@@ -1,0 +1,942 @@
+/* Quick Access: section cards and the panel that opens below them */
+.qa-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.qa-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 1.1rem 1.2rem;
+  text-align: left;
+  font-family: var(--font-body);
+  width: 100%;
+}
+
+.qa-card--active {
+  background: var(--color-gold-light);
+}
+
+.qa-card__icon {
+  width: 56px;
+  height: 56px;
+  font-size: var(--fs-3xl);
+  flex-shrink: 0;
+}
+
+.qa-card__label {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  color: var(--color-navy);
+  font-family: var(--font-heading);
+}
+
+.qa-card__sub {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.qa-card__arrow {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  flex-shrink: 0;
+}
+
+.qa-panel {
+  border: 1.5px solid var(--color-gold-border);
+  border-radius: var(--border-radius-xl);
+  overflow: hidden;
+  animation: qa-slide-in 0.2s ease;
+}
+
+@keyframes qa-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.qa-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 2px solid var(--color-gold);
+}
+
+.qa-panel__icon { font-size: var(--fs-2xl); }
+
+.qa-panel__title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-lg);
+  color: #fff;
+  font-weight: 700;
+}
+
+.qa-panel__sub {
+  font-size: var(--fs-xs);
+  color: rgba(255,255,255,0.5);
+  margin-top: 2px;
+}
+
+.qa-close {
+  margin-left: auto;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: rgba(255,255,255,0.7);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  transition: background 0.15s;
+}
+.qa-close:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+.qa-panel__body {
+  padding: 1.5rem;
+  background: var(--color-surface);
+}
+
+/* Rows, avatars, tags and section headers */
+.qa-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-gold-border);
+  border-radius: var(--border-radius-md);
+  margin-bottom: 0.6rem;
+  background: var(--color-surface-alt);
+  transition: box-shadow 0.15s;
+}
+.qa-row:hover { box-shadow: var(--shadow-sm); }
+
+.qa-row--clickable {
+  cursor: pointer;
+}
+.qa-row--clickable:hover  { border-color: var(--color-gold); }
+.qa-row--clickable:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 1px;
+}
+
+.qa-row__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.qa-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-navy);
+  color: var(--color-gold);
+  font-size: var(--fs-md);
+  flex-shrink: 0;
+}
+
+.qa-row__primary {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qa-row__secondary {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.qa-row__tags {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.qa-tag {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.qa-tag--leave { background: #fee2e2; color: #991b1b; font-size: var(--fs-xs);}
+.qa-tag--vacant { background: #fee2e2; color: #991b1b; font-size: var(--fs-xs); }
+.judge-card--vacant { border-style: dashed; }
+.judge-card--vacant .judge-card__name { color: var(--color-text-muted); font-style: italic; }
+.qa-tag--muted { background: var(--color-surface-2); color: var(--color-text-muted); font-size: var(--fs-xs);}
+
+.qa-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-text-mid);
+  margin-bottom: 0.75rem;
+}
+
+.qa-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.qa-dot--red   { background: #dc2626; }
+.qa-dot--amber { background: #d97706; }
+
+/* Empty message */
+.qa-empty { color: var(--color-text-muted); font-size: var(--fs-sm); padding: 0.5rem 0; }
+
+/* Search box */
+.qa-search {
+  width: 100%;
+  padding: 9px 14px;
+  border: var(--border-input);
+  border-radius: var(--border-radius-md);
+  font-size: var(--fs-sm);
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-surface);
+  margin-bottom: 1rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.qa-search:focus { border-color: var(--color-gold); }
+
+/* Tables, links and map location icons */
+.qa-table-wrap { overflow-x: auto; }
+
+.qa-table {
+  width: 100%;
+  font-size: var(--fs-sm);
+}
+
+.qa-link {
+  font-size: var(--fs-xs);
+}
+
+.qa-loc-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.qa-loc-icon {
+  flex-shrink: 0;
+  line-height: 1;
+  text-decoration: none;
+  filter: grayscale(0%);
+  opacity: 0.85;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.qa-loc-icon:hover { opacity: 1; transform: scale(1.1); }
+
+/* Court and district filter buttons */
+.qa-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.qa-filter-btn.active     { font-weight: 700; }
+
+/* Court calendar: year buttons and PDF viewer */
+.qa-year-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.qa-year-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--border-radius-md);
+  border: 1.5px solid var(--color-gold-border);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-heading);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.qa-year-btn:hover      { border-color: var(--color-gold); background: var(--color-gold-light); }
+.qa-year-btn.active     { background: var(--color-gold); border-color: var(--color-gold); }
+.qa-year-btn:disabled   { opacity: 0.6; cursor: not-allowed; }
+
+.qa-year-btn__icon { font-size: var(--fs-lg); }
+
+.qa-calendar-viewer {
+  margin-top: 1.5rem;
+  border: 1.5px solid var(--color-gold-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  overflow: clip; /* clip keeps the rounded corners without breaking the sticky zoom buttons */
+}
+
+.qa-calendar-viewer__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-gold-border);
+}
+
+.qa-calendar-viewer__label {
+  font-weight: 600;
+  font-size: var(--fs-base);
+  color: var(--color-navy);
+}
+
+.qa-calendar-viewer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.qa-filter-btn--sub.active {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-navy);
+}
+
+/* Loading skeleton and error state */
+.qa-skeleton-wrap { display: flex; flex-direction: column; gap: 8px; }
+.qa-skeleton-row {
+  height: 60px;
+  border-radius: var(--border-radius-md);
+  background: linear-gradient(90deg, var(--color-surface-alt) 25%, var(--color-surface-2) 50%, var(--color-surface-alt) 75%);
+  background-size: 200% 100%;
+  animation: qa-shimmer 1.4s infinite;
+}
+@keyframes qa-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+.qa-error-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: var(--fs-sm);
+}
+.qa-retry-btn {
+  margin-left: auto;
+  padding: 4px 12px;
+  font-size: var(--fs-xs);
+}
+.qa-retry-btn:hover { color: #fff; }
+
+/* Navy colour variants */
+.qa-dot--navy { background: var(--color-navy); }
+
+.qa-avatar--navy { background: var(--color-navy); color: var(--color-gold); }
+
+/* Police directory: search, station cards, officer blocks, badges and notes */
+.qa-pd-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--color-surface);
+  border: var(--border-input);
+  border-radius: var(--border-radius-md);
+  margin-bottom: 0.85rem;
+  transition: border-color 0.15s ease;
+}
+.qa-pd-search:focus-within { border-color: var(--color-gold); }
+
+.qa-pd-search__icon { font-size: var(--fs-base); opacity: 0.6; flex-shrink: 0; }
+
+.qa-pd-search__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--color-text);
+  padding: 11px 0;
+  min-width: 0;
+}
+.qa-pd-search__input::placeholder { color: var(--color-text-faint); }
+.qa-pd-search__input::-webkit-search-cancel-button { display: none; }
+
+.qa-pd-search__clear {
+  border: none;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.qa-pd-search__clear:hover { background: var(--color-gold-light); color: var(--color-navy); }
+
+.qa-pd-card {
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.qa-pd-card--open { border-color: var(--color-gold); box-shadow: var(--shadow-sm); }
+
+.qa-pd-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.qa-pd-card__head:hover { background: var(--color-surface-alt); }
+.qa-pd-card__titles { flex: 1; min-width: 0; }
+
+.qa-pd-card__body {
+  padding: 4px 14px 14px;
+  border-top: 1px solid var(--color-gold-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qa-pd-officer {
+  border-left: 3px solid var(--color-gold-border);
+  background: var(--color-surface-alt);
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+.qa-pd-officer--navy  { border-left-color: var(--color-navy); }
+.qa-pd-officer--slate { border-left-color: #6b7a90; }
+.qa-pd-officer--gold  { border-left-color: var(--color-gold); }
+.qa-pd-officer--rose  { border-left-color: #A32D2D; }
+.qa-pd-officer--plain { border-left-color: var(--color-text-faint); }
+
+.qa-pd-officer__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.qa-pd-officer__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.qa-pd-badge {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.qa-pd-badge--navy  { background: var(--color-navy); color: var(--color-gold); }
+.qa-pd-badge--slate { background: rgba(107,122,144,0.15); color: #3f4b5c; }
+.qa-pd-badge--gold  { background: var(--color-gold); color: var(--color-navy); }
+.qa-pd-badge--rose  { background: rgba(163,45,45,0.10); color: #A32D2D; }
+.qa-pd-badge--plain { background: var(--color-surface-2); color: var(--color-text-muted); }
+
+.qa-pd-line {
+  display: flex;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-base);
+  margin: 2px 0;
+}
+.qa-pd-line__label {
+  flex-shrink: 0;
+  width: 56px;
+  color: var(--color-text-faint);
+  font-size: var(--fs-sm);
+  padding-top: 2px;
+}
+.qa-pd-line__value { color: var(--color-text-mid); word-break: break-word; min-width: 0; }
+
+.qa-link { color: var(--color-navy); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.qa-link:hover { color: var(--color-gold); text-decoration: underline; }
+
+.qa-pd-foot {
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+  border-top: 1px dashed var(--color-gold-border);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.qa-pd-note {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-base);
+  color: var(--color-text-muted);
+  background: var(--color-gold-light);
+  border: 1px solid var(--color-gold-border);
+  border-radius: var(--border-radius-sm);
+  padding: 10px 12px;
+  margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .qa-pd-line { flex-direction: column; gap: 0; }
+  .qa-pd-line__label { width: auto; }
+}
+
+.qa-pd-hqnote {
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* Stacked and multi-line cell helpers and muted text */
+.qa-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qa-cell-multiline { white-space: pre-line; }
+
+.qa-muted { color: var(--color-text-faint); }
+
+/* Judges list: grid and judge cards */
+.judge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-lg);
+}
+
+.judge-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  min-width: 0;
+}
+
+.judge-card__head {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: flex-start;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px dashed var(--color-gold-border);
+}
+
+.judge-card__photo {
+  width: 96px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: var(--border-radius-md);
+  object-fit: cover;
+  object-position: center top;
+  border: 1px solid var(--color-gold-border);
+  background: var(--color-surface-2);
+  display: block;
+}
+
+.judge-card__photo--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-navy);
+  color: var(--color-gold);
+  font-size: var(--fs-4xl);
+}
+
+.judge-card__id { min-width: 0; }
+
+.judge-card__name {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  line-height: 1.25;
+  color: var(--color-navy);
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.judge-card__designation {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-text-mid);
+  margin: 0 0 4px;
+}
+
+.judge-card__court {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.judge-card__fields { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.judge-card__field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.judge-card__field dt {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-text-faint);
+}
+
+.judge-card__field dd {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.judge-card__actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  padding-top: var(--space-md);
+  border-top: 1px dashed var(--color-gold-border);
+}
+
+/* Hearing links, copy button, chips and PDF bar */
+.qa-hearing { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.qa-copy-btn {
+  border: 1px solid var(--color-gold-border);
+  background: var(--color-gold-light);
+  color: #8a6d1f;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.qa-copy-btn:hover { background: var(--color-gold); color: var(--color-navy); }
+.qa-copy-btn--done { background: #e6f4ee; border-color: #b9dccb; color: var(--color-active); }
+.qa-copy-btn--done:hover { background: #e6f4ee; color: var(--color-active); }
+
+.qa-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.qa-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  background: rgba(10, 22, 40, 0.06);
+  color: var(--color-navy);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.qa-chip--holiday { background: #fbeaea; color: var(--color-critical); }
+.qa-chip--work    { background: #e6f4ee; color: var(--color-active); }
+
+.qa-chip--toggle {
+  background: transparent;
+  border: 1px dashed var(--color-gold-border);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.qa-chip--toggle:hover { border-color: var(--color-gold); color: var(--color-navy); }
+
+.qa-pdf-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--color-gold-light);
+  border: 1px solid var(--color-gold-border);
+  border-radius: var(--border-radius-md);
+  padding: 10px 14px;
+  margin-bottom: 1rem;
+  font-size: var(--fs-sm);
+}
+.qa-pdf-bar__label { font-weight: 600; color: var(--color-navy); margin-right: auto; }
+.qa-pdf-bar__meta  { font-weight: 400; color: var(--color-text-muted); font-size: var(--fs-xs); margin-left: 6px; }
+
+/* Roster cells: link judge, validity and status */
+.qa-linkcell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.qa-linkcell__name { font-size: var(--fs-xs); font-weight: 600; color: var(--color-navy); }
+
+.qa-validity { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; font-size: var(--fs-xs); }
+
+.qa-status {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+.qa-status--active   { background: #e6f4ee; color: var(--color-active); }
+.qa-status--upcoming { background: #e8f0fa; color: var(--color-onhold); }
+.qa-status--expired  { background: #efefee; color: var(--color-closed); }
+
+.qa-subtext { display: block; font-size: var(--fs-xs); color: var(--color-text-muted); margin-top: 2px; }
+
+@media (max-width: 600px) {
+  .judge-grid { grid-template-columns: minmax(0, 1fr); }
+  .judge-card__photo { width: 84px; height: 106px; }
+}
+
+/* Judges on leave detail */
+
+.qa-leave-detail__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--color-bg);
+}
+
+.qa-leave-detail__name {
+  font-family: var(--font-heading);
+  font-size: var(--fs-xl);
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
+.qa-leave-detail__court {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.qa-leave-detail__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.qa-leave-detail__field dt {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 3px;
+}
+
+.qa-leave-detail__field dd {
+  font-size: var(--fs-base);
+  color: var(--color-navy);
+}
+
+/* Find Jurisdiction: category buttons, steps, search and results */
+.qa-jur-cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.qa-jur-cat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.7rem 0.9rem;
+  border: 1.5px solid var(--color-gold-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+.qa-jur-cat:hover { border-color: var(--color-gold); }
+.qa-jur-cat.active {
+  background: var(--color-gold-light);
+  border-color: var(--color-gold);
+  color: var(--color-navy);
+}
+
+.qa-jur-cat__icon { font-size: var(--fs-lg); flex-shrink: 0; }
+
+.qa-jur-step { max-width: 460px; margin-bottom: 1.25rem; }
+
+.qa-jur-search {
+  border: 1.5px solid var(--color-gold-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface-alt);
+  padding: 1.1rem 1.25rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.qa-jur-search .qa-section-header { color: var(--color-navy); }
+
+.qa-jur-result { margin-top: 1.25rem; margin-bottom: 0.25rem; }
+
+.qa-jur-flow .qa-table-wrap { margin-bottom: 1.25rem; }
+
+.qa-jur-search-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.qa-jur-search-row__input { flex: 1 1 auto; min-width: 0; }
+.qa-jur-search-row__btn { flex-shrink: 0; }
+
+@media (max-width: 600px) {
+  .qa-jur-search-row { flex-wrap: wrap; }
+  .qa-jur-search-row__input { flex: 1 1 100%; }
+}
+
+/* Appellate tribunal card, highlighted row and spacing helpers */
+.qa-drat-card {
+  padding: 0.9rem 1.1rem;
+  max-width: 460px;
+}
+.qa-drat-card__name { margin-bottom: 0.5rem; color: var(--color-navy); }
+.qa-drat-card__line { font-size: var(--fs-sm); color: var(--color-text); margin-bottom: 0.35rem; }
+.qa-drat-card__line:last-child { margin-bottom: 0; }
+
+.qa-table-row--highlight td {
+  background: var(--color-gold-light);
+}
+
+.qa-mt-sm { margin-top: 0.75rem; }
+.qa-mt-md { margin-top: 1rem; }
+.qa-mt-lg { margin-top: 1.5rem; }
+
+/* Quick Access > Police Directory: slightly larger circle around the shield icon */
+.qa-pd-card__head .qa-avatar {
+  width: 46px;
+  height: 46px;
+  font-size: 1.4rem;
+}
+
+/* Judges on Leave: the judge's photo (or the scales icon) in a circle */
+.leave-avatar {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-gold);
+  background: var(--color-navy);
+  color: var(--color-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  overflow: hidden;
+  padding: 0;
+}
+.leave-avatar--lg { width: 72px; height: 72px; font-size: 2rem; }
+.leave-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+.leave-avatar--photo { background: var(--color-bg); }
+.leave-avatar--zoom { cursor: zoom-in; }
+.leave-avatar--zoom:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+.court-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.court-history__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--space-sm);
+  padding: 6px var(--space-sm);
+  background: var(--color-surface-2);
+  border: var(--border-default);
+  border-radius: var(--border-radius-md);
+  font-size: var(--fs-xs);
+}
+
+.court-history__no { color: var(--color-navy); }
+.court-history__range { color: var(--color-text-muted); }
+
+.qa-dot--grey { background: var(--color-closed); }
+.qa-section-header--spaced { margin-top: 1.5rem; }
+
+/* Court history popup */
+.court-log__path { margin: 2px 0 0; font-size: var(--fs-xs); font-weight: 400; color: var(--color-text-muted); }
+
+/* Successor courts list */
+.successor { display: flex; flex-direction: column; gap: var(--space-md); }
+.successor__nos { display: flex; flex-wrap: wrap; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
+.successor__no {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 150px;
+  padding: 8px var(--space-md);
+  background: var(--color-surface-2);
+  border: var(--border-default);
+  border-radius: var(--border-radius-md);
+  color: var(--color-navy);
+  cursor: pointer;
+  text-align: left;
+}
+.successor__no:hover { border-color: var(--color-gold); }
+.successor__judge { font-size: var(--fs-xs); color: var(--color-text-muted); }
+
+/* Successor courts: search card (same look as Find Jurisdiction) */
+.successor__filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+.successor__field { min-width: 0; }
+.successor__field .form-input { width: 100%; max-width: none; }
+.successor__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.successor__reset { flex-shrink: 0; white-space: nowrap; }
+.successor__filters .successor__reset { align-self: end; }
+.successor__summary { margin: 0; font-size: var(--fs-sm); color: var(--color-text-muted); }
+.successor__add { margin-left: auto; flex-shrink: 0; white-space: nowrap; }
+.successor .qa-jur-search { margin-bottom: 0.5rem; }
+
+@media (max-width: 900px) {
+  .successor__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .successor__filters .successor__reset { grid-column: 1 / -1; justify-self: end; }
+}
+@media (max-width: 520px) {
+  .successor__filters { grid-template-columns: minmax(0, 1fr); }
+  .successor__filters .successor__reset { justify-self: stretch; }
+  .successor__footer { flex-wrap: wrap; }
+  .successor__add { width: 100%; }
+}

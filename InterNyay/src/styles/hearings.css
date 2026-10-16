@@ -1,0 +1,194 @@
+
+/* Hearing history list on a case */
+.hearing-history {
+  margin-top: 1rem;
+  cursor: default;
+}
+
+.hearing-history__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.hearing-history__next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hearing-history__next-label {
+  font-size: var(--fs-sm);
+  color: var(--color-text-faint);
+}
+
+.hearing-history__next-date {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.hearing-history__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.hearing-history__toggle:hover { color: var(--color-navy); }
+
+.hearing-history__caret {
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+
+.hearing-history__caret--open { transform: rotate(90deg); }
+
+.hearing-history__empty {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  padding: 10px 0;
+}
+.hearing-history__empty--error { color: var(--color-critical); }
+
+/* One hearing entry in the history */
+.hearing-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: var(--border-default);
+}
+
+.hearing-entry__date {
+  flex-shrink: 0;
+  min-width: 104px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hearing-entry__date-text {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-navy);
+  white-space: nowrap;
+}
+
+.hearing-entry__outcome {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--color-gold-light);
+  border: 1px solid var(--color-gold-border);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-mid);
+  white-space: nowrap;
+}
+
+.hearing-entry__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.hearing-entry__note {
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.hearing-entry__note--empty {
+  color: var(--color-text-faint);
+  font-style: italic;
+}
+
+.hearing-entry__edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.hearing-entry__edit-row .form-label { margin: 0; white-space: nowrap; }
+.hearing-entry__edit-row .form-input { max-width: 190px; }
+.hearing-entry__note-input {
+  resize: vertical;
+  font-family: var(--font-body);
+}
+
+.hearing-entry__edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.hearing-entry__order {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: var(--border-radius-sm);
+  background: var(--color-surface-2);
+}
+
+.hearing-entry__order-icon { font-size: var(--fs-base); }
+
+.hearing-entry__order-name {
+  flex: 1;
+  min-width: 120px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--color-navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hearing-entry__attach { margin-top: 8px; }
+
+.hearing-entry__actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.next-hearing__note {
+  margin-top: var(--space-md);
+}
+
+.next-hearing__hint {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-base);
+  color: var(--color-text-faint);
+}
+
+/* Order actions of a hearing with no order yet: fetch from eCourts, or attach a PDF by hand */
+.hearing-entry__order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.hearing-entry__order-actions .hearing-entry__attach { margin-top: 0; }
+
+.hearing-entry__order-note {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}

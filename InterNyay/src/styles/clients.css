@@ -1,0 +1,125 @@
+/* Clients grid */
+.clients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 1rem;
+}
+
+/* Client card */
+.client-card {
+  padding: 1.25rem;
+}
+
+.client-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+.client-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.client-card__name {
+  font-size: var(--fs-lg);
+  margin-bottom: 4px;
+}
+
+.client-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1rem;
+}
+
+.client-card__info-row {
+  font-size: var(--fs-base);
+  color: var(--color-text-mid);
+  overflow-wrap: anywhere;   
+}
+
+.client-card__address {
+  font-size: var(--fs-base);
+  overflow-wrap: anywhere;
+  color: var(--color-text-faint);
+}
+
+.client-card__footer {
+  border-top: 1px solid var(--color-bg);
+  padding-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.client-card__case-count {
+  font-size: var(--fs-base);
+  color: var(--color-text-faint);
+  margin-left: auto;
+}
+
+/* Corporate client badge, full width empty state and client photo upload */
+.badge--corporate    {   font-size: var(--fs-xs); }
+.badge--individual   { font-size: var(--fs-xs); }
+.badge--case-type    { background: var(--color-bg); color: var(--color-text-mid); font-size: var(--fs-xs); }
+
+.empty-state--full { grid-column: 1 / -1; }
+
+.add-client-photo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.client-card__avatar img,
+.client-card__avatar--lg img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Sort dropdown */
+.sort-control {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.sort-control select {
+  width: auto;
+  color: var(--color-navy);
+}
+
+/* Clients page card spacing */
+.clients-page .client-card { padding: 1.4rem; }
+
+.clients-page .client-card__header { gap: 14px; }
+
+.clients-page .client-card__avatar {
+  width: 54px;
+  height: 54px;
+}
+
+.clients-page .client-card .badge--corporate,
+.clients-page .client-card .badge--individual { font-size: var(--fs-xs); padding: 3px 11px; }
+
+.clients-page .client-card .badge--case-type  { font-size: var(--fs-sm);   padding: 3px 11px; }
+
+.clients-page .client-card__info { gap: 7px; }
+
+@media (max-width: 400px) {
+  .clients-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

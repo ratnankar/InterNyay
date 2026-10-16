@@ -1,0 +1,254 @@
+/* ==========================================================================
+   DESKTOP SIZES, FINAL SCALE: the size of every button, chip, field, search, sort and filter control on a computer
+   (window wider than 768px, mouse). Phones and tablets are not touched. Keep this file last in index.css.
+   Change a number in the :root block to resize a whole group.
+
+   One scale, biggest to smallest, so the page reads in order (main action > fields > card buttons and pills > small):
+
+                                              height    text
+     1  Main page buttons (+ Add Case ...)    40px      14px
+     2  Fields, search, sort, Filter,         36px      14px
+        dialog and admin toolbar buttons
+     3  Buttons inside a card,                32px      13px
+        filter pills, court chips
+     4  Small buttons, sub filter pills,      28px      13px
+        buttons on a table row
+        Admin main tabs                       40px      14px
+        Admin sub tabs                        32px      13px
+
+   Weights (only 400, 500, 600 and 700 are loaded): gold action buttons 700, outline buttons and pills 600,
+   option lists 500, typed text 400. State is shown by colour or fill, never by weight, so nothing changes width when pressed.
+   ========================================================================== */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  :root {
+    --d-main: 40px;   --d-main-fs: 0.875rem;
+    --d-ctl: 36px;    --d-ctl-fs: 0.875rem;
+    --d-card: 32px;   --d-card-fs: 0.8125rem;
+    --d-pill: 32px;   --d-pill-fs: 0.8125rem;
+    --d-sub: 28px;    --d-sub-fs: 0.8125rem;
+    --d-row: 28px;    --d-row-fs: 0.8125rem;
+    --d-field-fs: 0.875rem;
+    --d-dialog-fs: 0.875rem;
+    --d-radius: 8px;
+  }
+
+  /* ---------- Padding per group (steps down with the height) ---------- */
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon, .doc-row__actions > *, .judge-card__actions > *, [data-compact] > *, table *),
+  .modal .form-actions :is(button.btn-gold, button.btn-outline, button.btn-danger),
+  .admin .admin__toolbar :is(button.btn-gold, button.btn-outline, button.btn-danger):not(.btn-outline--sm),
+  .client-search-row .btn-add-client,
+  .admin .plans-layout__side .plans-layout__add {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  :is(.app-main, .admin) :is(.page-header, .page-header__actions, .documents__header-actions) > :is(button, a):is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):not(.btn-outline--sm, .btn-icon, [data-compact] > *),
+  .page-header--hero .btn-gold {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .app-main :is(.profile-card, .account-action) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon, [data-compact] > *, table *),
+  .app-main .profile-card .court-pref__actions > :is(button.btn-gold, button.btn-outline),
+  .app-main .profile-card .page-header > :is(button.btn-gold, button.btn-outline) {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.qa-filter-btn, .case-filter-btn):not(.qa-filter-btn--sub, [data-compact] > *) {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a).qa-filter-btn--sub:not([data-compact] > *) {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.btn-outline--sm, .qa-filter-btn--sub):not([data-compact] > *, table *),
+  .doc-row__actions > :is(button, a),
+  .judge-card__actions > button,
+  .qa-retry-btn,
+  .dropdown__search-btn,
+  .form-template-card__actions button {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  :is(.admin, .app-main) table :is(button, a):is(.btn-gold, .btn-outline, .btn-danger),
+  .admin .admin__actions button,
+  .notif-row__pdf-btn,
+  .qa-copy-btn {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* Rows of pills and buttons get a little more air so the bigger targets do not touch */
+  .court-pref__chips, .case-filters, .qa-filter-row, .contact-filters, .txn-period__chips { gap: 6px; }
+  .qa-filter-row--sub { margin-top: 6px; }
+  .admin .admin__toolbar, .list-toolbar, .doc-filter-row, .todo-filters { gap: 10px 12px; }
+  .app-main .profile-card .court-pref__actions { gap: 8px; }
+  .form-actions, .drawer__footer, .confirm-dialog__actions { gap: 10px; }
+
+  /* Two main buttons side by side share the new height (controls.css fixed them at 38px) */
+  :where(
+    :is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm):has(+ :is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm)),
+    :is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm) + :is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm)
+  ) { min-height: var(--d-ctl); }
+
+  /* ---------- Tabs ---------- */
+  .admin__tabs.admin__tabs .admin__tab { min-height: 40px; font-size: 0.875rem; padding-left: 16px; padding-right: 16px; }
+  .admin__subtabs.admin__subtabs .admin__subtab { min-height: 32px; font-size: 0.8125rem; padding-left: 14px; padding-right: 14px; }
+
+  /* ---------- Other option buttons ---------- */
+  /* Year tiles on Quick Access are a main choice on that page: field height, heading font */
+  .qa-year-btn { box-sizing: border-box; height: var(--d-ctl); min-height: var(--d-ctl); padding: 0 18px; font-size: 0.9375rem; }
+  .fee-type-btn { min-height: var(--d-pill); padding: 0 14px; font-size: var(--d-pill-fs); }
+  .auth-card .auth-account-type__btn { min-height: 42px; }
+  .wa-days-toggle__btn { padding: 6px 14px; font-size: 0.8125rem; }
+  .txn-year-select, .txn-period__chips .txn-year-select { width: 76px; }
+  .pricing-switch button { min-height: 36px; padding: 0 18px; }
+  .contact-filters button { min-height: var(--d-pill); padding: 0 14px; font-size: var(--d-pill-fs); }
+  .btn-icon { min-width: 32px; min-height: 32px; }
+
+  /* ---------- Option lists (dropdowns, pickers, the Filter menu) ---------- */
+  .picker__list { padding: 4px; }
+  .picker__option { padding: 7px 12px; font-size: 0.875rem; line-height: 1.35; border-radius: 7px; }
+  .picker__option-sub { font-size: var(--fs-sm); margin-top: 2px; }
+  .picker__empty { padding: 10px 12px; font-size: var(--fs-sm); }
+  .dropdown__group-label { font-size: var(--fs-sm); padding-top: 8px; padding-bottom: 4px; }
+  .dropdown__list { max-height: 260px; }
+
+  .case-filter-menu__panel { width: 300px; }
+  .case-filter-menu__row { padding: 9px 14px; font-size: 0.875rem; border-radius: 7px; }
+  .case-filter-menu__control { padding: 10px 12px 12px; }
+  .case-filter-menu__count { min-width: 18px; height: 18px; font-size: 11px; }
+
+  /* ---------- Chips and tags ---------- */
+  .case-filter-chip { padding: 4px 6px 4px 12px; font-size: 0.8125rem; }
+  .case-filter-chip__remove { width: 20px; height: 20px; }
+  .picker__chip { padding: 4px 6px 4px 10px; font-size: 0.8125rem; }
+  .picker__chip-sub { font-size: var(--fs-xs); }
+  .spec-chip { padding: 4px 6px 4px 10px; font-size: 0.8125rem; }
+  .courts-chip__label { font-size: 0.8125rem; }
+  .todo-category-tag, .admin__pill { font-size: 0.75rem; }
+
+  /* ---------- Sort and filter captions ---------- */
+  .sort-control label, .doc-filter-label { font-size: 0.875rem; }
+
+  /* ==========================================================================
+     WEIGHTS: one step firmer. Selectors repeat the ones in weight-hierarchy.css so they win by coming later.
+     ========================================================================== */
+
+  /* Gold and red action buttons: 700 everywhere, so the action reads first next to Cancel */
+  .btn-gold, .btn-danger,
+  .calc-estimate__btn, .qa-jur-search-row__btn, .form-template-card__actions button.btn-gold,
+  .btn-gold.btn-outline--sm, .btn-danger.btn-outline--sm,
+  .admin table .btn-gold, .admin table .btn-danger, .admin .admin__actions :is(.btn-gold, .btn-danger),
+  .app-main .profile-card .page-header > :is(button, a):is(.btn-gold, .btn-danger) {
+    font-weight: var(--w-bold);
+  }
+
+  /* Outline and secondary buttons: 600 */
+  .btn-outline, .btn-gold-secondary, .btn-outline--danger,
+  .form-template-card__actions button:not(.btn-gold),
+  .btn-outline--sm, .paid-status-btn, .courts-btn,
+  .admin table .btn-outline, .admin .admin__actions .btn-outline,
+  .doc-row__actions > :is(button, a), .judge-card__actions > button,
+  .qa-retry-btn, .qa-copy-btn, .notif-row__pdf-btn, .dropdown__search-btn,
+  .modal .form-actions button.btn-outline,
+  .admin .admin__toolbar button.btn-outline:not(.btn-outline--sm),
+  .admin button.btn-outline.btn-outline--sm,
+  .modal button.btn-outline.btn-outline--sm,
+  .admin .judge-card__actions button,
+  .admin .admin-judge-grid button.btn-outline,
+  .change-judge__tabs button.btn-outline,
+  .change-judge__tabs button.btn-gold,
+  .options-admin__actions--compact .btn-outline,
+  .options-admin__actions--compact .btn-gold,
+  .admin__account-actions .btn-outline,
+  .case-detail__actions-right > button, .case-detail__actions > button, .client-detail__header > .btn-outline,
+  .case-filter-menu > .btn-outline,
+  .app-main .profile-card .page-header > :is(button, a):is(.btn-outline, .btn-gold-secondary),
+  .auth-card .auth-link-btn, .notif-page__back, .notifications-panel__more, .qa-link, .skip-btn {
+    font-weight: var(--w-semibold);
+  }
+
+  /* Filter pills, year picker, segmented switches, option chips: 600 pressed or not */
+  .qa-filter-btn, .case-filter-btn, .txn-year-select, .fee-type-btn,
+  .qa-filter-btn.active, .case-filter-btn--active, .txn-year-select--active, .fee-type-btn--active,
+  .page-header .case-filter-btn--active, .page-header .case-filter-btn--active:hover,
+  .txn-period__chips .txn-year-select, .txn-period__chips .form-input.txn-year-select,
+  .contact-filters button, .court-pref__chip, .txn-period__chips .case-filter-btn,
+  .auth-card .auth-account-type__btn, .auth-account-type__btn,
+  .wa-days-toggle__btn, .pricing-switch button,
+  .qa-filter-btn--sub, .qa-year-btn {
+    font-weight: var(--w-semibold);
+  }
+
+  /* Chips and tags */
+  .case-filter-chip, .picker__chip, .courts-chip, .spec-chip, .courts-chip__tag, .qa-chip,
+  .admin__pill, .todo-category-tag, .hearing-row__past, .qa-tag, .court-history-editor__summary,
+  .case-filter-chips__clear {
+    font-weight: var(--w-semibold);
+  }
+
+  /* Tabs: main 700, sub 600 */
+  .admin__tabs.admin__tabs .admin__tab,
+  .admin__tabs.admin__tabs .admin__tab--active,
+  .auth-tab, .auth-tab--active {
+    font-weight: var(--w-bold);
+  }
+  .admin__subtabs.admin__subtabs .admin__subtab,
+  .admin__subtabs.admin__subtabs .admin__subtab--active,
+  .admin__subtabs .admin__subtab, .admin__subtabs .admin__subtab--active {
+    font-weight: var(--w-semibold);
+  }
+
+  /* Dropdown and select values 600, the open list 500 with the chosen option 700 */
+  select.form-input, .dropdown__input, .doc-filter-select, .form-input.dropdown__input,
+  .sort-control .dropdown__input, .doc-filter-group .doc-filter-select, .doc-filter-group .dropdown__input,
+  .todo-filters .dropdown__input, .txn-timeline-filter .dropdown__input {
+    font-weight: var(--w-semibold);
+  }
+  .picker__option, .case-filter-menu__row { font-weight: var(--w-medium); }
+  .dropdown__option--selected { font-weight: var(--w-bold); }
+  .case-filter-menu__value, .case-filter-menu__date-label { font-weight: var(--w-medium); }
+  .sort-control label, .doc-filter-label, .form-input-prefix { font-weight: var(--w-semibold); }
+
+  /* Typed text and placeholders stay regular, as before */
+
+  /* Navigation */
+  .nav-item { font-weight: var(--w-semibold); }
+  .nav-item.active { font-weight: var(--w-bold); }
+  .sidebar__user-menu-item, .todo-sidebar__item { font-weight: var(--w-semibold); }
+  .sidebar__user-menu-item.is-active, .todo-sidebar__item.active { font-weight: var(--w-bold); }
+
+  /* ==========================================================================
+     ADMIN MAIN TAB BAR: tidy up (icons, active tab, spacing, edge)
+     ========================================================================== */
+  .admin__tabs.admin__tabs {
+    gap: 2px;
+    padding: 4px;
+    border-radius: 12px;
+    cursor: default;
+  }
+  .admin__tabs.admin__tabs .admin__tab {
+    gap: 7px;
+    padding: 0 14px;
+    border-radius: 9px;
+    letter-spacing: 0;
+  }
+  /* Icons: one size, one stroke, same colour as the label (softer when the tab is not open) */
+  .admin__tabs .admin__tab-icon { width: 16px; height: 16px; flex: none; opacity: .75; }
+  .admin__tabs .admin__tab-icon .icon { width: 16px; height: 16px; vertical-align: 0; }
+  .admin__tabs .admin__tab--active .admin__tab-icon,
+  .admin__tabs .admin__tab:hover .admin__tab-icon { opacity: 1; }
+  /* Open tab: clean gold fill, no smudged text-shadow, soft lift instead of a bevel */
+  .admin__tabs.admin__tabs .admin__tab--active {
+    text-shadow: none;
+    border-bottom: 0;
+    box-shadow: 0 1px 2px rgba(120, 90, 20, .25), inset 0 1px 0 rgba(255, 255, 255, .45);
+  }
+  .admin__tabs.admin__tabs .admin__tab:hover { transform: none; }
+  /* Keep a little room at the right so the last tab never touches the edge of the bar */
+  .admin__tabs.admin__tabs::after { content: ''; flex: 0 0 2px; }
+
+  /* Quick Access search by name: the bordered wrapper is the 36px box, the input inside fills it */
+  .qa-pd-search { box-sizing: border-box; height: var(--d-ctl); min-height: var(--d-ctl); padding: 0 12px; border-radius: var(--d-radius); }
+  .qa-pd-search .qa-pd-search__input { height: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0; font-size: var(--d-ctl-fs); }
+}

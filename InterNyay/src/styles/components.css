@@ -1,0 +1,358 @@
+
+
+/* Badge */
+.badge {
+  display: inline-block;
+  font-size: var(--fs-xs);
+}
+
+/* Buttons: gold, outline, danger and icon */
+.btn-gold {
+  cursor: pointer;
+}
+
+.btn-outline {
+  cursor: pointer;
+}
+
+.btn-outline--danger:hover {
+  border-color: var(--color-critical);
+}
+
+.btn-danger {
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.btn-danger:hover { opacity: 0.85; }
+.btn-danger:disabled { opacity: 0.45; }
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--fs-xl);
+  color: var(--color-text-muted);
+}
+
+/* Form fields: labels, inputs, prefix and suffix inputs, password field and grid layouts */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: var(--fs-base);
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.form-input--prefix {
+  padding-left: 28px;
+}
+
+.form-input-wrap {
+  position: relative;
+}
+
+.form-input-prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-size: var(--fs-base);
+  pointer-events: none;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field__input {
+  width: 100%;
+  padding-right: 46px !important;
+}
+
+/* No toggle button, so the input doesn't need room on the right for it */
+.password-field--no-toggle .password-field__input.form-input { padding-right: 12px !important; }
+.password-field--no-toggle .password-field__input.auth-input { padding-right: 14px !important; }
+
+.password-field__toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.password-field__toggle:hover  { opacity: 0.7; }
+.password-field__toggle:focus  { outline: none; }
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.form-grid-full {
+  grid-column: 1 / -1;
+}
+
+/* Popup backdrop and modal box */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.overlay--stacked {
+  z-index: 130;
+}
+
+.modal {
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal--sm   { max-width: 420px; }
+.modal--md   { max-width: 480px; }
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.modal__title {
+  font-size: var(--fs-2xl);
+}
+
+/* Toast notifications */
+/* Sits above the assistant button (56px button + 24px gap from the edge + 16px space) so the two never overlap */
+.toast-container {
+  position: fixed;
+  bottom: calc(24px + 56px + 16px);
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 999;
+  pointer-events: none;
+}
+
+/* While the assistant panel is open it fills the bottom-right, so toasts move to its left */
+body:has(.chat__panel) .toast-container {
+  bottom: 24px;
+  right: calc(24px + 400px + 16px);
+}
+
+@media (max-width: 520px) {
+  .toast-container { bottom: calc(16px + 56px + 12px); right: 16px; left: 16px; }
+  /* The panel is full screen on phones, so toasts go to the top instead */
+  body:has(.chat__panel) .toast-container { right: 16px; left: 16px; }
+}
+
+@media (min-width: 521px) and (max-width: 900px) {
+  /* Narrow screens have no room beside the open panel, so toasts go to the top */
+  body:has(.chat__panel) .toast-container { top: 16px; bottom: auto; right: 24px; }
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  font-family: var(--font-body);
+  min-width: 200px;
+  max-width: 340px;
+}
+
+.toast svg { flex-shrink: 0; }
+
+.toast--success { background: var(--color-navy); color: #fff; border-left: 3px solid var(--color-gold); }
+.toast--success svg { color: var(--color-gold); }
+.toast--error   { background: var(--color-navy); color: #fff; border-left: 3px solid var(--color-critical); }
+.toast--error svg { color: #ff8a80; }
+
+@keyframes slideIn {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* Stat card, section title and empty state */
+.stat-card {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 96px;
+}
+
+.stat-card__label {
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: var(--fs-xl);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem;
+  color: var(--color-text-faint);
+}
+
+.empty-state__icon  { margin-bottom: 1rem; }
+.empty-state__title { margin-bottom: 6px; }
+.empty-state__desc  { font-size: var(--fs-sm); }
+
+/* Stat colours and case form spacing */
+.stat--navy    { color: var(--color-navy);    }
+.stat--active  { color: var(--color-active);  }
+
+.form-grid-2--case { margin-bottom: 1rem; }
+
+/* Expandable card: header, body and open state */
+.exp-card {
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.exp-card--open { border-color: var(--color-gold); box-shadow: var(--shadow-sm); }
+
+.card .exp-card,
+.doc-group .exp-card,
+.modal .exp-card { background: var(--color-surface-alt); }
+.card .exp-card .exp-card__head:hover,
+.doc-group .exp-card .exp-card__head:hover,
+.modal .exp-card .exp-card__head:hover { background: var(--color-surface-2); }
+
+.exp-card:last-child { margin-bottom: 0; }
+
+.doc-group > .exp-card:last-child {
+  margin-bottom: 0;
+}
+
+.exp-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.exp-card__head:hover { background: var(--color-surface-alt); }
+
+.exp-card__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-navy);
+  color: var(--color-gold);
+  font-size: var(--fs-md);
+  flex-shrink: 0;
+}
+
+.exp-card__titles { flex: 1; min-width: 0; }
+.exp-card__primary {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--color-navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exp-card__secondary {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.exp-card__arrow {
+  margin-left: 4px;
+  font-size: var(--fs-xs);
+  flex-shrink: 0;
+}
+
+.exp-card__body {
+  padding: 4px 14px 14px;
+  border-top: 1px solid var(--color-gold-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .form-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .modal {
+    max-height: 100%;
+    padding: 1.25rem;
+    padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+}
+
+/* Required field star and case modal status spacing */
+.req-star {
+  color: #e5484d;
+  font-weight: 700;
+  margin-left: 3px;
+  text-transform: none;
+}
+
+.case-modal-status { margin-bottom: 1rem; }
+
+/* "See more" button under long lists */
+.see-more {
+  display: flex;
+  justify-content: center;
+  grid-column: 1 / -1;
+  padding: 16px 0 8px;
+}
+
+.see-more__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.see-more__count {
+  color: var(--color-text-muted, #7a7a7a);
+  font-size: var(--fs-xs, 0.8rem);
+}

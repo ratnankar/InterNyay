@@ -1,0 +1,19 @@
+/* Court preference: the picker (Profile and the question after sign-up) */
+
+.court-pref { display: flex; flex-direction: column; gap: 14px; margin: 0.75rem 0 1rem; }
+.court-pref__group { min-width: 0; }
+.court-pref__court {
+  margin: 0 0 6px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+.court-pref__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.court-pref__chip[disabled] { opacity: 0.6; cursor: not-allowed; }
+.court-pref__hint { margin-top: 0; }
+
+/* Question after sign-up sits on the dark sign-up background, so the picker gets a white card */
+.choose-courts { max-width: 760px; }
+.choose-courts__card { padding: 1.5rem; margin-top: 1rem; }
+.choose-courts__actions { margin-top: 0.5rem; justify-content: flex-end; }
+

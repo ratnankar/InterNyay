@@ -1,0 +1,1014 @@
+/* Admin console: header, tabs and count cards */
+.admin__header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.admin__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+
+.admin__title {
+  font-size: var(--fs-3xl);
+}
+
+.admin__subtitle {
+  font-size: var(--fs-base);
+}
+
+.admin__tabs {
+  border-bottom: var(--border-default);
+  margin-bottom: var(--space-xl);
+}
+
+.admin__tab {
+  background: none;
+  font-family: var(--font-body);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.admin__tab:hover { color: var(--color-navy); }
+
+.admin__tab--active {
+  border-bottom-color: var(--color-gold);
+}
+
+.admin__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-lg);
+}
+
+.admin__stat-label {
+  line-height: 1.4;
+  min-height: calc(var(--fs-xs) * 1.4 * 2);
+}
+
+.admin__stat-value {
+  font-size: var(--fs-2xl);
+  margin-top: 6px;
+}
+
+/* Analytics section */
+.admin-section-title {
+  margin: var(--space-xl, 28px) 0 var(--space-md);
+  font-size: var(--fs-md);
+}
+
+/* Analytics grid */
+.admin-analytics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+}
+
+/* Chart card */
+.admin-chart { padding: 1rem 1.25rem; }
+
+.admin-chart__title {
+  margin: 0 0 12px;
+}
+
+.admin-chart__empty { font-size: var(--fs-base); color: var(--color-text-muted); }
+
+/* Horizontal bar chart */
+.admin-bar {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: var(--fs-sm);
+}
+
+.admin-bar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.admin-bar__track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--color-surface-alt);
+  overflow: hidden;
+}
+
+.admin-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-navy);
+}
+
+.admin-bar__count { text-align: right; font-weight: 600; color: var(--color-navy); }
+
+/* Monthly bar chart */
+.admin-months {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 150px;
+}
+
+.admin-months__col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.admin-months__bars {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+}
+
+.admin-months__bar {
+  position: relative;
+  width: 40%;
+  max-width: 22px;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+}
+
+.admin-months__bar em {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--fs-xs);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+
+.admin-months__bar--cases   { background: var(--color-navy); }
+.admin-months__bar--clients { background: var(--color-gold); }
+
+.admin-months__label { margin-top: 6px; font-size: var(--fs-xs); color: var(--color-text-muted); white-space: nowrap; }
+
+.admin-months__legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+.admin-months__dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 4px;
+}
+.admin-months__dot--cases   { background: var(--color-navy); }
+.admin-months__dot--clients { background: var(--color-gold); }
+
+/* Toolbar, tables, status pills and edit form */
+.admin__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-lg);
+}
+
+.admin__toolbar .form-input { max-width: 260px; }
+
+.admin__count {
+  margin-left: auto;
+}
+
+.admin__table-wrap {
+  overflow-x: auto;
+}
+
+.admin__table {
+  width: 100%;
+  font-size: var(--fs-base);
+}
+
+.admin__empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-muted);
+}
+
+.admin__actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+/* On a table cell keep the real table-cell display (flex on a <td> breaks the row background and border) */
+td.admin__actions {
+  display: table-cell;
+  text-align: right;
+}
+td.admin__actions > * + * { margin-left: 6px; }
+
+.admin__pill {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: var(--color-surface-2);
+  color: var(--color-text-mid);
+}
+
+.admin__pill--gold {
+  background: var(--color-gold-light);
+  color: #8a6d1f;
+  border: 1px solid var(--color-gold-border);
+}
+
+.admin__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-md);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin__form .form-group:has(textarea) { grid-column: 1 / -1; }
+
+.admin__hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* Input error state */
+.form-input--error {
+  border-color: #c62828 !important;
+}
+
+@media (max-width: 700px) {
+  .admin__form { grid-template-columns: minmax(0, 1fr); }
+  .admin__toolbar .form-input { max-width: none; flex: 1 1 100%; }
+}
+
+/* Full width form field */
+.admin__form-group--full { grid-column: 1 / -1; }
+
+.admin__photo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.admin__photo-preview {
+  border-radius: var(--border-radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+  border: var(--border-default);
+}
+
+.admin__photo-preview--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-navy);
+  color: var(--color-gold);
+  font-size: var(--fs-3xl);
+}
+
+.admin__photo-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin__check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+}
+
+.admin__multiline {
+  white-space: pre-line;
+  max-width: 280px;
+}
+
+.admin__pill--inline { margin-left: 8px; }
+
+/* Wide modal and picker (search and select with chips) */
+.modal--wide { max-width: 760px; }
+
+.admin__form .picker,
+.admin__form .date-list { grid-column: 1 / -1; }
+
+.picker { position: relative; }
+
+.picker__row { display: flex; gap: 8px; align-items: center; }
+
+.picker__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+
+.picker__chip {
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 4px 3px 10px;
+}
+.picker__chip-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker__chip-sub  { color: var(--color-text-muted); font-size: var(--fs-xs); }
+
+.picker__chip-x {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+  padding: 0;
+}
+
+.picker__field { position: relative; }
+
+/* Placement (fixed position, width, edges, z-index) is set by FloatingList, so only the look and the max height live here */
+.picker__list {
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.picker__district { max-width: 170px; }
+
+.picker__list-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 8px;
+  background: var(--color-surface);
+  border-bottom: 1px solid #e8edf5;
+}
+
+.picker__close {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  padding: 2px 6px;
+  border-radius: var(--border-radius-md);
+}
+.picker__close:hover { background: var(--color-surface-alt); color: var(--color-critical); }
+
+.picker__option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+}
+.picker__option:last-child { border-bottom: none; }
+.picker__option[disabled] { opacity: 0.5; cursor: default; }
+
+.picker__option-sub { display: block; font-size: var(--fs-xs); color: var(--color-text-muted); }
+.picker__scope { margin-top: 6px; font-size: var(--fs-xs); color: var(--color-text-muted); }
+.picker__empty { padding: 10px 12px; font-size: var(--fs-xs); color: var(--color-text-muted); }
+
+/* Custom dropdown */
+.dropdown { position: relative; }
+.dropdown__input {
+  width: 100%;
+  cursor: pointer;
+  padding-right: 30px;
+  caret-color: transparent;
+}
+/* Only searchable fields show a typing cursor */
+.dropdown__input[aria-autocomplete]:focus { caret-color: auto; }
+.dropdown--disabled .dropdown__input { opacity: 0.6; }
+.dropdown__chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
+.dropdown__list { max-height: 240px; }
+/* Touch screens: search row pinned to the top of the list */
+.dropdown__search {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 6px 8px;
+  background: var(--color-surface);
+  border-bottom: 1px solid #e8edf5;
+}
+.dropdown__search-btn {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  text-align: left;
+  padding: 8px 12px;
+  border: 1px dashed var(--color-gold-border, #d9cfb8);
+  border-radius: var(--border-radius-md);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.dropdown__search-btn .icon { width: 1.1em; height: 1.1em; margin-right: 0.45em; vertical-align: middle; }
+.dropdown__search-input { width: 100%; }
+.dropdown__group-label {
+  padding: 6px 12px 4px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+}
+
+/* Date list rows */
+.date-list__rows { display: flex; flex-direction: column; gap: 8px; }
+.date-list__row  { display: flex; gap: 8px; align-items: center; }
+.date-list__row .form-input { max-width: 220px; }
+
+/* Validity date fields */
+.validity-fields {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: end;
+  padding: 12px;
+  border: 1px dashed var(--color-gold-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface-alt);
+}
+.validity-fields .admin__check { grid-column: 1 / -1; margin-top: 0; }
+.validity-fields .admin__hint  { grid-column: 1 / -1; margin-top: 0; }
+
+/* Judge grid */
+.admin-judge-grid { margin-top: var(--space-lg); }
+
+/* District PDF uploads */
+.district-pdfs {
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--space-lg);
+}
+.district-pdfs__summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: var(--fs-base);
+  color: var(--color-navy);
+}
+.district-pdfs__count {
+  margin-left: 10px;
+  font-weight: 400;
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+.district-pdfs__court {
+  padding: 8px 16px 4px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  border-top: 1px solid #e8edf5;
+}
+.district-pdfs__hint { padding: 0 16px 8px; font-size: var(--fs-xs); color: var(--color-text-muted); margin: 0; }
+.district-pdfs__rows { display: flex; flex-direction: column; }
+.district-pdfs__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid #e8edf5;
+  font-size: var(--fs-base);
+}
+.district-pdfs__name { font-weight: 600; min-width: 130px; }
+.district-pdfs__file { flex: 1 1 200px; color: var(--color-text-muted); min-width: 0; overflow-wrap: anywhere; }
+.district-pdfs__actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+@media (max-width: 700px) {
+  .validity-fields { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Input shown below a dropdown */
+.admin__follow-input { margin-top: 8px; }
+
+.admin__related,
+.modal .admin__related {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem 1rem;
+  border-top: 1px solid var(--color-gold-border);
+}
+
+.admin__related-title {
+  margin: 0 0 0.5rem;
+  font-size: var(--fs-sm);
+}
+
+.admin__related-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.admin__related-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-gold-border);
+}
+.admin__related-list .admin__related-row:last-child { border-bottom: none; }
+
+.admin__related-info { min-width: 0; }
+.admin__related-name { margin: 0; font-weight: 600; }
+
+.admin__account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* One group of related buttons. Groups are set apart from each other by a line */
+.admin__account-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.admin__account-group--single { grid-template-columns: minmax(0, 1fr); }
+.admin__account-group + .admin__account-group {
+  border-top: 1px solid var(--color-gold-border);
+  padding-top: 12px;
+}
+/* Account list rows open the profile when clicked */
+.admin__row--open { cursor: pointer; }
+.admin__row--open:hover, .admin__row--open:focus-visible { background: var(--color-surface-2); outline: none; }
+.admin__account-actions .btn-outline {
+  width: 100%;
+  justify-content: center;
+}
+.admin__confirm .form-actions { margin-top: 0.75rem; }
+.admin__confirm .account-modal__error { margin: 0.5rem 0 0; }
+
+.admin__account-actions .btn-outline {
+  white-space: nowrap;
+}
+
+.admin__subtabs {
+  margin-bottom: var(--space-xl);
+}
+
+/* Rounded pills: white with a gold edge, the open one is filled with the same gold as the main tabs */
+.admin__subtab {
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.admin__subtab:hover { border-color: var(--color-gold); color: var(--color-navy); background: var(--color-gold-light); }
+
+.admin__subtab--active,
+.admin__subtab--active:hover {
+  background: var(--grad-gold);
+  border-color: var(--color-gold);
+  box-shadow: 0 2px 8px rgba(201, 168, 76, 0.35);
+}
+
+.admin__subtabs .admin__subtab { padding: 7px 14px; gap: 6px; border-radius: 9px; font-size: 0.875rem; font-weight: 600; }
+.admin__subtabs .admin__subtab--active { font-weight: 700; box-shadow: 0 1px 4px rgba(201, 168, 76, 0.3); }
+
+.admin__subfield-label { margin-top: var(--space-sm); }
+
+.court-history-editor {
+  list-style: none;
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.court-history-editor__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px var(--space-md);
+  padding: 10px var(--space-md);
+  background: var(--color-surface-2);
+  border: var(--border-default);
+  border-radius: var(--border-radius-md);
+  font-size: var(--fs-sm);
+}
+
+.court-history-editor__place { color: var(--color-text); min-width: 0; }
+.court-history-editor__range { color: var(--color-text-muted); flex: 1; min-width: 0; }
+.court-history-editor__actions { display: flex; gap: 6px; }
+.court-history-editor__empty { font-size: var(--fs-sm); color: var(--color-text-faint); }
+
+/* Expandable header: chevron, title, current court number and period count */
+.court-history-editor__box { border: var(--border-default); border-radius: var(--border-radius-md); padding: 0; background: var(--color-surface); }
+.court-history-editor__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: 12px var(--space-md);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--color-navy);
+}
+.court-history-editor__toggle:hover { background: var(--color-surface-2); }
+.court-history-editor__title { font-size: var(--fs-sm); font-weight: 600; color: var(--color-text-muted); }
+.court-history-editor__summary { flex: 1; font-size: var(--fs-sm); font-weight: 600; }
+.court-history-editor__toggle .archive__count { margin-left: auto; }
+.court-history-editor__body { padding: var(--space-xs) var(--space-md) var(--space-md); display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
+.court-history-editor__body .court-history-editor { align-self: stretch; margin-bottom: 0; }
+.court-history-editor__body .admin__hint { margin: 0; }
+
+/* Add / edit form: three equal columns, so Court, District, Building and Court number, From, Till line up; buttons sit on their own row at the right */
+.court-history-editor__form {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm) var(--space-md);
+}
+.court-history-editor__field { min-width: 0; }
+.court-history-editor__field .form-input { width: 100%; }
+.court-history-editor__buttons {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+@media (max-width: 640px) {
+  .court-history-editor__form { grid-template-columns: minmax(0, 1fr); }
+}
+
+.admin__row--muted { opacity: 0.55; }
+
+/* Admin > Courts: add panel and expandable court tree */
+.courts-add {
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+.courts-add .admin__toolbar { margin-bottom: 0; }
+.courts-add .admin__toolbar + .admin__toolbar {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-gold-border);
+}
+.courts-add .admin__toolbar .form-input { flex: 1 1 200px; max-width: 260px; min-width: 0; }
+.courts-add .admin__toolbar > .btn-gold { flex: 0 0 auto; }
+.courts-add .admin__toolbar { align-items: center; }
+.courts-add .admin__toolbar .dropdown { flex: 1 1 200px; max-width: 260px; min-width: 0; }
+.courts-add .admin__toolbar .dropdown .form-input { max-width: none; }
+
+/* one header line: the expand button fills the row, the action sits at the right edge */
+.courts-row { display: flex; align-items: center; min-height: 48px; }
+.courts-row > .archive__head { flex: 1 1 auto; min-width: 0; width: auto; }
+/* hover/background belong to the whole row, so the Remove button area matches the header */
+.courts-row > .archive__head,
+.courts-row > .archive__head:hover { background: transparent; }
+.courts-row:hover { background: var(--color-surface-2); }
+/* Court header: same soft neutral tone as the rest of the app, no strong gold band */
+.courts-row--year { background: var(--color-surface-alt); }
+.courts-row--year:hover { background: var(--color-surface-2); }
+.courts-tree .archive__year { border-color: var(--color-gold-border); }
+.courts-tree .archive__head--year { background: transparent; }
+.courts-tree .archive__head--year:hover { background: transparent; }
+.courts-row__action { flex: 0 0 auto; margin-right: var(--space-lg); }
+
+.courts-tree .archive__body { gap: 0; }
+.courts-tree .archive__month > .archive__body,
+.courts-tree .archive__day > .archive__body { padding: var(--space-sm) var(--space-lg) var(--space-md) var(--space-2xl); }
+.courts-flat { padding: var(--space-sm) var(--space-lg) var(--space-md); }
+
+.courts-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+}
+.courts-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-height: 44px;
+  padding: 7px var(--space-md);
+}
+.courts-chip__main { display: flex; align-items: center; gap: var(--space-sm); min-width: 0; flex: 1 1 auto; }
+.courts-chip__label { flex: 0 0 auto; font-size: var(--fs-sm); white-space: nowrap; }
+.courts-chip__actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+
+.courts-btn {
+  height: var(--ctl-h-sm);
+  font-family: var(--font-body);
+  background: transparent; border: 1px solid; box-shadow: none;
+  cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.courts-btn--gold { border-color: var(--color-gold); color: var(--color-navy); }
+.courts-btn--gold:hover { background: var(--color-gold-light); }
+.courts-btn--danger { border-color: var(--color-critical); color: var(--color-critical); }
+.courts-btn--danger:hover { background: var(--color-critical); color: #fff; }
+.courts-btn--solid { background: var(--color-gold); border-color: var(--color-gold); color: var(--color-navy); }
+.courts-btn--solid:hover:not(:disabled) { filter: brightness(1.05); }
+.courts-btn--solid:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.courts-check {
+  display: inline-flex; align-items: center; gap: var(--space-sm);
+  min-height: var(--ctl-h); margin: 0;
+  font-size: var(--fs-sm); font-weight: 600; color: var(--color-text-mid); cursor: pointer;
+}
+.courts-check input { margin: 0; width: 16px; height: 16px; flex: none; }
+
+.courts-adder {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: var(--space-sm); padding-top: var(--space-sm);
+  border-top: 1px dashed var(--color-gold-border);
+}
+.courts-adder .courts-adder__input {
+  width: 150px; flex: 0 1 150px; min-width: 0; box-sizing: border-box;
+  height: var(--ctl-h-sm); min-height: var(--ctl-h-sm); padding: 0 10px;
+  font-size: var(--fs-xs); border-radius: var(--ctl-radius);
+}
+
+.courts-empty { margin: 0; padding: var(--space-sm) var(--space-md); font-size: var(--fs-sm); color: var(--color-text-muted); }
+
+@media (max-width: 640px) {
+  .courts-add .admin__toolbar .form-input { flex: 1 1 100%; max-width: none; }
+  .courts-row__action { margin-right: var(--space-md); }
+  .courts-chips { grid-template-columns: minmax(0, 1fr); }
+  .courts-adder .courts-adder__input { flex: 1 1 auto; width: auto; }
+  .courts-chip { flex-wrap: wrap; }
+}
+/* Add / edit court number period popup: the judge field spans the full width above the grid */
+.court-period-form { margin-top: var(--space-md); }
+.court-period-form__full { grid-column: 1 / -1; }
+.court-period-form__judge { margin: 0; font-weight: 600; color: var(--color-navy); }
+.court-history__actions { display: flex; gap: 6px; margin-left: auto; }
+.successor__admin-bar { display: flex; justify-content: flex-end; margin: var(--space-md) 0; }
+
+.modal.pdf-field-editor {
+  width: 96vw;
+  max-width: 1280px;
+  height: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.pdf-field-editor__body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.pdf-field-editor__stage {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 12px;
+  background: var(--color-surface-2);
+}
+
+.pdf-field-editor__side {
+  flex: 0 0 300px;
+  width: 300px;
+  border-left: var(--border-default);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+/* "Mahila court" tag on a court no. in the Courts admin */
+.courts-chip__tag {
+  font-weight: 600;
+  background: var(--color-gold-light);
+  border: 1px solid var(--color-gold);
+  color: var(--color-navy);
+  white-space: nowrap;
+}
+
+/* Dropdown Options tab */
+.options-admin__lists { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.options-admin__list {
+  padding: 7px 14px; border: var(--border-default); border-radius: 999px; background: var(--color-surface);
+  color: var(--color-text-mid); font: inherit; font-size: var(--fs-sm); cursor: pointer;
+}
+.options-admin__list--active { background: var(--color-navy); border-color: var(--color-navy); color: #fff; }
+.options-admin__panel { padding: 16px; }
+.options-admin__heading { margin: 18px 0 8px; font-size: var(--fs-md); }
+.options-admin__heading:first-of-type { margin-top: 8px; }
+.options-admin__row { justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: var(--border-default);
+}
+.options-admin__row--hidden .options-admin__name > span:first-child { color: var(--color-text-faint); text-decoration: line-through; }
+.options-admin__name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.options-admin__actions { flex-wrap: wrap; }
+.options-admin__tag {
+  font-size: var(--fs-xs); padding: 2px 8px; border-radius: 999px; background: var(--color-surface-2); color: var(--color-text-muted);
+}
+.options-admin__tag--hidden { background: var(--color-gold-light); color: var(--color-pending); }
+.options-admin__add { display: flex; gap: 8px; margin-top: 12px; }
+.options-admin__add .form-input { flex: 1; }
+
+/* Case types open directly under their relief. Every row uses the same button columns, so everything lines up. */
+.options-admin__item { display: block; }
+.options-admin__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; min-height: 52px; padding: 6px 0; }
+.options-admin__name { min-width: 0; flex: none; }
+.options-admin__name > span:first-child { overflow-wrap: anywhere; }
+.options-admin__actions {
+  display: grid; align-items: center; justify-items: stretch; gap: 6px;
+  grid-template-columns: 34px 34px 78px 66px 74px;
+}
+.options-admin__actions > * { margin: 0; }
+.options-admin__actions .btn-outline, .options-admin__actions .btn-gold {
+  height: 32px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box; white-space: nowrap; line-height: 1;
+}
+.options-admin__actions--toggle { grid-template-columns: 136px 34px 34px 78px 66px 74px; }
+.options-admin__toggle { justify-content: space-between !important; padding: 0 12px !important; }
+.options-admin__actions .options-admin__toggle[aria-expanded="true"] { background: var(--color-gold-light); border-color: var(--color-gold); color: var(--color-navy); }
+.options-admin__count {
+  flex: none; min-width: 22px; padding: 1px 8px; border-radius: 999px; text-align: center;
+  background: var(--color-gold-light); color: var(--color-navy); font-size: var(--fs-xs); font-weight: 600;
+}
+/* An open relief and its case types read as one card */
+.options-admin__item--open { margin: 8px 0 12px; border: 1px solid #e4d7a8; overflow: hidden; background: var(--color-surface); }
+.options-admin__item--open > .options-admin__row { padding: 8px 12px; border-bottom: 1px solid #e4d7a8; }
+.options-admin__nested { margin: 0; padding: 0; border: 0; border-radius: 0; background: var(--color-surface); }
+.options-admin__subheading {
+  display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 16px;
+  font-size: var(--fs-xs); text-transform: uppercase;
+  background: var(--color-surface-alt); border-bottom: var(--border-default);
+}
+.options-admin__nested .options-admin__table { counter-reset: ct; }
+.options-admin__nested .options-admin__item { counter-increment: ct; }
+.options-admin__nested .options-admin__row { min-height: 46px; padding: 4px 16px; border-bottom: var(--border-default); }
+.options-admin__nested .options-admin__item:hover > .options-admin__row { background: var(--color-surface-alt); }
+.options-admin__nested .options-admin__name > span:first-child::before {
+  content: counter(ct); display: inline-block; min-width: 22px; margin-right: 10px; color: var(--color-text-faint); font-size: var(--fs-xs);
+}
+/* Case types use one line of small icon buttons instead of five text buttons */
+.options-admin__actions--compact { grid-template-columns: repeat(5, 34px); gap: 4px; }
+.options-admin__actions--compact .btn-outline, .options-admin__actions--compact .btn-gold { padding: 0; font-size: 15px; font-weight: 600; }
+.options-admin__nested .options-admin__name > span:first-child { display: flex; align-items: baseline; }
+.options-admin__nested .options-admin__name > span:first-child::before { flex: none; }
+/* Quiet buttons inside the open list so the case type names, not the controls, are what you read */
+.options-admin__nested .btn-outline { border-color: transparent; background: transparent; }
+.options-admin__nested .btn-outline:hover:not(:disabled) { border-color: #dde4ee; background: var(--color-surface); }
+.options-admin__nested .options-admin__add { margin: 0; padding: 12px 16px; background: var(--color-surface-alt); }
+.options-admin__add .btn-gold { height: var(--ctl-h); padding: 0 18px; white-space: nowrap; }
+@media (max-width: 640px) {
+  /* Smaller chips on phones so more fit per row */
+  .options-admin__lists { gap: 6px; margin: 8px 0; }
+  .options-admin__list { padding: 4px 10px; font-size: var(--fs-xs); line-height: 1.3; }
+  .options-admin__panel { padding: 12px; }
+  .options-admin__row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; padding: 10px 0; }
+  .options-admin__actions, .options-admin__actions--toggle { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .options-admin__actions--toggle > :first-child { grid-column: 1 / -1; }
+  .options-admin__actions .btn-outline, .options-admin__actions .btn-gold { padding: 0 4px; font-size: var(--fs-xs); }
+  .options-admin__item--open { margin: 6px 0 10px; }
+  .options-admin__item--open > .options-admin__row { padding: 10px 10px; }
+  .options-admin__nested .options-admin__row { padding: 8px 10px; }
+  .options-admin__nested .options-admin__add { padding: 10px; }
+  .options-admin__subheading { padding: 10px; }
+  .options-admin__nested .btn-outline { border-color: #dde4ee; }
+  .options-admin__nested .options-admin__row { grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: center; }
+  .options-admin__nested .options-admin__actions--compact { grid-template-columns: repeat(5, 32px); gap: 3px; }
+  .options-admin__nested .options-admin__name > span:first-child::before { display: none; }
+}
+.options-admin__panel > .admin__hint { margin: 0 0 12px; }
+/* Overview: the "Needs attention" list */
+.admin-attention { display: flex; flex-direction: column; gap: 10px; margin-bottom: var(--space-lg); border-left: 3px solid var(--color-gold); }
+.admin-attention .admin-chart__title { margin: 0; }
+.admin-attention__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.admin-attention__list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  font-size: var(--fs-sm); color: var(--color-text-mid); }
+.admin-attention__list li + li { padding-top: 8px; border-top: var(--border-default); }
+
+/* Login Activity tab */
+.loginlog__summary { display: flex; flex-wrap: wrap; gap: var(--space-lg); margin-bottom: var(--space-md); font-size: var(--fs-sm); color: var(--color-text-mid); }
+.loginlog__summary strong { font-size: var(--fs-lg); color: var(--color-text); margin-right: 4px; }
+.loginlog__summary .loginlog__failed strong { color: var(--color-critical); }
+.loginlog__pill--login        { background: #e3f2ed; color: var(--color-active); }
+.loginlog__pill--login_failed { background: #fbeaea; color: var(--color-critical); }
+.loginlog__pill--logout       { background: var(--color-surface-2); color: var(--color-text-mid); }
+.loginlog__pager { display: flex; align-items: center; justify-content: center; gap: var(--space-md); margin-top: var(--space-lg); font-size: var(--fs-sm); color: var(--color-text-mid); }
+.loginlog__note { margin-top: var(--space-md); font-size: var(--fs-xs); color: var(--color-text-muted); }
+
+/* Judges List: judge tags (holds more than one court, released) and the change judge dialog */
+.judge-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.judge-card__note { font-size: var(--fs-xs); color: var(--color-text-muted); line-height: 1.5; }
+.qa-tag--multi { background: #dbeafe; color: #1e40af; }
+.qa-tag--released { background: #fef3c7; color: #92400e; }
+
+.change-judge__current { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--color-gold-border); border-radius: 10px; margin-bottom: 14px; }
+.change-judge__tabs { display: flex; margin-bottom: 12px; }
+.change-judge__list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; margin-top: 8px; }
+.change-judge__option { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border: 1px solid var(--color-gold-border); border-radius: 10px; background: transparent; color: inherit; cursor: pointer; }
+.change-judge__option:hover { background: var(--color-surface-2); }
+.change-judge__option--on { border-color: var(--color-gold, #b8860b); background: var(--color-surface-2); }
+.change-judge__thumb { width: 36px; height: 44px; border-radius: 6px; object-fit: cover; flex: 0 0 auto; background: var(--color-surface-2); display: inline-flex; align-items: center; justify-content: center; }
+.change-judge__who { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.change-judge__sub { font-size: var(--fs-xs); color: var(--color-text-muted); }
+.change-judge__result { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--color-surface-2); font-size: var(--fs-sm, 0.9rem); line-height: 1.5; }
+.change-judge__result p { margin: 0 0 4px; }
+.change-judge__result p:last-child { margin: 0; }
+
+/* ---------- Add / change judge: aligned form ---------- */
+/* New judge: name, then photo with its file picker on one centred row, all full width */
+.judge-new { display: flex; flex-direction: column; gap: 12px; width: 100%; min-width: 0; }
+.judge-new .form-group { margin: 0; min-width: 0; }
+.judge-new .admin__photo { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; width: 100%; }
+.judge-new .admin__photo-actions { align-items: stretch; min-width: 0; }
+.judge-new .admin__photo-actions .form-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.judge-new .admin__photo-actions .btn-outline { align-self: flex-start; }
+.judge-new .admin__hint { margin: 0; }
+
+/* Photo preview: same size and radius wherever it appears */
+.admin__photo-preview { width: 84px; height: 105px; box-sizing: border-box; }
+
+/* Main tab / sub tab sizes live in hierarchy.css (the one place for the size scale) */
+.change-judge__tabs { align-items: center; flex-wrap: wrap; gap: 6px; }
+.change-judge__tabs button.btn-gold,
+.change-judge__tabs button.btn-outline {
+  min-height: 32px; padding: 5px 14px; font-size: 0.8125rem; line-height: 1.2; font-weight: 600;
+}
+
+/* Login log popup: wide enough to show every column without sideways scrolling */
+.modal.modal--loglist { width: min(1240px, 96vw); max-width: 96vw; }
+.modal--loglist .admin__table th,
+.modal--loglist .admin__table td { white-space: nowrap; }
+.modal--loglist .admin__table td:last-child { white-space: normal; min-width: 140px; }
+
+/* ---------- Button hierarchy ----------
+   Level 1  page and dialog actions (+ Add, Save, Push, Cancel, Refresh): 38px, 14px text, same height side by side
+   Level 2  actions on a row or card (Edit, Change judge, Remove, Copy): 30px, 12px text
+   Level 3  section switch (Listing / Judges): 32px, 13px text (see above)
+   Doubled-class selectors so these win over the older button rules */
+.admin .admin__toolbar button.btn-gold,
+.admin .admin__toolbar button.btn-outline:not(.btn-outline--sm),
+.admin .admin__toolbar button.btn-danger,
+.modal .form-actions button.btn-gold,
+.modal .form-actions button.btn-outline,
+.modal .form-actions button.btn-danger {
+  min-height: 38px; padding: 0 20px; font-size: 0.875rem; line-height: 1.2; font-weight: 600; border-radius: 10px; white-space: nowrap;
+}
+.admin button.btn-outline.btn-outline--sm,
+.modal button.btn-outline.btn-outline--sm,
+.admin .judge-card__actions button, .admin .admin-judge-grid button.btn-outline {
+  min-height: 30px; padding: 0 12px; font-size: 0.75rem; line-height: 1.2; font-weight: 600; border-radius: 10px;
+}
+.admin .admin__toolbar { gap: 10px; }
+
+/* ---------- Judge cards: one aligned grid ---------- */
+/* Cards in a row share the same height, the buttons sit on the bottom edge of every card, and a card with no details
+   (a judge with no court) shows one divider above its buttons instead of two stacked dashed lines */
+.judge-grid { align-items: stretch; }
+.judge-card { height: 100%; box-sizing: border-box; }
+.judge-card__fields:empty { display: none; }
+.judge-card:has(.judge-card__fields:empty) .judge-card__head { border-bottom: 0; padding-bottom: 0; }
+.judge-card__actions { margin-top: auto; align-items: center; }
+.judge-card__note { margin: 0; }
+
+/* Accounts table: an arrow at the end of each row shows that it opens */
+.admin__table .admin__open-col { width: 44px; padding-left: 0; padding-right: 14px; text-align: right; }
+.admin__open-icon {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%;
+  color: var(--color-text-muted); border: 1px solid var(--color-gold-border); background: #fff; font-size: var(--fs-md);
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+.admin__open-icon .icon { width: 1em; height: 1em; }
+.admin__row--open:hover .admin__open-icon, .admin__row--open:focus-visible .admin__open-icon {
+  background: var(--grad-gold); color: var(--color-navy); border-color: var(--color-gold); transform: translateX(2px);
+}

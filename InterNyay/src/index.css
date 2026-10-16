@@ -1,0 +1,96 @@
+/* Design tokens and the browser reset */
+@import './styles/variables.css';
+@import './styles/reset.css';
+/* Shared components and the app layout */
+@import './styles/components.css';
+@import './styles/layout.css';
+/* Sign in, pricing, calendar, dashboard, notifications and WhatsApp */
+@import './styles/auth.css';
+@import './styles/pricing.css';
+@import './styles/calendar.css';
+@import './styles/dashboard.css';
+@import './styles/notifications.css';
+@import './styles/archive.css';
+@import './styles/whatsapp.css';
+/* Cases, hearings, clients, documents, fee calculator, legal forms and to do list */
+@import './styles/cases.css';
+@import './styles/hearings.css';
+@import './styles/clients.css';
+@import './styles/documents.css';
+@import './styles/calculator.css';
+@import './styles/forms.css';
+@import './styles/todos.css';
+/* Quick Access, modals, profile, image crop and case fees */
+@import './styles/quickaccess.css';
+@import './styles/modals.css';
+@import './styles/profile.css';
+@import './styles/courtprefs.css';
+@import './styles/imagecrop.css';
+@import './styles/fees.css';
+/* Admin console */
+@import './styles/admin.css';
+/* Hover effects, transaction gate, chat, contact page, icons and landing page. Later imports win when rules clash */
+@import './styles/hover.css';
+@import './styles/txngate.css';
+@import './styles/chat.css';
+@import './styles/contact.css';
+@import './styles/icons.css';
+@import './styles/landing.css';
+@import './styles/landing2.css';
+@import './styles/landing3.css';
+/* Gradients, duotone icon tones and animations; keep last so it refines everything above */
+@import './styles/polish.css';
+/* Small hover and active motion touches (transform and opacity only); keep last */
+@import './styles/motion.css';
+/* Landing-page skin: gives every app screen the same look as the landing page. Sits before mobile.css so small-screen layout rules still win */
+@import './styles/appskin.css';
+/* Controls: filter pills, sort dropdowns, Filter menu, toggles, chips and small buttons. Before mobile.css so phone rules still win */
+@import './styles/controls.css';
+@import './styles/mobile.css';
+/* In-app confirmation dialog (replaces window.confirm); keep last */
+@import './styles/confirm.css';
+@import './styles/casecards.css';
+/* Sign in / Register gradients; keep last */
+@import './styles/authgradient.css';
+/* Judges on Leave date title hierarchy */
+@import './styles/leavetitle.css';
+/* Landing card, fonts and gold button on every screen (cards, sign in, plans, profile, admin); keep before mobile-touch */
+@import './styles/landingcards.css';
+/* Phone and tablet touch fixes (16px fields so iOS does not zoom, bigger targets, court preference on small screens); keep last */
+@import './styles/mobile-touch.css';
+@import './styles/mobile-polish.css';
+/* Error screens (page not found, something went wrong) */
+@import './styles/errorpage.css';
+@import './styles/buttons.css';
+/* Mobile v2 overrides: intentionally last */
+@import './styles/mobile-v2.css';
+/* Final phone pass: 40px touch targets and a 12px text floor; keep after mobile-v2 */
+@import './styles/mobile-final.css';
+
+/* Size hierarchy of admin bars and buttons, image preview, sidebar arrow and rename pencil; keep last */
+@import './styles/hierarchy.css';
+@import './styles/unified.css';
+
+/* Mobile alignment pass: one phone gutter, wrapping rows; keep last */
+@import './styles/mobile-align.css';
+
+/* Landing page buttons sized like the application buttons; keep last */
+@import './styles/landing-buttons.css';
+
+/* Desktop sizes of every button, field, search, filter and sort control; keep last */
+@import './styles/desktop-sizes.css';
+
+/* One text scale for desktop and for phones; keep last */
+@import './styles/typography.css';
+
+/* Sign in, Register, plan, court preference and Google sign-up window sizes; keep last */
+@import './styles/auth-flow.css';
+
+/* Weight hierarchy: which controls and labels are 700, 600, 500 or 400; keep last */
+@import './styles/weight-hierarchy.css';
+
+/* Smaller secondary controls on desktop: pills, chips and card buttons; keep last */
+@import './styles/compact-controls.css';
+
+/* One step bigger and firmer buttons, options and controls on desktop only; keep last */
+@import './styles/desktop-larger.css';

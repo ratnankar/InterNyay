@@ -1,0 +1,377 @@
+/* Calendar: month header and weekday row */
+.calendar {
+  padding: 1.25rem;
+}
+
+.calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.calendar__month-label {
+  font-size: var(--cal-month-fs);
+}
+
+.calendar__nav {
+  display: flex;
+  gap: 4px;
+}
+
+.calendar__nav-btn {
+  padding: 4px 10px;
+  font-size: var(--fs-md);
+}
+
+.calendar__dow-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.calendar__dow {
+  text-align: center;
+  font-size: var(--cal-dow-fs);
+  font-weight: 700;
+  color: var(--color-text-faint);
+  padding: 4px 0;
+  letter-spacing: 0.3px;
+}
+
+.calendar__dow--sunday {
+  color: #b45309;
+}
+
+.calendar__days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+/* Day cells */
+.cal-day {
+  width: var(--cal-day-size);
+  height: var(--cal-day-size);
+  justify-self: center;   
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: var(--cal-day-fs);
+  transition: all 0.15s;
+  position: relative;
+  color: var(--color-text);
+  font-weight: 400;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+}
+.cal-day:hover { background: var(--color-bg); }
+
+.cal-day--selected {
+  background: var(--color-gold) !important;
+  color: var(--color-navy) !important;
+}
+
+.cal-day--today {
+  background: var(--color-bg);
+  font-weight: 700;
+}
+
+.cal-day--sunday {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.cal-day--sunday.cal-day--today {
+  background: rgba(180, 83, 9, 0.12);
+}
+
+.cal-day--crossed {
+  color: var(--color-text-faint);
+}
+
+.cal-day__cross {
+  position: absolute;
+  inset: 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  fill: none;
+  stroke: var(--color-navy);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.cal-day--selected .cal-day__cross { stroke: var(--color-navy); }
+
+.cal-day__count {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* Holiday colours: green for a District Court holiday, red for a High Court holiday */
+:root {
+  --holiday-district:        #2e7d32;
+  --holiday-district-bg:     rgba(46, 125, 50, 0.13);
+  --holiday-district-border: rgba(46, 125, 50, 0.32);
+  --holiday-high:            #c62828;
+  --holiday-high-bg:         rgba(198, 40, 40, 0.11);
+  --holiday-high-border:     rgba(198, 40, 40, 0.30);
+}
+
+/* Holiday day cells and the colour swatch used in the legend and the admin holidays table */
+.cal-day--holiday {
+  font-weight: 600;
+}
+
+.cal-day--holiday-district {
+  background: var(--holiday-district-bg);
+  color: var(--holiday-district);
+}
+
+.cal-day--holiday-high {
+  background: var(--holiday-high-bg);
+  color: var(--holiday-high);
+}
+
+.cal-day--holiday-both {
+  background: linear-gradient(135deg,
+    rgba(46, 125, 50, 0.55) 0%, rgba(46, 125, 50, 0.55) 50%,
+    rgba(198, 40, 40, 0.55) 50%, rgba(198, 40, 40, 0.55) 100%);
+  color: var(--color-navy);
+}
+
+.holiday-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: baseline;
+  flex-shrink: 0;
+}
+
+.holiday-swatch--district { background: var(--holiday-district); }
+.holiday-swatch--high     { background: var(--holiday-high); }
+.holiday-swatch--both {
+  background: linear-gradient(135deg, var(--holiday-district) 50%, var(--holiday-high) 50%);
+}
+
+/* Legend under the calendar */
+.calendar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 10px;
+  font-size: var(--cal-note-fs);
+  color: var(--color-text-muted, #666);
+}
+
+.calendar__legend-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.calendar__cross-box {
+  margin-top: 10px;
+}
+
+.calendar__cross-btn--on {
+  background: var(--color-gold-light);
+  border-color: var(--color-gold);
+}
+
+.calendar__cross-note {
+  margin-top: 6px;
+  font-size: var(--cal-note-fs);
+  color: var(--color-text-muted, #666);
+}
+
+.calendar__upcoming-date.calendar__upcoming-date--holiday-district { color: var(--holiday-district); }
+.calendar__upcoming-date.calendar__upcoming-date--holiday-high     { color: var(--holiday-high); }
+.calendar__upcoming-date.calendar__upcoming-date--holiday-both     { color: var(--color-navy); }
+
+.calendar__selected-holiday {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: var(--border-radius-md, 8px);
+  padding: 10px 12px;
+  margin: 10px 0;
+  border: 1px solid transparent;
+}
+
+.calendar__selected-holiday--district { background: var(--holiday-district-bg); border-color: var(--holiday-district-border); }
+.calendar__selected-holiday--high     { background: var(--holiday-high-bg);     border-color: var(--holiday-high-border); }
+.calendar__selected-holiday--both {
+  background: linear-gradient(90deg, var(--holiday-district-bg), var(--holiday-high-bg));
+  border-color: var(--color-gold-border, #dde4ee);
+}
+
+.calendar__selected-holiday-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+}
+
+.calendar__selected-holiday--district .calendar__selected-holiday-dot { background: var(--holiday-district); }
+.calendar__selected-holiday--high     .calendar__selected-holiday-dot { background: var(--holiday-high); }
+.calendar__selected-holiday--both     .calendar__selected-holiday-dot {
+  background: linear-gradient(90deg, var(--holiday-district) 50%, var(--holiday-high) 50%);
+}
+
+.calendar__selected-holiday-label {
+  font-weight: 600;
+  font-size: var(--fs-base);
+}
+
+.calendar__selected-holiday--district .calendar__selected-holiday-label { color: var(--holiday-district); }
+.calendar__selected-holiday--high     .calendar__selected-holiday-label { color: var(--holiday-high); }
+.calendar__selected-holiday--both     .calendar__selected-holiday-label { color: var(--color-navy); }
+
+.calendar__selected-holiday-court {
+  font-size: var(--cal-note-fs);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--color-text-muted, #666);
+  margin-top: 1px;
+}
+
+.calendar__selected-holiday-desc {
+  font-size: var(--cal-note-fs);
+  color: var(--color-text-muted, #666);
+  margin-top: 2px;
+}
+
+.calendar__upcoming {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-bg);
+}
+
+.calendar__upcoming-label {
+  font-size: var(--cal-note-fs);
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.calendar__upcoming-label--toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  text-align: left;
+}
+.calendar__upcoming-label--toggle:hover { color: var(--color-navy); }
+
+.calendar__upcoming-caret {
+  flex-shrink: 0;
+  color: var(--color-text-faint);
+}
+
+.calendar__upcoming-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.calendar__upcoming-title {
+  flex: 1;
+  min-width: 0;             
+  overflow: hidden;
+  text-overflow: ellipsis;  
+  white-space: nowrap;
+  font-size: var(--cal-note-fs);
+  color: var(--color-navy);
+  font-weight: 500;
+}
+
+.calendar__upcoming-date {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: var(--cal-note-fs);
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.calendar__upcoming--holidays .calendar__upcoming-label {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.calendar__upcoming--holidays .calendar__upcoming-row {
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.calendar__upcoming--holidays .calendar__upcoming-title {
+  font-size: 13px;
+}
+
+.calendar__upcoming--holidays .calendar__upcoming-date {
+  font-size: 12px;
+}
+
+.calendar__upcoming--holidays .holiday-swatch {
+  width: 8px;
+  height: 8px;
+}
+
+/* Judges on Leave: court and district filters on the left, archive button on the right of the same line */
+.leave-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0 1rem;
+}
+.leave-filterbar .qa-court-filter { flex: 1 1 auto; min-width: 0; }
+.leave-filterbar__archive { flex: 0 0 auto; margin-left: auto; margin-bottom: 1rem; }
+/* Phones: the archive button sits on its own row, left-aligned with the filters above */
+@media (max-width: 640px) {
+  .leave-filterbar { justify-content: flex-start; }
+  .leave-filterbar .qa-court-filter { flex: 1 1 100%; }
+  .leave-filterbar__archive { margin-left: 0; }
+}
+
+/* Judges on Leave calendar: the same card and round day cells as the Dashboard calendar, beside the list of judges for the picked day */
+.leave-cal {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  margin-top: 0.25rem;
+}
+
+.leave-cal__day-panel { min-width: 0; }
+
+/* Slightly roomier than the Dashboard calendar */
+.leave-cal__grid-wrap { --cal-day-size: 38px; --cal-day-fs: var(--fs-base); --cal-month-fs: var(--fs-lg); --cal-dow-fs: var(--fs-sm); }
+.leave-cal__grid-wrap .calendar__days-grid { gap: 6px 2px; }
+.leave-cal__grid-wrap .cal-day__count { font-size: 10px; bottom: 3px; }
+
+@media (max-width: 900px) {
+  .leave-cal { grid-template-columns: minmax(0, 1fr); }
+  .leave-cal__grid-wrap { max-width: 420px; }
+}

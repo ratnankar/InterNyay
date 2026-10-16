@@ -1,0 +1,60 @@
+
+/* Box sizing for every element */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Full height page and base text */
+html, body, #root {
+  height: 100%;
+}
+
+html {
+  font-size: 16px;   
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--color-text);
+  min-height: 100vh;
+
+  font-variant-numeric: lining-nums;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button,
+input,
+select,
+textarea {
+  font-size: inherit;
+}
+
+/* Responsive images */
+img {
+  display: block;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #b8c4d6; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold); }
+
+/* Keep the scrollbar clear of rounded corners: inside pop-ups, lists, cards and drawers the track starts and ends
+   a little in from the edge, so the bar no longer pokes out past the curve. The page's own scrollbar is left as it is */
+:not(html)::-webkit-scrollbar-track:vertical   { margin: 14px 0; }
+:not(html)::-webkit-scrollbar-track:horizontal { margin: 0 14px; }

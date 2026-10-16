@@ -1,0 +1,129 @@
+/* ==========================================================================
+   Landing look for every screen: the landing page's white card, its fonts and its gold button,
+   on every app screen (cards, Sign in / Register / Admin sign in, Plans, Profile & preferences, Admin console).
+   Colours, borders, shadows and fonts only: layout, spacing and phone rules are untouched.
+   Loaded after the other skins so it wins ties; mobile-touch.css still comes after it.
+   ========================================================================== */
+
+:root {
+  /* The landing mock-up card (.lx-mock): flat white, hairline border, soft deep shadow */
+  --lc-line:         #dde4ee;
+  --lc-radius:       14px;
+  --lc-shadow:       0 1px 2px rgba(10, 22, 40, 0.06), 0 18px 40px -12px rgba(10, 22, 40, 0.22);
+  --lc-shadow-hover: 0 2px 4px rgba(10, 22, 40, 0.08), 0 24px 48px -14px rgba(10, 22, 40, 0.30);
+  --lc-gold-grad:    linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%);
+}
+
+/* ---------- Fonts: Source Sans 3 for text, Playfair Display for titles (same as the landing) ---------- */
+body, button, input, select, textarea, optgroup { font-family: var(--font-body); }
+h1, h2, h3, h4,
+.page-title, .section-title, .modal__title, .drawer__title, .admin__title, .admin-section-title, .admin-chart__title,
+.admin__related-title, .options-admin__heading, .options-admin__subheading, .plans-admin__head h3,
+.pricing-card__name, .pricing-card__price, .profile-card__name, .stat-card__value, .admin__stat-value,
+.auth-logo__name, .choose-plan__head h1, .case-card__title, .client-card__name, .empty-state__title,
+.todo-sidebar__heading, .calendar__month-label {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--sk-ink, #0a1628);
+}
+.pricing-card__price, .stat-card__value, .admin__stat-value { font-weight: 700; }
+/* Numbers, dates and tables keep clean lining figures like the landing */
+table, .stat-card__value, .admin__stat-value, .pricing-card__price { font-variant-numeric: lining-nums tabular-nums; }
+
+/* ---------- Cards: one look everywhere ---------- */
+.card, .stat-card, .case-card, .client-card, .form-template-card, .judge-card, .notif-card, .qa-card, .qa-pd-card,
+.hearings-panel, .profile-card, .calc-info-card, .contact-card, .exp-card, .doc-group, .pricing-card, .admin-chart,
+.todo-item, .txn-gate__card, .calendar, .card.calendar, .hearing-card--expanded, .notifications-panel,
+.plans-admin__card, .options-admin__panel, .qa-drat-card, .choose-courts__card, .admin-attention, .admin__related, .todo-sidebar,
+.admin__table-wrap, .admin__table, .qa-table, .fee-summary__table, .case-fields, .case-detail, .client-detail__header {
+  background: #fff;
+  background-image: none;
+  border: 1px solid var(--lc-line);
+  border-radius: var(--lc-radius);
+  box-shadow: var(--lc-shadow);
+}
+.case-card:hover, .client-card:hover, .form-template-card:hover, .judge-card:hover, .qa-card:hover, .qa-pd-card:hover,
+.pricing-card:hover, .plans-admin__card:hover {
+  border-color: #c3cfe6;
+  box-shadow: var(--lc-shadow-hover);
+}
+/* Panels that must not lift (they hold forms and long content) keep the resting shadow */
+.hearings-panel:hover, .calendar:hover, .profile-card:hover, .plans-admin__card:hover, .options-admin__panel:hover { transform: none; }
+.todo-item--completed { background: var(--sk-mist, #f1f4f9); }
+
+/* Highlighted cards keep their meaning but use the same card shadow */
+.pricing-card--featured, .qa-card--active { border-color: var(--color-gold); box-shadow: 0 0 0 1px var(--color-gold), var(--lc-shadow-hover); }
+.pricing-card--current { border-color: #2f7d4f; box-shadow: 0 0 0 1px #2f7d4f, var(--lc-shadow); }
+.plans-admin__card--new { border-color: rgba(201, 168, 76, 0.6); }
+
+/* Card heads and rows: hairline dividers like the landing case card */
+.profile-card .page-header, .pricing-card__head, .admin__related-row, .options-admin__row { border-color: var(--lc-line); }
+
+/* ---------- Sign in / Register / Admin sign in / Choose plan ---------- */
+.auth-card:not(.auth-card--admin), .modal--auth {
+  background: #fff;
+  background-image: none;
+  border: 1px solid var(--lc-line);
+  border-radius: var(--lc-radius);
+}
+/* The admin card keeps its red edge from appskin.css; only its background and corners match */
+.auth-card--admin { background: #fff; background-image: none; border-radius: var(--lc-radius); }
+.auth-tabs { background: var(--sk-mist, #f1f4f9); background-image: none; border: 1px solid var(--lc-line); }
+/* Primary action: the landing's gold button (was a blue gradient) */
+.auth-btn:not(.auth-btn--admin) {
+  background-image: var(--lc-gold-grad); background-color: #d8b856; color: var(--sk-ink, #0a1628);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(120, 88, 14, 0.28), 0 1px 2px rgba(10, 22, 40, 0.18), 0 8px 18px -8px rgba(176, 138, 46, 0.65);
+}
+.auth-btn:not(.auth-btn--admin):hover:not(:disabled) {
+  background-image: linear-gradient(180deg, #f2dc92 0%, #e0c062 52%, #c8a141 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(120, 88, 14, 0.28), 0 2px 4px rgba(10, 22, 40, 0.18), 0 12px 24px -8px rgba(176, 138, 46, 0.75);
+}
+.auth-card .auth-input:focus, .auth-card .auth-input:focus-within { border-color: var(--color-gold); box-shadow: var(--sk-focus, 0 0 0 3px rgba(201, 168, 76, 0.28)); }
+/* The sign in tagline sits on the white card, so it uses a readable dark gold instead of a pale gradient */
+.auth-card .auth-logo__tagline { background: none; -webkit-text-fill-color: #8a6a1c; color: #8a6a1c; }
+.auth-card .auth-logo__name { color: var(--sk-ink, #0a1628); }
+/* Administrator sign in: same gold button as everywhere; the red edge and red heading stay as the "restricted" cue */
+.auth-btn--admin, .auth-btn--admin:hover:not(:disabled) {
+  background-image: var(--lc-gold-grad); background-color: #d8b856; color: var(--sk-ink, #0a1628);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(120, 88, 14, 0.28), 0 1px 2px rgba(10, 22, 40, 0.18), 0 8px 18px -8px rgba(176, 138, 46, 0.65);
+}
+.auth-btn--admin:hover:not(:disabled) { background-image: linear-gradient(180deg, #f2dc92 0%, #e0c062 52%, #c8a141 100%); }
+
+/* ---------- Plans (pricing cards, My Plan, admin Plans) ---------- */
+.pricing-card__head { border-bottom: 1px solid var(--lc-line); }
+.pricing-switch { border: 1px solid var(--lc-line); box-shadow: var(--sk-card-shadow, none); }
+
+/* ---------- Profile and preferences ---------- */
+.profile-card + .profile-card { margin-top: 1.25rem; }
+.profile-view-item__value { color: var(--sk-ink, #0a1628); font-weight: 600; }
+
+/* ---------- Admin console ---------- */
+.admin__tabs, .admin__subtabs { background: #fff; border: 1px solid var(--lc-line); box-shadow: var(--lc-shadow); border-radius: var(--lc-radius); }
+.options-admin__item--open { border-color: var(--lc-line); border-radius: 12px; }
+.options-admin__item--open > .options-admin__row { background: var(--sk-mist, #f1f4f9); border-bottom-color: var(--lc-line); }
+
+/* Pop-ups use the same white surface and hairline */
+.modal, .drawer, .pdf-modal, .imp-notif__card { border-color: var(--lc-line); }
+
+@media (prefers-reduced-motion: reduce) {
+  .case-card:hover, .client-card:hover, .pricing-card:hover, .qa-card:hover, .judge-card:hover, .form-template-card:hover { transform: none; }
+}
+
+/* ---------- Saving state: while a save is running the gold buttons dim and wait (set by services/api.js) ---------- */
+body.is-saving :is(.btn-gold, .auth-btn, .calc-submit-btn, .lp-btn--gold) { opacity: 0.6; cursor: progress; pointer-events: none; }
+
+/* ---------- Transactions: the Year pill is the same size and weight as the other period pills ---------- */
+/* The wrapper around the Year field got the pills' padding on phones, which pushed the pill out of line */
+.txn-period__chips .dropdown { padding: 0; }
+.txn-period__chips .txn-year-select,
+.txn-period__chips .form-input.txn-year-select {
+  width: 74px; min-height: 34px; padding: 0 20px 0 10px;
+  font-size: var(--fs-sm); font-weight: 600; line-height: 1; box-shadow: none;
+}
+.txn-period__chips .txn-year-select:hover { background: var(--sk-mist, #f1f4f9); border-color: #b8c4d6; }
+.txn-period__chips .txn-year-select--active, .txn-period__chips .txn-year-select--active:hover { background: var(--sk-ink, #0a1628); color: #fff; border-color: var(--sk-ink, #0a1628); }
+.txn-period__chips .txn-year-select--active ~ .dropdown__chevron { color: #fff; }
+
+/* Headings that sit on the dark blue sign-up screens (choose plan, choose courts) stay white; the global heading colour above is dark ink */
+.choose-plan__head h1 { color: #fff; }

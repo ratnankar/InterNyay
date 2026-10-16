@@ -1,0 +1,83 @@
+
+/* Lift cards slightly on hover */
+.case-card,
+.client-card,
+.todo-item,
+.judge-card,
+.qa-pd-card,
+.notif-card,
+.calc-info-card,
+.hearing-card:not(.hearing-card--expanded) {
+  transition: all 0.2s;
+}
+
+.case-card:hover,
+.client-card:hover,
+.todo-item:hover,
+.judge-card:hover,
+.qa-pd-card:hover,
+.notif-card:hover,
+.calc-info-card:hover,
+.hearing-card:not(.hearing-card--expanded):hover {
+  border-color: var(--color-gold);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+/* Turn off the hover motion for people who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .case-card:hover,
+  .client-card:hover,
+    .todo-item:hover,
+  .judge-card:hover,
+  .qa-pd-card:hover,
+  .notif-card:hover,
+  .calc-info-card:hover,
+  .hearing-card:not(.hearing-card--expanded):hover {
+    transform: none;
+  }
+}
+
+.exp-card:hover,
+.doc-group:hover {
+  border-color: var(--color-gold);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Stat cards only show numbers, so they stay still and keep an even row */
+.stat-card:hover { transform: none; box-shadow: none; border-color: #dde4ee; }
+
+.doc-group:has(.exp-card--evidence.exp-card--open):hover {
+  border-color: var(--sk-line);
+  box-shadow: var(--sk-card-shadow);
+}
+
+.exp-card__body .hearing-entry,
+.exp-card__body .case-detail__doc-row {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.exp-card__body .hearing-entry {
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: var(--border-radius-md);
+}
+
+.exp-card__body .hearing-entry:hover,
+.exp-card__body .case-detail__doc-row--clickable:hover {
+  background-color: #fffaf0;
+  box-shadow: inset 0 0 0 1px var(--color-gold-border);
+}
+
+.exp-card__body .case-detail__doc-row {
+  gap: 12px;
+  margin: 0 -8px;
+  padding: 10px 8px;
+  background: transparent;
+  border-radius: var(--border-radius-md);
+}
+
+.exp-card__body .case-detail__doc-row + .case-detail__doc-row {
+  border-top: var(--border-default);
+}

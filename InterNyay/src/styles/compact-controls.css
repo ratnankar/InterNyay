@@ -1,0 +1,53 @@
+/* ==========================================================================
+   COMPACT CONTROLS (desktop): layout rules only. All desktop sizes (heights, text sizes, padding, tabs)
+   are defined in desktop-larger.css, which loads after this file and wins. See the table at the top of that file.
+   Auth pages keep their own 42px / 15px below. Phones and tablets are not touched here.
+   ========================================================================== */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  /* Sign in, Register and plan screens are stand-alone pages: they keep their own 42px / 15px (auth-flow.css) */
+  :is(.auth-page, .overlay--auth) { --d-ctl: 42px; --d-ctl-fs: 0.9375rem; }
+
+  /* ---------- Main page buttons keep the largest size ---------- */
+  :is(.app-main, .admin) :is(.page-header, .page-header__actions, .documents__header-actions) > :is(button, a):is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):not(.btn-outline--sm, .btn-icon, [data-compact] > *),
+  .page-header--hero .btn-gold {
+    box-sizing: border-box;
+    height: var(--d-main);
+    min-height: var(--d-main);
+    padding: 0 20px;
+    font-size: var(--d-main-fs);
+  }
+
+  /* ---------- Admin tabs: smaller than the main page buttons ---------- */
+  .admin__tabs.admin__tabs .admin__tab { min-height: 40px; font-size: 0.875rem; }
+  .admin__subtabs.admin__subtabs .admin__subtab { min-height: 34px; font-size: 0.8125rem; }
+
+  /* ---------- Other option buttons ---------- */
+  .fee-type-btn { min-height: var(--d-pill); }
+  .form-template-card__actions button { height: var(--d-card); min-height: var(--d-card); padding: 0 14px; font-size: var(--d-card-fs); }
+
+  /* ---------- Filter pills, court chips, status pills ---------- */
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.qa-filter-btn, .case-filter-btn):not(.qa-filter-btn--sub, [data-compact] > *),
+  .txn-year-select, .txn-period__chips .txn-year-select {
+    padding: 0 14px;
+  }
+  .txn-year-select, .txn-period__chips .txn-year-select { padding-left: 10px; padding-right: 22px; }
+  .court-pref__chips, .case-filters, .qa-filter-row, .contact-filters, .txn-period__chips { gap: 6px; }
+
+  /* Sub filter pills */
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a).qa-filter-btn--sub:not([data-compact] > *) {
+    padding: 0 12px;
+  }
+  .qa-filter-row--sub { margin-top: 6px; }
+
+  /* ---------- Buttons inside cards: Profile, My Plan, payment details, account actions, court preference ---------- */
+  .app-main :is(.profile-card, .account-action) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon, [data-compact] > *, table *),
+  .app-main .profile-card .court-pref__actions > :is(button.btn-gold, button.btn-outline),
+  .app-main .profile-card .page-header > :is(button.btn-gold, button.btn-outline) {
+    height: var(--d-card);
+    min-height: var(--d-card);
+    padding: 0 16px;
+    font-size: var(--d-card-fs);
+    border-radius: var(--d-radius);
+  }
+  .app-main .profile-card .court-pref__actions { gap: 8px; }
+}

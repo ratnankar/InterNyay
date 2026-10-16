@@ -1,0 +1,778 @@
+/* Case fees: type toggle, paid status toggle, hearing wise and one time fees */
+.fee-section {
+  background: var(--color-surface-alt);
+  border: var(--border-default);
+  border-radius: var(--border-radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.fee-type-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.fee-type-btn {
+  border: 1.5px solid #d3dbe8;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.15s;
+}
+
+.fee-type-btn:hover        { border-color: var(--color-gold); color: var(--color-navy); }
+.fee-type-btn--active      { border-color: var(--color-gold); background: var(--color-gold); color: var(--color-navy); }
+
+.paid-status-toggle {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.paid-status-btn {
+  border: 1.5px solid #d3dbe8;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.15s;
+}
+
+.paid-status-btn:hover { border-color: var(--color-gold); color: var(--color-navy); }
+
+.paid-status-btn--unpaid.paid-status-btn--active {
+  border-color: var(--color-critical);
+  background: #fbeaea;
+  color: var(--color-critical);
+}
+
+.paid-status-btn--paid.paid-status-btn--active {
+  border-color: var(--color-active);
+  background: #e6f4ee;
+  color: var(--color-active);
+}
+
+.fee-datewise {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fee-onetime {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Hearing wise fee list and rows */
+.fee-hearing-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+
+.fee-hearing-list__header .form-label,
+.fee-hearing-list__header .btn-outline--sm {
+  white-space: nowrap;
+}
+
+.fee-hearing-empty {
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+  margin-bottom: 8px;
+}
+
+.fee-hearing-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.fee-hearing-row__amount { margin: 0; }
+
+.fee-hearing-row--single {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.fee-hearing-row--adhoc {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+
+.fee-amount-date-note {
+  margin: 4px 0 0;
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+}
+
+/* Fee amount inputs and preview */
+.fee-commission__inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.fee-commission__preview {
+  margin: 10px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.fee-commission__preview strong {
+  color: var(--color-navy);
+}
+
+/* Locked fee type notice */
+.fee-type-locked {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 1.1rem;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e4eaf3;
+}
+
+.fee-type-locked__label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-text-faint);
+}
+
+.fee-type-locked__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.fee-type-locked__icon {
+  font-size: 0.95em;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+/* Hearing fee update row */
+.fee-hearing-update-row {
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--border-radius-md);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.fee-hearing-update-row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.fee-hearing-update-row__date {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.fee-hearing-update-row__ref {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.fee-hearing-update-row__inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.fee-hearing-update-row__inputs--single {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.fee-hearing-update-row__remaining {
+  margin: 8px 0 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-critical);
+}
+
+.fee-hearing-update-row__remaining--clear {
+  color: var(--color-active);
+}
+
+/* One time fee block (a stacked column) */
+.fee-onetime-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fee-onetime-dashboard > .btn-outline {
+  align-self: flex-start;
+}
+
+/* Stage wise fees */
+.fee-additional-row {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
+}
+
+.fee-stagewise { margin-bottom: 0.25rem; }
+
+@media (max-width: 640px) {
+  .fee-commission__inputs { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Fee summary table in the transaction drawer */
+.fee-summary__empty {
+  background: var(--color-surface-alt);
+  border-radius: var(--border-radius-md);
+  padding: 12px 14px;
+}
+
+.fee-summary__table {
+  width: 100%;
+  font-size: var(--fs-sm);
+  margin-top: 8px;
+}
+
+.fee-summary__due   { color: var(--color-critical); }
+.fee-summary__clear { color: var(--color-active); }
+
+/* Fee status button and danger icon button */
+.fee-status-btn {
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.btn-icon--danger {
+  color: var(--color-critical);
+}
+.btn-icon--danger:hover {
+  background: #A32D2D12;
+}
+
+/* Large modal and client detail header */
+.modal--lg { max-width: 720px; }
+/* Client details: wider so the header card, contact details and case rows have room */
+.modal--client { max-width: 900px; }
+
+.client-detail__header {
+  display: flex;
+  align-items: center;
+  gap: 14px 16px;
+  margin-bottom: 1.5rem;
+  padding: 16px 20px;
+  flex-wrap: wrap;
+}
+.client-detail__header > .client-card__avatar { flex-shrink: 0; }
+.client-detail__header > div { min-width: 0; }
+.client-detail__header > .btn-outline { flex-shrink: 0; }
+
+.client-card__avatar--lg {
+  width: 56px;
+  height: 56px;
+}
+
+.client-detail__name {
+  font-family: var(--font-heading);
+  font-size: var(--fs-xl);
+  color: var(--color-navy);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.client-detail__info-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-bottom: 1rem;
+  padding: 0 4px;
+}
+.client-detail__info-grid .profile-view-item__value { overflow-wrap: anywhere; }
+
+.client-detail__cases {
+  border-top: 1px solid var(--color-bg);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+/* Client's cases list and documents label */
+.client-case-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--color-surface-alt);
+  border-radius: var(--border-radius-md);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.client-case-row__info  { flex: 1; min-width: 0; }
+.client-case-row__title { font-weight: 600; font-size: var(--fs-base); color: var(--color-navy); margin-bottom: 2px; }
+.client-case-row__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.case-detail__docs-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  margin-bottom: 4px;
+}
+
+/* Invoice modal and printable invoice */
+.invoice-modal { max-width: 760px; }
+
+.invoice {
+  font-size: var(--fs-sm);
+  color: var(--color-text-mid);
+}
+
+.invoice__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--color-navy);
+}
+
+.invoice__brand {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2xl);
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
+.invoice__brand-tag {
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.invoice__meta { text-align: right; font-size: var(--fs-xs); }
+.invoice__meta p { margin-bottom: 2px; }
+
+.invoice__parties {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.invoice__label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.invoice__value          { font-size: var(--fs-sm); line-height: var(--lh-base); }
+.invoice__value--bold    { font-weight: 700; color: var(--color-navy); }
+
+.invoice__case-info {
+  background: var(--color-surface-alt);
+  border-radius: var(--border-radius-md);
+  padding: 10px 14px;
+  margin-bottom: 1.25rem;
+  font-size: var(--fs-sm);
+}
+.invoice__case-info p { margin-bottom: 3px; }
+
+.invoice__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+
+.invoice__table th {
+  text-align: left;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 8px 10px;
+  border-bottom: 1.5px solid var(--color-navy);
+}
+
+.invoice__table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--color-bg);
+}
+
+.invoice__totals {
+  margin-left: auto;
+  width: 260px;
+  margin-bottom: 1.5rem;
+}
+
+.invoice__totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: var(--fs-sm);
+}
+
+.invoice__totals-row--due {
+  font-weight: 700;
+  color: var(--color-critical);
+  border-top: 1.5px solid var(--color-navy);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+
+  .invoice__parties {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .invoice__table {
+    font-size: var(--fs-xs);
+  }
+
+  .invoice__table th,
+  .invoice__table td {
+    padding: 6px 4px;
+  }
+
+  .invoice__totals {
+    width: 100%;
+    max-width: 260px;
+  }
+}
+
+.invoice__footer-note {
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+  text-align: center;
+  border-top: 1px solid var(--color-bg);
+  padding-top: 1rem;
+}
+
+/* Transaction history: summary, period filters and timeline */
+.txn-summary-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.txn-period {
+  margin-bottom: 1.25rem;
+}
+
+.txn-period__label {
+  margin-bottom: 6px;
+}
+
+.txn-period__chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.txn-period__chips .picker__field {
+  width: auto;
+  flex: 0 0 auto;
+}
+.txn-year-select,
+.txn-period__chips .txn-year-select {
+  padding: 6px 14px;
+  border: 1.5px solid #d3dbe8;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.txn-period__range {
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.txn-timeline-filter {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.txn-timeline-filter__field { min-width: 160px; }
+.txn-timeline-filter__field .form-label { margin-bottom: 4px; }
+
+.txn-date--case { color: var(--color-text-muted); }
+
+.fee-panel-note {
+  margin: 6px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+/* Transaction table and print styles */
+.txn-table-wrap {
+  overflow-x: auto;
+}
+
+.txn-table th, .txn-table td { white-space: nowrap; }
+
+@media print {
+  .no-print { display: none !important; }
+
+  body * { visibility: hidden; }
+
+  #invoice-print-root,
+  #invoice-print-root * {
+    visibility: visible;
+  }
+
+  #invoice-print-root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-shadow: none;
+    max-width: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 1.5rem;
+  }
+}
+
+/* Transactions section in the case detail */
+.case-detail__transactions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: var(--border-default);
+}
+
+.case-detail__transactions-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+/* Icon + title sit on one centred line */
+.case-detail__transactions-btn > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* "View ›" is centred on the same line as the title and matches its size (phones shrink it to 12px in mobile-final.css) */
+.case-detail__transactions-meta {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  font-size: inherit;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Title and "View ›" share one line height and size so they centre exactly against each other (also on phones) */
+.case-detail .case-detail__transactions-btn { align-items: center; line-height: 1.25; }
+.case-detail .case-detail__transactions-btn > span:first-child,
+.case-detail .case-detail__transactions-btn > .case-detail__transactions-meta {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  line-height: 1.25;
+  font-size: inherit;
+  margin: 0;
+  padding: 0;
+}
+.case-detail .case-detail__transactions-btn .icon,
+.case-detail .case-detail__transactions-btn svg { flex: 0 0 auto; display: block; }
+
+/* Side drawer */
+.drawer-overlay {
+  justify-content: flex-end;
+  align-items: stretch;
+  padding: 0;
+}
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  animation: drawer-in 0.18s ease-out;
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer { animation: none; }
+}
+
+.drawer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 1.5rem;
+}
+
+.drawer__subtitle {
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+}
+
+.drawer__table-wrap {
+  overflow-x: auto;
+}
+
+.drawer__table-wrap table {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.drawer__section-label {
+  margin-bottom: 0.75rem;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-text-faint);
+}
+
+.drawer__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 1rem 1.5rem;
+  border-top: var(--border-default);
+}
+
+.drawer__body .fee-summary__table { margin-top: 0; }
+
+/* Fee view groups and payment list */
+.fee-view__group {
+  margin-bottom: 1.1rem;
+}
+
+.fee-view__row,
+.fee-view__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e4eaf3;
+  font-size: var(--fs-sm);
+}
+
+.fee-view__name {
+  color: var(--color-text-muted);
+}
+
+.fee-view__amount {
+  color: var(--color-navy);
+}
+
+.fee-view__total {
+  border-bottom: none;
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.exp-card--section,
+.exp-card--section:last-child { margin-bottom: 1.25rem; }
+
+.exp-card--section { max-width: 480px; }
+
+.payment-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-gold-border);
+}
+.payment-row:last-child { border-bottom: none; }
+
+.payment-row__qr {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 1px solid var(--color-gold-border);
+  cursor: pointer;
+}
+
+.payment-row__qr--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-alt);
+  color: var(--color-text-faint);
+  font-size: var(--fs-lg);
+  cursor: default;
+}
+
+.payment-row__text { min-width: 0; }
+.payment-row__name { margin: 0; font-weight: 600; }
+.payment-row__upi { margin: 0; }
+
+/* Paid / due state of a fee or expense badge (was repeated as inline colours on every badge) */
+.badge.badge--paid { background: #0f6e5615; color: #0f6e56; }
+.badge.badge--due  { background: #a32d2d15; color: var(--color-critical); }
+.stat-card__value.stat--due { color: var(--color-critical); }
+
+/* UPI QR thumbnail beside the upload button, and the enlarged preview in its popup */
+.qr-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; border: 1px solid var(--color-gold-border); cursor: pointer; }
+.qr-thumb:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+.qr-preview__img { display: block; width: 100%; max-width: 320px; aspect-ratio: 1 / 1; object-fit: cover; margin: 0 auto; border-radius: 8px; border: 1px solid var(--color-gold-border); }
+
+@media (max-width: 640px) {
+  .client-case-row { flex-direction: column; }
+  .client-case-row__actions { justify-content: flex-start; }
+  .client-detail__header { padding: 14px; }
+}

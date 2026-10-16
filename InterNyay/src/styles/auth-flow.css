@@ -1,0 +1,113 @@
+/* ==========================================================================
+   SIGN-IN FLOW: Sign in, Register, Forgot password, Admin sign in, Choose plan, Court preference, and the Google
+   sign-up window (mobile number and advocate code). One size and one text style for every field and button in these
+   screens, separately for desktop and for phones. Keep this file last in index.css.
+
+   Desktop:  fields and buttons 42px, 15px text (same as the application)    small print 13px, titles as before
+   Phones:   fields and buttons 38px, 14px text (no zoom: viewport has maximum-scale=1)
+   Buttons are 600 weight everywhere (the sign-in button was 700, the others 600).
+   ========================================================================== */
+
+/* ---------- Desktop ---------- */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  /* Fields */
+  .auth-input.auth-input,
+  .auth-card .auth-input.auth-input,
+  .auth-card .auth-input.dropdown.dropdown,
+  :is(.auth-page, .overlay--auth) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input):not(textarea) {
+    box-sizing: border-box;
+    height: var(--d-ctl);
+    min-height: var(--d-ctl);
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--d-ctl-fs);
+    line-height: 1.25;
+    border-radius: var(--d-radius);
+  }
+
+  /* Buttons: Sign in, Send code, Verify, Advocate / Associate, Continue, Create Account, plan buttons */
+  .auth-btn.auth-btn,
+  .auth-otp-btn.auth-otp-btn,
+  .auth-account-type__btn.auth-account-type__btn,
+  :is(.auth-page, .overlay--auth) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon),
+  .auth-page .pricing-card__cta.pricing-card__cta {
+    box-sizing: border-box;
+    height: var(--d-ctl);
+    min-height: var(--d-ctl);
+    padding: 0 20px;
+    font-size: var(--d-ctl-fs);
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: var(--d-radius);
+  }
+  .auth-account-type__btn.auth-account-type__btn { padding: 0 18px; }
+
+  /* Continue with Google matches the other buttons (was 43px) */
+  .auth-google.auth-google { height: var(--d-ctl); border-radius: var(--d-radius); }
+
+  /* Sign in / Register tabs */
+  .auth-tab.auth-tab {
+    box-sizing: border-box;
+    min-height: var(--d-ctl);
+    font-size: var(--d-ctl-fs);
+    font-weight: 600;
+  }
+
+  /* "Skip for now" stays a quiet text link, not a boxed button */
+  .skip-btn.skip-btn { height: auto; min-height: 0; padding: 8px 16px; font-size: var(--fs-base); }
+  .skip-btn__label { font-size: var(--fs-base); font-weight: 600; }
+
+  /* Text under and around the fields */
+  .auth-link-btn { font-size: var(--fs-base); }
+  .auth-hint, .auth-otp-hint, .auth-footer-note { font-size: var(--fs-sm); line-height: 1.5; }
+  .auth-divider { font-size: var(--fs-base); }
+  .auth-logo__tagline { font-size: var(--fs-sm); }
+  .choose-plan__eyebrow { font-size: var(--fs-base); font-weight: 600; }
+  .choose-plan__head p, .choose-plan__note { font-size: var(--fs-md); }
+
+  /* Google sign-up window */
+  .modal--auth .account-modal__text { font-size: var(--fs-base); line-height: 1.55; }
+  .modal--auth .account-modal__error { font-size: var(--fs-base); }
+  .modal--auth .form-label { font-size: var(--fs-base); font-weight: 600; }
+}
+
+/* ---------- Phones and tablets ---------- */
+@media not all and (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  /* Fields (the Google window's fields were 34px with 13px text, the sign-in page's 44px) */
+  .auth-input.auth-input,
+  .auth-card .auth-input.auth-input,
+  .auth-card .auth-input.dropdown.dropdown,
+  :is(.auth-page, .overlay--auth) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input):not(textarea) {
+    box-sizing: border-box;
+    height: 38px;
+    min-height: 38px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: 14px;
+    line-height: 1.25;
+    border-radius: 10px;
+  }
+
+  /* Buttons */
+  .auth-btn.auth-btn,
+  .auth-otp-btn.auth-otp-btn,
+  .auth-account-type__btn.auth-account-type__btn,
+  :is(.auth-page, .overlay--auth) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon),
+  .auth-page .pricing-card__cta.pricing-card__cta {
+    box-sizing: border-box;
+    height: 38px;
+    min-height: 38px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 10px;
+  }
+  .auth-tab.auth-tab { min-height: 38px; font-size: 14px; font-weight: 600; }
+  .skip-btn.skip-btn { height: auto; min-height: 0; padding: 8px 14px; font-size: 14px; }
+
+  .auth-link-btn { font-size: 13px; }
+  .choose-plan__eyebrow { font-size: 13px; font-weight: 600; }
+  .modal--auth .account-modal__text, .modal--auth .account-modal__error { font-size: 13px; line-height: 1.5; }
+  .modal--auth .form-label { font-size: 13px; font-weight: 600; }
+}

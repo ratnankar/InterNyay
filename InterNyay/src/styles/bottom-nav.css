@@ -1,0 +1,40 @@
+/* Mobile bottom navigation interaction and active-icon animations. */
+.bottom-nav__item {
+  position: relative;
+  overflow: hidden;
+  transition: color 180ms ease, transform 180ms ease, background-color 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav__item .bottom-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+  transition: transform 220ms cubic-bezier(.2, .8, .2, 1), filter 220ms ease;
+}
+
+.bottom-nav__item:active { transform: scale(.94); }
+
+.bottom-nav__item[aria-current="page"] .bottom-nav__icon {
+  animation: bottomNavIconPop 320ms cubic-bezier(.2, .8, .2, 1) both;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 12%));
+}
+
+@keyframes bottomNavIconPop {
+  0% { transform: translateY(2px) scale(.82); }
+  65% { transform: translateY(-2px) scale(1.12); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@media (hover: hover) {
+  .bottom-nav__item:hover .bottom-nav__icon { transform: translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav__item,
+  .bottom-nav__item .bottom-nav__icon {
+    transition: none !important;
+    animation: none !important;
+  }
+}

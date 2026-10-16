@@ -1,0 +1,353 @@
+/* Profile page: narrower column, centred with equal space left and right */
+.profile-page {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Profile card */
+.profile-card {
+  padding: 1.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Expenses page, associate view: "Your Payment Details" holds only a UPI field and a QR thumbnail,
+   so keep it compact instead of stretching across the whole page */
+.profile-card.payment-details-card {
+  max-width: 560px;
+  padding: 1.25rem 1.5rem;
+}
+
+/* Section title row inside a card (e.g. Password + Change Password button) */
+.profile-card .page-header {
+  margin-bottom: 1rem;
+  gap: 12px;
+  align-items: center;
+}
+.profile-card .section-title { margin: 0 0 0.5rem; }
+.profile-card .page-header .section-title { margin: 0; }
+
+.profile-card__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-bg);
+  flex-wrap: wrap;
+}
+
+.profile-card__identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-card__edit-btn {
+  margin-left: auto;
+}
+
+.profile-card__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.profile-card__avatar img,
+/* Profile photo upload */
+.avatar-upload img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-upload {
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.avatar-upload__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.avatar-upload__badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-gold);
+  color: var(--color-navy);
+  font-size: var(--fs-xs);
+  border: 2px solid var(--color-surface);
+  pointer-events: none;
+}
+
+.avatar-upload__remove {
+  margin-left: 4px;
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* Profile details view, notes and advocate code */
+.profile-reset-link {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-family: var(--font-body);
+}
+
+.profile-card__name {
+  font-size: var(--fs-xl);
+}
+
+.profile-card__email {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.profile-view-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.profile-view-item__label {
+  margin-bottom: 4px;
+}
+
+.profile-view-item__value {
+  font-size: var(--fs-base);
+}
+
+.profile-note {
+  margin: 0.25rem 0 1rem;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--color-text-muted);
+}
+
+.advocate-code {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.advocate-code__value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--color-navy);
+  background: var(--color-gold-light);
+  border: 1px dashed var(--color-gold);
+  border-radius: var(--border-radius-md);
+  padding: 8px 16px;
+  user-select: all;
+}
+
+/* Associates list */
+.associate-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.associate-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-bg);
+}
+
+.associate-list__name {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.associate-list__meta {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* Account actions: deactivate and delete */
+.account-danger {
+  border-color: #d9a3a3;
+}
+
+.account-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--color-bg);
+}
+
+.account-action__title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.account-action__text {
+  max-width: 480px;
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--color-text-muted);
+}
+
+.account-action .btn-outline {
+  flex-shrink: 0;
+}
+
+.account-modal__text {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--color-text-muted);
+}
+
+.account-modal__field {
+  margin-top: 1rem;
+}
+
+.account-modal__error {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .profile-view-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-card__header {
+    flex-wrap: wrap;
+  }
+}
+
+/* Email value can be long: let it wrap instead of overflowing */
+.profile-view-item__value--email { overflow-wrap: anywhere; }
+
+/* ---------- Photo avatars: click the photo to view it full size ---------- */
+.avatar-upload__photo { cursor: zoom-in; display: block; }
+.avatar-upload__photo:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+/* The camera badge is a real button when a photo exists, so it changes the photo */
+.avatar-upload__badge--action {
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 2;
+}
+.avatar-upload__badge--action:hover { background: var(--color-gold-light); }
+
+/* Client card avatar with a photo opens the viewer without opening the client */
+.client-card__avatar--viewable { cursor: zoom-in; }
+.client-card__avatar--viewable:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+/* ---------- Full-window image viewer: the photo is fitted to the whole window, whatever its size ---------- */
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+  background: rgba(6, 12, 24, 0.92);
+  animation: image-viewer-in 0.15s ease;
+}
+
+@keyframes image-viewer-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* The figure takes the whole window; the picture is stretched to it with its proportions kept (object-fit) */
+.image-viewer__figure {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.image-viewer__img {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 40px rgba(0, 0, 0, 0.55));
+}
+
+.image-viewer__caption {
+  flex: none;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  text-align: center;
+}
+
+.image-viewer__close {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(6, 12, 24, 0.7);
+  color: #fff;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.image-viewer__close:hover { background: rgba(6, 12, 24, 0.9); }
+
+/* Wide screens: details in three columns so the full-width card has no empty stretch */
+@media (min-width: 1100px) {
+  .profile-view-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.profile-follow-input { margin-top: 8px; }
+
+/* Profile page: keep the content a readable width on wide screens instead of stretching across the whole window.
+   appskin.css sets every direct child of .app-main to 1800px max, so this repeats that selector to win. */
+.app-main > .profile-page {
+  max-width: 960px;
+}

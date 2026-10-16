@@ -1,0 +1,15 @@
+# Security headers for the website itself (Netlify / Cloudflare Pages read this file; the API sets its own).
+# Other hosts: add the same headers in their settings.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  # Content-Security-Policy in REPORT-ONLY mode: nothing is blocked, the browser console lists what would be.
+  # Open the live site, use sign-in with Google, a PDF preview and the form-fill window, fix anything reported,
+  # replace "https:" in connect-src with your API address (https://api.yourdomain.com), then rename the header
+  # to Content-Security-Policy to enforce it.
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' https: https://accounts.google.com/gsi/; frame-src 'self' blob: https://accounts.google.com/gsi/; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

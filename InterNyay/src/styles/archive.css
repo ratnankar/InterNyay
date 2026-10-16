@@ -1,0 +1,90 @@
+.archive { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.archive__year {
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-color: var(--color-gold-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.archive__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-md) var(--space-lg);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--color-navy);
+}
+
+.archive__head:hover { background: var(--color-surface-2); }
+
+.archive__head--year {
+  font-family: var(--font-heading);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  /* Same soft neutral bar as the Courts list in Admin, no strong gold band */
+  background: var(--color-surface-alt);
+}
+
+.archive__head--year:hover { background: var(--color-surface-2); }
+
+.archive__head--month { font-size: var(--fs-md); font-weight: 600; padding-left: var(--space-xl); }
+
+.archive__head--day {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-text-mid);
+  padding-left: var(--space-2xl);
+}
+
+.archive__label { flex: 1; min-width: 0; }
+
+.archive__count {
+  flex-shrink: 0;
+  min-width: 24px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  border: var(--border-default);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.archive__chevron {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.archive__chevron--open { transform: rotate(45deg); }
+
+.archive__month { border-top: 1px solid var(--color-gold-border); }
+.archive__day { border-top: 1px dashed var(--color-gold-border); }
+
+.archive__body { display: flex; flex-direction: column; }
+
+.archive__month > .archive__body,
+.archive__day > .archive__body {
+  padding: var(--space-sm) var(--space-lg) var(--space-lg) var(--space-2xl);
+  gap: var(--space-md);
+}
+
+.archive__body .admin__table-wrap { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .archive__chevron { transition: none; }
+}

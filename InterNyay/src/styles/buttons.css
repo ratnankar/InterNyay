@@ -1,0 +1,309 @@
+:root {
+  --ctl-h-xl: 44px;
+  --ctl-h: 38px;
+  --ctl-h-md: 34px;
+  --ctl-h-sm: 30px;
+  --ctl-h-xs: 28px;
+  --ctl-radius: 10px;
+  --ctl-radius-pill: 999px;
+}
+
+.btn-gold,
+.btn-outline,
+.btn-danger,
+.calc-estimate__btn,
+.qa-jur-search-row__btn,
+.form-template-card__actions button,
+.documents__header-actions .btn-gold,
+.documents__header-actions .btn-outline,
+.documents__header-actions .btn-gold-secondary,
+.page-header--hero .btn-gold,
+.page-header:not(.page-header--top) .btn-gold,
+.errpage__actions .btn-gold,
+.errpage__actions .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--ctl-h);
+  padding: 0 18px;
+  border-radius: var(--ctl-radius);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.btn-outline,
+.btn-danger,
+.documents__header-actions .btn-gold-secondary {
+  border-width: 1.5px;
+  border-style: solid;
+}
+
+.btn-danger { border-color: var(--color-critical); }
+
+.btn-outline--sm,
+.btn-gold.btn-outline--sm,
+.btn-danger.btn-outline--sm,
+.hearings-panel .btn-outline--sm,
+.hearings-panel .hearing-row__side .btn-outline--sm,
+.paid-status-btn,
+.courts-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--ctl-h-sm);
+  padding: 0 12px;
+  border-radius: var(--ctl-radius);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.btn-gold.btn-outline--sm {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(120, 88, 14, 0.28), 0 1px 2px rgba(10, 22, 40, 0.18);
+}
+
+.btn-icon,
+.calendar .calendar__nav-btn,
+.calendar__nav-btn {
+  box-sizing: border-box;
+  min-width: var(--ctl-h-sm);
+  min-height: var(--ctl-h-sm);
+  border-radius: var(--ctl-radius);
+}
+
+.btn-icon { padding: 0; }
+
+.change-judge__tabs button.btn-gold,
+.change-judge__tabs button.btn-outline {
+  border-radius: var(--ctl-radius);
+}
+
+.btn-gold .icon,
+.btn-outline .icon,
+.btn-danger .icon {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+}
+
+.auth-btn,
+.auth-otp-btn,
+.skip-btn,
+.auth-account-type__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--ctl-h-xl);
+  border-radius: var(--ctl-radius);
+  line-height: 1.2;
+}
+
+.form-input,
+.dropdown__input,
+.doc-filter-select,
+.doc-search-input,
+.todo-search-input,
+.qa-jur-search-row__input,
+.court-history-editor__field .form-input {
+  box-sizing: border-box;
+  min-height: var(--ctl-h);
+  border-radius: var(--ctl-radius);
+}
+
+.court-history-editor__field .form-input { height: var(--ctl-h); }
+
+textarea.form-input { min-height: 0; }
+
+.auth-input,
+.auth-card .auth-input,
+.auth-card .auth-input.dropdown {
+  box-sizing: border-box;
+  min-height: var(--ctl-h-xl);
+  border-radius: var(--ctl-radius);
+}
+
+.qa-filter-btn,
+.case-filter-btn,
+.txn-year-select,
+.fee-type-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--ctl-h-md);
+  padding: 0 14px;
+  border-radius: var(--ctl-radius-pill);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.qa-filter-btn--sub,
+.case-filter-menu__presets .case-filter-btn {
+  min-height: var(--ctl-h-xs);
+  padding: 0 11px;
+  font-size: var(--fs-xs);
+}
+
+.picker__chip,
+.case-filter-chip,
+.spec-chip,
+.courts-chip__tag,
+.admin__pill {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--ctl-h-xs);
+  border-radius: var(--ctl-radius-pill);
+  font-size: var(--fs-xs);
+  line-height: 1.2;
+}
+
+.courts-chip__tag,
+.admin__pill {
+  min-height: 22px;
+  padding: 0 10px;
+}
+
+.admin__toolbar,
+.list-toolbar {
+  align-items: center;
+}
+
+.admin__toolbar > .btn-gold,
+.admin__toolbar > .btn-outline,
+.admin__toolbar > .btn-danger,
+.admin__toolbar > .qa-filter-btn {
+  align-self: center;
+}
+
+@media (pointer: coarse) {
+  .btn-gold,
+  .btn-outline,
+  .btn-danger,
+  .calc-estimate__btn,
+  .qa-jur-search-row__btn,
+  .form-template-card__actions button,
+  .documents__header-actions .btn-gold,
+  .documents__header-actions .btn-outline,
+  .documents__header-actions .btn-gold-secondary,
+  .errpage__actions .btn-gold,
+  .errpage__actions .btn-outline,
+  .form-input,
+  .dropdown__input,
+  .doc-filter-select {
+    min-height: 40px;
+  }
+
+  textarea.form-input { min-height: 0; }
+
+  .qa-filter-btn,
+  .case-filter-btn,
+  .fee-type-btn,
+  .txn-year-select {
+    min-height: 40px;
+  }
+
+  .btn-icon,
+  .calendar .calendar__nav-btn,
+  .calendar__nav-btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .qa-filter-btn--sub,
+  .case-filter-menu__presets .case-filter-btn {
+    min-height: 34px;
+  }
+
+  .btn-outline--sm,
+  .btn-gold.btn-outline--sm,
+  .btn-danger.btn-outline--sm,
+  .hearings-panel .btn-outline--sm,
+  .hearings-panel .hearing-row__side .btn-outline--sm,
+  .paid-status-btn,
+  .courts-btn {
+    min-height: 36px;
+  }
+
+  .auth-btn,
+  .auth-otp-btn,
+  .skip-btn,
+  .auth-input {
+    min-height: var(--ctl-h-xl);
+  }
+}
+
+@media (min-width: 641px) {
+  .case-card,
+  .card.case-card,
+  .client-card,
+  .qa-card,
+  .judge-card,
+  .stat-card,
+  .calc-info-card {
+    padding: 1.25rem;
+  }
+
+  .notif-card {
+    padding: 1rem 1.25rem;
+  }
+
+  .profile-card,
+  .form-template-card,
+  .contact-card,
+  .plans-admin__card {
+    padding: 1.5rem;
+  }
+}
+
+.courts-btn:focus-visible,
+.paid-status-btn:focus-visible,
+.fee-type-btn:focus-visible,
+.archive__head:focus-visible,
+.picker__option:focus-visible,
+.case-status__option:focus-visible,
+.calc-type-btn:focus-visible,
+.auth-tab:focus-visible,
+.auth-account-type__btn:focus-visible,
+.auth-otp-btn:focus-visible,
+.skip-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--sk-focus);
+}
+
+
+/* ---------- Admin tab bars: a tab keeps the same size in every state ----------
+   The open tab used to be bolder (700 vs 600, so wider) and shrank when pressed (scale), which made the whole bar
+   change size on every click. Weight and size now stay fixed; the gold fill and a thin text shadow mark the open tab.
+   Doubled class names so this wins over polish.css, appskin.css and admin.css */
+.admin__tabs.admin__tabs .admin__tab,
+.admin__tabs.admin__tabs .admin__tab--active,
+.admin__subtabs.admin__subtabs .admin__subtab,
+.admin__subtabs.admin__subtabs .admin__subtab--active {
+  font-weight: 600;
+}
+.admin__tabs.admin__tabs .admin__tab--active,
+.admin__subtabs.admin__subtabs .admin__subtab--active {
+  text-shadow: 0 0 0.6px currentColor;
+}
+.admin__tabs.admin__tabs .admin__tab:hover,
+.admin__tabs.admin__tabs .admin__tab:active,
+.admin__tabs.admin__tabs .admin__tab--active:active,
+.admin__subtabs.admin__subtabs .admin__subtab:hover,
+.admin__subtabs.admin__subtabs .admin__subtab:active {
+  transform: none;
+}
+
+
+/* ---------- Dashboard greeting: "Good Afternoon," keeps the title size, the name after it is a little smaller ---------- */
+.page-title .page-title__name { font-size: 0.9em; }

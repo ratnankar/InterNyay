@@ -1,0 +1,80 @@
+
+/* Design tokens used across the whole app */
+:root {
+  /* Brand colours */
+  --color-navy:        #0a1628;
+  --color-navy-mid:    #0d2347;
+  --color-gold:        #C9A84C;
+  --color-gold-light:  #fdf6e3;
+  --color-gold-border: #dde4ee;
+
+  /* Page and card backgrounds */
+  --color-bg:          #f4f7fb;
+  --color-surface:     #ffffff;
+  --color-surface-alt: #f7f9fc;
+  --color-surface-2:   #f1f4f9;
+
+  /* Text colours */
+  --color-text:        #1a1a2e;
+  --color-text-mid:    #3d4859;
+  --color-text-muted:  #566176;
+  --color-text-faint:  #667085;
+
+  /* Case status colours */
+  --color-active:      #0F6E56;
+  --color-pending:     #BA7517;
+  --color-closed:      #5F5E5A;
+  --color-onhold:      #185FA5;
+
+  /* Priority colours */
+  --color-critical:    #A32D2D;
+
+  /* Borders and corner radius */
+  --border-default:    1px solid #dde4ee;
+  --border-input:      1.5px solid #d3dbe8;
+  --border-radius-sm:  8px;
+  --border-radius-md:  10px;
+  --border-radius-lg:  14px;
+  --border-radius-xl:  20px;
+
+  /* Shadows */
+  --shadow-sm:         0 1px 2px rgba(10, 22, 40, 0.06), 0 6px 16px -8px rgba(10, 22, 40, 0.12);
+  --shadow-md:         0 1px 2px rgba(10, 22, 40, 0.06), 0 14px 30px -12px rgba(10, 22, 40, 0.20);
+  --shadow-lg:         0 2px 4px rgba(10, 22, 40, 0.08), 0 24px 48px -16px rgba(10, 22, 40, 0.32);
+
+  /* Fonts */
+  --font-body:         'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-heading:      'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-mono:         ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
+
+  /* Font sizes */
+  --fs-xs:    0.75rem;    
+  --fs-sm:    0.8125rem;  
+  --fs-base:  0.875rem;   
+  --fs-md:    1rem;       
+  --fs-lg:    1.125rem;   
+  --fs-xl:    1.25rem;    
+  --fs-2xl:   1.5rem;     
+  --fs-3xl:   1.75rem;    
+  --fs-4xl:   2rem;       
+  --fs-icon:  2.5rem;     
+
+  /* Calendar sizes */
+  --cal-month-fs: var(--fs-lg);    
+  --cal-dow-fs:   var(--fs-sm);    
+  --cal-day-fs:   var(--fs-base);  
+  --cal-note-fs:  var(--fs-sm);    
+  --cal-day-size: 36px;            
+
+  /* Line heights */
+  --lh-tight: 1.25;       
+  --lh-base:  1.5;        
+
+  /* Spacing */
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   12px;
+  --space-lg:   16px;
+  --space-xl:   24px;
+  --space-2xl:  32px;
+}

@@ -1,0 +1,67 @@
+/* Base icon: inline and aligned with the text next to it */
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: -0.16em;
+  overflow: visible;
+}
+
+/* Icon holders across the app */
+.nav-item__icon, .qa-card__icon, .qa-panel__icon, .qa-jur-cat__icon, .qa-year-btn__icon,
+.qa-avatar, .exp-card__avatar, .doc-row__icon, .case-detail__doc-icon, .hdi__icon,
+.doc-search-icon, .upload-search__icon, .qa-pd-search__icon, .admin__tab-icon,
+.avatar-upload__badge, .fee-type-locked__icon, .auth-admin-heading__icon,
+.opposing-field__edit, .hearing-entry__order-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.qa-avatar, .exp-card__avatar, .avatar-upload__badge { display: flex; }
+.nav-item__icon .icon, .qa-card__icon .icon, .qa-avatar .icon { vertical-align: 0; }
+
+.empty-state__icon, .upload-dropzone__icon, .txn-gate__icon {
+  display: flex;
+  justify-content: center;
+  color: var(--color-gold);
+}
+.txn-gate__icon { margin-left: auto; margin-right: auto; }
+.calc-type-btn__icon { display: flex; justify-content: flex-start; align-items: center; color: var(--color-navy); }
+.qa-card__icon { color: var(--color-navy); }
+
+.qa-panel__icon { color: var(--color-gold); }
+.imp-notif__badge, .auth-admin-badge, .auth-admin-heading__icon { display: inline-flex; align-items: center; gap: 6px; }
+
+.doc-row__icon .icon--pdf { color: #c0392b; }
+.doc-row__icon .icon--word { color: #2b6cb0; }
+.doc-row__icon .icon--sheet { color: #2f855a; }
+.doc-row__icon .icon--image { color: #8a5cc2; }
+.doc-row__icon .icon--film { color: #8a5cc2; }
+.doc-row__icon .icon--file { color: var(--color-navy-mid); }
+
+/* Space between an icon and button text */
+.btn-gold .icon, .btn-outline .icon, .btn-danger .icon { margin-right: 0.35em; }
+.btn-icon .icon, .doc-search-clear .icon, .qa-close .icon, .picker__chip-x .icon { margin-right: 0; vertical-align: middle; }
+
+/* Icon sizes inside buttons, navigation and avatars */
+.nav-item__icon .icon { width: 1.3em; height: 1.3em; }
+.btn-icon .icon, .doc-search-clear .icon, .qa-close .icon { width: 1.1em; height: 1.1em; }
+
+.exp-card__avatar .icon, .qa-avatar .icon { color: var(--color-gold); }
+.exp-card__avatar .icon { width: 1.2em; height: 1.2em; }
+
+.avatar-upload__badge .icon { width: 13px; height: 13px; color: var(--color-navy); }
+
+.icon--arrow-left  { margin-right: 0.35em; }
+.icon--arrow-right { margin-left: 0.35em; }
+.btn-gold .icon--arrow-right, .btn-outline .icon--arrow-right,
+.btn-danger .icon--arrow-right { margin-right: 0; }
+
+.calc-submit-btn { display: inline-flex; align-items: center; justify-content: center; }
+.calc-submit-btn .icon { margin-right: 0; margin-left: 0.5em; vertical-align: 0; }
+.calc-info-card__title { display: flex; align-items: center; gap: 0.5em; }
+.calc-info-card__title .icon { vertical-align: 0; width: 1.25em; height: 1.25em; color: var(--color-gold); }
+
+/* Duotone icons: main shape in the current colour plus an offset tone layer behind it */
+.icon--duotone .icon__tone { fill: var(--icon-tone, currentColor); opacity: 0.35; }
+/* Tone colours for the large icons that use duotone */
+.qa-card__icon, .qa-jur-cat__icon, .empty-state__icon, .lx .lx-strip__icon { --icon-tone: var(--color-gold); }

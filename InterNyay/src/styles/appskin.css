@@ -1,0 +1,521 @@
+/* ==========================================================================
+   App skin: gives every signed-in screen the look of the landing page.
+   Same language as the landing (lx-*): ink navy, court blue, gold actions, Playfair headings,
+   cool mist surfaces, white cards with hairline borders and layered soft shadows, pill chips.
+   Loaded after polish.css and motion.css (so it wins ties) and before mobile.css (so phone layout rules still win).
+   ========================================================================== */
+
+:root {
+  --sk-ink:   #0a1628;
+  --sk-blue:  #16386f;
+  --sk-mist:  #f1f4f9;
+  --sk-page:  #f4f7fb;
+  --sk-line:  #dde4ee;
+  --sk-muted: #566176;
+
+  --sk-card-shadow:       0 1px 2px rgba(10, 22, 40, 0.05), 0 10px 24px -14px rgba(10, 22, 40, 0.20);
+  --sk-focus:             0 0 0 3px rgba(201, 168, 76, 0.28);
+
+  /* Cards are clean white like the landing mock-ups: the warm gradient and gold corner glow are retired */
+  --grad-surface:      #ffffff;
+  --grad-surface-glow: #ffffff;
+  --grad-gold: linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%);
+  --shadow-gold: 0 12px 24px -8px rgba(176, 138, 46, 0.7);
+}
+
+::selection { background: rgba(201, 168, 76, 0.35); color: var(--sk-ink); }
+
+/* ---------- Page canvas ---------- */
+body { background: var(--sk-page); }
+.app-main {
+  background:
+    radial-gradient(900px 340px at 85% -80px, rgba(22, 56, 111, 0.07), transparent 70%),
+    var(--sk-page);
+  scroll-behavior: smooth;
+}
+.app-main::-webkit-scrollbar, .sidebar::-webkit-scrollbar { width: 10px; height: 10px; }
+.app-main::-webkit-scrollbar-thumb { background: #c9d3e3; border-radius: 10px; border: 3px solid var(--sk-page); }
+.app-main::-webkit-scrollbar-thumb:hover { background: #aab8d0; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 10px; }
+
+.page-title {
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  -webkit-text-fill-color: var(--sk-ink); font-size: clamp(1.6rem, 2.4vw, 2rem); line-height: 1.15; width: auto;
+}
+.page-title::after { display: none; }
+.page-subtitle { color: var(--sk-muted); font-size: var(--fs-md); }
+.page-header { margin-bottom: 1.5rem; }
+
+/* Dashboard greeting: same plain page heading as every other page (no band) */
+.page-header--hero { padding: 0 0 1rem; margin-bottom: 1.5rem; }
+.page-header--hero .page-title { font-size: clamp(1.7rem, 2.6vw, 2.2rem); }
+
+/* ---------- Sidebar: landing spotlight navy, gold gradient active item ---------- */
+.sidebar { background: linear-gradient(160deg, #0d2347 0%, #0a1628 70%); box-shadow: 1px 0 0 rgba(255, 255, 255, 0.04), 8px 0 30px -12px rgba(10, 22, 40, 0.45); }
+.sidebar__brand { padding-bottom: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.nav-item { border-radius: 10px; padding: 10px 14px; color: rgba(255, 255, 255, 0.68); font-weight: 500; }
+.nav-item:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.nav-item.active {
+  background-image: linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%); color: var(--sk-ink); font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 8px 18px -8px rgba(176, 138, 46, 0.65);
+}
+.sidebar__user { border-top-color: rgba(255, 255, 255, 0.1); }
+.sidebar__user-row { border-radius: 12px; }
+
+/* ---------- Buttons: the landing's gold and line buttons ---------- */
+.btn-gold, .auth-btn, .calc-submit-btn, .pricing-card__cta {
+  background-image: linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%);
+  background-origin: border-box; background-color: #d8b856;
+  color: var(--sk-ink); border: 0; border-radius: 10px; font-weight: 700; letter-spacing: 0.01em; padding: 0.62rem 1.25rem; font-size: var(--fs-base);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(120, 88, 14, 0.28), 0 1px 2px rgba(10, 22, 40, 0.18), 0 8px 18px -8px rgba(176, 138, 46, 0.65);
+}
+.btn-gold:hover:not(:disabled), .auth-btn:hover:not(:disabled), .calc-submit-btn:hover:not(:disabled) {
+  filter: none; opacity: 1; transform: translateY(-1px);
+  background-image: linear-gradient(180deg, #f2dc92 0%, #e0c062 52%, #c8a141 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(120, 88, 14, 0.28), 0 2px 4px rgba(10, 22, 40, 0.18), 0 12px 24px -8px rgba(176, 138, 46, 0.75);
+}
+.btn-gold:active:not(:disabled), .auth-btn:active:not(:disabled) { transform: none; box-shadow: inset 0 2px 4px rgba(120, 88, 14, 0.35), 0 1px 2px rgba(10, 22, 40, 0.15); }
+.btn-gold:disabled, .auth-btn:disabled { opacity: 0.5; box-shadow: none; }
+
+.btn-outline {
+  background: #fff; color: var(--sk-ink); border: 1.5px solid var(--sk-ink);
+}
+.btn-outline:hover:not(:disabled) { background: var(--sk-ink); color: #fff; border-color: var(--sk-ink); }
+.btn-outline--danger { color: var(--color-critical); background: #fff; }
+.btn-outline--danger:hover:not(:disabled) { background: var(--color-critical); border-color: var(--color-critical); color: #fff; }
+
+/* Keyboard focus */
+:is(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+.case-card, .client-card, .form-template-card, .judge-card, .notif-card, .qa-card, .qa-pd-card, .doc-group, .pricing-card, .stat-card, .todo-item, .exp-card {
+  transition: transform .25s var(--ease-out), box-shadow .25s, border-color .25s;
+}
+.case-card:hover, .client-card:hover, .form-template-card:hover, .judge-card:hover, .qa-card:hover, .qa-pd-card:hover, .pricing-card:hover {
+  transform: translateY(-3px);
+}
+.hearings-panel, .calendar, .profile-card, .calc-info-card, .contact-card, .notifications-panel, .hearing-card--expanded { transform: none; }
+.stat-card { padding-top: 1.1rem; padding-bottom: 1.1rem; position: relative; overflow: hidden; }
+.stat-card::before { position: absolute; left: 0; right: 0; top: 0; height: 3px; pointer-events: none;
+  background: linear-gradient(90deg, #e6c870 0%, #c9a84c 100%);
+}
+.empty-state__icon { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin: 0 auto 1rem; border-radius: 50%; background: var(--sk-mist); color: var(--sk-blue); font-size: 2rem; }
+.empty-state__title { font-size: var(--fs-lg); }
+
+.case-fields__label { background: var(--sk-mist); }
+.drawer, .invoice-modal { background: #fff; }
+
+/* ---------- Chips and badges ---------- */
+.badge { border-radius: 999px; padding: 3px 11px; font-weight: 700; letter-spacing: 0; }
+.badge--nature { background: #e4eaf5; color: var(--sk-blue); }
+.badge--corporate { background: #fbefd5; color: #8a5a0a; }
+.badge--individual { background: #e4eaf5; color: var(--sk-blue); }
+.admin__pill, .qa-chip, .case-filter-chip, .hearing-row__past, .todo-category-tag { border-radius: 999px; }
+ .auth-tabs, .admin__tabs, .admin__subtabs { border-radius: 12px; }
+.admin__tab--active, .admin__subtab--active, .auth-tab--active {
+  background-image: linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%); color: var(--sk-ink); font-weight: 700;
+}
+
+/* ---------- Form fields ---------- */
+.form-input, .auth-input, .doc-search-input, .todo-search-input, .contact-textarea, .qa-jur-search-row__input,
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], input[type="search"], select, textarea {
+  border-color: #d3dbe8;
+}
+.form-input, .auth-input, .contact-textarea, .doc-filter-select {
+  background: #f7f9fc; border: 1.5px solid #d3dbe8; border-radius: 10px; color: var(--color-text);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.form-input:hover, .auth-input:hover { border-color: #b8c4d6; }
+.form-input:focus, .auth-input:focus, .contact-textarea:focus, .doc-filter-select:focus {
+  outline: none; background: #fff; border-color: var(--color-gold); box-shadow: var(--sk-focus);
+}
+.upload-dropzone { border-radius: 14px; border-color: #c3cfe6; background: var(--sk-mist); }
+.upload-dropzone:hover { border-color: var(--color-gold); background: #fffdf6; }
+
+/* ---------- Tables: light mist header (landing mock-ups) instead of the heavy navy bar ---------- */
+.admin__table, .qa-table, .fee-summary__table, .case-fields { border-color: var(--sk-line); }
+.admin__table-wrap { border-color: var(--sk-line); }
+.admin__table th, .qa-table th, .fee-summary__table th {
+  background: var(--sk-mist); background-image: linear-gradient(180deg, #f6f8fc 0%, #e3eaf6 100%); color: var(--sk-blue); text-shadow: none; box-shadow: none;
+  border-bottom: 1px solid var(--sk-line); font-weight: 700;
+}
+.admin__table th + th, .qa-table th + th, .fee-summary__table th + th { border-left: none; }
+.admin__table td, .qa-table td, .fee-summary__table td { border-bottom: 1px solid #e8edf5; }
+.admin__table tbody tr:nth-child(even) td, .qa-table tbody tr:nth-child(even) td, .fee-summary__table tbody tr:nth-child(even) td { background: #fff; }
+.admin__table tbody tr:hover td, .qa-table tbody tr:hover td, .fee-summary__table tbody tr:hover td { background: #f7f9fc; }
+.fee-summary__table tfoot td { background: var(--sk-mist); border-top: 1px solid var(--sk-line); color: var(--sk-ink); }
+.qa-panel__header { background: linear-gradient(160deg, #0d2347 0%, #0a1628 70%); box-shadow: none; }
+
+/* ---------- Modals, overlays, drawers ---------- */
+.overlay { background: rgba(10, 22, 40, 0.55); backdrop-filter: blur(6px) saturate(140%); -webkit-backdrop-filter: blur(6px) saturate(140%); }
+.modal, .drawer, .pdf-modal, .imp-notif__card {
+  background: #fff; border: 1px solid rgba(221, 228, 238, 0.9); border-radius: 20px; box-shadow: var(--shadow-lg);
+}
+.modal__header { padding-bottom: 1rem; border-bottom: 1px solid var(--sk-line); }
+.drawer { border-radius: 20px 0 0 20px; }
+.drawer__header { border-bottom: 1px solid var(--sk-line); }
+.toast { border-radius: 12px; box-shadow: var(--shadow-lg); }
+
+/* ---------- Dashboard, calendar, hearings ---------- */
+.hearings-panel__count { background: #e4eaf5; color: var(--sk-blue); border-radius: 999px; font-weight: 700; padding: 3px 12px; }
+.cal-day--today { box-shadow: inset 0 0 0 2px var(--color-gold); }
+.cal-day--selected { background-image: linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%); color: var(--sk-ink); font-weight: 700; }
+.hearing-row, .hearing-card { border-radius: 12px; }
+
+.case-filter-menu__panel { border-radius: 14px; border: 1px solid var(--sk-line); box-shadow: var(--shadow-lg); }
+.client-card__avatar, .client-selected__avatar { background-image: linear-gradient(160deg, #16386f, #0a1628); color: #e6c870; }
+
+.pricing-card__badge { border-radius: 999px; }
+
+/* ---------- Sign in / register: the landing's navy spotlight with a clean white card ---------- */
+.auth-page {
+  background:
+    radial-gradient(700px 380px at 82% -60px, rgba(201, 168, 76, 0.18), transparent 70%),
+    linear-gradient(160deg, #0d2347 0%, #0a1628 70%);
+}
+.auth-card, .modal--auth { background: #fff; border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.55); }
+.auth-tab { border-radius: 8px; color: var(--sk-muted); font-weight: 600; }
+.auth-tab:not(.auth-tab--active):hover { color: var(--sk-ink); background: rgba(10, 22, 40, 0.05); }
+.auth-tab.auth-tab--active { color: var(--sk-ink); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px -8px rgba(176,138,46,.7); }
+.auth-page::before { background: rgba(201, 168, 76, 0.10); }
+.choose-plan { background: transparent; }
+
+/* ---------- Mobile top bar: frosted like the landing nav ---------- */
+@media (max-width: 860px) {
+  .mobile-topbar { -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom: 1px solid rgba(10, 22, 40, 0.08); box-shadow: 0 10px 30px -18px rgba(10, 22, 40, 0.35); }
+  .mobile-topbar__brand { color: var(--sk-ink); }
+  .mobile-topbar__hamburger span { background: var(--sk-ink); }
+  .page-header--hero { padding: 0 0 1rem; border-radius: 0; }
+  .modal, .drawer { border-radius: 16px; }
+  .btn-gold:hover:not(:disabled), .case-card:hover, .client-card:hover { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-card:hover, .client-card:hover, .stat-card:hover, .btn-gold:hover { transform: none; }
+}
+
+/* ==========================================================================
+   Pass 2 (review fixes)
+   ========================================================================== */
+
+/* Page heading: no top bar. The title sits on the page with a gold fade-out hairline underneath.
+   Embedded headers (page-header--top) stay plain with no line. */
+.page-header:not(.page-header--top), .admin__header {
+  position: relative; isolation: isolate;
+  padding: 0 0 1rem; border-radius: 0; margin-bottom: 1.5rem;
+  background: none; box-shadow: none;
+  align-items: center;
+}
+.page-header:not(.page-header--top)::before, .admin__header::before { display: none; }
+.page-header:not(.page-header--top)::after, .admin__header::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 3px; pointer-events: none;
+  background: linear-gradient(90deg, #c9a84c 0%, rgba(201, 168, 76, 0.55) 40%, rgba(201, 168, 76, 0) 100%);
+}
+.page-header:not(.page-header--top) .page-title, .admin__title {
+  margin: 0; color: var(--sk-ink); -webkit-text-fill-color: var(--sk-ink);
+}
+.page-header:not(.page-header--top) .page-subtitle, .admin__subtitle { color: var(--sk-muted); margin-top: 4px; }
+/* View toggle and counts on the plain page */
+
+.documents__count, .page-header .documents__count { color: var(--sk-muted); }
+
+/* Labels: sentence case, regular weight, readable size */
+.stat-card__label, .form-label, .auth-field-label, .case-fields__label, .admin-chart__title, .calc-step__label,
+.profile-view-item__label, .doc-filter-label, .case-summary-fields__label, .todo-sidebar__heading, .admin__stat-label {
+  text-transform: none; letter-spacing: 0; font-size: 0.875rem; font-weight: 600; color: var(--sk-muted);
+}
+.case-fields__label { color: var(--sk-blue); }
+.admin__table th, .qa-table th, .fee-summary__table th { font-size: 0.875rem; letter-spacing: 0; text-transform: none; }
+.admin-chart__title { font-size: var(--fs-md); }
+.stat-card__value { font-size: 1.9rem; }
+
+/* Admin and sub tabs: one calm segmented bar. Wide screens wrap onto a second row so every tab stays visible; phones scroll sideways (mobile.css) */
+.admin__tabs, .admin__subtabs {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 5px; min-width: 0; max-width: 100%; box-sizing: border-box; scrollbar-width: none;
+}
+.admin__tabs::-webkit-scrollbar, .admin__subtabs::-webkit-scrollbar { display: none; }
+.admin__tab, .admin__subtab {
+  flex: none; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 10px; margin: 0;
+  padding: 9px 14px; font-size: 0.9375rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--sk-muted); white-space: nowrap;
+}
+.admin__tab:hover:not(.admin__tab--active), .admin__subtab:hover:not(.admin__subtab--active) { background: var(--sk-mist); color: var(--sk-ink); }
+
+.todo-sidebar__heading { font-size: var(--fs-md); }
+.todo-sidebar__item { color: var(--color-text); border-radius: 10px; }
+.todo-sidebar__item:hover { background: var(--sk-mist); }
+.todo-sidebar__item .nav-item__icon { color: var(--sk-blue); background: var(--sk-mist); }
+.todo-sidebar__item.active { background-image: linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%); color: var(--sk-ink); }
+.todo-sidebar__item.active .nav-item__icon { background: rgba(10, 22, 40, 0.1); color: var(--sk-ink); }
+.todo-sidebar__count { color: var(--sk-muted); }
+
+/* The chat button no longer pulses a halo over the page content */
+.chat__launcher { animation: none; box-shadow: 0 10px 24px -8px rgba(10, 22, 40, 0.55); }
+
+/* Calmer entrance: only the page itself fades in; cards no longer animate one by one */
+.case-card, .client-card, .stat-card, .todo-item, .judge-card, .notif-card, .qa-card, .qa-pd-card, .calc-info-card,
+.hearing-card, .exp-card, .doc-group, .pricing-card, .profile-card { animation: none; }
+.admin__table tbody tr, .qa-table tbody tr, .fee-summary__table tbody tr { animation: none; }
+
+/* Roomier canvas, like the landing's section spacing */
+.app-main { padding: 1.75rem 2.25rem; }
+.app-main > * { max-width: 1800px; margin-left: auto; margin-right: auto; }
+
+@media (max-width: 860px) {
+  .app-main { padding: 1rem 0.9rem calc(2rem + env(safe-area-inset-bottom, 0px)); }
+  /* Plain header (no box): title lines up with the cards and the gold underline instead of being pushed in */
+  .page-header:not(.page-header--top), .admin__header { padding: 0 0 1rem; border-radius: 0; gap: 10px; }
+  .page-header:not(.page-header--top) .btn-gold { padding: 0.55rem 1rem; }
+}
+
+/* ---------- Pass 3 ---------- */
+/* Filter tabs in the page heading (Transactions / Expenses) */
+.page-header .case-filters { margin: 0; }
+.page-header .case-filter-btn { background: #fff; color: var(--sk-muted); border: 1.5px solid #cdd6e4; }
+.page-header .case-filter-btn:hover { background: #fffaf0; color: #8a6a1c; border-color: var(--color-gold); }
+.page-header .case-filter-btn--active, .page-header .case-filter-btn--active:hover {
+  background-image: linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%); background-origin: border-box; background-clip: border-box; color: var(--sk-ink); border-color: transparent; font-weight: 700;
+}
+/* The open Quick Access card is marked, not just flipped */
+.qa-card--active { transform: none; }
+.qa-card:hover { transform: none; }
+@media (max-width: 860px) {
+  .page-header:has(> .case-filters) { flex-direction: column; align-items: flex-start; }
+  .page-header > .case-filters { width: 100%; flex-wrap: wrap; }
+}
+@media (max-width: 860px) { .page-header > .case-filters { margin-left: 0; padding-left: 0; } }
+
+/* ---------- Calendar controls and leave colours (Dashboard + Judges on Leave) ---------- */
+/* Compact nav buttons: a higher-specificity rule so the global button padding and touch min-height don't win */
+.calendar .calendar__nav { gap: 6px; }
+.calendar .calendar__nav-btn {
+  padding: 0 10px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: var(--fs-sm); line-height: 1;
+  border-color: var(--sk-line, #dde4ee); color: var(--sk-ink);
+}
+.calendar .calendar__nav-btn:hover:not(:disabled) { background: #f1f4fa; color: var(--sk-ink); border-color: var(--color-gold); box-shadow: none; transform: none; }
+
+/* Leave days use a navy tint scale instead of red, so they sit with the gold selected day and today ring */
+.cal-day--leave-l1 { background: #e9eef8; color: var(--sk-ink); }
+.cal-day--leave-l2 { background: #cbd7ee; color: var(--sk-ink); }
+.cal-day--leave-l3 { background: #a3b8de; color: var(--sk-ink); }
+
+/* Judges on Leave calendar: leave days are not tinted; the small number under the date shows how many judges are on leave */
+.cal-day--leave-l1:not(.cal-day--holiday), .cal-day--leave-l2:not(.cal-day--holiday), .cal-day--leave-l3:not(.cal-day--holiday) { background: transparent; color: inherit; }
+.cal-day--leave:not(.cal-day--selected):not(.cal-day--holiday):hover { background: var(--color-bg); }
+
+/* Sunday dates keep the same amber colour as the hearing calendar, also on days with leave (the rule above set colour to inherit) */
+.cal-day--leave.cal-day--sunday:not(.cal-day--selected) { color: #b45309; font-weight: 600; }
+
+/* Leave + holiday on the same day: the green / red / split holiday colour stays visible (the transparent rule above no longer wipes it) */
+.cal-day--leave.cal-day--holiday-district { background: var(--holiday-district-bg); color: var(--holiday-district); box-shadow: none; }
+.cal-day--leave.cal-day--holiday-high     { background: var(--holiday-high-bg);     color: var(--holiday-high);     box-shadow: none; }
+.cal-day--leave.cal-day--holiday-both     { box-shadow: none; }
+.cal-day--leave.cal-day--today:not(.cal-day--selected) { box-shadow: inset 0 0 0 2px var(--color-gold); }
+
+/* Number of judges on leave: plain gold text under the date, same as the hearing count on the Dashboard calendar */
+.cal-day--leave .cal-day__count,
+.cal-day .cal-day__count--leave { background: none; color: #8a6a1c; font-weight: 700; }
+.cal-day--selected .cal-day__count--leave { background: none; color: var(--sk-ink); }
+
+/* ==========================================================================
+   Sign in / register on the white card: every inner element was still styled for the old dark glass card
+   (white text, translucent white borders), which made labels, inputs, the "or" divider and links vanish.
+   ========================================================================== */
+.auth-card .auth-field-label { color: var(--sk-muted); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.auth-card .auth-input,
+.auth-card .auth-input.dropdown {
+  background: #fff; color: var(--sk-ink); border: 1.5px solid #cdd6e4; padding: 11px 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.auth-card .auth-input:hover { border-color: #aab7cc; }
+.auth-card .auth-input::placeholder { color: #8591a6; opacity: 1; }
+.auth-card .auth-input:-webkit-autofill { -webkit-text-fill-color: var(--sk-ink); box-shadow: 0 0 0 40px #fff inset; }
+.auth-card .password-field__input.auth-input + .password-field__toggle { color: #6b7890; opacity: 1; }
+.auth-card .password-field__input.auth-input + .password-field__toggle:hover { color: var(--sk-blue); }
+.auth-card .auth-form .dropdown__chevron { color: #6b7890; }
+
+.auth-card .auth-hint { color: var(--sk-muted); }
+.auth-card .auth-link-btn { color: var(--sk-blue); font-weight: 600; }
+.auth-card .auth-link-btn:hover { color: #8a6a1c; }
+
+/* "Sign in as" / account type chips */
+.auth-card .auth-account-type__btn { background: #fff; border: 1.5px solid #cdd6e4; color: var(--sk-muted); font-weight: 600; }
+.auth-card .auth-account-type__btn:hover { border-color: var(--color-gold); color: var(--sk-ink); background: #fffaf0; }
+.auth-card .auth-account-type__btn--active,
+.auth-card .auth-account-type__btn--active:hover { border-color: var(--color-gold); background: #fdf3d6; color: var(--sk-ink); }
+
+/* One-time code row */
+.auth-card .auth-otp-btn { background: #fff; border: 1.5px solid var(--color-gold); color: #7a5b12; }
+.auth-card .auth-otp-btn:hover:not(:disabled) { background: #fdf3d6; }
+.auth-card .auth-otp-btn--verify { background-image: var(--grad-gold); border-color: #c9a84c; color: var(--sk-ink); }
+.auth-card .auth-otp-badge { background: #e7f6ec; border-color: #9fd6b3; color: #166534; }
+
+/* "or" divider and the Google button */
+.auth-card .auth-divider { color: var(--sk-muted); }
+.auth-card .auth-divider::before { background: linear-gradient(90deg, transparent, #cdd6e4); }
+.auth-card .auth-divider::after  { background: linear-gradient(270deg, transparent, #cdd6e4); }
+.auth-card .auth-google__face { background: #fff; color: var(--sk-ink); border: 1.5px solid #cdd6e4; box-shadow: 0 1px 2px rgba(10, 22, 40, 0.06); }
+.auth-card .auth-google:hover .auth-google__face { background: #f6f8fc; border-color: #aab7cc; }
+
+/* Notes inside the card are dark; the note under the card sits on navy and stays light */
+.auth-card .auth-footer-note { color: var(--sk-muted); }
+.auth-container > .auth-footer-note { color: rgba(255, 255, 255, 0.6); }
+.auth-back-link { color: rgba(255, 255, 255, 0.8); }
+
+/* Saved accounts on this device */
+.auth-card .auth-saved__label, .auth-card .auth-saved__or { color: var(--sk-muted); }
+.auth-card .auth-saved__item { background: #fff; border: 1.5px solid #cdd6e4; color: var(--sk-ink); }
+.auth-card .auth-saved__item:hover { background: #fffaf0; border-color: var(--color-gold); }
+.auth-card .auth-saved__email { color: var(--sk-muted); }
+.auth-card .auth-saved__go { color: #8a6a1c; }
+
+/* Error box inside the white card */
+.auth-card .alert-error {
+  --alert-bg: #fdecea; --alert-border: #f1b5b0; --alert-text: #7f1d1d; --alert-accent: #b91c1c;
+}
+
+/* Administrator sign in keeps its red accent, on the same white card */
+.auth-card--admin { border-color: rgba(224, 82, 82, 0.45); box-shadow: 0 0 0 1px rgba(224, 82, 82, 0.15), 0 30px 60px -20px rgba(120, 20, 20, 0.55); }
+.auth-card .auth-admin-heading { color: #b42323; border-bottom-color: rgba(224, 82, 82, 0.3); }
+.auth-card .auth-admin-heading--gold { color: #8a6a1c; border-bottom-color: rgba(201, 168, 76, 0.45); }
+.auth-btn--admin { background: #c93a3a; box-shadow: 0 8px 18px -8px rgba(160, 30, 30, 0.6); }
+.auth-btn--admin:hover:not(:disabled) { background: #b22f2f; }
+
+/* To-Do sidebar: the base hover turns the text white, which disappeared on the light hover background */
+.todo-sidebar__item:hover:not(.active) { color: var(--sk-ink); }
+
+/* Larger section heading, used for the Expenses title inside Transaction History so it matches the big stat cards and page banner */
+.section-title--lg { font-size: var(--fs-3xl); font-weight: 700; line-height: 1.15; }
+@media (max-width: 860px) { .section-title--lg { font-size: var(--fs-2xl); } }
+
+/* ==========================================================================
+   Leftover contrast fixes (found by rendering the app and measuring text against its real background)
+   ========================================================================== */
+
+/* Active admin tabs and sub-tabs: the generic tab colour above came later than the active rule and turned the gold tab's text grey */
+.admin__tab--active, .admin__subtab--active,
+.admin__tab--active:hover, .admin__subtab--active:hover { color: var(--sk-ink); }
+
+/* Gold is for fills and borders; small gold TEXT on white or cream was only about 2:1, so it uses the darker gold */
+.cal-day__count,
+.notif-row__source,
+.case-card__hearing-date,
+.calc-info-card__bullet,
+.qa-card__arrow,
+.exp-card__arrow { color: #8a6a1c; }
+.cal-day--selected .cal-day__count { color: var(--sk-ink); }
+
+/* Completed to-dos stay dimmed by colour and strike-through only; fading the whole row as well made them unreadable */
+.todo-item--completed { opacity: 1; }
+.todo-item--completed .todo-item__title { color: var(--color-text-muted); }
+
+/* Plan picker: lift it above the blurred background orbs (only .auth-container was lifted, so the blue orb washed over the Firm card) */
+.choose-plan { position: relative; z-index: 1; }
+
+/* Sign Out: a clear red on the navy sidebar, a touch softer than full-strength; slightly stronger background and glow on hover */
+.nav-item.nav-item--danger { color: rgba(255, 100, 100, 0.85); }
+.nav-item.nav-item--danger .nav-item__icon { color: #f55f5f; filter: drop-shadow(0 0 3px rgba(245, 95, 95, 0.25)); }
+
+.nav-item.nav-item--danger:hover {
+  background: linear-gradient(90deg, rgba(240, 70, 70, 0.26), rgba(240, 70, 70, 0.06));
+  color: #fa7878;
+}
+.nav-item.nav-item--danger:hover .nav-item__icon { color: #fa6a6a; filter: drop-shadow(0 0 5px rgba(250, 106, 106, 0.5)); }
+
+/* ==========================================================================
+   Meaningful colour only: red for removing things, green / amber / blue for task state
+   ========================================================================== */
+
+/* Delete and remove icon buttons turn red on hover, like Sign Out */
+.btn-icon:is([aria-label^="Delete"], [title^="Delete"], [aria-label^="Remove"], [title^="Remove"]):hover:not(:disabled) {
+  background: rgba(229, 57, 53, 0.12); color: #d32f2f;
+}
+/* Small "x" remove chips: red instead of navy on hover */
+.picker__chip-x:hover, .case-filter-chip__remove:hover {
+  background: #d32f2f; color: #fff;
+}
+
+/* To-do task state pill: amber while pending, blue in progress, green when done */
+.todo-item--pending .todo-status     { background: #fbefd5; color: #8a5a0a; }
+.todo-item--in-progress .todo-status { background: #dbe8f8; color: #185fa5; }
+.todo-item--completed .todo-status   { background: #dcf1e6; color: #0f6e56; }
+/* Overdue tasks show their due date in red */
+.todo-due-date--overdue { color: #c62828; font-weight: 700; }
+
+/* ==========================================================================
+   Motion: a few small touches (opacity / transform only, switched off for reduced motion)
+   ========================================================================== */
+@keyframes sk-line-draw { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes sk-fade      { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sk-day-pop   { 0% { transform: scale(0.82); } 60% { transform: scale(1.08); } 100% { transform: none; } }
+
+/* The gold line under a page title and the strip on stat cards draw in from the left */
+.page-header:not(.page-header--top)::after, .admin__header::after,
+.stat-card::before {
+  transform-origin: left;
+  animation: sk-line-draw 0.7s 0.1s var(--ease-out) both;
+}
+
+/* Cards in lists fade in when they appear (all together, no one-by-one stagger),
+   which makes switching tabs, filtering and searching feel smooth */
+.case-card, .client-card, .todo-item, .judge-card, .notif-card { animation: sk-fade 0.25s ease both; }
+
+/* Picking a calendar date: the gold day pops slightly */
+.cal-day--selected { animation: sk-day-pop 0.25s var(--ease-spring); }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-header:not(.page-header--top)::after, .admin__header::after, .stat-card::before,
+  .case-card, .client-card, .todo-item, .judge-card, .notif-card, .cal-day--selected { animation: none; }
+}
+/* Admin tab bars, evened out after the tabs started to wrap:
+   - main bar and sub bar read as one group (small gap between them, normal gap below the pair)
+   - sub bar lines up with the left edge of the main bar instead of being indented
+   - every tab has the same height and centred icon and text
+   - on wide screens the main tabs share each row evenly, so a wrapped second row has no ragged right edge */
+.admin__tabs:has(+ .admin__subtabs) { margin-bottom: 8px; }
+.admin__tab, .admin__subtab { min-height: 40px; justify-content: center; line-height: 1.2; }
+.admin__subtab { min-height: 36px; }
+.admin__tab-icon { display: inline-flex; align-items: center; margin-right: 0; }
+@media (min-width: 861px) {
+  .admin__tabs { row-gap: 4px; }
+  .admin__tab { flex: 1 1 auto; }
+  .admin__subtabs { width: fit-content; }
+}
+
+/* Logo: one mark, one rhythm everywhere (see components/common/BrandMark.jsx)
+   mark + 8-10px gap + wordmark, centred on the same line; the sidebar logo starts at the same left edge as the menu items */
+.brand-mark { display: block; flex: none; }
+.sidebar__brand { padding-left: 14px; }
+.sidebar__brand-row, .mobile-topbar__brand, .lx .lx-brand, .errpage__brand, .invoice__brand, .lx .lx-footer__logo {
+  display: inline-flex; align-items: center; line-height: 1.1;
+}
+.sidebar__brand-row { display: flex; gap: 8px; }
+.mobile-topbar__brand { gap: 8px; }
+.errpage__brand, .invoice__brand, .lx .lx-footer__logo { gap: 8px; }
+.lx .lx-footer__logo { display: flex; }
+/* The tagline lines up under the wordmark: mark width (28px) + gap (8px) */
+.sidebar__brand-tag { padding-left: 36px; }
+
+/* Admin tabs: always one row, never wrapping onto a second line. When the tabs do not all fit, the bar slides sideways
+   (swipe, trackpad, Shift + wheel or the thin gold slider underneath). Doubled class names so this wins over the earlier rules and mobile.css */
+.admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs {
+  flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; cursor: grab;
+}
+/* No scrollbar: swipe, drag, trackpad or Shift + wheel to slide. A soft fade at an edge shows there are more tabs that way */
+.admin__tabs.admin__tabs::-webkit-scrollbar, .admin__subtabs.admin__subtabs::-webkit-scrollbar { display: none; }
+.admin__tabs[data-fade-right="true"], .admin__subtabs[data-fade-right="true"] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+          mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+}
+.admin__tabs[data-fade-left="true"], .admin__subtabs[data-fade-left="true"] {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
+          mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
+}
+.admin__tabs[data-fade-left="true"][data-fade-right="true"], .admin__subtabs[data-fade-left="true"][data-fade-right="true"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
+          mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
+}
+/* Tabs share spare width evenly on a wide screen but never shrink below their own text */
+.admin__tab.admin__tab { flex: 1 0 auto; }
+.admin__subtab.admin__subtab { flex: 0 0 auto; }

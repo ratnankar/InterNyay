@@ -1,0 +1,30 @@
+/* ==========================================================================
+   TYPOGRAPHY: one text scale for desktop and one for phones. Keep this file last in index.css.
+   Fonts: Source Sans 3 for text, buttons and fields; Playfair Display for titles (set in landingcards.css).
+   Weights: 400 body, 500 field values and menu items, 600 labels, buttons and titles, 700 table headings, numbers and badges.
+   (Only 400, 500, 600 and 700 are loaded, so no other weight is used.)
+   Sizes come from the --fs-* tokens in variables.css. Phones use smaller tokens (mobile.css) and never go under 12px.
+   ========================================================================== */
+
+/* ---------- Desktop (computer, window wider than 768px) ---------- */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  /* Tables: heading and cell text are the same size, so a row reads evenly (cells were 13px under 14px headings) */
+  :is(.admin__table, .qa-table, .fee-summary__table) :is(th, td) { font-size: var(--fs-base); }
+  :is(.admin__table, .qa-table, .fee-summary__table) th { font-weight: 700; }
+  :is(.admin__table, .qa-table, .fee-summary__table) td { font-weight: 400; }
+
+  .page-subtitle { font-size: var(--fs-md); }
+
+  /* Form labels: same size and weight on every form */
+  .form-label, .form-group > label { font-size: var(--fs-base); font-weight: 600; }
+}
+
+/* ---------- Phones and tablets ---------- */
+@media not all and (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  /* Table headings were 11px; nothing is smaller than 12px */
+  :is(.admin__table, .qa-table, .fee-summary__table) th { font-size: var(--fs-xs); font-weight: 700; }
+  :is(.admin__table, .qa-table, .fee-summary__table) td { font-size: 0.8125rem; font-weight: 400; }
+
+  .page-subtitle { font-size: 0.8125rem; }
+  .form-label, .form-group > label { font-size: 0.8125rem; font-weight: 600; }
+}

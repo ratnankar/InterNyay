@@ -1,0 +1,184 @@
+
+/* Fee calculator layout */
+.calculator__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.calculator__left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.calculator__right {
+  position: sticky;
+  top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Calculator step */
+.calc-step {
+  padding: 1.5rem;
+}
+
+.calc-step__label {
+  margin-bottom: 1rem;
+}
+
+/* Case type buttons */
+.calc-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+
+.calc-type-btn {
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #d3dbe8;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  font-family: var(--font-body);
+  background: var(--color-surface);
+}
+
+.calc-type-btn:hover {
+  border-color: var(--color-gold);
+  background: var(--color-gold-light);
+}
+
+.calc-type-btn--active {
+  border-color: var(--color-gold);
+  background: var(--color-gold-light);
+}
+
+.calc-type-btn__icon  { font-size: var(--fs-2xl); margin-bottom: 4px; }
+.calc-type-btn__label { font-size: var(--fs-sm); font-weight: 700; color: var(--color-navy); margin-bottom: 2px; }
+.calc-type-btn__desc  { font-size: var(--fs-xs); color: var(--color-text-muted); }
+
+/* Details inputs and fixed fee badge */
+.calc-details-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+/* Read-only 'Fee Type' box: same label, border, padding and height as the inputs beside it */
+.calc-fixed-badge {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  border: var(--border-input);
+  border-radius: var(--border-radius-md);
+  padding: 9px 12px;
+  background: var(--color-surface-2);
+  font-size: var(--fs-base);
+  font-family: var(--font-body);
+  font-weight: 600;
+  line-height: normal;
+  color: var(--color-navy);
+}
+
+/* Fee estimate inside the Case Details card: result on the left, Calculate button on the right */
+.calc-estimate {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-gold-light);
+  border: 1px solid var(--color-gold-border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.calc-estimate__info { min-width: 0; flex: 1; }
+
+.calc-estimate__label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-text-mid);
+}
+
+.calc-estimate__hint {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  color: var(--color-text-faint);
+}
+
+.calc-estimate__amount {
+  margin-top: 2px;
+  font-weight: 700;
+  font-size: var(--fs-2xl);
+  line-height: 1.2;
+  color: var(--color-navy);
+  font-family: var(--font-heading);
+}
+
+.calc-estimate__basis {
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--color-text-mid);
+}
+
+.calc-estimate__btn {
+  flex-shrink: 0;
+  width: auto;
+}
+
+/* Info card and quick row */
+.calc-info-card {
+  padding: 1.25rem;
+}
+
+.calc-info-card__title {
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  color: var(--color-navy);
+  margin-bottom: 0.75rem;
+}
+
+.calc-info-card__note-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.calc-info-card__bullet { font-weight: 700; flex-shrink: 0; }
+.calc-info-card__note   { font-size: var(--fs-xs); color: var(--color-text-mid); line-height: var(--lh-base); }
+
+.calc-quick-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.calc-quick-row__label { font-size: var(--fs-xs); color: var(--color-text-mid); }
+.calc-quick-row__fee   { font-size: var(--fs-xs); font-weight: 700; color: var(--color-navy); }
+
+@media (max-width: 860px) {
+  .calculator__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .calc-estimate { flex-direction: column; align-items: stretch; }
+  .calc-estimate__btn { width: 100%; }
+
+  .calculator__right {
+    position: static;
+    top: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .calc-details-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

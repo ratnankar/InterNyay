@@ -1,0 +1,63 @@
+/* Mobile v2: overrides loaded after existing styles, focused on phones and touch screens. */
+@media (max-width: 860px) {
+  .overlay { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(10, 22, 40, 0.62); }
+  .mobile-topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: #fff; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .btn-outline--sm,
+  .btn-gold.btn-outline--sm,
+  .btn-danger.btn-outline--sm,
+  .hearings-panel .btn-outline--sm,
+  .hearings-panel .hearing-row__side .btn-outline--sm,
+  .courts-btn { min-height: 40px; }
+}
+
+.bottom-nav { display: none; }
+
+@media (max-width: 860px) {
+  .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 85;
+    padding: 0 max(0px, env(safe-area-inset-right)) env(safe-area-inset-bottom, 0px) max(0px, env(safe-area-inset-left));
+    background: #fff;
+    border-top: 1px solid var(--sk-line, #dde4ee);
+    box-shadow: 0 -8px 24px -14px rgba(10, 22, 40, 0.28);
+  }
+  .bottom-nav__item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; min-height: 58px; padding: 6px 2px;
+    border: 0; background: transparent; cursor: pointer; text-decoration: none;
+    font-family: var(--font-body); font-size: 0.75rem; font-weight: 600; line-height: 1.1;
+    color: var(--color-text-muted);
+  }
+  .bottom-nav__icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 52px; height: 28px; border-radius: 999px; font-size: 1.2rem;
+    transition: background 0.15s ease;
+  }
+  .bottom-nav__item[aria-current="page"] { color: var(--color-navy); font-weight: 700; }
+  .bottom-nav__item[aria-current="page"] .bottom-nav__icon {
+    background-image: linear-gradient(180deg, #ecd281 0%, #d8b856 52%, #bf9a3a 100%);
+  }
+  .app-main--chat { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+  .chat__launcher { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
+  body:has(input:focus, textarea:focus, select:focus) .bottom-nav { display: none; }
+}
+
+@media (max-width: 640px) {
+  .modal .form-actions {
+    position: sticky;
+    bottom: calc(-16px - env(safe-area-inset-bottom, 0px));
+    z-index: 2;
+    margin: 16px -16px calc(-16px - env(safe-area-inset-bottom, 0px));
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: #fff;
+    border-top: 1px solid var(--sk-line, #dde4ee);
+  }
+}
+
+@media print { .bottom-nav { display: none; } }

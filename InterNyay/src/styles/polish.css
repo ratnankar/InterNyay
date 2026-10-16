@@ -1,0 +1,716 @@
+/* ==========================================================================
+   UI polish: gradients, duotone icons and animations.
+   Loaded last, so these rules refine the base styles without editing them.
+   ========================================================================== */
+
+/* ---------- Tokens ---------- */
+:root {
+  --grad-gold-soft:   linear-gradient(135deg, #fdf6e3 0%, #f6e7bd 100%);
+  --grad-navy:        linear-gradient(160deg, #0d2347 0%, #0a1628 60%, #07101f 100%);
+  /* The stat card look: surface gradient plus a gold glow in the top-right corner.
+     The glow is sized as a share of the component itself (farthest-corner = its diagonal), not in pixels,
+     so it stays in proportion on a 96px stat card and on a big card, panel or popup alike.
+     27% of the diagonal gives the glow the same size the stat card had (about 54px on a 200 x 96 card).
+     Raise --glow-size for a bigger glow everywhere, lower it for a smaller one. */
+  --grad-danger:      linear-gradient(135deg, #c24141 0%, #A32D2D 100%);
+
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --glow-gold: 0 0 0 3px rgba(201, 168, 76, 0.22);
+}
+
+/* ---------- Keyframes ---------- */
+@keyframes px-page-in   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes px-rise      { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes px-fade      { from { opacity: 0; } to { opacity: 1; } }
+@keyframes px-pop       { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes px-gradient  { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes px-orb       { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(30px, -24px, 0) scale(1.12); } }
+@keyframes px-pulse     { 0% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.55); } 70% { box-shadow: 0 0 0 14px rgba(201, 168, 76, 0); } 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); } }
+@keyframes px-badge     { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+@keyframes px-shine     { from { transform: translateX(-130%) skewX(-20deg); } to { transform: translateX(230%) skewX(-20deg); } }
+@keyframes px-bar       { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ---------- Page transition ---------- */
+.app-main > * { animation: px-page-in 0.38s var(--ease-out) backwards; }
+
+:is(.case-card, .client-card, .stat-card, .todo-item, .judge-card, .notif-card,
+    .qa-card, .qa-pd-card, .hearing-card, .exp-card, .doc-group, .pricing-card):nth-child(2) { animation-delay: 0.04s; }
+:is(.case-card, .client-card, .stat-card, .todo-item, .judge-card, .notif-card,
+    .qa-card, .qa-pd-card, .hearing-card, .exp-card, .doc-group, .pricing-card):nth-child(3) { animation-delay: 0.08s; }
+:is(.case-card, .client-card, .stat-card, .todo-item, .judge-card, .notif-card,
+    .qa-card, .qa-pd-card, .hearing-card, .exp-card, .doc-group, .pricing-card):nth-child(4) { animation-delay: 0.12s; }
+:is(.case-card, .client-card, .stat-card, .todo-item, .judge-card, .notif-card,
+    .qa-card, .qa-pd-card, .hearing-card, .exp-card, .doc-group, .pricing-card):nth-child(5) { animation-delay: 0.16s; }
+:is(.case-card, .client-card, .stat-card, .todo-item, .judge-card, .notif-card,
+    .qa-card, .qa-pd-card, .hearing-card, .exp-card, .doc-group, .pricing-card):nth-child(n+6) { animation-delay: 0.2s; }
+
+/* Gradient tiles behind icons */
+.qa-card__icon{
+  background: var(--grad-gold-soft);
+}
+.qa-card__icon { border-radius: 50%; }
+
+.sidebar__brand-name {
+  background: linear-gradient(90deg, #ffffff 0%, #f1dc9a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sidebar__brand-tag { animation: px-fade 0.8s 0.2s both; }
+
+.nav-item { position: relative; transition: background 0.2s, color 0.2s, transform 0.2s var(--ease-out), box-shadow 0.2s; }
+.nav-item:hover { transform: translateX(3px); }
+.nav-item.active {
+  background: var(--grad-gold);
+  box-shadow: 0 4px 14px rgba(201, 168, 76, 0.35);
+}
+.nav-item.active:hover { transform: none; }
+.nav-item--danger:hover { background: linear-gradient(90deg, rgba(255, 80, 80, 0.18), rgba(255, 80, 80, 0.03)); }
+
+.nav-item__badge { animation: px-badge 1.8s ease-in-out infinite; }
+
+.sidebar__user-menu { animation: px-pop 0.18s var(--ease-out) both; transform-origin: bottom center; }
+
+/* ---------- Page headings ---------- */
+.page-title {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  max-width: 100%;
+}
+.page-title::after {
+  content: '';
+  height: 3px;
+  width: 56px;
+  margin-top: 6px;
+  border-radius: 3px;
+  background: var(--grad-gold);
+  transform-origin: left;
+  animation: px-bar 0.6s 0.15s var(--ease-out) both;
+}
+.page-subtitle { animation: px-fade 0.6s 0.15s both; }
+
+/* ---------- Buttons ---------- */
+.btn-gold, .auth-btn, .lp-btn--gold, .calc-submit-btn, .pricing-card__cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-gold, .lp-btn--gold {
+  background: var(--grad-gold);
+  transition: transform 0.2s var(--ease-out), box-shadow 0.2s, filter 0.2s;
+}
+.btn-gold:hover, .lp-btn--gold:hover:not(:disabled) {
+  opacity: 1;
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-gold);
+}
+.btn-gold:active, .lp-btn--gold:active, .auth-btn:active { transform: translateY(0) scale(0.98); box-shadow: none; }
+
+/* Light sweep across gold buttons on hover */
+.btn-gold::after, .auth-btn::after, .lp-btn--gold::after, .calc-submit-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: translateX(-130%) skewX(-20deg);
+  pointer-events: none;
+}
+.btn-gold:hover:not(:disabled)::after, .auth-btn:hover:not(:disabled)::after,
+.lp-btn--gold:hover:not(:disabled)::after, .calc-submit-btn:hover:not(:disabled)::after {
+  animation: px-shine 0.7s var(--ease-out);
+}
+
+.btn-outline { transition: background 0.2s, border-color 0.2s, transform 0.2s var(--ease-out), box-shadow 0.2s; }
+.btn-outline:hover {
+  background: var(--grad-gold-soft);
+  border-color: var(--color-gold);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.btn-outline:active { transform: scale(0.98); }
+.btn-outline--danger:hover { background: linear-gradient(135deg, #fbeaea, #f6d6d6); }
+
+.btn-danger { background: var(--grad-danger); transition: transform 0.2s var(--ease-out), box-shadow 0.2s, opacity 0.2s; }
+.btn-danger:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(163, 45, 45, 0.35); }
+.btn-danger:active { transform: scale(0.98); }
+
+.btn-icon:hover { transform: scale(1.12); }
+
+/* Stat-card look (surface gradient + gold corner glow). One list, so every place below stays identical,
+   and the glow scales with each component's size (see --glow-size).
+   Stat cards and admin chart cards: Expenses, Transactions, To do and Admin.
+   Cases / Clients / Legal Forms: case card (the opened details inside it stay plain), client card, form card.
+   Other lists: judge card, notification card, Quick Access card, profile card, calculator info card, contact card.
+   Dashboard: the window listing the hearings.
+   Windows: transaction PIN gate, Judge on Leave popup, advocate code popup (Google associate sign-up). */
+.stat-card, .admin-chart,
+.case-card,
+.client-card, .form-template-card,
+.judge-card, .notif-card, .qa-pd-card,
+.hearings-panel,
+.profile-card, .calc-info-card, .contact-card,
+.txn-gate__card, .modal:has(.qa-leave-detail) { background: var(--grad-surface-glow); }
+
+/* A case card that is opened drops the gold glow too, so the whole opened case reads as one plain window */
+.case-card:has(> .case-detail) { background: var(--grad-surface); }
+
+/* Opened details inside a case card sit in their own bordered panel, plain white with no gold glow */
+.case-card .case-detail {
+  background: var(--color-surface);
+  padding: 1rem;
+  border: var(--border-default);
+  border-radius: var(--border-radius-lg);
+}
+
+/* The stat card and chart card glow now comes from --grad-surface-glow above (it used to be a fixed 110px
+   corner circle drawn here, which stayed the same size on every card) */
+.stat-card, .admin-chart { position: relative; overflow: hidden; }
+
+.case-card, .client-card, .todo-item, .judge-card, .notif-card, .qa-card, .calc-info-card {
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s, border-color 0.2s;
+}
+
+/* Default avatar (no photo): navy gradient circle, gold ring, light-gold person icon.
+   Same look everywhere a profile image is missing: profile page, clients, sidebar, selected client, saved accounts. */
+.client-card__avatar, .client-card__avatar--lg, .profile-card__avatar,
+.sidebar__avatar:not(.sidebar__avatar--photo), .client-selected__avatar, .auth-saved__avatar {
+  position: relative;
+  background: linear-gradient(145deg, #12305f 0%, #0a1628 100%);
+  color: #f1dc9a;
+  border: 2px solid var(--color-gold);
+  box-sizing: border-box;
+}
+/* The small avatars (sidebar, sign-in saved accounts, selected client) get a thin ring; the larger ones keep 2px */
+.sidebar__avatar:not(.sidebar__avatar--photo), .auth-saved__avatar, .client-selected__avatar { border-width: 1px; }
+
+/* The person icon fills about half of the circle, whatever size the avatar is */
+:is(.client-card__avatar, .profile-card__avatar, .sidebar__avatar, .client-selected__avatar, .auth-saved__avatar) > .icon {
+  width: 52%;
+  height: 52%;
+  vertical-align: 0;
+}
+
+/* Photo avatar: keep the photo clean, with a gentle gradient overlay for depth */
+.client-card__avatar:has(img), .client-card__avatar--lg:has(img), .profile-card__avatar:has(img),
+.sidebar__avatar--photo, .auth-saved__avatar:has(img) { background: var(--color-bg); }
+.client-card__avatar:has(img)::after, .profile-card__avatar:has(img)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, transparent 55%, rgba(10, 22, 40, 0.28) 100%);
+  pointer-events: none;
+}
+
+.hearing-row__case-type, .hearing-row__cause-list-no { background: var(--grad-gold-soft); }
+.hearing-row { transition: background 0.2s, transform 0.2s var(--ease-out); }
+.hearing-row:hover { background: var(--color-surface-2); }
+
+/* ---------- Forms ---------- */
+.form-input, .lp-field input, .lp-field textarea, .dropdown__input {
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.form-input:focus, .lp-field input:focus, .lp-field textarea:focus, .dropdown__input:focus {
+  border-color: var(--color-gold);
+  box-shadow: var(--glow-gold);
+}
+.dropdown__list { animation: px-pop 0.16s var(--ease-out) both; transform-origin: top center; }
+
+.upload-dropzone { transition: border-color 0.2s, background 0.2s, transform 0.2s var(--ease-out); }
+.upload-dropzone:hover { transform: translateY(-2px); }
+
+/* ---------- Modals, overlays, toasts ---------- */
+.overlay { animation: px-fade 0.2s ease both; }
+.modal { animation: px-pop 0.3s var(--ease-out) both; position: relative; }
+
+.toast { animation: slideIn 0.35s var(--ease-spring); }
+
+/* ---------- Chat assistant ---------- */
+.chat__launcher {
+  background: var(--grad-navy);
+  transition: transform 0.2s var(--ease-spring), background 0.2s;
+}
+.chat__launcher:hover { transform: translateY(-3px) scale(1.06); animation-play-state: paused; }
+.chat__panel  { animation: px-pop 0.3s var(--ease-out) both; transform-origin: bottom right; }
+.chat__header { background: var(--grad-navy); }
+.chat__msg--user { background: linear-gradient(135deg, #1d4ed8 0%, #16386f 100%); color: #fff; }
+.chat__msg { animation: px-rise 0.28s var(--ease-out) both; }
+.chat__send { background: linear-gradient(135deg, #1d4ed8 0%, #16386f 100%); color: #fff; }
+.chat__send:hover:not(:disabled) { filter: brightness(1.12); }
+
+.pricing-card--featured {
+  background: linear-gradient(180deg, #fffdf6 0%, #fdf6e3 100%);
+}
+.pricing-card__badge { background: var(--grad-gold); color: var(--color-navy); }
+.pricing-card__cta { background: var(--grad-gold); }
+
+/* ---------- Admin console ---------- */
+.admin__tab { transition: background 0.2s, color 0.2s, transform 0.2s var(--ease-out), box-shadow 0.2s, filter 0.2s; }
+.admin__tab:hover { transform: translateY(-1px); }
+/* The open tab is a gold button like .btn-gold: same gradient, same clean 8px edges (no outline or bevel),
+   with the same lift, glow and light sweep on hover. The 2px transparent bottom edge keeps every tab the same height */
+.admin__tab--active {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--grad-gold);
+  border: none;
+  border-bottom: 2px solid transparent;
+  box-shadow: none;
+}
+.admin__tab--active:hover {
+  filter: brightness(1.05);
+  box-shadow: var(--shadow-gold);
+}
+.admin__tab--active:active { transform: translateY(0) scale(0.98); box-shadow: none; }
+.admin__tab--active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: translateX(-130%) skewX(-20deg);
+  pointer-events: none;
+}
+.admin__tab--active:hover::after { animation: px-shine 0.7s var(--ease-out); }
+
+/* ---------- Auth page ---------- */
+.auth-page {
+  position: relative;
+  overflow: hidden;
+  background-size: 300% 300%;
+  animation: px-gradient 18s ease infinite;
+}
+.auth-page::before, .auth-page::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  animation: px-orb 14s ease-in-out infinite;
+}
+.auth-page::before { width: 340px; height: 340px; top: -90px; left: -80px; }
+.auth-page::after  { width: 420px; height: 420px; bottom: -140px; right: -100px; background: rgba(59, 109, 200, 0.28); animation-delay: -6s; }
+.auth-container { position: relative; z-index: 1; animation: px-rise 0.6s var(--ease-out) both; }
+.auth-logo__name {
+  background: linear-gradient(90deg, #ffffff, #f1dc9a 60%, #C9A84C);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.auth-card {
+  animation: px-pop 0.6s 0.1s var(--ease-out) both;
+}
+.auth-tab { transition: background 0.25s, color 0.25s, box-shadow 0.25s; }
+.auth-tab--active { background: var(--grad-gold); box-shadow: 0 4px 12px rgba(201, 168, 76, 0.35); }
+.auth-btn { transition: transform 0.2s var(--ease-out), box-shadow 0.2s; }
+.lp-btn { transition: filter 0.15s, background 0.15s, transform 0.2s var(--ease-out), box-shadow 0.2s; }
+.lp-btn--gold { background: var(--grad-gold); }
+.lp-btn:hover:not(:disabled) { transform: translateY(-2px); }
+
+/* Sidebar: soft sheen behind the user block */
+.sidebar__user { background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.04)); }
+
+/* Modal and popup backdrops: vignette */
+.overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 22, 40, 0.25) 0%, transparent 35%, rgba(10, 22, 40, 0.35) 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Chat panel header and messages area */
+.chat__header { box-shadow: inset 0 -1px 0 rgba(201, 168, 76, 0.35); }
+
+/* Mobile top bar */
+.mobile-topbar { background: var(--grad-navy); }
+
+/* Pricing featured card: gold sheen across the top */
+.pricing-card--featured { background-image: linear-gradient(180deg, rgba(201, 168, 76, 0.14) 0%, transparent 40%); background-color: #fffdf6; }
+
+/* ---------- Reduced motion: keep gradients and tones, drop movement ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Set-password panel (Google sign-ups without a password) ---------- */
+.profile-setpw {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--color-gold-border);
+  background: linear-gradient(135deg, #fffdf6 0%, #fdf6e3 100%);
+  animation: px-rise 0.4s var(--ease-out) backwards;
+}
+.profile-setpw__icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--color-gold);
+  background: linear-gradient(145deg, #12305f 0%, #0a1628 100%);
+}
+.profile-setpw__body { flex: 1; min-width: 0; }
+.profile-setpw__title { font-weight: 700; color: var(--color-navy); font-size: var(--fs-md); margin-bottom: 4px; }
+.profile-setpw__text { color: var(--color-text-mid); font-size: var(--fs-base); line-height: 1.55; margin-bottom: 12px; }
+
+/* Remove-photo link in the client detail header */
+.client-detail__header .avatar-upload__remove {
+  display: block;
+  margin: 6px 0 0;
+  color: var(--color-critical);
+}
+.client-detail__header .avatar-upload__remove:hover { filter: brightness(0.85); }
+
+/* Email row inside the Edit Profile form */
+.profile-email-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding: 12px 14px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-gold-border);
+  background: var(--grad-gold-soft);
+}
+.profile-email-row .form-label { margin-bottom: 2px; }
+
+/* ==========================================================================
+   Tables: rounded edges, navy gradient header, zebra rows, gold hover
+   ========================================================================== */
+.admin__table, .qa-table, .fee-summary__table, .case-fields {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.admin__table-wrap > .admin__table { border: none; border-radius: 0; box-shadow: none; }
+
+/* Header: navy gradient with a light top edge, gold text, faint column dividers and a gold underline */
+.admin__table th, .qa-table th, .fee-summary__table th {
+  text-align: left;
+  padding: 14px 16px;
+  white-space: nowrap;
+}
+.qa-table th:first-child, .qa-table th:last-child { border-radius: 0; }
+
+/* Body cells: roomy padding, soft dividers */
+.admin__table td, .qa-table td, .fee-summary__table td {
+  padding: 12px 16px;
+  color: var(--color-text);
+  vertical-align: middle;
+  transition: background 0.15s;
+}
+.admin__table tbody tr:last-child td, .qa-table tbody tr:last-child td,
+.fee-summary__table tbody tr:last-child td { border-bottom: none; }
+
+/* Highlighted Quick Access row keeps its own colour */
+.qa-table tbody tr.qa-table-row--highlight td { background: var(--grad-gold-soft); box-shadow: inset 3px 0 0 var(--color-gold); }
+
+/* Totals row */
+.fee-summary__table tfoot td {
+  border-bottom: none;
+  font-weight: 700;
+}
+
+.admin__table tbody tr:nth-child(2), .qa-table tbody tr:nth-child(2), .fee-summary__table tbody tr:nth-child(2) { animation-delay: 0.03s; }
+.admin__table tbody tr:nth-child(3), .qa-table tbody tr:nth-child(3), .fee-summary__table tbody tr:nth-child(3) { animation-delay: 0.06s; }
+.admin__table tbody tr:nth-child(4), .qa-table tbody tr:nth-child(4), .fee-summary__table tbody tr:nth-child(4) { animation-delay: 0.09s; }
+.admin__table tbody tr:nth-child(n+5), .qa-table tbody tr:nth-child(n+5), .fee-summary__table tbody tr:nth-child(n+5) { animation-delay: 0.12s; }
+
+/* Case details table: rounded, label column tinted */
+.case-fields th, .case-fields td { border: none; border-bottom: 1px solid var(--color-gold-border); border-right: 1px solid var(--color-gold-border); }
+.case-fields tr:last-child th, .case-fields tr:last-child td { border-bottom: none; }
+.case-fields tr > :last-child { border-right: none; }
+
+/* Transaction tables sit inside a card, so trim the card padding a little */
+.txn-table-wrap { padding: 0.75rem; }
+
+/* Printed invoice keeps plain styling */
+@media print {
+  .admin__table, .qa-table, .fee-summary__table, .case-fields { box-shadow: none; }
+}
+
+/* ==========================================================================
+   Button polish: keyboard focus, disabled states, touch targets, reduced motion
+   ========================================================================== */
+
+/* No double-tap zoom delay or grey tap flash on phones */
+:is(.btn-gold, .btn-outline, .btn-danger, .btn-icon, .auth-btn, .lp-btn, .calc-submit-btn,
+    .pricing-card__cta, .qa-filter-btn, .qa-year-btn, .qa-copy-btn, .qa-jur-cat, .qa-retry-btn, .nav-item) {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Visible keyboard focus (mouse clicks don't show it) */
+:is(.btn-gold, .btn-outline, .btn-danger, .btn-icon, .auth-btn, .lp-btn, .calc-submit-btn,
+    .pricing-card__cta, .qa-filter-btn, .qa-year-btn, .qa-copy-btn, .qa-jur-cat, .qa-retry-btn,
+    .qa-close, .profile-reset-link, .avatar-upload__remove):focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+.btn-danger:focus-visible, .btn-outline--danger:focus-visible { outline-color: var(--color-critical); }
+.nav-item:focus-visible, .sidebar__user-row:focus-visible, .sidebar__user-menu-item:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
+}
+
+/* Disabled buttons look disabled and don't react to hover */
+.btn-outline:disabled, .btn-icon:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+:is(.btn-gold, .btn-danger, .btn-outline, .btn-icon):disabled {
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+.btn-outline:disabled:hover { background: transparent; border-color: #b8c4d6; }
+.btn-outline--danger:disabled:hover { border-color: #d9a3a3; }
+.btn-icon:disabled:hover { background: none; color: var(--color-text-muted); }
+
+/* Pressed feedback for the icon button */
+.btn-icon:active:not(:disabled) { transform: scale(0.94); }
+
+/* Touch screens: larger tap targets */
+@media (pointer: coarse) {
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-outline--sm { padding-left: 12px; padding-right: 12px; }
+}
+
+/* Keep the buttons still for people who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :is(.btn-gold, .btn-outline, .btn-danger, .btn-icon, .auth-btn, .lp-btn, .calc-submit-btn, .pricing-card__cta):is(:hover, :active) {
+    transform: none;
+  }
+  .btn-gold::after, .auth-btn::after, .lp-btn--gold::after, .calc-submit-btn::after { animation: none !important; }
+}
+
+/* ---------- Error messages (one look everywhere, kept last so it wins over the older per-page error rules) ----------
+   Soft red box with a left accent bar and a warning icon, instead of plain red text.
+   Used by <ErrorMessage /> and by the older error classes listed in the selector, so every form looks the same.
+   The icon is drawn by CSS, so those classes need no extra markup. */
+.alert-error,
+.account-modal__error,
+.lp-error,
+.crop-error,
+.file-numbers__note--error {
+  --alert-bg: #fdf1f0;
+  --alert-border: #f3c9c6;
+  --alert-text: #8f2323;
+  --alert-accent: var(--color-critical, #A32D2D);
+
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.75rem 0;
+  padding: 10px 14px 10px 12px;
+  background: var(--alert-bg);
+  border: 1px solid var(--alert-border);
+  border-left: 4px solid var(--alert-accent);
+  border-radius: var(--border-radius-md);
+  color: var(--alert-text);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  animation: alert-error-in 0.22s ease-out;
+}
+
+.alert-error::before,
+.account-modal__error::before,
+.lp-error::before,
+.crop-error::before,
+.file-numbers__note--error::before {
+  content: '';
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  background-color: var(--alert-accent);
+  -webkit-mask: var(--alert-icon) center / contain no-repeat;
+  mask: var(--alert-icon) center / contain no-repeat;
+  --alert-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2 1 21h22M12 6l7.53 13H4.47M11 10v4h2v-4m-2 6v2h2v-2'/></svg>");
+}
+
+/* Margins the older classes set for themselves are replaced by the shared spacing above */
+.account-modal__error,
+.crop-error { margin: 0.75rem 0; }
+
+/* On the dark sign in / register screens */
+.auth-card .alert-error {
+  margin: 0 0 1rem;
+}
+
+@keyframes alert-error-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alert-error,
+  .account-modal__error,
+  .lp-error,
+  .crop-error,
+  .file-numbers__note--error { animation: none; }
+}
+
+/* Short hints under a single field: keep them small, no box, with a small icon-free red tone */
+.admin__hint--error,
+.contact-error {
+  color: #b3261e;
+  font-weight: 500;
+}
+
+/* Inside the landing contact form the form's own gap already spaces the box */
+.lp-form .lp-error { margin: 0; }
+
+/* ---------- Advocate code popup (Google associate sign-up): same golden touch as the admin stat card ---------- */
+.modal--auth { overflow: hidden auto; }
+/* A little wider than the plain small modal so the Google sign-up popup and its buttons breathe */
+.modal--auth.modal--sm { max-width: 520px; }
+.modal--auth > * { position: relative; z-index: 1; }
+
+/* Heading: gold key tile beside the title */
+.modal--auth__heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.modal--auth__icon {
+  flex: none;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  color: var(--color-navy);
+  background: var(--grad-gold-soft);
+  border: 1px solid rgba(201, 168, 76, 0.45);
+}
+.modal--auth__icon .icon { width: 1.3em; height: 1.3em; }
+.modal--auth .modal__title { font-size: var(--fs-xl); }
+
+/* The code box reads like the advocate's own code on their Profile page: gold tint, dashed gold border, spaced mono letters */
+.modal--auth .advocate-code-input {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-navy);
+  background: var(--color-gold-light);
+  border: 1px dashed var(--color-gold);
+}
+.modal--auth .advocate-code-input::placeholder { font-weight: 400; letter-spacing: 2px; color: rgba(10, 22, 40, 0.35); }
+
+/* Name of the Google account in the intro line */
+.modal--auth .account-modal__text strong { color: var(--color-navy); }
+
+/* Rows that hold search, filter and sort controls */
+.list-toolbar,
+.doc-filter-row,
+.todo-filter-bar,
+.todo-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.todo-filter-bar { margin-bottom: 1.25rem; }
+.todo-filters { flex-wrap: nowrap; }
+
+/* "Sort:" and "Submitted By:" labels */
+.sort-control,
+.doc-filter-group { display: flex; align-items: center; flex-shrink: 0; }
+.sort-control label,
+.doc-filter-label {
+  margin: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Search boxes, dropdowns, Filter / Clear buttons and status chips share the same height */
+.list-toolbar .doc-search-input,
+.doc-filter-row .doc-search-input,
+.todo-search-input,
+.sort-control .dropdown__input,
+.doc-filter-select,
+.todo-filters .dropdown__input,
+.txn-timeline-filter .dropdown__input,
+.txn-timeline-filter .form-input,
+.list-toolbar .btn-outline,
+.doc-filter-row .btn-outline,
+.case-filter-menu > .btn-outline,
+.list-toolbar .case-filter-btn {
+  box-sizing: border-box;
+  height: var(--ctl-h);
+  min-height: var(--ctl-h);
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: var(--fs-base);
+  line-height: 1.2;
+}
+
+/* Left / right padding stays roomy for the search icon, clear button and dropdown arrow */
+.list-toolbar .doc-search-input,
+.doc-filter-row .doc-search-input { padding-left: 38px; padding-right: 34px; }
+.todo-search-input { padding-left: 12px; padding-right: 34px; }
+.sort-control .dropdown__input,
+.doc-filter-select,
+.todo-filters .dropdown__input { padding-left: 12px; padding-right: 30px; }
+
+/* Buttons centre their text and icon, and never wrap */
+.list-toolbar .btn-outline,
+.doc-filter-row .btn-outline,
+.case-filter-menu > .btn-outline,
+.list-toolbar .case-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* Same dropdown width everywhere */
+.sort-control .dropdown,
+.doc-filter-group .dropdown,
+.todo-filters .dropdown { width: 170px; flex: 0 0 auto; }
+
+/* The search box takes the free space; sort and filter stay on the right edge */
+.list-toolbar .doc-search-wrap,
+.doc-filter-row .doc-search-wrap,
+.todo-search-wrap { flex: 1 1 260px; min-width: 220px; margin-bottom: 0; }
+.doc-filter-row .doc-search-wrap { margin-bottom: 0; }
+
+/* Search icon and clear button stay centred on the taller box */
+.list-toolbar .doc-search-icon,
+.doc-filter-row .doc-search-icon { font-size: var(--fs-md); }
+
+/* Labelled fields (period filters on Transactions / Expenses) line up on their bottom edge */
+.txn-timeline-filter { align-items: flex-end; }
+
+@media (max-width: 640px) {
+  .list-toolbar .doc-search-wrap,
+  .doc-filter-row .doc-search-wrap,
+  .todo-search-wrap { flex-basis: 100%; }
+  .todo-filters { flex-wrap: wrap; }
+}

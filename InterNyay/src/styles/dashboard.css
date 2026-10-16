@@ -1,0 +1,297 @@
+
+/* Dashboard layout: main column and side column */
+.dashboard__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.dashboard__side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+/* Hearings panel and its header */
+.hearings-panel {
+  padding: 1.5rem;
+}
+
+.hearings-panel__count {
+  font-size: var(--fs-base);
+}
+
+/* Hearing row: accent bar, title, case type, meta, judge, court number and file number */
+.hearing-row {
+  display: flex;
+  flex-wrap: wrap;      
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px;
+}
+
+.hearing-row__bar {
+  width: 4px;
+  align-self: stretch;   
+  min-height: 40px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  /* Same colour for every hearing, whatever the case status */
+  background: var(--color-gold);
+}
+
+.hearing-row__title {
+  font-weight: 600;
+  font-size: var(--fs-md);
+  color: var(--color-navy);
+}
+
+.hearing-row__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.hearing-row__heading .badge {
+  padding: 3px 12px;
+  font-size: var(--fs-sm);
+}
+
+.hearing-row__case-type {
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--color-gold-border);
+  color: var(--color-navy);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.hearing-row__meta {
+  font-size: var(--fs-base);
+  color: var(--color-text-muted);
+}
+.hearing-row__meta strong {
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.hearing-row__body { flex: 1 1 320px; min-width: 0; }
+
+.hearing-row__leave {
+  margin-top: 4px;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--color-critical);
+}
+
+.hearing-row__judge {
+  margin-top: 2px;
+  font-size: var(--fs-base);
+  color: var(--color-text-mid);
+}
+.hearing-row__judge strong {
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.hearing-row__side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.hearing-row__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.hearing-row__court-no {
+  padding: 3px 12px;
+  border-radius: 20px;
+  border: var(--border-default);
+  background: var(--color-surface-2);
+  color: var(--color-navy);
+  font-size: var(--fs-base);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.hearing-row__cause-list-no {
+  padding: 3px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--color-gold-border);
+  color: var(--color-navy);
+  font-size: var(--fs-base);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.hearing-row__file-no {
+  padding: 3px 12px;
+  border-radius: 20px;
+  border: var(--border-default);
+  background: var(--color-surface-2);
+  color: var(--color-navy);
+  font-size: var(--fs-base);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* Main dashboard column */
+.dashboard__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+/* Hearing row for a past hearing */
+.hearing-row__past {
+  padding: 3px 12px;
+  border: var(--border-default);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.hearing-card--expanded > .hearing-row:hover { background: transparent; }
+
+.hearing-row__caret {
+  display: inline-block;
+  color: var(--color-text-faint);
+  font-size: var(--fs-sm);
+}
+
+.hearing-card__detail {
+  padding: 10px 12px 12px 12px;
+  border-top: var(--border-default);
+  cursor: default;
+}
+
+.hearing-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: var(--border-default);
+}
+.hearing-card__open { margin-left: auto; }
+
+.hearing-card__detail .case-detail__docs-label     { font-size: var(--fs-base); }
+.hearing-card__detail .hearing-history__next-label { font-size: var(--fs-sm); }
+.hearing-card__detail .hearing-history__next-date  { font-size: var(--fs-base); }
+.hearing-card__detail .hearing-history__empty      { font-size: var(--fs-base); }
+
+.hearing-card__detail .hearing-entry__date         { min-width: 122px; }
+.hearing-card__detail .hearing-entry__date-text    { font-size: var(--fs-base); }
+.hearing-card__detail .hearing-entry__outcome      { font-size: var(--fs-xs); padding: 3px 10px; }
+.hearing-card__detail .hearing-entry__note         { font-size: var(--fs-base); line-height: var(--lh-base); }
+.hearing-card__detail .hearing-entry__order-icon   { font-size: var(--fs-md); }
+.hearing-card__detail .hearing-entry__order-name   { font-size: var(--fs-base); }
+.hearing-card__detail .hearing-entry__edit-row .form-label { font-size: var(--fs-sm); }
+.hearing-card__detail .form-input                  { font-size: var(--fs-base); }
+
+@media (max-width: 860px) {
+  .dashboard__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard__side {
+    position: static;
+    top: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .hearing-card__detail .hearing-entry__date { min-width: 0; }
+}
+/* Court headings between hearings when the day has hearings at more than one court */
+.hearings-court { margin: 14px 0 6px; font-size: var(--fs-sm); font-weight: 700; color: var(--color-navy); }
+.hearings-court:first-of-type { margin-top: 0; }
+
+/* ---------- Alignment pass ---------- */
+
+/* Side column: the calendar and notifications cards have the same padding, and the gap comes from the column alone */
+.dashboard__side .notifications-panel,
+.dashboard__side .calendar { padding: 1.25rem; margin: 0; }
+
+/* Card headers: title left, pill or link right, vertically centred, same height and spacing in every card */
+.hearings-panel__header,
+.notifications-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  margin-bottom: 1rem;
+}
+.hearings-panel__header .section-title,
+.notifications-panel__header .section-title { margin: 0; line-height: 1.3; min-width: 0; }
+.dashboard__side .section-title { font-size: var(--fs-lg); }
+
+/* The count pills look the same and never squash the title */
+.hearings-panel__header .hearings-panel__count,
+.notifications-panel__header .notifications-panel__count {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 4px 12px;
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+}
+
+/* Hearing row: the title text and the lines under it start at the same left edge (the caret has a fixed width) */
+.hearing-row__title { display: flex; align-items: baseline; margin: 0; line-height: 1.3; }
+.hearing-row__caret { flex: 0 0 16px; width: 16px; }
+.hearing-row__meta,
+.hearing-row__chips,
+.hearing-row__judge,
+.hearing-row__leave { margin-left: 16px; }
+
+@media (min-width: 641px) {
+  /* Reminder controls stay at the right edge, level with the title, instead of dropping under the text */
+  .hearing-row { flex-wrap: nowrap; align-items: stretch; }
+  .hearing-row__body { flex: 1 1 auto; }
+  .hearing-row__side { align-self: center; flex-wrap: nowrap; justify-content: flex-end; }
+  .hearings-panel .hearing-row__side .btn-outline--sm {
+    display: inline-flex; align-items: center; min-height: 38px; white-space: nowrap;
+  }
+
+  /* Every pill in the title line has the same height */
+  .hearing-row__heading > .badge,
+  .hearing-row__heading > .hearing-row__case-type {
+    display: inline-flex; align-items: center; box-sizing: border-box;
+    min-height: 24px; padding: 0 12px; line-height: 1;
+  }
+  .hearing-row__chips > span {
+    display: inline-flex; align-items: center; box-sizing: border-box;
+    min-height: 28px; padding: 0 12px; line-height: 1;
+  }
+
+  /* Even spacing between the title line, court, chips, judge and leave warning */
+  .hearing-row__meta  { margin-top: 4px; }
+  .hearing-row__chips { margin-top: 6px; }
+  .hearing-row__judge { margin-top: 6px; }
+  .hearing-row__leave { margin-top: 6px; }
+}
+

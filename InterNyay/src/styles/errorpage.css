@@ -1,0 +1,150 @@
+/* Error screens: "page not found" and "something went wrong" (components/common/ErrorPage.jsx) */
+.errpage {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* Original light page, with a faint wash of navy at the top so the header bar blends into the page */
+  background: linear-gradient(180deg, rgba(10, 22, 40, .06) 0, transparent 280px), var(--color-bg);
+  color: var(--color-text);
+}
+.errpage--embedded { min-height: 0; background: transparent; }
+
+.errpage__bar {
+  display: flex;
+  align-items: center;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-mid) 100%);
+  box-shadow: 0 2px 10px -4px rgba(10, 22, 40, .4);
+}
+.errpage__brand {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: #fff;
+  text-decoration: none;
+}
+.errpage__brand:hover { color: var(--color-gold); }
+.errpage__brand:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 4px; border-radius: 4px; }
+
+.errpage__body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px 48px;
+}
+.errpage--embedded .errpage__body { padding: 48px 16px; }
+
+.errpage__card {
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+  padding: 40px 28px 32px;
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-md);
+  animation: errpage-rise .35s ease-out both;
+}
+.errpage__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--color-gold-light);
+  color: var(--color-gold);
+  box-shadow: 0 0 0 6px rgba(201, 168, 76, .1);
+  font-size: 1.7rem;
+}
+.errpage__code {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(3.5rem, 14vw, 5.5rem);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-navy);
+  letter-spacing: .04em;
+}
+/* Short gold rule under the code ties the card to the brand */
+.errpage__code::after {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 3px;
+  margin: 14px auto 0;
+  border-radius: 3px;
+  background: var(--color-gold);
+}
+.errpage__title { margin: 14px 0 8px; font-size: var(--fs-3xl); color: var(--color-navy); }
+.errpage__text { margin: 0 auto; max-width: 400px; color: var(--color-text-muted); line-height: var(--lh-base); }
+.errpage__address {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px auto 0;
+  max-width: 100%;
+  font-size: var(--fs-sm);
+  color: var(--color-text-faint);
+}
+.errpage__address span { flex: 0 0 auto; }
+.errpage__address code {
+  min-width: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--color-surface-2);
+  font-family: var(--font-mono);
+  color: var(--color-text-mid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.errpage__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 24px;
+}
+.errpage__actions .btn-gold,
+.errpage__actions .btn-outline {
+  text-decoration: none;
+}
+.errpage__actions .btn-gold:focus-visible,
+.errpage__actions .btn-outline:focus-visible { outline: 2px solid var(--color-navy); outline-offset: 2px; }
+
+.errpage__details { margin-top: 18px; text-align: left; font-size: var(--fs-sm); color: var(--color-text-faint); }
+.errpage__details summary { cursor: pointer; text-align: center; list-style: none; }
+.errpage__details summary::-webkit-details-marker { display: none; }
+.errpage__details summary:hover { color: var(--color-text-mid); text-decoration: underline; }
+.errpage__details pre {
+  margin: 10px 0 0;
+  max-height: 140px;
+  overflow: auto;
+  padding: 10px 12px;
+  border-radius: var(--border-radius-sm);
+  background: var(--color-surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-text-mid);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@keyframes errpage-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .errpage__card { animation: none; } }
+
+@media (max-width: 480px) {
+  .errpage__bar { padding: 12px 16px; }
+  .errpage__card { padding: 32px 18px 24px; }
+  .errpage__address { flex-direction: column; gap: 4px; }
+  .errpage__actions > * { flex: 1 1 100%; }
+}

@@ -1,0 +1,222 @@
+/* ==========================================================================
+   WEIGHT HIERARCHY: one place that says how heavy every kind of control and text is.
+   Keep this file last in index.css. Before this file almost everything was weight 600, so a main button,
+   a filter pill, a search box, a Cancel button and a table button all looked equally important.
+
+   Only 400, 500, 600 and 700 of Source Sans 3 are loaded, so those are the four steps:
+
+     700  Level 1  main page action (the gold button at the top right: + Add Case, + Add Client, Upload ...), numbers, badges
+     600  Level 2  dialog Save / Delete, other gold buttons, main tabs, labels above fields, card values, selected option
+     500  Level 3  secondary buttons (Cancel, Filter, outline), filter pills, sort and dropdown values, sub tabs, chips, small row buttons
+     400  Level 4  text typed into search boxes and fields, placeholders, dropdown list options, table cell text
+
+   Rule of thumb: the more often a control is the thing you came to click, the heavier it is.
+   State is shown with colour or fill, never with weight, so tabs, pills and switches do not change width when pressed.
+   Sizes: on desktop the Level 1 buttons stay at 15px; everything else steps down to 14px or 13px.
+   ========================================================================== */
+
+:root {
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-semibold: 600;
+  --w-bold: 700;
+}
+
+/* ---------- Level 1: main page actions (top right of a page) ---------- */
+:is(.app-main, .admin) :is(.page-header, .page-header__actions, .documents__header-actions) > :is(button, a):is(.btn-gold, .btn-danger),
+.page-header--hero .btn-gold,
+.errpage__actions .btn-gold {
+  font-weight: var(--w-bold);
+  letter-spacing: 0.01em;
+}
+/* An outline button next to the main one is the lighter partner */
+:is(.app-main, .admin) :is(.page-header, .page-header__actions, .documents__header-actions) > :is(button, a):is(.btn-outline, .btn-gold-secondary),
+.errpage__actions .btn-outline {
+  font-weight: var(--w-semibold);
+}
+
+/* Card headers (Password, Transactions PIN) reuse .page-header, but their buttons are card buttons, not main page actions */
+.app-main .profile-card .page-header > :is(button, a):is(.btn-gold, .btn-danger) { font-weight: var(--w-semibold); letter-spacing: 0; }
+.app-main .profile-card .page-header > :is(button, a):is(.btn-outline, .btn-gold-secondary) { font-weight: var(--w-medium); }
+
+/* ---------- Level 2 and 3: every other button ---------- */
+/* Gold and red action buttons inside dialogs, drawers, forms and admin toolbars */
+.btn-gold, .btn-danger,
+.calc-estimate__btn, .qa-jur-search-row__btn, .form-template-card__actions button.btn-gold {
+  font-weight: var(--w-semibold);
+}
+/* Outline buttons (Cancel, Back, Edit, Filter...) are lighter than the gold button beside them */
+.btn-outline, .btn-gold-secondary,
+.form-template-card__actions button:not(.btn-gold) {
+  font-weight: var(--w-medium);
+}
+.btn-outline--danger { font-weight: var(--w-medium); }
+
+/* Buttons on a table row or a card (28 to 34px): the smaller the button, the lighter it is */
+.btn-outline--sm, .paid-status-btn, .courts-btn,
+.admin table .btn-outline, .admin .admin__actions .btn-outline,
+.doc-row__actions > :is(button, a), .judge-card__actions > button,
+.qa-retry-btn, .qa-copy-btn, .notif-row__pdf-btn, .dropdown__search-btn {
+  font-weight: var(--w-medium);
+}
+.btn-gold.btn-outline--sm, .btn-danger.btn-outline--sm,
+.admin table .btn-gold, .admin table .btn-danger, .admin .admin__actions :is(.btn-gold, .btn-danger) {
+  font-weight: var(--w-semibold);
+}
+
+/* Admin and dialog rules that set a weight with more specificity than the defaults above: outline buttons in Level 3 */
+.modal .form-actions button.btn-outline,
+.admin .admin__toolbar button.btn-outline:not(.btn-outline--sm),
+.admin button.btn-outline.btn-outline--sm,
+.modal button.btn-outline.btn-outline--sm,
+.admin .judge-card__actions button,
+.admin .admin-judge-grid button.btn-outline,
+.change-judge__tabs button.btn-outline,
+.change-judge__tabs button.btn-gold,
+.options-admin__actions--compact .btn-outline,
+.options-admin__actions--compact .btn-gold,
+.admin__account-actions .btn-outline {
+  font-weight: var(--w-medium);
+}
+
+/* Edit Case / Delete Case and the client Edit / Delete: Level 3 */
+.case-detail__actions-right > button, .case-detail__actions > button, .client-detail__header > .btn-outline {
+  font-weight: var(--w-medium);
+}
+
+/* Link-style buttons */
+.auth-card .auth-link-btn, .notif-page__back, .notifications-panel__more, .qa-link { font-weight: var(--w-medium); }
+.auth-btn, .auth-otp-btn, .calc-submit-btn, .pricing-card__cta { font-weight: var(--w-bold); }
+.skip-btn { font-weight: var(--w-medium); }
+
+/* ---------- Filter pills, year picker and segmented switches: Level 3, same weight pressed or not ---------- */
+.qa-filter-btn, .case-filter-btn, .txn-year-select, .fee-type-btn,
+.qa-filter-btn.active, .case-filter-btn--active, .txn-year-select--active, .fee-type-btn--active,
+.page-header .case-filter-btn--active, .page-header .case-filter-btn--active:hover,
+.txn-period__chips .txn-year-select, .txn-period__chips .form-input.txn-year-select,
+.contact-filters button, .court-pref__chip, .txn-period__chips .case-filter-btn,
+.auth-card .auth-account-type__btn, .auth-account-type__btn,
+.wa-days-toggle__btn, .pricing-switch button {
+  font-weight: var(--w-medium);
+}
+/* Sub filter pills are one step smaller and lighter */
+.qa-filter-btn--sub { font-weight: var(--w-medium); }
+
+/* Filter menu button and its count */
+.case-filter-menu > .btn-outline { font-weight: var(--w-medium); }
+.case-filter-menu__count { font-weight: var(--w-bold); }
+.case-filter-menu__row { font-weight: var(--w-medium); }
+.case-filter-menu__value, .case-filter-menu__date-label { font-weight: var(--w-regular); }
+.case-filter-chips__clear { font-weight: var(--w-medium); }
+
+/* ---------- Tabs: main tabs heavier than sub tabs. Same weight open or closed (the bar must not change width) ---------- */
+.admin__tabs.admin__tabs .admin__tab,
+.admin__tabs.admin__tabs .admin__tab--active,
+.auth-tab, .auth-tab--active {
+  font-weight: var(--w-semibold);
+}
+.admin__subtabs.admin__subtabs .admin__subtab,
+.admin__subtabs.admin__subtabs .admin__subtab--active,
+.admin__subtabs .admin__subtab, .admin__subtabs .admin__subtab--active {
+  font-weight: var(--w-medium);
+}
+
+/* ---------- Fields, search boxes and dropdowns ---------- */
+/* What you type is regular; its placeholder is regular and lighter in colour */
+.form-input, .auth-input, .doc-search-input, .todo-search-input, .qa-jur-search-row__input, .qa-pd-search__input, .qa-search,
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], input[type="search"],
+textarea, .contact-textarea {
+  font-weight: var(--w-regular);
+}
+.form-input::placeholder, .doc-search-input::placeholder, .todo-search-input::placeholder, .auth-input::placeholder,
+.qa-pd-search__input::placeholder, .qa-jur-search-row__input::placeholder, textarea::placeholder {
+  font-weight: var(--w-regular);
+}
+/* A chosen value in a dropdown or select reads one step heavier than typed text */
+select.form-input, .dropdown__input, .doc-filter-select, .form-input.dropdown__input,
+.sort-control .dropdown__input, .doc-filter-group .doc-filter-select, .doc-filter-group .dropdown__input,
+.todo-filters .dropdown__input, .txn-timeline-filter .dropdown__input {
+  font-weight: var(--w-medium);
+}
+/* The list that opens: options are regular, the chosen one is semibold */
+.picker__option { font-weight: var(--w-regular); }
+.dropdown__option--selected { font-weight: var(--w-semibold); }
+.dropdown__group-label { font-weight: var(--w-bold); }
+.form-input-prefix { font-weight: var(--w-medium); }
+
+/* Labels: the word above a field is heavier than the value in it; "Sort by" and "Filter" captions are lighter than the value */
+.form-label, .form-group > label { font-weight: var(--w-semibold); }
+.sort-control label, .doc-filter-label { font-weight: var(--w-medium); }
+
+/* ---------- Chips, tags and badges ---------- */
+.case-filter-chip, .picker__chip, .courts-chip, .spec-chip, .courts-chip__tag, .qa-chip,
+.admin__pill, .todo-category-tag, .hearing-row__past, .qa-tag, .court-history-editor__summary {
+  font-weight: var(--w-medium);
+}
+.badge, .nav-item__badge, .case-card__status, .qa-pd-badge, .notif-tag--important, .imp-notif__badge,
+.admin-bar__count, .options-admin__count, .notifications-panel__count, .archive__count, .hearings-panel__count {
+  font-weight: var(--w-bold);
+}
+
+/* ---------- Read-only data: the caption is lighter than the value ---------- */
+.stat-card__label, .admin__stat-label, .case-fields__label, .case-summary-fields__label, .case-card .case-summary-fields__label,
+.profile-view-item__label, .todo-sidebar__heading, .calc-step__label, .fee-type-locked__label, .case-detail__whatsapp-timing-label {
+  font-weight: var(--w-medium);
+}
+.stat-card__value, .admin__stat-value, .pricing-card__price { font-weight: var(--w-bold); }
+.case-card .case-summary-fields__value, .case-summary-fields__value, .case-fields__value, .profile-view-item__value {
+  font-weight: var(--w-semibold);
+}
+.case-fields__value { font-weight: var(--w-medium); }
+
+/* ---------- Navigation ---------- */
+.nav-item { font-weight: var(--w-medium); }
+.nav-item.active { font-weight: var(--w-bold); }
+.sidebar__user-menu-item { font-weight: var(--w-medium); }
+.sidebar__user-menu-item.is-active { font-weight: var(--w-semibold); }
+.todo-sidebar__item { font-weight: var(--w-medium); }
+.todo-sidebar__item.active { font-weight: var(--w-semibold); }
+.bottom-nav__item { font-weight: var(--w-medium); }
+.bottom-nav__item[aria-current="page"] { font-weight: var(--w-bold); }
+
+/* ---------- Tables: headings heavier than cells ---------- */
+:is(.admin__table, .qa-table, .fee-summary__table, .invoice__table) th { font-weight: var(--w-bold); }
+:is(.admin__table, .qa-table, .fee-summary__table) td { font-weight: var(--w-regular); }
+
+/* ==========================================================================
+   Desktop sizes that go with the weights: only the main page buttons keep the largest text (15px).
+   Fields, search boxes, dialog buttons and toolbar controls step down to 14px, small buttons to 13px.
+   Heights are not touched here, so rows of controls still line up.
+   ========================================================================== */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  :root { --d-field-fs: 0.875rem; --d-dialog-fs: 0.875rem; }
+
+  /* Fields and search boxes */
+  :is(.admin, .app-main, .modal, .drawer) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input, .form-input.dropdown__input):not(textarea),
+  .app-main input.qa-search,
+  .app-main :is(.doc-search-input, .todo-search-input),
+  .sort-control .dropdown__input.dropdown__input,
+  .doc-filter-group :is(.dropdown__input.dropdown__input, .doc-filter-select.doc-filter-select),
+  .todo-filters :is(.dropdown__input.dropdown__input, select),
+  .txn-timeline-filter :is(.dropdown__input.dropdown__input, .form-input),
+  .clients-page .list-toolbar .doc-search-input,
+  .clients-page .sort-control select,
+  .qa-pd-search__input,
+  :is(.admin, .app-main, .modal, .drawer) textarea.form-input {
+    font-size: var(--d-field-fs);
+  }
+  .sort-control label, .doc-filter-label { font-size: var(--fs-base); }
+
+  /* Buttons in dialogs, drawers and forms (Save, Cancel, Delete...) */
+  :is(.modal, .drawer) :is(.form-actions, .drawer__footer, .confirm-dialog__actions) > :is(button, a):is(.btn-gold, .btn-outline, .btn-danger),
+  .modal .form-actions :is(button.btn-gold, button.btn-outline, button.btn-danger),
+  .app-main .profile-card .court-pref__actions > :is(button.btn-gold, button.btn-outline) {
+    font-size: var(--d-dialog-fs);
+  }
+
+  /* Filter button and the Add button in an admin toolbar sit one step under the page buttons */
+  .case-filter-menu > .btn-outline,
+  .admin .admin__toolbar :is(button.btn-gold, button.btn-outline, button.btn-danger):not(.btn-outline--sm) {
+    font-size: var(--d-dialog-fs);
+  }
+}

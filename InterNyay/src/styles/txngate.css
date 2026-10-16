@@ -1,0 +1,108 @@
+/* Locked state shown for the transaction history */
+.txn-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+}
+
+.txn-gate__card {
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.txn-gate__icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.txn-gate__card .account-modal__field {
+  text-align: left;
+  margin-top: 1rem;
+}
+
+.txn-gate__card .profile-note {
+  margin-top: 0.35rem;
+}
+
+/* ---------- 4-digit PIN boxes (Transactions gate and Profile) ---------- */
+.pin-input {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.pin-input__box {
+  width: 3rem;
+  height: 3.4rem;
+  padding: 0;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: var(--font-body);
+  color: var(--color-navy);
+  background: var(--color-surface);
+  border: var(--border-input);
+  border-radius: var(--border-radius-md);
+  outline: none;
+  caret-color: var(--color-gold);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pin-input__box:focus {
+  border-color: var(--color-gold);
+  box-shadow: var(--glow-gold);
+}
+
+.pin-input__box--filled { border-color: var(--color-gold-border); }
+.pin-input__box:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Show / hide (seen / unseen) button beside the PIN boxes.
+   It sits just outside the right edge of the boxes (absolute), so it never shifts them:
+   every PIN row, with or without the eye, has its four boxes in exactly the same place */
+.pin-input {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+.pin-input__toggle {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 3.4rem;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 1.2rem;
+}
+.pin-input__toggle:hover { color: var(--color-navy); }
+.pin-input__toggle:disabled { opacity: 0.6; cursor: not-allowed; }
+.pin-input__toggle .icon { margin: 0; width: 1.2em; height: 1.2em; }
+
+/* Gate: PIN boxes sit in the middle of the card */
+.txn-gate__pin { margin-top: 1.25rem; }
+.txn-gate__card .txn-gate__pin-field { text-align: center; }
+/* Gate: the password label and field line up with the centred PIN labels */
+.txn-gate__card .txn-gate__password-field { text-align: center; }
+.txn-gate__card .txn-gate__password-field .form-input { text-align: left; }
+/* Two classes so it beats `.txn-gate__card .profile-note` (margin-top: 0.35rem), which was pulling "Forgot your PIN?" right up against the Unlock button */
+.txn-gate__card .txn-gate__link { margin-top: 1.5rem; }
+
+/* Profile: label above the boxes, both centred in the card */
+.pin-field { margin-top: 1rem; text-align: center; }
+.pin-field .form-label { display: block; margin-bottom: 0.4rem; }
+.pin-field--password { max-width: 420px; margin-inline: auto; }
+.pin-field--password .form-input { text-align: left; }

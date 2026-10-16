@@ -1,0 +1,39 @@
+/* In-app confirmation dialog (replaces the browser's window.confirm). Imported last so it wins over the generic modal rules */
+.overlay.confirm-overlay { z-index: 980; } /* above every modal and the mobile sidebar, below the toasts (999) */
+
+.modal.confirm-dialog { max-width: 420px; padding: 1.5rem; }
+
+.confirm-dialog__head { display: flex; align-items: center; gap: 12px; margin-bottom: 0.75rem; }
+.confirm-dialog__title { margin: 0; min-width: 0; }
+
+.confirm-dialog__icon {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%; font-size: var(--fs-lg);
+  background: rgba(201, 168, 76, 0.18); color: #8a6a1c;
+}
+.confirm-dialog__icon--danger { background: rgba(163, 45, 45, 0.12); color: var(--color-critical); }
+
+/* pre-line keeps the paragraph breaks some messages use (\n\n) */
+.confirm-dialog__message {
+  margin: 0; font-size: var(--fs-base); line-height: 1.55; color: var(--color-text-mid, var(--color-text-muted));
+  white-space: pre-line; overflow-wrap: anywhere;
+}
+.modal.confirm-dialog .confirm-dialog__actions { margin-top: 1.25rem; }
+
+.btn-danger:focus-visible, .btn-outline:focus-visible, .btn-gold:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  /* The generic mobile rules turn modals into bottom sheets; keep this one compact */
+  .modal.confirm-dialog { padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px)); height: auto; }
+  .modal.confirm-dialog .confirm-dialog__actions { flex-direction: column-reverse; }
+  .modal.confirm-dialog .confirm-dialog__actions button { width: 100%; }
+}
+
+/* Small shared leftovers that used to be inline styles */
+.checkbox-label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.text-error { color: var(--color-critical); }
+
+/* Shown in place of a page the user's plan does not include */
+.upgrade-notice { padding: 4rem 1.5rem; text-align: center; max-width: 480px; margin: 0 auto; }
+.upgrade-notice__title { margin-bottom: 8px; }
+.upgrade-notice__text { color: var(--color-text-muted); }

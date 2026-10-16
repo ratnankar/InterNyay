@@ -1,0 +1,74 @@
+/* Mobile alignment pass. Loaded last so it settles clashes between the older phone files.
+   Found by reading every stylesheet for phone-width conflicts. Everything is inside phone media queries, desktop is unchanged.
+
+   1. Side margin: hierarchy.css sets the page side space to 10px on phones, but the scrolling filter bars (mobile.css, mobile-polish.css)
+      still bled out by 14px / 12px, so they were cut off at the screen edge and sat out of line with the cards. One variable now drives both.
+   2. Rows of buttons or labels that cannot wrap (admin toolbar, row actions, panel headers) now wrap onto the next line instead of being clipped. */
+
+@media (max-width: 860px) {
+  :root { --page-gutter: max(0.625rem, env(safe-area-inset-left, 0px)); }
+
+  /* Scrolling filter bars: bleed out by exactly the page gutter, so the first pill lines up with the cards and the last can scroll to the edge */
+  .app-main :not(.page-header) > .case-filters {
+    margin-left: calc(-1 * var(--page-gutter));
+    margin-right: calc(-1 * var(--page-gutter));
+    padding-left: var(--page-gutter);
+    padding-right: var(--page-gutter);
+  }
+
+  /* Children of flex/grid rows may shrink below their content, so long names wrap instead of pushing the row wider than the screen */
+  .app-main :is(.admin__header, .calendar__header, .client-card__header, .exp-card__head, .qa-row, .qa-row__left,
+                .todo-item, .notif-row, .notif-card, .contact-history__top, .hearings-panel__header,
+                .notifications-panel__header, .form-template-card__header) > * { min-width: 0; }
+}
+
+@media (max-width: 640px) {
+  /* Admin: header, toolbar and row actions wrap rather than run off the right edge */
+  .admin__header,
+  .admin__toolbar,
+  .admin__actions,
+  .notifications-panel__toolbar,
+  .todo-main__category-bar,
+  .contact-meta,
+  .form-template-card__header,
+  .courts-adder,
+  .options-admin__add,
+  .court-history-editor__buttons,
+  .loginlog__pager { flex-wrap: wrap; }
+
+  /* Row actions in a stacked admin card: left-aligned under the labels, not squeezed to the right */
+  .admin__actions { justify-content: flex-start; white-space: normal; row-gap: 8px; }
+
+  /* The "Saved / Unsaved changes" note (and other counts) sit on their own line, left-aligned, instead of floating at the far right */
+  .admin__toolbar > .admin__count { margin-left: 0; flex: 1 1 100%; }
+
+  /* Search / name boxes in toolbars use the full width */
+  .admin__toolbar .form-input,
+  .courts-adder .courts-adder__input { max-width: none; flex: 1 1 100%; width: 100%; }
+
+  /* Title row with actions: the actions drop below the title and line up with its left edge */
+  .todo-main__category-bar > :last-child,
+  .form-template-card__header > :last-child { margin-left: 0; }
+}
+
+/* Phones and tablets: court / district / filter chips are full pills like on desktop.
+   unified.css gave them a 9px radius at this width through a high-specificity selector, so this repeats that selector. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.qa-filter-btn, .case-filter-btn):not([data-compact] > *),
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a).qa-filter-btn--sub:not([data-compact] > *) {
+    border-radius: var(--ctl-radius-pill, 999px);
+  }
+}
+
+/* Phones: Account card (Deactivate / Delete). Text on top using the full width, button underneath at full width,
+   so the buttons line up with each other and with the card edges instead of floating at the left. */
+@media (max-width: 640px) {
+  .account-action {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+  .account-action__text { max-width: none; }
+  .account-action .btn-outline { width: 100%; }
+}

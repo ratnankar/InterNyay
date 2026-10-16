@@ -1,0 +1,312 @@
+/* Legal forms grid and form cards */
+.form-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.form-template-card {
+  padding: 1.5rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-template-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.form-template-card__title {
+  font-weight: 700;
+  font-size: var(--fs-md);
+  color: var(--color-navy);
+}
+
+.form-template-card__desc {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  line-height: var(--lh-base);
+}
+
+.form-template-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: var(--border-default);
+}
+
+.form-template-card__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.form-template-card__actions button {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+/* Form field group and action buttons */
+.form-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: var(--border-default);
+}
+
+/* Hearing date input */
+.hdi__row {
+  position: relative;
+}
+
+.hdi__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  padding-right: 62px;   
+}
+
+.hdi__field--open { border-color: var(--color-gold); }
+
+.hdi__field--invalid { border-color: #b45309; }
+
+.hdi__placeholder { color: var(--color-text-faint); }
+
+.hdi__clear {
+  position: absolute;
+  top: 50%;
+  right: 34px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--color-text-faint);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.hdi__clear:hover { color: var(--color-navy); }
+
+.hdi__icon {
+  font-size: var(--fs-md);
+  line-height: 1;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.hdi__problem {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  color: #b45309;
+}
+
+.hdi__pop {
+  position: fixed;
+  z-index: 400;          
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 12px;
+}
+
+.hdi__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.hdi__month {
+  font-family: var(--font-heading);
+  font-size: var(--cal-month-fs);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.hdi__nav {
+  border: var(--border-default);
+  background: var(--color-surface);
+  border-radius: var(--border-radius-sm);
+  padding: 2px 10px;
+  font-size: var(--fs-md);
+  cursor: pointer;
+  color: var(--color-navy);
+}
+.hdi__nav:hover { background: var(--color-bg); }
+
+.hdi__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+  justify-items: center;
+}
+
+.hdi__dow {
+  font-size: var(--cal-dow-fs);
+  font-weight: 700;
+  color: var(--color-text-faint);
+  padding: 4px 0;
+}
+.hdi__dow--sunday { color: #b45309; }
+
+.hdi__day {
+  position: relative;
+  width: var(--cal-day-size);
+  height: var(--cal-day-size);
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--cal-day-fs);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.hdi__day:hover:not(:disabled) { background: var(--color-bg); }
+
+.hdi__day--today { font-weight: 700; background: var(--color-bg); }
+
+.hdi__day--selected,
+.hdi__day--selected:disabled {
+  background: var(--color-gold);
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
+.hdi__day:disabled { cursor: not-allowed; }
+
+.hdi__day--sunday:disabled {
+  color: #b45309;
+  opacity: 0.45;
+}
+
+.hdi__day--crossed:disabled { color: var(--color-text-faint); }
+
+.hdi__cross {
+  position: absolute;
+  inset: 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  fill: none;
+  stroke: var(--color-navy);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.hdi__legend {
+  margin-top: 8px;
+  font-size: var(--cal-note-fs);
+  color: var(--color-text-muted);
+}
+
+/* Fill a legal form: case picker, PDF window and page */
+.legal-fill__case {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+
+.legal-fill__search {
+  flex: 1 1 320px;      
+  min-width: 0;
+}
+.legal-fill__search .form-input { width: 100%; padding-right: 32px; box-sizing: border-box; }
+.legal-fill__clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  padding: 2px 6px;
+}
+.legal-fill__clear:hover { color: var(--color-critical); }
+
+.modal.pdf-modal.pdf-modal--fill {
+  --fill-h: 96vh;            
+  --fill-chrome: 125px;      
+  --viewer-bar: 56px;        
+  --page-zoom: 1.1;
+  width: 98vw;
+  max-width: 1800px;
+  height: var(--fill-h);
+  max-height: var(--fill-h);
+  overflow: hidden;
+  padding: 0.6rem 0.9rem 0.75rem;
+}
+.modal.pdf-modal.pdf-modal--fill[data-shaped] {
+  width: min(98vw, max(600px, calc((var(--fill-h) - var(--fill-chrome) - var(--viewer-bar)) * var(--page-ratio) * var(--page-zoom) + 28px + 1.8rem)));
+}
+.pdf-modal--fill .modal__header { margin-bottom: 0.5rem; }
+.pdf-modal--fill .modal__title { font-size: var(--fs-xl); }
+
+.legal-fill__stage {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  background: transparent;   
+  overflow: hidden;
+}
+.pdf-form { position: relative; display: flex; flex-direction: column; min-height: 0; }
+.pdf-form__scroll { flex: 1 1 auto; min-height: 0; overflow: auto; background: #e9ecef; }
+.pdf-form__pages { display: flex; flex-direction: column; align-items: center; box-sizing: border-box; width: max-content; min-width: 100%; }
+.pdf-form__page { position: relative; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
+.pdf-form__page canvas { display: block; }
+.pdf-form__page .annotationLayer { position: absolute; inset: 0; }
+.pdf-form__page .annotationLayer .textWidgetAnnotation input,
+.pdf-form__page .annotationLayer .textWidgetAnnotation textarea { background: rgba(255, 244, 179, 0.55); }
+.pdf-modal--fill .pdf-modal__frame {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #fff;
+}
+/* Phones: bigger touch targets for the boxes, and a case picker and buttons that fit */
+@media (max-width: 640px) {
+  .pdf-form__page .annotationLayer .textWidgetAnnotation input,
+  .pdf-form__page .annotationLayer .textWidgetAnnotation textarea { min-height: 24px; touch-action: manipulation; }
+  .pdf-modal--fill .pdf-modal__actions { flex-wrap: wrap; gap: 6px; }
+  .legal-fill__search { flex-basis: 100%; }
+}
+
+.legal-fill-page {
+  height: 100vh;
+  display: flex;
+  padding: 6px;
+  box-sizing: border-box;
+  background: var(--color-bg);
+}
+.legal-fill-page { justify-content: center; }
+.legal-fill-page .modal.pdf-modal.pdf-modal--fill {
+  --fill-h: calc(100vh - 12px);
+  max-width: none;
+}

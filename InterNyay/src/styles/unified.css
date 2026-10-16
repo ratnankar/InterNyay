@@ -1,0 +1,197 @@
+/* Phone and tablet sizes for fields, buttons, filters and search. Desktop has its own file: desktop-sizes.css */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  :is(.admin, .app-main, .modal, .drawer) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input, .form-input.dropdown__input) {
+    box-sizing: border-box;
+    height: 38px;
+    min-height: 38px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: 14px;
+    line-height: 1.25;
+    border-radius: 10px;
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) textarea.form-input {
+    height: auto;
+    min-height: 76px;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    border-radius: 10px;
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon, .doc-row__actions > *, .judge-card__actions > *, [data-compact] > *, table *) {
+    box-sizing: border-box;
+    height: 38px;
+    min-height: 38px;
+    padding: 0 16px;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    border-radius: 10px;
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.btn-outline--sm, .qa-filter-btn, .case-filter-btn):not([data-compact] > *) {
+    box-sizing: border-box;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    border-radius: 9px;
+  }
+
+  .admin .plans-layout__side .plans-layout__add {
+    height: 38px;
+    min-height: 38px;
+    padding: 0 16px;
+    font-size: 0.875rem;
+  }
+
+  .admin .admin__toolbar {
+    gap: 10px;
+    align-items: center;
+  }
+}
+
+.profile-card .court-pref__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .app-main input.qa-search,
+  .app-main .qa-search input {
+    box-sizing: border-box;
+    height: 34px;
+    min-height: 34px;
+    font-size: 0.8125rem;
+  }
+
+  input.form-input::placeholder,
+  input.doc-search-input::placeholder {
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .admin .admin__tabs.admin__tabs .admin__tab {
+    min-height: 38px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 0.875rem;
+    gap: 8px;
+  }
+
+  .admin .admin__subtabs.admin__subtabs .admin__subtab {
+    min-height: 32px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 0.8125rem;
+  }
+
+  .admin :is(input.form-input, select.form-input, .dropdown__input.dropdown__input, .form-input.dropdown__input) {
+    height: 34px;
+    min-height: 34px;
+    font-size: 0.8125rem;
+  }
+
+  .admin :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon, [data-compact] > *, table *),
+  .admin .plans-layout__side .plans-layout__add {
+    height: 34px;
+    min-height: 34px;
+    padding: 0 14px;
+    font-size: 0.8125rem;
+  }
+
+  .admin :is(.btn-outline--sm, .qa-filter-btn):not([data-compact] > *) {
+    height: 30px;
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .admin .admin__toolbar button.btn-gold:not(.btn-outline--sm),
+  .admin .admin__toolbar button.btn-outline:not(.btn-outline--sm),
+  .admin .admin__toolbar button.btn-danger:not(.btn-outline--sm) {
+    height: 34px;
+    min-height: 34px;
+    padding: 0 14px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Phones and tablets only: field, button and search sizes (desktop sizes live in desktop-sizes.css) */
+@media not all and (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .app-main .profile-card .court-pref__actions > button.btn-gold,
+  .app-main .profile-card .court-pref__actions > button.btn-outline {
+    flex: 0 0 auto;
+    width: auto;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 16px;
+    font-size: 0.8125rem;
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input, .form-input.dropdown__input):not(textarea) {
+    box-sizing: border-box;
+    height: 34px;
+    min-height: 34px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    border-radius: 10px;
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) textarea.form-input {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon, .doc-row__actions > *, .judge-card__actions > *, [data-compact] > *, table *),
+  .modal .form-actions button.btn-gold,
+  .modal .form-actions button.btn-outline,
+  .modal .form-actions button.btn-danger,
+  .app-main .page-header > button.btn-gold,
+  .app-main .page-header > button.btn-outline {
+    box-sizing: border-box;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 16px;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    border-radius: 10px;
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.btn-outline--sm, .qa-filter-btn, .case-filter-btn):not([data-compact] > *) {
+    box-sizing: border-box;
+    height: 30px;
+    min-height: 30px;
+    padding: 0 12px;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    border-radius: 9px;
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.qa-filter-btn, .case-filter-btn):not([data-compact] > *) {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 14px;
+    font-size: 0.8125rem;
+  }
+
+  .app-main input.qa-search {
+    box-sizing: border-box;
+    height: 34px;
+    min-height: 34px;
+    font-size: 0.8125rem;
+  }
+}

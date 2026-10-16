@@ -1,0 +1,191 @@
+/* Final phone pass (keep after mobile-v2.css). Found by opening every page and pop-up at 360px and 390px wide:
+   1. Small buttons and links were 17-30px tall, under the 40px a finger needs.
+   2. Badges, chips and captions were 10-11px; 12px is the floor on a phone.
+   3. Documents rows pushed their buttons off the screen; wide tables scrolled sideways.
+   Everything here is inside phone/touch media queries, so desktop looks the same. */
+
+/* ---------- Touch targets and text size (phones, small tablets, any touch screen) ---------- */
+@media (max-width: 860px), (hover: none) and (pointer: coarse) {
+  /* Small buttons */
+  .btn-outline--sm,
+  .btn-gold.btn-outline--sm,
+  .btn-danger.btn-outline--sm,
+  .admin button.btn-outline.btn-outline--sm,
+  .modal button.btn-outline.btn-outline--sm,
+  .courts-btn,
+  .notif-row__pdf-btn,
+  .wa-days-toggle__btn,
+  .successor__add,
+  .options-admin__list,
+  .chat__icon-btn { min-height: 40px; }
+  .notif-row__pdf-btn,
+  .options-admin__list,
+  .chat__icon-btn { min-width: 40px; }
+  label.btn-outline.btn-outline--sm { display: inline-flex; align-items: center; }
+
+  /* Brand link in the menu and on error pages */
+  .sidebar__brand-row,
+  .errpage__brand { min-height: 44px; display: inline-flex; align-items: center; }
+
+  /* Text links on their own line (Join hearing, e-mail, year reset) */
+  .qa-link,
+  .qa-link--reset,
+  .calendar__upcoming-label--toggle { display: inline-flex; align-items: center; min-height: 40px; }
+  .qa-link { padding-block: 6px; }
+  /* Links inside dense cards keep their look: padding makes the tap area 40px, negative margin keeps the card the same height */
+  .judge-card .qa-link,
+  .qa-chip .qa-link { min-height: 0; display: inline-block; padding: 11px 0; margin: -11px 0; line-height: 1.2; }
+
+  /* To-do check box: tap area 40px, negative margins so the row does not get taller */
+  .todo-item__checkbox { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: -9px -9px -9px -10px; padding: 0; }
+  .todo-item__checkbox input { width: 22px; height: 22px; }
+
+  /* Small icon buttons: rename pencil, date clear (x), icon buttons in rows */
+  .doc-rename-btn { width: 40px; height: 40px; }
+  .doc-rename-btn,
+  .btn-icon { min-width: 40px; min-height: 40px; }
+  .hdi__clear { min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+
+  /* 12px text floor (!important: several of these are set with higher specificity elsewhere) */
+  .dropdown__chevron,
+  .case-fields__label, .case-fields__section-title,
+  .archive__count,
+  .badge, .badge--case-type, .badge--individual, .badge--corporate, .badge--nature,
+  .admin__pill,
+  .admin-months span, .admin-months__label, .admin-months em, .admin-months__legend, .admin-months__legend span,
+  .qa-chip, .qa-chip--work, .qa-chip--holiday, .qa-subtext, .qa-filter-btn--sub, .qa-section-header span, .qa-link--reset,
+  .notif-row__time, .notif-row__date,
+  .pricing-card__tag, .pricing-card__seats, .pricing-card__price small, .pricing-card__price span,
+  .judge-card__court, .judge-card dt, .judge-card dd, .judge-card .qa-link,
+  .district-pdfs__court,
+  .exp-card__secondary, .exp-card__arrow,
+  .u-faint-xs, .contact-status, .associate-list__meta, .loginlog__note,
+  .wa-switch__label, .wa-days-toggle__btn, .wa-remind-btn,
+  .case-detail__whatsapp-timing-label, .case-detail__transactions-meta, .case-detail .btn-outline--sm,
+  .btn-outline--sm.btn-outline--danger, .calendar__cross-btn, .notif-card__pdf,
+  .courts-row__action,
+  .doc-group__tag, .doc-group__file-count, .doc-group__arrow, .doc-group__meta, .doc-row__meta,
+  .lx .lx-bubble small,
+  .leave-cal__grid-wrap .cal-day__count,
+  pre { font-size: 12px !important; }
+  .admin .btn-outline--sm,
+  .modal .btn-outline--sm,
+  .admin .qa-link, .admin td span, .admin dd span { font-size: max(12px, 0.75rem); }
+}
+
+/* ---------- Phones: layout fixes ---------- */
+@media (max-width: 640px) {
+  /* Documents: a case folder's title takes the full width, its actions sit on their own line underneath */
+  /* The card's own 14px phone padding pushed the grey title bar in from the edges; the bar now fills the card edge to edge */
+  .doc-group { padding: 0; }
+  .doc-group__header { flex-wrap: wrap; row-gap: 10px; padding: 14px 16px; }
+  .doc-group__header > div:first-child { flex: 1 1 100%; min-width: 0; }
+  .doc-group__actions { flex: 1 1 100%; justify-content: flex-start; gap: 10px; }
+  .doc-group__arrow { margin-left: auto; padding: 8px 0 8px 8px; }
+  .doc-group__tag { display: inline-block; margin: 4px 6px 0 0; }
+  .doc-group__meta { line-height: 1.7; }
+
+  /* Documents: Open, Download and Delete share a full-width line under the file name (they ran off the right edge) */
+  .doc-row { flex-wrap: wrap; align-items: flex-start; gap: 10px 12px; padding-left: 1rem; padding-right: 1rem; }
+  .doc-row__body { flex: 1 1 0; min-width: 0; }
+  .doc-row__name { overflow-wrap: anywhere; display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; }
+  .doc-row__actions { flex: 1 1 100%; justify-content: stretch; flex-wrap: nowrap; gap: 8px; }
+  .doc-row__actions > button { flex: 1 1 0; min-width: 0; min-height: 40px; padding-left: 8px; padding-right: 8px; font-size: 0.8125rem; gap: 6px; }
+
+  /* Fee rows (stages, hearing fees) with a remove button: name, amount and the X stay on one line */
+  .fee-hearing-row:has(> .btn-icon),
+  .fee-additional-row:has(> .btn-icon) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 40px; align-items: center; }
+  .fee-hearing-row > .btn-icon,
+  .fee-additional-row > .btn-icon { justify-self: end; }
+
+  /* Tables: one card per row, each value with its column heading, instead of a sideways scroll.
+     utils/stackTables.js copies the headings onto the cells (data-label) */
+  table.is-stackable { display: block; width: 100%; min-width: 0 !important; border: 0; box-shadow: none; background: transparent; }
+  table.is-stackable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  table.is-stackable tbody,
+  table.is-stackable tfoot { display: block; }
+  table.is-stackable tr {
+    display: block;
+    margin: 0 0 12px;
+    padding: 4px 14px;
+    background: #fff;
+    border: 1px solid var(--sk-line, #dde4ee);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(10, 22, 40, 0.05);
+  }
+  table.is-stackable tr:last-child { margin-bottom: 0; }
+  table.is-stackable td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: auto;
+    min-height: 44px;
+    padding: 8px 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid #e8edf5 !important;
+    background: transparent !important;
+    text-align: right;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+  }
+  table.is-stackable td:last-child { border-bottom: 0 !important; }
+  table.is-stackable td:empty { display: none; }
+  table.is-stackable td::before {
+    content: attr(data-label);
+    flex: 0 0 38%;
+    max-width: 38%;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-text-muted, #5b6778);
+  }
+  table.is-stackable td[data-label=""]::before { content: none; }
+  table.is-stackable td[data-label=""] { justify-content: flex-start; text-align: left; }
+  table.is-stackable td[colspan] { display: block; text-align: left; }
+  table.is-stackable td > * { max-width: 100%; }
+  .txn-table-wrap { overflow: visible; background: transparent; border: 0; box-shadow: none; padding: 0; }
+}
+
+/* Documents rows (phones): the buttons share the full width under the file name in equal parts, and the case tag sits on the text line */
+@media (max-width: 640px) {
+  .doc-row__actions { width: 100%; }
+  .doc-row__actions > button,
+  .doc-row__actions[data-compact] > button.btn-outline:has(> svg.icon) {
+    flex: 1 1 0 !important; width: auto !important; min-width: 0 !important;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .doc-group__tag { margin: 0 4px; vertical-align: baseline; line-height: 1.4; }
+}
+
+/* Transaction drawer (phones): the same table as on desktop, just compacted so all four columns fit without a sideways scroll;
+   the action buttons share the footer (two on the first line, View Invoice full width under them) */
+@media (max-width: 640px) {
+  .drawer__header { padding: 18px 16px 14px; }
+  .drawer__body { padding: 14px 12px; }
+  .drawer__section-label { padding-left: 4px; }
+  .drawer__table-wrap { overflow-x: visible; }
+  .drawer__table-wrap table { white-space: normal; table-layout: auto; width: 100%; }
+  .drawer__table-wrap .fee-summary__table th { padding: 11px 6px; font-size: 0.8125rem; white-space: nowrap; }
+  .drawer__table-wrap .fee-summary__table td { padding: 11px 6px; font-size: 0.8125rem; vertical-align: middle; }
+  .drawer__table-wrap .fee-summary__table th:first-child,
+  .drawer__table-wrap .fee-summary__table td:first-child { padding-left: 10px; }
+  .drawer__table-wrap .fee-summary__table th:last-child,
+  .drawer__table-wrap .fee-summary__table td:last-child { padding-right: 10px; }
+  .drawer__table-wrap .fee-summary__table td:nth-child(3) { white-space: nowrap; }
+  .drawer__table-wrap .fee-summary__table .fee-status-btn { padding: 5px 9px; font-size: 0.75rem; white-space: nowrap; min-height: 0; }
+  .drawer__table-wrap .fee-summary__table tfoot td:last-child { white-space: nowrap; }
+  .drawer__footer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .drawer__footer > button { min-width: 0; width: 100%; justify-content: center; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+  .drawer__footer > .btn-gold:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+.drawer__footer { flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .upload-menu__list {
+    left: 0;
+    right: auto;
+    min-width: 200px;
+    max-width: calc(100vw - 32px);
+  }
+}

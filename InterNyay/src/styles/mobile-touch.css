@@ -1,0 +1,137 @@
+/* Phone and tablet touch fixes. Imported last so no earlier rule overrides it.
+   1. Field sizes (see note below).
+   2. Fingers need bigger targets than a mouse.
+   3. The court preference screens (Profile card, question after sign-up) on a narrow screen. */
+
+/* 1. Field sizes live in hierarchy.css (38px high, 14px text; toolbar search and sort 36px).
+   iOS no longer zooms into fields because the viewport tag in index.html has maximum-scale=1 */
+
+/* 2. Bigger targets for the filter pills used on most pages */
+@media (hover: none) and (pointer: coarse) {
+  .qa-filter-btn,
+  .case-filter-btn {
+    min-height: 40px;
+  }
+}
+
+/* 3. Court preference */
+@media (max-width: 640px) {
+  .court-pref { gap: 18px; }
+  .court-pref__chips { gap: 8px; }
+  .court-pref__chip { min-height: 40px; padding-left: 14px; padding-right: 14px; }
+
+  /* Question after sign-up: the buttons stay in reach while the list of courts scrolls.
+     The page clips (not hides) its overflow, because a hidden-overflow parent would stop the bar from sticking to the screen */
+  .auth-page--plans { overflow: clip; }
+  .choose-courts__card { padding: 1rem; }
+  .choose-courts__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 0.75rem -1rem -1rem;
+    padding: 12px 1rem calc(12px + env(safe-area-inset-bottom, 0px));
+    background: #fff;
+    border-top: 1px solid var(--color-gold-border);
+    border-radius: 0 0 var(--border-radius-lg, 14px) var(--border-radius-lg, 14px);
+  }
+  .choose-courts__actions .btn-gold { width: 100%; }
+  .choose-courts .choose-plan__foot { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+  /* Profile card: Save and Clear side by side, full width */
+
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Second pass: found by opening the real pages in a phone-sized browser (390px and 360px wide)
+   ------------------------------------------------------------------------------------------------ */
+
+/* "Back to Dashboard" on Notifications was white text left over from the old navy banner; the banner is light now, so it was invisible.
+   This is a colour bug on every screen size, not only phones */
+.page-header .notif-page__back { color: var(--color-text-muted); }
+.page-header .notif-page__back:hover { color: var(--color-navy); }
+
+/* 4. Phone layouts that broke with long real-world content */
+@media (max-width: 640px) {
+  /* Documents: the title was squeezed into a sliver beside the two upload buttons ("Docume-nts"), so the buttons go below it */
+  .page-header.documents__header { flex-wrap: wrap; }
+  .page-header.documents__header > :first-child { flex: 1 1 100%; }
+  .page-header.documents__header .documents__header-actions { flex: 1 1 100%; justify-content: stretch; }
+
+  /* Documents: search, sort and the list/grid switch were wider than the screen and the switch was cut off */
+  .doc-filter-group--right { margin-left: 0; flex-wrap: wrap; width: 100%; }
+  
+  
+
+  /* Client details: a long name was squeezed next to the Edit and Delete buttons and broke in the middle of a word.
+     The name takes the row beside the photo and the buttons share the row below */
+  .client-detail__header { flex-wrap: wrap; align-items: flex-start; }
+  .client-detail__header > div { flex: 1 1 160px; min-width: 160px; }
+  .client-detail__header > .btn-outline { flex: 1 1 calc(50% - 5px); margin-left: 0 !important; }
+  .client-detail__name { overflow-wrap: break-word; }
+}
+
+/* Register: two password boxes side by side are too narrow to show their own hint ("8+ characters, w…") on a small phone */
+@media (max-width: 440px) {
+  .auth-form--register > div:has(.password-field) { grid-column: 1 / -1; }
+}
+
+/* 5. Tap targets: every control a finger has to hit reaches about 40px (44px for the main call-to-action buttons) */
+@media (hover: none) and (pointer: coarse) {
+  .btn-outline,
+  .btn-outline--sm,
+  .case-status__option,
+  .admin__tab,
+  .auth-account-type__btn,
+  .pricing-switch button,
+  .lx-textbtn { min-height: 40px; }
+
+  .pricing-card__cta,
+  .lp-btn { min-height: 44px; }
+
+  /* Calendar: arrows and day cells (seven across, so the width is already enough) */
+  .calendar .calendar__nav-btn,
+  .calendar__nav-btn { min-width: 40px; min-height: 40px; }
+  .cal-day { min-height: 40px; }
+
+  /* Segmented switches with several short options */
+  .wa-days-toggle__btn { min-height: 40px; }
+  /* Show/hide password sits inside the field; keep it a full finger wide */
+  .password-field__toggle { min-width: 44px; min-height: 40px; }
+
+  /* Small text-style buttons and links: the visible text stays the same, the hit area grows */
+  .auth-back-link,
+  .auth-link-btn,
+  .auth-forgot-link,
+  .profile-reset-link,
+  .notif-page__back,
+  .qa-copy-btn,
+  .mobile-topbar__brand,
+  .lx-brand,
+  .lx-footer__col :is(a, button),
+  .lx-menu :is(a, button) { display: inline-flex; align-items: center; min-height: 40px; }
+}
+
+/* Case form: paired dropdowns hold long court and relief names that were cut off ("District & Sessio…"), so they get a full row on small phones */
+@media (max-width: 440px) {
+  .form-grid-2--case { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Smaller controls inside forms and lists that were 20 to 32px tall */
+@media (hover: none) and (pointer: coarse) {
+  .fee-type-btn { min-height: 40px; }
+  /* Paid / Unpaid / Mark Paid chips: the look stays, the area that reacts to a finger grows */
+  .paid-status-btn,
+  .fee-status-btn { position: relative; min-height: 32px; }
+  .paid-status-btn::after,
+  .fee-status-btn::after { content: ''; position: absolute; inset: -6px -4px; }
+  .hdi__clear::after { content: ''; position: absolute; inset: -10px; }
+  .form-input.txn-year-select,
+  .txn-year-select { min-height: 40px; }
+}
+
+/* Admin console: second-level tabs, collapsible plan headers and row buttons */
+@media (hover: none) and (pointer: coarse) {
+  .admin__subtab,
+  .plans-admin__toggle-head,
+  .courts-row__action { min-height: 40px; }
+}

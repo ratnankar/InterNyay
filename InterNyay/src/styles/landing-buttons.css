@@ -1,0 +1,43 @@
+/* Phones only (760px and narrower, the landing page's own phone breakpoint): landing page buttons use the
+   application size (38px tall, 10px corners, 14px semibold text). Desktop and tablet keep their original sizes.
+   Colours, gold gradient and hover effects are unchanged. Loaded last so it wins over landing, mobile and touch rules. */
+@media (max-width: 760px) {
+  :is(.lx, body) .lp-btn.lp-btn,
+  :is(.lx, body) .lp-btn.lp-btn.lp-btn--lg,
+  :is(.lx, body) .lp-btn.lp-btn.lp-btn--gold,
+  :is(.lx, body) .lp-btn.lp-btn.lp-btn--gold.lp-btn--lg,
+  .pricing-card__cta.lp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: var(--ctl-h);
+    min-height: var(--ctl-h);
+    padding: 0 18px;
+    border-radius: var(--ctl-radius);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+
+  /* Nav "Sign in" text button lines up with the "Get started" button next to it (no display rule here: it stays hidden on phones, where the menu button takes over) */
+  .lx .lx-textbtn {
+    box-sizing: border-box;
+    min-height: var(--ctl-h);
+    padding: 0 14px;
+    border-radius: var(--ctl-radius);
+    font-size: var(--fs-base);
+    white-space: nowrap;
+  }
+
+  /* Continue with Google */
+  .auth-google { height: var(--ctl-h); border-radius: var(--ctl-radius); }
+  .auth-google__face { font-size: var(--fs-base); }
+  .auth-google__hit > div { transform: scaleY(0.95); }
+
+  /* Landing menu (hamburger) button: same height as the buttons beside it */
+  .lx .lx-menubtn { width: var(--ctl-h); height: var(--ctl-h); border-radius: var(--ctl-radius); }
+}

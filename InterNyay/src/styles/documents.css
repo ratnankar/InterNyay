@@ -1,0 +1,339 @@
+
+/* Documents page header */
+.documents__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.documents__count {
+  font-size: var(--fs-sm);
+  margin-top: 4px;
+}
+
+.documents__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Popup to find the case or client to upload a document for */
+.upload-search__empty {
+  margin-top: 0.75rem;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.upload-search__results {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.upload-search__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--border-radius-md);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: background 0.15s;
+}
+.upload-search__row:hover { background: var(--color-surface-alt); }
+
+.upload-search__icon { font-size: var(--fs-md); flex-shrink: 0; }
+
+.upload-search__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-search__name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-search__meta {
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+}
+
+.upload-search__action {
+  flex-shrink: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-gold);
+  white-space: nowrap;
+}
+
+/* Search box, sort and clear filter bar */
+.doc-filter-bar {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.doc-search-wrap {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.doc-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--fs-md);
+  pointer-events: none;
+}
+
+.doc-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--fs-md);
+}
+
+.doc-filter-select {
+  width: auto;
+  padding: 6px 10px;
+}
+
+/* Document group card, one per case or client */
+.doc-group {
+  overflow: hidden;
+}
+
+.doc-group:has(.upload-menu__list) {
+  overflow: visible;
+}
+
+.doc-group:has(.upload-menu__list) > .doc-group__header {
+  border-radius: inherit;
+}
+
+.doc-group__header {
+  padding: 1rem 1.25rem;
+  background: var(--color-surface-alt);
+  border-bottom: var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.doc-group__header[aria-expanded="false"] { border-bottom: 0; }   /* closed folder: no line under the title bar */
+
+.doc-group__header--toggle {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.doc-group__header--toggle:hover { background: var(--color-surface-2); }
+.doc-group__header--toggle:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
+}
+
+.doc-group__arrow {
+  color: var(--color-gold);
+  font-size: var(--fs-xs);
+  margin-left: 4px;
+}
+
+.doc-group__case-name {
+  font-weight: 700;
+  font-size: var(--fs-base);
+  color: var(--color-navy);
+}
+
+.doc-group__meta {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.doc-group__tag {
+  margin-left: 8px;
+  background: #dde4ee;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: var(--fs-xs);
+}
+
+.doc-group__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* + Upload menu for a document or evidence */
+.upload-menu {
+  position: relative;
+}
+
+.upload-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: transparent;
+}
+
+.upload-menu__list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 130;
+  min-width: 180px;
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-menu__item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  text-align: left;
+  white-space: nowrap;
+  padding: 0 14px;
+  font-size: var(--fs-sm);
+  font-family: var(--font-body);
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.upload-menu__item .icon {
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  vertical-align: 0;
+}
+
+.upload-menu__item:hover {
+  background: var(--color-surface-alt);
+}
+
+.upload-menu__item + .upload-menu__item {
+  border-top: var(--border-default);
+}
+
+/* Document rows inside a group */
+.doc-group__file-count {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.doc-group__evidence-empty {
+  margin: 0;
+  padding: 14px 12px;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.doc-row--evidence { background: #fffdf8; padding-left: 12px; padding-right: 12px; }
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 1.25rem;
+  border-bottom: 1px solid var(--color-surface-2);
+}
+
+.doc-row:last-child { border-bottom: none; }
+
+.doc-row__icon {
+  width: 38px;
+  height: 38px;
+  background: var(--color-bg);
+  border-radius: var(--border-radius-md);
+  font-size: var(--fs-lg);
+  flex-shrink: 0;
+}
+
+.doc-row__name { font-weight: 600; font-size: var(--fs-base); color: var(--color-navy); }
+.doc-row__meta { font-size: var(--fs-xs); color: var(--color-text-muted); margin-top: 2px; }
+
+.doc-row__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Small layout tweaks */
+.doc-groups { display: flex; flex-direction: column; gap: 1rem; }
+
+.doc-search-input { padding-left: 38px; }
+.doc-filter-group--right { margin-left: auto; }
+
+/* Secondary upload button: white with a gold edge, same footprint as the gold one */
+.documents__header-actions .btn-gold-secondary {
+  background: #fff;
+  color: var(--sk-ink, var(--color-navy));
+  border: 1.5px solid var(--color-gold);
+  box-shadow: none;
+}
+.documents__header-actions .btn-gold-secondary:hover:not(:disabled) {
+  background: var(--grad-gold-soft, #fffaf0);
+  color: var(--sk-ink, var(--color-navy));
+  border-color: var(--color-gold);
+  box-shadow: 0 8px 18px -10px rgba(176, 138, 46, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Pencil beside a document name: opens the rename popup. No circle or border, centred on the name's line */
+.doc-row__name,
+.case-detail__doc-name {
+  display: flex;
+  align-items: center;
+}
+
+.doc-rename-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.5em;
+  height: 1.5em;
+  margin: 0 0 0 0.25em;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  line-height: 1;
+  cursor: pointer;
+}
+.doc-rename-btn svg { display: block; width: 0.9em; height: 0.9em; }
+.doc-rename-btn:hover,
+.doc-rename-btn:focus-visible {
+  color: var(--color-gold);
+  outline: none;
+}

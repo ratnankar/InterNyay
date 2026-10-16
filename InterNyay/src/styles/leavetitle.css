@@ -1,0 +1,17 @@
+/* Judges on Leave: the date title is the top-level heading; "On Leave Today" / "Upcoming Leave" sit under it as sub-headings */
+.leave-cal__day-panel .leave-cal__day-title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-xl, 1.25rem);
+  font-weight: 700;
+  color: var(--color-navy);
+  padding-bottom: 0.6rem;
+  margin-bottom: 1rem;
+  position: relative;
+  border-bottom: 0;
+}
+/* Same gold fade-out line as the page title bar (see .page-header::after in appskin.css) */
+.leave-cal__day-panel .leave-cal__day-title::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 3px; pointer-events: none;
+  background: linear-gradient(90deg, #c9a84c 0%, rgba(201, 168, 76, 0.55) 40%, rgba(201, 168, 76, 0) 100%);
+}
+.leave-cal__day-panel .leave-cal__day-title + * { margin-top: 0; }

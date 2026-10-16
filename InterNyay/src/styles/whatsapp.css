@@ -1,0 +1,153 @@
+
+/* On/off toggle switch, also used for the case reminder toggle */
+.wa-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wa-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.wa-switch__track {
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cfc7b6;
+  transition: background 0.18s;
+}
+
+.wa-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s;
+}
+
+.wa-switch input:checked + .wa-switch__track { background: var(--color-active); }
+.wa-switch input:checked + .wa-switch__track .wa-switch__thumb { transform: translateX(16px); }
+.wa-switch input:focus-visible + .wa-switch__track { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+.wa-switch__label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--color-navy);
+}
+
+.wa-switch--disabled { cursor: not-allowed; opacity: 0.55; }
+
+/* WhatsApp reminder buttons */
+.wa-remind-btn { white-space: nowrap; }
+
+/* Icon-style on/off button for automatic reminders */
+.wa-icon-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--color-gold-border);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.wa-icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.wa-icon-btn--on  { color: var(--color-active); border-color: var(--color-active); background: rgba(15, 110, 86, 0.10); }
+.wa-icon-btn--off { color: var(--color-text-muted); }
+.wa-icon-btn:hover:not(:disabled) { background: var(--color-bg); }
+.wa-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+
+/* Choose whether the reminder goes out 1 or 2 days before the hearing */
+.wa-days-toggle {
+  display: inline-flex;
+  border: var(--border-default);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.wa-days-toggle__btn {
+  appearance: none;
+  border: none;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 7px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.wa-days-toggle__btn + .wa-days-toggle__btn {
+  border-left: var(--border-default);
+}
+
+.wa-days-toggle__btn--active {
+  background: var(--color-navy);
+  color: var(--color-gold);
+}
+
+.wa-days-toggle__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* WhatsApp section inside the case detail */
+.case-detail__whatsapp {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: var(--border-default);
+  cursor: default;
+}
+
+.case-detail__whatsapp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.case-detail__whatsapp-timing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.case-detail__whatsapp-timing:has(.wa-days-toggle__btn:disabled) {
+  opacity: 0.55;
+}
+
+.case-detail__whatsapp-timing-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Hint text on the transaction history page */
+.txn-hint {
+  margin-bottom: 10px;
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}

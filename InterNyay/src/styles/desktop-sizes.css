@@ -1,0 +1,107 @@
+/* ==========================================================================
+   DESKTOP SIZES: selectors for the size of every button, field, search box, filter and sort control on a computer
+   (mouse, window wider than 768px). Phones and tablets use unified.css / hierarchy.css and are not touched here.
+   The sizes (--d-ctl, --d-pill, --d-sub, --d-row ...) are defined only in desktop-larger.css. Change them there.
+
+     --d-ctl      page buttons (New Case, Add Client, Upload, Add Task, Save...), fields, search boxes, Filter and sort
+     --d-pill     filter pills (status, court, period, year)
+     --d-sub      small buttons, sub-filter pills
+     --d-row      buttons inside a table row
+   ========================================================================== */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  /* ---------- Fields: text boxes, dropdowns, sort and filter boxes ---------- */
+  :is(.admin, .app-main, .modal, .drawer) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input, .form-input.dropdown__input):not(textarea),
+  .app-main input.qa-search,
+  .app-main :is(.doc-search-input, .todo-search-input),
+  .sort-control .dropdown__input.dropdown__input,
+  .doc-filter-group :is(.dropdown__input.dropdown__input, .doc-filter-select.doc-filter-select),
+  .todo-filters :is(.dropdown__input.dropdown__input, select),
+  .txn-timeline-filter :is(.dropdown__input.dropdown__input, .form-input),
+  .clients-page .list-toolbar .doc-search-input,
+  .clients-page .sort-control select,
+  .qa-pd-search__input {
+    box-sizing: border-box;
+    height: var(--d-ctl);
+    min-height: var(--d-ctl);
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--d-ctl-fs);
+    line-height: 1.25;
+    border-radius: var(--d-radius);
+  }
+  :is(.admin, .app-main, .modal, .drawer) textarea.form-input {
+    font-size: var(--d-ctl-fs);
+    line-height: 1.45;
+    border-radius: var(--d-radius);
+  }
+  .sort-control label, .doc-filter-label { font-size: var(--d-ctl-fs); }
+
+  /* ---------- Page and dialog buttons (New Case, Add Client, Upload Documents, Upload Evidence, Add Task, Save, Cancel...) ---------- */
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm, .btn-icon, .doc-row__actions > *, .judge-card__actions > *, [data-compact] > *, table *),
+  .modal .form-actions :is(button.btn-gold, button.btn-outline, button.btn-danger),
+  .app-main .page-header > :is(button.btn-gold, button.btn-outline),
+  .app-main .profile-card .court-pref__actions > :is(button.btn-gold, button.btn-outline),
+  .admin .admin__toolbar :is(button.btn-gold, button.btn-outline, button.btn-danger):not(.btn-outline--sm),
+  .client-search-row .btn-add-client,
+  .admin .plans-layout__side .plans-layout__add {
+    box-sizing: border-box;
+    height: var(--d-ctl);
+    min-height: var(--d-ctl);
+    padding: 0 20px;
+    font-size: var(--d-ctl-fs);
+    line-height: 1.2;
+    border-radius: var(--d-radius);
+  }
+
+  /* ---------- Filter pills and the year picker ---------- */
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.qa-filter-btn, .case-filter-btn):not(.qa-filter-btn--sub, [data-compact] > *),
+  .txn-year-select, .txn-period__chips .txn-year-select {
+    box-sizing: border-box;
+    height: var(--d-pill);
+    min-height: var(--d-pill);
+    padding: 0 16px;
+    font-size: var(--d-pill-fs);
+    line-height: 1.2;
+    border-radius: var(--ctl-radius-pill);
+  }
+  .txn-year-select, .txn-period__chips .txn-year-select { padding-left: 10px; padding-right: 22px; }
+
+  /* ---------- Small buttons and sub-filter pills ---------- */
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.btn-outline--sm, .qa-filter-btn--sub):not([data-compact] > *, table *),
+  .doc-row__actions > :is(button, a),
+  .judge-card__actions > button,
+  .qa-retry-btn,
+  .dropdown__search-btn {
+    box-sizing: border-box;
+    height: var(--d-sub);
+    min-height: var(--d-sub);
+    padding: 0 14px;
+    font-size: var(--d-sub-fs);
+    line-height: 1.2;
+    border-radius: var(--d-radius);
+  }
+
+  /* ---------- Buttons inside table rows ---------- */
+  :is(.admin, .app-main) table :is(button, a):is(.btn-gold, .btn-outline, .btn-danger),
+  .admin .admin__actions button,
+  .notif-row__pdf-btn,
+  .qa-copy-btn {
+    box-sizing: border-box;
+    height: var(--d-row);
+    min-height: var(--d-row);
+    padding: 0 12px;
+    font-size: var(--d-row-fs);
+    line-height: 1.2;
+  }
+
+  /* Monthly / yearly switch on the pricing cards */
+  .pricing-switch button {
+    box-sizing: border-box;
+    min-height: var(--d-pill);
+    padding: 0 18px;
+    font-size: var(--d-pill-fs);
+  }
+
+  /* Rows of controls line up in the middle */
+  .admin .admin__toolbar, .list-toolbar, .doc-filter-row, .todo-filters { align-items: center; gap: 10px 12px; }
+}

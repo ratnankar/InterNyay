@@ -1,0 +1,125 @@
+/* Sign in / Register page gradients. Loaded last so it wins over appskin.css, which had flattened the background. */
+
+/* Backdrop: the courthouse photo under a navy overlay (royal blue and teal glow, gold light from the corners), so the white card
+   stays easy to read. It is a layer of its own (AuthBackdrop) fixed to the screen: the page grows and shrinks with its content
+   (tabs, error messages, phone keyboard) and the photo must not resize with it. 100lvh is the full screen height, it does not
+   change when the browser bars or the keyboard move. The overlay drifts slowly, the photo itself stays put and centred. */
+.auth-page:not(.auth-page--admin) {
+  isolation: isolate;
+  background: #0a1628;
+  animation: none;
+}
+.auth-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(640px 420px at 12% 8%,  rgba(201, 168, 76, 0.30), transparent 65%),
+    radial-gradient(720px 480px at 92% 92%, rgba(59, 109, 200, 0.40), transparent 65%),
+    radial-gradient(520px 360px at 85% 12%, rgba(20, 150, 160, 0.20), transparent 65%),
+    linear-gradient(125deg, rgba(10, 22, 40, 0.90) 0%, rgba(13, 35, 71, 0.84) 35%, rgba(23, 64, 126, 0.76) 62%, rgba(13, 35, 71, 0.84) 82%, rgba(10, 22, 40, 0.90) 100%),
+    #0a1628 url('../assets/photo-bg.webp') center / cover no-repeat;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 260% 260%, cover;
+  animation: auth-gradient 16s ease infinite;
+}
+@keyframes auth-gradient {
+  0%, 100% { background-position: 0% 50%,   0% 50%,   0% 50%,   0% 50%,   center; }
+  50%      { background-position: 100% 50%, 100% 50%, 100% 50%, 100% 50%, center; }
+}
+/* Phones get a smaller portrait crop of the same photo */
+@media (max-width: 700px) {
+  .auth-backdrop {
+    background-image:
+      radial-gradient(640px 420px at 12% 8%,  rgba(201, 168, 76, 0.30), transparent 65%),
+      radial-gradient(720px 480px at 92% 92%, rgba(59, 109, 200, 0.40), transparent 65%),
+      radial-gradient(520px 360px at 85% 12%, rgba(20, 150, 160, 0.20), transparent 65%),
+      linear-gradient(125deg, rgba(10, 22, 40, 0.90) 0%, rgba(13, 35, 71, 0.84) 35%, rgba(23, 64, 126, 0.76) 62%, rgba(13, 35, 71, 0.84) 82%, rgba(10, 22, 40, 0.90) 100%),
+      url('../assets/photo-bg-sm.webp');
+  }
+}
+
+/* Soft glowing orbs stay visible on desktop; blur them a little more for a smoother blend */
+.auth-page:not(.auth-page--admin)::before { background: rgba(201, 168, 76, 0.26); }
+.auth-page:not(.auth-page--admin)::after  { background: rgba(59, 109, 200, 0.34); }
+
+/* Card: white with a faint warm-to-cool wash */
+.auth-card:not(.auth-card--admin) {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Tagline and form accents */
+.auth-logo__tagline {
+  background: linear-gradient(90deg, #f1dc9a, #C9A84C, #f1dc9a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.auth-btn {
+  background: linear-gradient(135deg, #0d2347 0%, #17407e 55%, #3b6dc8 100%);
+  color: #fff;
+  box-shadow: 0 10px 22px -10px rgba(23, 64, 126, 0.8);
+}
+.auth-btn:hover:not(:disabled) { box-shadow: 0 14px 26px -10px rgba(23, 64, 126, 0.95); }
+
+/* Remove the coloured top bar from stat cards */
+.stat-card::before, .stat-card::after { content: none; display: none; }
+
+/* Administrator sign in: same animated multi-colour backdrop, in the red admin theme.
+   appskin.css (loaded after auth.css) was overriding the red background with a flat navy one and the old rule here
+   switched the animation off, so the admin page showed no gradient at all */
+.auth-page.auth-page--admin {
+  background:
+    radial-gradient(640px 420px at 12% 8%,  rgba(224, 82, 82, 0.30), transparent 65%),
+    radial-gradient(720px 480px at 92% 92%, rgba(150, 30, 30, 0.50), transparent 65%),
+    radial-gradient(520px 360px at 85% 12%, rgba(201, 168, 76, 0.16), transparent 65%),
+    linear-gradient(125deg, #1a0b0b 0%, #2b1010 35%, #4a1717 62%, #2b1010 82%, #1a0b0b 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 260% 260%;
+  animation: px-gradient 16s ease infinite;
+}
+.auth-page--admin::before { background: rgba(224, 82, 82, 0.24); }
+.auth-page--admin::after  { background: rgba(150, 30, 30, 0.34); }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-backdrop,
+  .auth-page.auth-page--admin { animation: none; }
+}
+
+/* ---------- Google sign-up popup (asks for the mobile number): sized for phones ----------
+   On a phone the popup was a full-width bottom sheet with a big title, long intro text and two buttons squeezed
+   side by side. Make it a compact centred card that fits its content, with stacked full-width buttons. */
+@media (max-width: 640px) {
+  .overlay.overlay--auth {
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .overlay.overlay--auth .modal.modal--auth {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    padding: 16px;
+    border-radius: 16px;
+  }
+  .modal--auth .modal__header { margin-bottom: 10px; }
+  .modal--auth .modal--auth__heading { gap: 10px; }
+  .modal--auth .modal--auth__icon { width: 32px; height: 32px; border-radius: 9px; }
+  .modal--auth .modal__title { font-size: var(--fs-lg); line-height: 1.25; }
+  .modal--auth .account-modal__text { font-size: var(--fs-xs); line-height: 1.5; overflow-wrap: anywhere; }
+  .modal--auth .account-modal__field { margin-top: 0.75rem; }
+  .modal--auth .form-input { font-size: 14px; padding: 10px 12px; }
+  .modal--auth .form-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+  }
+  .modal--auth .form-actions button { width: 100%; flex: none; justify-content: center; }
+}

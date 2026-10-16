@@ -1,0 +1,51 @@
+{
+  "id": "/",
+  "name": "InterNyay — Practice Management for Delhi Advocates",
+  "short_name": "InterNyay",
+  "description": "Cases, hearings, clients, fees, documents and court updates for advocates at the Delhi District Courts, Delhi High Court and Supreme Court.",
+  "lang": "en-IN",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a1628",
+  "theme_color": "#0a1628",
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cases",
+      "url": "/cases"
+    },
+    {
+      "name": "To-Do List",
+      "url": "/todos"
+    },
+    {
+      "name": "Quick Access",
+      "url": "/quick-access"
+    }
+  ]
+}
