@@ -20,6 +20,7 @@ public class AccountPurgeService {
     private final HearingRepository hearingRepo;
     private final WhatsAppMessageLogRepository whatsAppMessageLogRepo;
     private final NoHearingDateRepository noHearingDateRepo;
+    private final HearingDayLimitRepository hearingDayLimitRepo;
     private final OfficeExpenseRepository officeExpenseRepo;
     private final DocumentService documentService;
     private final QrCodeService qrCodeService;
@@ -49,6 +50,7 @@ public class AccountPurgeService {
 
         whatsAppMessageLogRepo.deleteByUserId(id);
         noHearingDateRepo.deleteByUserId(id);
+        hearingDayLimitRepo.deleteByUserId(id);
 
         userRepo.delete(advocate);
         userRepo.flush();

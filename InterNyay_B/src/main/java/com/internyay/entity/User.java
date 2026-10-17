@@ -50,6 +50,9 @@ public class User {
     @Column(length = 30)
     private String planCode;
 
+    // Most hearings the user takes on one day, empty means no limit. A limit set for one date replaces it (see HearingDayLimit)
+    private Integer dailyHearingLimit;
+
     // Profile details
     private String phone;
     private String barNo;

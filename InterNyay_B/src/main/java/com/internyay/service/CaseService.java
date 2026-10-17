@@ -162,7 +162,7 @@ public class CaseService {
             LocalDate nextHearing = parseDate("Next hearing date", req.getNextHearing());
 
             if (!Objects.equals(nextHearing, c.getNextHearing())) {
-                hearingDays.assertAllowed(nextHearing, userId);
+                hearingDays.assertAllowed(nextHearing, userId, c.getId());
                 // The date being replaced stays in the hearing history
                 if (nextHearing != null) hearingService.recordHeard(c, c.getNextHearing(), userId);
                 c.setCauseListNo(null);

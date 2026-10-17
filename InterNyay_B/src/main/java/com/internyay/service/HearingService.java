@@ -62,7 +62,7 @@ public class HearingService {
         boolean dateChanged = false;
 
         if (req.getDate() != null && !req.getDate().equals(h.getDate())) {
-            hearingDays.assertAllowed(req.getDate(), userId);
+            hearingDays.assertAllowed(req.getDate(), userId, h.getLegalCase().getId());
 
             hearingRepo.findByLegalCase_IdAndUser_IdAndDate(
                             h.getLegalCase().getId(), userId, req.getDate())
@@ -136,7 +136,7 @@ public class HearingService {
         Case c = ownedCase(caseId, userId);
 
         if (req.getNextHearing() != null && !req.getNextHearing().equals(c.getNextHearing())) {
-            hearingDays.assertAllowed(req.getNextHearing(), userId);
+            hearingDays.assertAllowed(req.getNextHearing(), userId, caseId);
         }
 
         // The hearing being closed is the one just heard, unless a closing date is given

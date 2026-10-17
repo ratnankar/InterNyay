@@ -60,7 +60,7 @@ class FlywayMigrationMySqlTest {
 
     @Test
     void theNamedForeignKeysAreInTheSchema() {
-        // The 22 named keys of V1, plus fk_cases_court
+        // The 22 named keys of V1, plus fk_cases_court and fk_hearing_limit_user
         Long found = jdbc.queryForObject("""
                 SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
                 WHERE CONSTRAINT_SCHEMA = DATABASE() AND CONSTRAINT_TYPE = 'FOREIGN KEY'
@@ -68,8 +68,8 @@ class FlywayMigrationMySqlTest {
                       'fk_reply_message','fk_message_account','fk_email_otp_account','fk_no_hearing_user','fk_dismissal_user',
                       'fk_dismissal_notice','fk_wa_log_user','fk_wa_log_case','fk_wa_log_client','fk_documents_case',
                       'fk_documents_client','fk_documents_user','fk_qr_user','fk_judges_court','fk_cases_police_station',
-                      'fk_bail_judges_roster','fk_bail_judges_judge','fk_cases_court')
+                      'fk_bail_judges_roster','fk_bail_judges_judge','fk_cases_court','fk_hearing_limit_user')
                 """, Long.class);
-        assertThat(found).isEqualTo(23);
+        assertThat(found).isEqualTo(24);
     }
 }
