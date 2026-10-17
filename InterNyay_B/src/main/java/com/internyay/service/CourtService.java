@@ -275,6 +275,7 @@ public class CourtService {
     }
 
     // Names what still points at the court / district / court no., null when nothing does.
+    // Only live judge listings count: a removed listing (active = false) is kept for history only and never blocks removal
     // rowIds are the rows that would be deleted: a case is linked to its row, so any case linked to one of them blocks it
     private String usedBy(Court t, String mode, List<Long> rowIds) {
         List<String> used = new java.util.ArrayList<>();
@@ -288,7 +289,7 @@ public class CourtService {
         boolean roomOnly = mode.equals("row") && !t.getCourtNo().isEmpty();
 
         if (roomOnly) {
-            count(used, "judges", "SELECT COUNT(*) FROM judges WHERE court = ?1 AND district = ?2 AND court_room_no = ?3",
+            count(used, "judges", "SELECT COUNT(*) FROM judges WHERE active = TRUE AND court = ?1 AND district = ?2 AND court_room_no = ?3",
                     t.getCourt(), t.getDistrict(), t.getCourtNo());
             // Court history does not block removal: each history period stores its own court, district, building
             // and court no. as text (no link to this table), so it stays exactly as it was after the row is gone
@@ -302,7 +303,7 @@ public class CourtService {
         String where = wholeCourt ? "court = ?1" : "court = ?1 AND district = ?2";
         Object[] args = wholeCourt ? new Object[]{t.getCourt()} : new Object[]{t.getCourt(), t.getDistrict()};
 
-        count(used, "judges", "SELECT COUNT(*) FROM judges WHERE " + where, args);
+        count(used, "judges", "SELECT COUNT(*) FROM judges WHERE active = TRUE AND " + where, args);
         count(used, "bail roster entries", "SELECT COUNT(*) FROM bail_roster_records WHERE " + where, args);
         count(used, "duty magistrate entries", "SELECT COUNT(*) FROM duty_magistrate_roster WHERE " + where, args);
         count(used, "judges on leave entries", "SELECT COUNT(*) FROM judges_on_leave WHERE " + where, args);
