@@ -9,8 +9,7 @@
   .btn-gold.btn-outline--sm,
   .btn-danger.btn-outline--sm,
   .hearings-panel .btn-outline--sm,
-  .hearings-panel .hearing-row__side .btn-outline--sm,
-  .courts-btn { min-height: 40px; }
+  .hearings-panel .hearing-row__side .btn-outline--sm { min-height: 40px; }
 }
 
 .bottom-nav { display: none; }

@@ -84,9 +84,8 @@
    ========================================================================== */
 @media (max-width: 640px) {
 
-  /* 1. Dropdown Options chips: compact pills that wrap tightly */
+  /* 1. Dropdown Options chips: tighter gaps (the pill size itself is in the size scale block at the end of this file) */
   .options-admin__lists { gap: 6px; margin: 8px 0 10px; }
-  .options-admin__list { min-height: 32px; min-width: 0; padding: 5px 12px; line-height: 1.3; }
 
   /* 2. Stacked table cards (one card per row) */
   /* The table wrapper keeps its frame only on wide screens; the cards carry their own border */
@@ -143,4 +142,62 @@
 
   /* Header: the Refresh button lines up with the left edge of the title */
   .admin__header-actions { justify-content: flex-start; }
+}
+
+/* ==========================================================================
+   One size scale for every phone control, so the same kind of control is the same size on every page.
+   Uses the same condition as unified.css (phones, small tablets and touch screens). Desktop is not touched.
+     Fields, search, dropdowns, page / dialog / toolbar buttons   34px  13px text   (unified.css)
+     Pills: filters, option chips, fee-type toggle                32px  13px text
+     Sub pills and sub tabs                                       30-32px  12-13px text
+     Buttons and toggles on a row or card                         30px  12px text   9px corners
+   mobile-touch.css, mobile-v2.css and mobile-final.css gave these controls a flat 40px that the scale never overrode.
+   ========================================================================== */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  /* Pills */
+  .options-admin__list,
+  .fee-type-btn {
+    box-sizing: border-box; height: 32px; min-height: 32px; min-width: 0; padding: 0 14px;
+    font-size: 0.8125rem; line-height: 1.2; display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* Sub filter pills sit one level below the main filter pills */
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a).qa-filter-btn--sub:not([data-compact] > *) {
+    height: 30px; min-height: 30px; padding: 0 12px; font-size: 0.75rem;
+  }
+
+  /* Row and card buttons */
+  .courts-btn, .courts-row__action, .notif-row__pdf-btn, .wa-days-toggle__btn {
+    box-sizing: border-box; height: 30px; min-height: 30px; padding: 0 12px; font-size: 0.75rem; line-height: 1.2;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .courts-btn, .courts-row__action, .notif-row__pdf-btn { border-radius: 9px; }
+
+  /* Plans tick boxes ("Free", "Coming soon") sit in the same grid row as fields, so they take the field size */
+  .plans-admin__free, .plans-admin__grid .plans-admin__free, .plans-admin__confirm .form-input { box-sizing: border-box; height: 34px; min-height: 34px; font-size: 0.8125rem; }
+
+  /* Paid / Unpaid chips: the finger area is still enlarged by their ::after in mobile-touch.css */
+  .paid-status-btn, .fee-status-btn { min-height: 30px; }
+}
+
+/* ==========================================================================
+   Admin > Plans and Fee Calculator, phones only (640px and narrower)
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* Plans: the Add plan button and each card's buttons use the full width, like the other admin toolbars */
+  .plans-layout__side { justify-content: stretch; }
+  .plans-layout__side .plans-layout__add { width: 100%; }
+  .plans-admin__actions { justify-content: stretch; }
+  .plans-admin__actions > * { flex: 1 1 auto; justify-content: center; }
+
+  /* Plans: the "Remove plan?" confirmation drops under the title and fills the card instead of floating right */
+  .plans-admin__confirm { flex: 1 1 100%; margin-left: 0; justify-content: flex-start; }
+  .plans-admin__confirm > span { flex: 1 1 100%; }
+  .plans-admin__confirm .dropdown { flex: 1 1 100%; min-width: 0; max-width: none; }
+  .plans-admin__confirm > button { flex: 1 1 0; justify-content: center; }
+
+  /* Fee Calculator: the quick-check value box uses the full width; "Maximum fee" has its label left and its box right */
+  .admin__toolbar > .form-input.u-w-160 { width: 100% !important; }
+  .admin__toolbar > label.admin__count { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .admin__toolbar > label.admin__count > .form-input { margin-left: 0; }
 }

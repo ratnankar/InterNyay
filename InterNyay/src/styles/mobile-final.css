@@ -16,10 +16,8 @@
   .notif-row__pdf-btn,
   .wa-days-toggle__btn,
   .successor__add,
-  .options-admin__list,
   .chat__icon-btn { min-height: 40px; }
   .notif-row__pdf-btn,
-  .options-admin__list,
   .chat__icon-btn { min-width: 40px; }
   label.btn-outline.btn-outline--sm { display: inline-flex; align-items: center; }
 

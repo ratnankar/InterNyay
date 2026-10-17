@@ -93,8 +93,6 @@
   .calendar__nav-btn { min-width: 40px; min-height: 40px; }
   .cal-day { min-height: 40px; }
 
-  /* Segmented switches with several short options */
-  .wa-days-toggle__btn { min-height: 40px; }
   /* Show/hide password sits inside the field; keep it a full finger wide */
   .password-field__toggle { min-width: 44px; min-height: 40px; }
 
@@ -118,7 +116,6 @@
 
 /* Smaller controls inside forms and lists that were 20 to 32px tall */
 @media (hover: none) and (pointer: coarse) {
-  .fee-type-btn { min-height: 40px; }
   /* Paid / Unpaid / Mark Paid chips: the look stays, the area that reacts to a finger grows */
   .paid-status-btn,
   .fee-status-btn { position: relative; min-height: 32px; }
@@ -132,6 +129,5 @@
 /* Admin console: second-level tabs, collapsible plan headers and row buttons */
 @media (hover: none) and (pointer: coarse) {
   .admin__subtab,
-  .plans-admin__toggle-head,
-  .courts-row__action { min-height: 40px; }
+  .plans-admin__toggle-head { min-height: 40px; }
 }
