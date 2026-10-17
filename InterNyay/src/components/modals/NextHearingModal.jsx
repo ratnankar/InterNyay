@@ -79,11 +79,12 @@ function NextHearingForm({ caseItem: c }) {
             </label>
             <HearingDateInput
               value={nextHearing}
+              caseId={c.id}
               onChange={setNextHearing}
               placeholder="Select next hearing date"
             />
             <p className="next-hearing__hint">
-              Sundays and dates you've crossed out on the calendar can't be chosen. Changing the date
+              Sundays, dates you've crossed out on the calendar and days that already have their daily limit of hearings can't be chosen. Changing the date
               clears the Cause List No., which is fetched again automatically at 6 PM the evening
               before the new date.
             </p>

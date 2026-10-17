@@ -204,6 +204,13 @@
 
 .hdi__day--crossed:disabled { color: var(--color-text-faint); }
 
+/* A day that already holds its daily limit of hearings */
+.hdi__day--full:disabled {
+  color: var(--color-text-faint);
+  text-decoration: line-through;
+  background: rgba(180, 83, 9, 0.08);
+}
+
 .hdi__cross {
   position: absolute;
   inset: 5px;

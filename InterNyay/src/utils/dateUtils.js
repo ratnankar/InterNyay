@@ -42,11 +42,12 @@ export function isSunday(dateStr) {
 }
 
 // Returns an error message if a hearing can't be set on this date, otherwise an empty string
-export function hearingDateProblem(dateStr, noHearingDates) {
+// dayFullProblem (optional) is the app's check for a day that already holds its daily limit, it answers a message or ''
+export function hearingDateProblem(dateStr, noHearingDates, dayFullProblem) {
   if (!dateStr) return ''
   if (isSunday(dateStr)) return 'Hearings cannot be set on a Sunday'
   if (noHearingDates?.has(dateStr)) return 'This date is marked as a no-hearing date'
-  return ''
+  return dayFullProblem ? dayFullProblem(dateStr) : ''
 }
 
 // Date the case was created (YYYY-MM-DD), or '' when unknown

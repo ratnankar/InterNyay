@@ -255,6 +255,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
                       <label className="form-label">Hearing date</label>
                       <HearingDateInput
                         value={draftDate}
+                        caseId={caseId}
                         onChange={setDraftDate}
                         clearable={false}
                       />

@@ -375,3 +375,46 @@
   .leave-cal { grid-template-columns: minmax(0, 1fr); }
   .leave-cal__grid-wrap { max-width: 420px; }
 }
+/* Daily hearing limit: a full day gets a ring, the editor sits under the calendar */
+.holiday-swatch--full {
+  background: transparent;
+  border: 2px solid #b45309;
+  box-sizing: border-box;
+}
+
+.cal-day--full:not(.cal-day--selected) {
+  box-shadow: inset 0 0 0 2px rgba(180, 83, 9, 0.55);
+}
+
+.hearing-limit__note {
+  font-size: var(--cal-note-fs);
+  color: var(--color-text-muted, #666);
+  margin-bottom: 6px;
+}
+
+.hearing-limit__editor { margin-top: 14px; }
+
+.calendar__limit-btn { margin-top: 6px; }
+
+.hearing-limit__hint {
+  margin-top: 4px;
+  font-size: var(--cal-note-fs);
+  color: var(--color-text-muted, #666);
+}
+
+.hearing-limit__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.hearing-limit__input { width: 130px; flex: 0 0 auto; }
+
+.hearing-limit__input--invalid { border-color: #b3261e; }
+
+.hearing-limit__error {
+  margin-top: 4px;
+  font-size: var(--cal-note-fs);
+  color: #b3261e;
+}

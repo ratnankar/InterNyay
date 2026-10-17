@@ -4,6 +4,7 @@ import { formatDate, getDaysInMonth, getFirstDayOfMonth, formatShortDate } from 
 import { holidayCourtClass, holidayCourtLabel } from '../../constants/holidays'
 
 import Icon from './Icon'
+import HearingLimitModal from '../modals/HearingLimitModal'
 import { confirmDialog } from '../../utils/confirmDialog'
 // Weekday headers for the month grid, starting on Sunday
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
@@ -16,11 +17,13 @@ export default function Calendar() {
   const {
     cases, holidays, hearingCountsByDate,
     calendarDate, setCalendarDate, calendarViewDate, setCalendarViewDate,
-    noHearingDates, toggleNoHearingDate,
+    noHearingDates, toggleNoHearingDate, hearingLimitFor,
   } = useApp()
 
   // Whether the upcoming-holidays list is expanded
   const [holidaysOpen, setHolidaysOpen] = useState(false)
+  // Whether the daily hearing limit window is open
+  const [limitOpen, setLimitOpen] = useState(false)
 
   // Month currently being viewed in the grid (not necessarily the selected date)
   const year  = calendarViewDate.getFullYear()
@@ -43,6 +46,9 @@ export default function Calendar() {
   const selectedIsSunday  = calendarDate.getDay() === SUNDAY
   // True if the user has marked this date as a no-hearing day
   const selectedIsCrossed = noHearingDates.has(selectedStr)
+
+  // Limit that applies to the selected date, null when there is none
+  const selectedLimit = hearingLimitFor(selectedStr)
 
   // Mark or unmark a day as no-hearing; warn first if cases are already listed on it because they won't move automatically
   async function toggleCross() {
@@ -107,6 +113,8 @@ export default function Calendar() {
           const dow        = d.getDay()
           const isSundayCell = dow === SUNDAY
           const isCrossed  = noHearingDates.has(ds)
+          const dayLimit   = hearingLimitFor(ds)
+          const isFull     = dayLimit != null && hearingCount >= dayLimit
 
           const cls = [
             'cal-day',
@@ -115,6 +123,7 @@ export default function Calendar() {
             holiday && !isSelected ? `cal-day--holiday cal-day--holiday-${holidayCourtClass(holiday)}` : '',
             !isSelected && !holiday && isSundayCell ? 'cal-day--sunday' : '',
             isCrossed ? 'cal-day--crossed' : '',
+            isFull && !isCrossed ? 'cal-day--full' : '',
           ].filter(Boolean).join(' ')
 
           return (
@@ -125,7 +134,7 @@ export default function Calendar() {
                 isCrossed ? 'No hearing on this date'
                 : holiday ? `${holiday.label} — ${holidayCourtLabel(holiday)} holiday`
                 : isSundayCell ? 'Sunday — no hearings'
-                : hearingCount > 0 ? `${hearingCount} hearing${hearingCount === 1 ? '' : 's'}`
+                : hearingCount > 0 ? `${hearingCount} hearing${hearingCount === 1 ? '' : 's'}${dayLimit != null ? ` of ${dayLimit}${isFull ? ' — full' : ''}` : ''}`
                 : undefined
               }
               onClick={() => setCalendarDate(d)}
@@ -154,6 +163,9 @@ export default function Calendar() {
         <span className="calendar__legend-item">
           <span className="holiday-swatch holiday-swatch--both" /> Both
         </span>
+        <span className="calendar__legend-item">
+          <span className="holiday-swatch holiday-swatch--full" /> Day full
+        </span>
       </div>
 
       <div className="calendar__cross-box">
@@ -170,6 +182,14 @@ export default function Calendar() {
                 : 'Mark this date so no hearing can be set on it'}
             >
               {selectedIsCrossed ? <><Icon name="close" /> Remove cross from this date</> : <><Icon name="close" /> Mark as no-hearing date</>}
+            </button>
+            <button
+              type="button"
+              className="btn-outline btn-outline--sm calendar__cross-btn calendar__limit-btn"
+              onClick={() => setLimitOpen(true)}
+              title="Set how many hearings can be listed on this date and on a usual day"
+            >
+              Daily hearing limit{selectedIsCrossed ? ': 0' : selectedLimit != null ? `: ${selectedLimit}` : ''}
             </button>
             {selectedIsCrossed && (
               <p className="calendar__cross-note">No hearing will be taken on this date.</p>
@@ -192,6 +212,8 @@ export default function Calendar() {
           </div>
         </div>
       )}
+
+      {limitOpen && <HearingLimitModal dateStr={selectedStr} onClose={() => setLimitOpen(false)} />}
 
       {upcomingHolidays.length > 0 && (
         <div className="calendar__upcoming calendar__upcoming--holidays">

@@ -20,9 +20,11 @@ export default function HearingDateInput({
   placeholder = 'Select date',
   clearable = true,
   className = '',
+  // Case the date is for: it does not count against the limit of its own date
+  caseId = null,
 }) {
-  // Dates the user crossed out as no-hearing days
-  const { noHearingDates } = useApp()
+  // Dates the user crossed out as no-hearing days, and the daily hearing limit
+  const { noHearingDates, isDayFull, dayFullProblem, hearingLimitFor, hearingCountsByDate } = useApp()
 
   // Whether the calendar popover is open
   const [open, setOpen] = useState(false)
@@ -38,7 +40,7 @@ export default function HearingDateInput({
   // Today's date as a formatted string
   const todayStr = formatDate(new Date())
   // Message if the chosen date is not allowed (for example a crossed-out day); marks the field invalid
-  const problem = hearingDateProblem(value, noHearingDates)
+  const problem = hearingDateProblem(value, noHearingDates, ds => dayFullProblem(ds, caseId))
 
   // Position the popover under the field, or above it if there isn't room below, and keep it inside the window width
   function place() {
@@ -165,7 +167,9 @@ export default function HearingDateInput({
               const ds = formatDate(new Date(year, month, day))
               const sunday = isSunday(ds)
               const crossed = noHearingDates.has(ds)
-              const blocked = sunday || crossed
+              // A day that already holds its daily limit; the limit can be raised from the dashboard calendar
+              const full = !sunday && !crossed && ds !== value && isDayFull(ds, caseId)
+              const blocked = sunday || crossed || full
 
               const cls = [
                 'hdi__day',
@@ -173,6 +177,7 @@ export default function HearingDateInput({
                 ds === todayStr ? 'hdi__day--today' : '',
                 sunday ? 'hdi__day--sunday' : '',
                 crossed ? 'hdi__day--crossed' : '',
+                full ? 'hdi__day--full' : '',
               ].filter(Boolean).join(' ')
 
               return (
@@ -181,7 +186,12 @@ export default function HearingDateInput({
                   type="button"
                   className={cls}
                   disabled={blocked}
-                  title={crossed ? 'Marked as a no-hearing date' : sunday ? 'Sunday — no hearings' : undefined}
+                  title={
+                    crossed ? 'Marked as a no-hearing date'
+                    : sunday ? 'Sunday — no hearings'
+                    : full ? `Full — ${hearingCountsByDate.get(ds) || 0} of ${hearingLimitFor(ds)} hearings`
+                    : undefined
+                  }
                   onClick={() => pick(ds)}
                 >
                   {day}
@@ -195,7 +205,7 @@ export default function HearingDateInput({
             })}
           </div>
 
-          <p className="hdi__legend">Sundays and crossed-out dates can't be chosen.</p>
+          <p className="hdi__legend">Sundays, crossed-out dates and full days can't be chosen.</p>
         </div>,
         document.body
       )}

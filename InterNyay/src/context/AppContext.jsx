@@ -30,7 +30,8 @@ import {
   hearings as hearingsApi,
   documents as documentsApi,
   holidays as holidaysApi,
-  noHearingDates as noHearingDatesApi
+  noHearingDates as noHearingDatesApi,
+  hearingLimits as hearingLimitsApi
 } from '../services/api'
 import { getErrorMessage } from '../utils/errorMessages'
 import { onLiveRefresh } from '../utils/liveRefresh'
@@ -288,6 +289,56 @@ export function AppProvider({ children }) {
   // Dates the advocate has crossed out as "no hearing" (kept in a Set for quick lookups)
   const [noHearingDates, setNoHearingDates] = useState(() => new Set())
 
+  // Most hearings the advocate takes on a day: the usual limit (null = no limit) and the limits of particular dates
+  const [hearingLimits, setHearingLimits] = useState({ defaultLimit: null, overrides: {} })
+
+  // Keeps the answer of the server in the same shape whatever it contains
+  function applyHearingLimits(data) {
+    setHearingLimits({
+      defaultLimit: data?.defaultLimit ?? null,
+      overrides: data?.overrides && typeof data.overrides === 'object' ? data.overrides : {},
+    })
+  }
+
+  // Load the hearing limits saved by this advocate
+  async function fetchHearingLimits() {
+    try {
+      applyHearingLimits(await hearingLimitsApi.get())
+    } catch (e) {
+      applyHearingLimits(null)
+    }
+  }
+
+  // Change the usual daily limit (null removes it)
+  async function saveDefaultHearingLimit(limit) {
+    try {
+      applyHearingLimits(await hearingLimitsApi.setDefault(limit))
+      addToast(limit == null ? 'Usual daily limit removed' : `Usual daily limit set to ${limit}`)
+      return true
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not save the hearing limit'), 'error')
+      return false
+    }
+  }
+
+  // Change the limit of one date; null (or an empty value) goes back to the usual limit
+  async function saveHearingLimitForDate(dateStr, limit) {
+    try {
+      applyHearingLimits(limit == null
+        ? await hearingLimitsApi.resetDate(dateStr)
+        : await hearingLimitsApi.setForDate(dateStr, limit))
+      // A limit of 0 makes the date a no-hearing date and removing a limit lifts that, so the crosses are read again
+      await fetchNoHearingDates()
+      addToast(limit == null ? 'Limit removed for this date'
+        : limit === 0 ? 'Marked as a no-hearing date (limit 0)'
+        : `Limit for this date set to ${limit}`)
+      return true
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not save the hearing limit'), 'error')
+      return false
+    }
+  }
+
   // Load hearing history (up to 1000 records) for the calendar and dashboard
   async function fetchHearingRecords() {
     try {
@@ -332,6 +383,9 @@ export function AppProvider({ children }) {
         else           next.add(dateStr)
         return next
       })
+
+      // Crossing a date out drops a limit that was set for it
+      if (!wasMarked) fetchHearingLimits()
 
       addToast(wasMarked ? 'Cross removed — hearings can be set on this date again' : 'Marked as a no-hearing date')
     } catch (e) {
@@ -762,6 +816,7 @@ export function AppProvider({ children }) {
         await fetchHolidays()
 
         await fetchNoHearingDates()
+        await fetchHearingLimits()
 
         await fetchHearingRecords()
 
@@ -791,7 +846,7 @@ export function AppProvider({ children }) {
       const startedAt = Date.now()
       loadOptions().catch(() => {})
 
-      const [casesRes, clientsRes, tasksRes, allDocs, holidayList, noHearingList, hearingRes, me] = await Promise.all([
+      const [casesRes, clientsRes, tasksRes, allDocs, holidayList, noHearingList, hearingRes, me, limitsRes] = await Promise.all([
         loadAllCases().catch(() => null),
         clientsApi.list().catch(() => null),
         tasksApi.list().catch(() => null),
@@ -800,11 +855,13 @@ export function AppProvider({ children }) {
         noHearingDatesApi.list().catch(() => null),
         hearingsApi.list({ size: 1000 }).catch(() => null),
         authApi.me().catch(() => null),
+        hearingLimitsApi.get().catch(() => null),
       ])
 
       // Calendar data and the profile do not depend on what the person is editing
       if (Array.isArray(holidayList)) setHolidays(holidayList)
       if (Array.isArray(noHearingList)) setNoHearingDates(new Set(noHearingList))
+      if (limitsRes) applyHearingLimits(limitsRes)
       if (hearingRes) setHearingRecords(Array.isArray(hearingRes) ? hearingRes : hearingRes?.content || [])
       if (me) {
         setCurrentUser(prev => {
@@ -1276,6 +1333,7 @@ export function AppProvider({ children }) {
     setTodos([])
     setHolidays([])
     setNoHearingDates(new Set())
+    setHearingLimits({ defaultLimit: null, overrides: {} })
     setNextHearingCaseId(null)
     setExpandedHearingCaseId(null)
     setHearingRecords([])
@@ -2155,7 +2213,7 @@ export function AppProvider({ children }) {
     const current = cases.find(c => c.id === id)
     // Block hearing dates that fall on a Sunday or a no-hearing date
     if (updates?.nextHearing && updates.nextHearing !== current?.nextHearing) {
-      const problem = hearingDateProblem(updates.nextHearing, noHearingDates)
+      const problem = hearingDateProblem(updates.nextHearing, noHearingDates, ds => dayFullProblem(ds, id))
       if (problem) {
         addToast(`${problem} — pick another date`, 'error')
         return false
@@ -3157,8 +3215,8 @@ export function AppProvider({ children }) {
   // Hearing records that count on the calendar (withdrawn ones are ignored)
   const calendarHearingRecords = hearingRecords.filter(h => h.outcome !== WITHDRAWN_OUTCOME)
 
-  // How many different cases have a hearing on each date (upcoming + past), shown on the calendar
-  const hearingCountsByDate = (() => {
+  // The different cases that have a hearing on each date (upcoming + past)
+  const hearingCaseIdsByDate = (() => {
     const caseIdsByDate = new Map()
     const caseIds = new Set(cases.map(c => c.id))
     // Counts a case once for a date
@@ -3173,8 +3231,30 @@ export function AppProvider({ children }) {
       if (caseIds.has(h.caseId)) add(h.date, h.caseId)
     })
 
-    return new Map([...caseIdsByDate].map(([date, ids]) => [date, ids.size]))
+    return caseIdsByDate
   })()
+
+  // How many different cases have a hearing on each date, shown on the calendar
+  const hearingCountsByDate = new Map([...hearingCaseIdsByDate].map(([date, ids]) => [date, ids.size]))
+
+  // Most hearings allowed on a date: the limit set for that date, else the usual limit, null when there is none
+  const hearingLimitFor = dateStr => hearingLimits.overrides[dateStr] ?? hearingLimits.defaultLimit ?? null
+
+  // True when the date already holds as many hearings as its limit allows, not counting the given case
+  const isDayFull = (dateStr, caseId = null) => {
+    const limit = hearingLimitFor(dateStr)
+    if (limit == null) return false
+    const ids = hearingCaseIdsByDate.get(dateStr)
+    const count = ids ? ids.size - (caseId != null && ids.has(caseId) ? 1 : 0) : 0
+    return count >= limit
+  }
+
+  // Message for a date that is full, '' when more hearings fit. The server makes the same check when saving
+  const dayFullProblem = (dateStr, caseId = null) => {
+    if (!isDayFull(dateStr, caseId)) return ''
+    const limit = hearingLimitFor(dateStr)
+    return `This date already has ${limit} hearing${limit === 1 ? '' : 's'}, the daily limit`
+  }
 
   // Number of hearing records per case
   const hearingCountsByCase = (() => {
@@ -3386,6 +3466,14 @@ export function AppProvider({ children }) {
 
         hearingCountsByDate,
         hearingCountsByCase,
+
+        // Daily hearing limit
+        hearingLimits,
+        hearingLimitFor,
+        isDayFull,
+        dayFullProblem,
+        saveDefaultHearingLimit,
+        saveHearingLimitForDate,
 
         // Judges-on-leave counts per date
         calendarDateKey,

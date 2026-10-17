@@ -477,6 +477,15 @@ export const noHearingDates = {
   unmark: (date) => del(`/no-hearing-dates/${date}`),
 }
 
+// How many hearings the advocate takes on one day: a usual limit plus a limit for particular dates.
+// Every answer is { defaultLimit, overrides: { 'YYYY-MM-DD': limit } }, an empty limit means no limit / the usual limit
+export const hearingLimits = {
+  get:        ()            => get('/hearing-limits'),
+  setDefault: (limit)       => put('/hearing-limits/default', { body: { limit } }),
+  setForDate: (date, limit) => put(`/hearing-limits/${date}`, { body: { limit } }),
+  resetDate:  (date)        => del(`/hearing-limits/${date}`),
+}
+
 // Login, registration, profile and account management
 export const auth = {
   login:      (body) => post('/auth/login', { body }),
@@ -835,5 +844,5 @@ export const chat = {
 }
 
 // Everything grouped into one object so components can call api.cases.list() etc.
-const api = { publicApi, contact, chat, courts, courtPreferences, quickAccess, police, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, notifications, whatsapp, courtCalendar, holidays, noHearingDates, auth, legalForms, admin, officeExpenses, feeCalculator }
+const api = { publicApi, contact, chat, courts, courtPreferences, quickAccess, police, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
 export default api
