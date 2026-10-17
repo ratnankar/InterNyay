@@ -65,7 +65,7 @@ public class JudgeRequest {
         regexp = "^$|^(\\+91[\\s-]?|0)?[6-9]\\d{9}$",
         message = "Enter a valid 10-digit Indian mobile number (optionally with +91)"
     )
-    private String courtReaderMobile;
+    private String courtReaderPhone;
 
     private String jurisdiction;
 }

@@ -735,7 +735,7 @@ public class ChatTools {
                         .put("courtEmail", j.getCourtEmail())
                         .put("virtualCourtLink", j.getVirtualCourtLink())
                         .put("courtReaderName", j.getCourtReaderName())
-                        .put("courtReaderMobile", j.getCourtReaderMobile())
+                        .put("courtReaderPhone", j.getCourtReaderPhone())
                         .put("jurisdiction", j.getJurisdiction()).map()).toList())
                 .map();
     }

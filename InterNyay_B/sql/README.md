@@ -18,6 +18,9 @@ and refuses to start if they do not. It never changes the database.
 | `V9__judge_profiles_and_listings.sql` | Judges List split into `judge_profiles` (the judge) and `judges` (the court listing held by one profile) |
 | `V10__mahila_court_on_court_rooms.sql` | Mahila court flag moves from the judge listing to the court room (`courts.mahila_court`) |
 | `V11__drop_released_judges.sql` | Drops the unused `released_judges` table |
+| `V14__court_reader_phone.sql` | Renames `judges.court_reader_mobile` to `court_reader_phone` (data unchanged) |
+| `V15__chat_history.sql` | `chat_messages`: the saved conversation of each account with the AI assistant (deleted together with the account) |
+| `V16__chat_conversations.sql` | `chat_conversations`: several saved chats per account; each existing conversation becomes one chat, titled with its first question |
 
 This folder keeps only the two scripts that run outside the app: `create_database.sql` and `check_links.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).

@@ -61,6 +61,17 @@ Model names and free-tier terms change; check the provider's current list. Anthr
 - Associates get the advocate's cases and clients but no fee, billing or transaction data.
 - Admin accounts do not see the chat.
 
+## Chat history
+
+- Every chat is saved on the server, per account (advocate or associate each have their own): chats in `chat_conversations` and their messages in `chat_messages` (migrations `V15` and `V16`). They come back after a refresh, on another device, and the next time the chat is opened.
+- **New chat** (the + button in the chat header) closes the open chat, which stays saved, and starts an empty one. **Previous chats** (the clock button) lists the saved chats, latest first; tap one to open it and carry on, or use the bin to delete it. A chat is created when its first question is answered and is titled with that question.
+- A reload brings back the chat that was open (the browser tab remembers which one); a fresh start opens the latest chat.
+- Nothing is deleted automatically: all previous chats are kept, and a chat can hold any number of messages. A chat is removed only when the user deletes it (or the account is deleted). Messages longer than 8000 characters are cut. Plan for the table growing over time (back it up and, if needed, archive old rows yourself).
+- Deleting an account deletes its chats too (foreign keys with `ON DELETE CASCADE`).
+- Only the latest 20 messages of the open chat are sent to the AI model with each question, so a very long chat does not make answers slower or more expensive, and a new chat starts without the earlier chat's context.
+- Endpoints: `GET /api/chat/conversations`, `GET /api/chat/conversations/{id}`, `DELETE /api/chat/conversations/{id}`, `DELETE /api/chat/conversations` (all), and `POST /api/chat/history` (adds messages to a chat; used for the built-in support answer). `POST /api/chat` takes an optional `conversationId` and returns the id of the chat the exchange was saved in. They follow the same plan rule as the chat (`chat_assistant`). The old `GET`/`DELETE /api/chat/history` endpoints are gone.
+- History is stored as plain text in your database, so it falls under the same backup and privacy handling as client records.
+
 ## Other settings (application.properties)
 
 | Property | Default |

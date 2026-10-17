@@ -391,7 +391,7 @@ public class ChatService {
                 Style:
                 - Be direct and concise. Lead with the answer.
                 - Amounts in tool results are already formatted in Indian rupees (for example Rs. 1,25,000). Copy them exactly, and never add up, subtract or convert amounts yourself; use the totals the tools give.
-                - Reply in the language the user wrote in (English, Hindi or Hinglish). Keep case numbers, names and legal terms unchanged.
+                - Reply in the language the user wrote in (for example English, Hindi, Hinglish or another Indian language; the question may come from voice input, so allow for small speech-recognition mistakes in names and numbers and confirm them if the record lookup is unclear). Keep case numbers, names and legal terms unchanged.
                 - If a list in a result is marked partial or has an "_omitted" count, say the list is partial and offer to narrow it.
                 - Write dates like 5 Oct 2026.
                 - Identify cases by title and case number.

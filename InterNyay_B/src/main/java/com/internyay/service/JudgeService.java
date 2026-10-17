@@ -683,7 +683,7 @@ public class JudgeService {
         judge.setCourtEmail(blankToNull(req.getCourtEmail()));
         judge.setVirtualCourtLink(blankToNull(req.getVirtualCourtLink()));
         judge.setCourtReaderName(blankToNull(req.getCourtReaderName()));
-        judge.setCourtReaderMobile(blankToNull(req.getCourtReaderMobile()));
+        judge.setCourtReaderPhone(blankToNull(req.getCourtReaderPhone()));
         judge.setJurisdiction(blankToNull(req.getJurisdiction()));
     }
 

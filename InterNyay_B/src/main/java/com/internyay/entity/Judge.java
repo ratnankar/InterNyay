@@ -46,7 +46,7 @@ public class Judge {
 
     // Court reader contact
     private String courtReaderName;
-    private String courtReaderMobile;
+    private String courtReaderPhone;
     // Matters the judge handles
     @Column(columnDefinition = "TEXT")
     private String jurisdiction;

@@ -27,7 +27,7 @@ public class JudgeDto {
     private String courtEmail;
     private String virtualCourtLink;
     private String courtReaderName;
-    private String courtReaderMobile;
+    private String courtReaderPhone;
     private String jurisdiction;
     // True when the judge sits in a Mahila court (orders are not declared there)
     private boolean mahilaCourt;
@@ -55,7 +55,7 @@ public class JudgeDto {
                 .courtEmail(j.getCourtEmail())
                 .virtualCourtLink(j.getVirtualCourtLink())
                 .courtReaderName(j.getCourtReaderName())
-                .courtReaderMobile(j.getCourtReaderMobile())
+                .courtReaderPhone(j.getCourtReaderPhone())
                 .jurisdiction(j.getJurisdiction())
                 .vacant(j.getProfile().isVacant())
                 .courtNoHistory(courtNoHistory)
