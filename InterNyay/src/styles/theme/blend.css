@@ -98,3 +98,38 @@
   box-sizing: border-box;
   box-shadow: 0 14px 28px -12px rgba(2, 8, 20, 0.6);
 }
+
+/* ---------- Account row and its pop-up as one matching pair ----------
+   The pop-up reaches 0.5rem past the user block on each side (room for "Add another account"), but the row's hover and
+   resting background stopped at the block, so the row looked narrower than the pop-up above it. The row now takes the
+   same width (its content stays where it was, the extra width is padding) and both share one radius, one navy tone
+   taken from the sidebar's own gradient, and the app's gold hairline and gold hover tint, instead of a flat blue panel. */
+.sidebar__user-row.sidebar__user-row--btn {
+  width: calc(100% + 1rem);
+  margin: 0 -0.5rem;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: background 0.15s, border-color 0.15s;
+}
+.sidebar__user-row.sidebar__user-row--btn:hover {
+  background: rgba(201, 168, 76, 0.12);
+  border-color: rgba(201, 168, 76, 0.3);
+}
+.sidebar__user-row.sidebar__user-row--btn.sidebar__user-row--active {
+  background: rgba(201, 168, 76, 0.18);
+  border-color: rgba(201, 168, 76, 0.4);
+}
+
+.sidebar__user-menu {
+  background: linear-gradient(170deg, #0e2246 0%, #0b1a35 100%);
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  border-radius: 12px;
+  box-shadow: 0 16px 32px -14px rgba(2, 8, 20, 0.75), 0 0 0 1px rgba(10, 22, 40, 0.6);
+}
+.sidebar__user-menu-item { border-radius: 9px; }
+.sidebar__user-menu-item:hover { background: rgba(201, 168, 76, 0.12); }
+.sidebar__user-menu-item.is-active:hover { background: var(--color-gold); }
+.sidebar__user-menu-sep { background: rgba(201, 168, 76, 0.22); }
