@@ -1,0 +1,68 @@
+/* Responsive fixes, loaded last so nothing earlier overrides them.
+   1. Calendar: "Mark as no-hearing date" and "Daily hearing limit" sit in one row at the same height and line up
+      (the limit button had a 6px top margin that pushed it out of line when the two sat side by side).
+   2. Admin > Contact Messages: the sub tabs and Refresh button line up with the tab bar above (same left and right edge).
+   3. Sidebar drawer is a little narrower on tablets and phones (was 240px, and up to 270px on phones). */
+
+/* ---------- 1. Calendar buttons ---------- */
+.calendar__cross-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+.calendar__cross-box > button.calendar__cross-btn.calendar__cross-btn {
+  flex: 1 1 auto;
+  margin: 0;
+  box-sizing: border-box;
+  height: auto;
+  min-height: 34px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.calendar__cross-box > .calendar__cross-note {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+/* ---------- 2. Contact Messages sub tabs and Refresh ---------- */
+@media (max-width: 640px) {
+  .contact-subbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .contact-subbar .admin__subtabs.admin__subtabs {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .contact-subbar .admin__subtabs.admin__subtabs .admin__subtab {
+    flex: 1 0 auto;
+    justify-content: center;
+    text-align: center;
+  }
+  .contact-subbar .contact-subbar__refresh.contact-subbar__refresh {
+    width: 100%;
+    margin-left: 0;
+    box-sizing: border-box;
+  }
+}
+
+/* ---------- 3. Narrower sidebar drawer ---------- */
+@media (max-width: 860px) {
+  .sidebar.sidebar {
+    flex-basis: auto;
+    width: 224px;
+    min-width: 0;
+    max-width: 224px;
+  }
+}
+@media (max-width: 420px) {
+  .sidebar.sidebar {
+    width: 68vw;
+    min-width: 0;
+    max-width: 240px;
+  }
+}
