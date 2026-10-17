@@ -1,7 +1,7 @@
 /* Responsive fixes, loaded last so nothing earlier overrides them.
    1. Calendar: "Mark as no-hearing date" and "Daily hearing limit" sit in one row at the same height and line up
       (the limit button had a 6px top margin that pushed it out of line when the two sat side by side).
-   2. Admin > Contact Messages: the sub tabs and Refresh button line up with the tab bar above (same left and right edge).
+   2. Admin > Contact Messages: the sub tabs fill the row like the tab bar above, and Refresh keeps its normal size with its right edge on the same line.
    3. Sidebar drawer is a little narrower on tablets and phones (was 240px, and up to 270px on phones). */
 
 /* ---------- 1. Calendar buttons ---------- */
@@ -43,10 +43,12 @@
     justify-content: center;
     text-align: center;
   }
+  /* Refresh keeps its normal size; its right edge lines up with the right edge of the tabs card */
   .contact-subbar .contact-subbar__refresh.contact-subbar__refresh {
-    width: 100%;
-    margin-left: 0;
-    box-sizing: border-box;
+    width: auto;
+    align-self: flex-end;
+    margin-left: auto;
+    margin-right: 0;
   }
 }
 
@@ -64,5 +66,30 @@
     width: 68vw;
     min-width: 0;
     max-width: 240px;
+  }
+}
+
+/* ---------- 4. Desktop only: calendar month arrows (‹ ›) a little smaller ----------
+   Same media query as the desktop button sizes in theme/control-sizes.css (they set the arrow to 0.875rem), phones and tablets keep their size.
+   The button box stays the same, only the arrow shrinks. */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .calendar .calendar__nav .calendar__nav-btn.calendar__nav-btn.btn-outline {
+    font-size: 0.75rem;
+  }
+}
+
+/* ---------- 5. Phones: the two calendar buttons are the same width and line up with the legend above ---------- */
+@media (max-width: 640px) {
+  .calendar__cross-box {
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .calendar__cross-box > button.calendar__cross-btn.calendar__cross-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 10px;
+    white-space: normal;
+    line-height: 1.25;
+    gap: 6px;
   }
 }
