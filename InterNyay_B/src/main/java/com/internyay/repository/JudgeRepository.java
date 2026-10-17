@@ -57,6 +57,9 @@ public interface JudgeRepository extends JpaRepository<Judge, Long> {
     // Live listings in one court room of a court row
     List<Judge> findByCourtIdAndCourtRoomNoIgnoreCaseAndActiveTrue(Long courtId, String courtRoomNo);
 
+    // Live listings in one court room of a court and district (district is empty for a listing without a district)
+    List<Judge> findByCourtAndDistrictAndCourtRoomNoIgnoreCaseAndActiveTrue(String court, String district, String courtRoomNo);
+
     // Live listings held by a judge
     List<Judge> findByProfileIdAndActiveTrue(Long profileId);
 

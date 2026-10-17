@@ -53,6 +53,7 @@ public class JudgeService {
     private final JudgeProfileRepository profileRepo;
     private final JudgeProfileService profileService;
     private final CourtService courtService;
+    private final CourtNoTransferService courtNoTransfer;
     private final CourtRepository courtRepo;
 
     // Optional court / district filters
@@ -310,7 +311,7 @@ public class JudgeService {
 
         judge.setCourt(place.getCourt());
         judge.setDistrict(place.getDistrict());
-        judge.setCourtId(courtService.placeOf(place.getCourt(), place.getDistrict()).getId());
+        judge.setCourtId(courtService.listingBaseOf(place.getCourt(), place.getDistrict()).getId());
         judge.setCourtRoomNo(blankToNull(place.getCourtNo()));
         judge.setBuilding(blankToNull(place.getBuilding()));
         judge.setUpdatedAt(LocalDateTime.now());
@@ -337,10 +338,17 @@ public class JudgeService {
         }
     }
 
-    // The court table row a judge request points at; court, district, building and court no. must all be in the table
+    // The court table row a judge request points at. Court, building and court no. must be in the court table.
+    // The district is optional: with one, a court no. that has no district yet moves into it and one that is already
+    // there stays; without one, nothing in the court table is changed
     private Court requirePlace(JudgeRequest req) {
-        courtService.requireDistrictOf(courtService.requireCourt(req.getCourt()), req.getDistrict());
-        return courtService.requirePlace(req.getCourt(), req.getDistrict(), req.getBuilding(), req.getCourtRoomNo());
+        String court = courtService.requireCourt(req.getCourt());
+        if (courtService.highCourt(court).isPresent()) {
+            throw new IllegalArgumentException(court + " is a high court. Listings are for district courts");
+        }
+        String district = blankToNull(req.getDistrict());
+        if (district != null) district = courtService.requireDistrictOf(court, district);
+        return courtNoTransfer.resolveForListing(court, district, req.getBuilding(), req.getCourtRoomNo());
     }
 
     private void trackCourtNo(Judge judge, LocalDate requestedFrom, boolean correction) {
@@ -457,7 +465,7 @@ public class JudgeService {
 
     // True when the court, building or court no. of the place is not the judge's current one
     private boolean placeChanged(Judge judge, Court place) {
-        Long courtId = courtService.placeOf(place.getCourt(), place.getDistrict()).getId();
+        Long courtId = courtService.listingBaseOf(place.getCourt(), place.getDistrict()).getId();
         return !Objects.equals(judge.getCourtId(), courtId)
                 || !Objects.equals(blankToNull(judge.getCourtRoomNo()), blankToNull(place.getCourtNo()))
                 || !Objects.equals(blankToNull(judge.getBuilding()), blankToNull(place.getBuilding()));
@@ -467,7 +475,7 @@ public class JudgeService {
     private void requireSeatFree(Court place, Long ignoreId) {
         String no = blankToNull(place.getCourtNo());
         if (no == null) return;
-        Long courtId = courtService.placeOf(place.getCourt(), place.getDistrict()).getId();
+        Long courtId = courtService.listingBaseOf(place.getCourt(), place.getDistrict()).getId();
         String building = blankToNull(place.getBuilding());
 
         judgeRepo.findByCourtIdAndCourtRoomNoIgnoreCaseAndActiveTrue(courtId, no).stream()
@@ -668,7 +676,7 @@ public class JudgeService {
         // Court, district, building and court no. are taken from the court table row, never from typed text
         judge.setCourt(place.getCourt());
         judge.setDistrict(place.getDistrict());
-        judge.setCourtId(courtService.placeOf(place.getCourt(), place.getDistrict()).getId());
+        judge.setCourtId(courtService.listingBaseOf(place.getCourt(), place.getDistrict()).getId());
         judge.setCourtRoomNo(blankToNull(place.getCourtNo()));
         judge.setBuilding(blankToNull(place.getBuilding()));
         judge.setVcMeetingId(blankToNull(req.getVcMeetingId()));

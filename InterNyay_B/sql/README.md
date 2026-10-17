@@ -28,7 +28,7 @@ Use MySQL 8.0.19 or newer (`V6__plans.sql` uses a row alias in its upsert; MySQL
 
 1. In MySQL run `create_database.sql`. It creates an empty `internyay` database as `utf8mb4_unicode_ci` and never deletes anything.
 2. Start the backend. Flyway runs V1 to V11, Hibernate validates, and the app is up. That is the whole setup.
-3. Sign out in the browser, register your account, then make it the first administrator (see `ADMIN_SETUP.md`).
+3. Sign out in the browser, register your account, then make it the first administrator (see `docs/ADMIN_SETUP.md`).
 
 Expected: the log shows `Successfully applied 11 migrations`, and these row counts:
 
@@ -81,7 +81,7 @@ When more than one backend instance starts at once, Flyway takes a database lock
 
 1. Stop the backend. In MySQL: `DROP DATABASE IF EXISTS internyay;` (or remove the two dashes in `create_database.sql`, see the file).
 2. Empty the `data/uploads` folder (or the S3 bucket), because old files belong to the old database.
-3. Run `create_database.sql`, start the backend, register your account (see `ADMIN_SETUP.md`).
+3. Run `create_database.sql`, start the backend, register your account (see `docs/ADMIN_SETUP.md`).
 
 ## Read-only check
 

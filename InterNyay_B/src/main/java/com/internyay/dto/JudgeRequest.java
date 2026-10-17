@@ -28,7 +28,7 @@ public class JudgeRequest {
     @NotBlank(message = "Court is required")
     private String court;
 
-    @NotBlank(message = "District is required")
+    // Optional. Without a district the court numbers stay as they are (none is moved into a district)
     private String district;
 
     private String courtRoomNo;

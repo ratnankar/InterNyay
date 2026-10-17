@@ -1,8 +1,10 @@
 package com.internyay.controller;
 
 import com.internyay.dto.CourtDto;
+import com.internyay.dto.CourtMoveRequest;
 import com.internyay.dto.CourtRequest;
 import com.internyay.dto.MahilaCourtRequest;
+import com.internyay.service.CourtNoTransferService;
 import com.internyay.service.CourtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.List;
 public class CourtController {
 
     private final CourtService courtService;
+    private final CourtNoTransferService transferService;
 
     @GetMapping
     public ResponseEntity<List<CourtDto>> list() {
@@ -37,6 +40,13 @@ public class CourtController {
     public ResponseEntity<List<CourtDto>> setMahila(@PathVariable Long id,
                                                     @RequestBody MahilaCourtRequest req) {
         return ResponseEntity.ok(courtService.setMahilaCourt(id, req.mahilaCourt()));
+    }
+
+    // Admin: move a court no. to another building and district of the same court
+    @PutMapping("/{id}/move")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CourtDto>> move(@PathVariable Long id, @RequestBody CourtMoveRequest req) {
+        return ResponseEntity.ok(transferService.move(id, req));
     }
 
     @DeleteMapping("/{id}")
