@@ -23,7 +23,7 @@
     radial-gradient(720px 480px at 92% 92%, rgba(59, 109, 200, 0.40), transparent 65%),
     radial-gradient(520px 360px at 85% 12%, rgba(20, 150, 160, 0.20), transparent 65%),
     linear-gradient(125deg, rgba(10, 22, 40, 0.90) 0%, rgba(13, 35, 71, 0.84) 35%, rgba(23, 64, 126, 0.76) 62%, rgba(13, 35, 71, 0.84) 82%, rgba(10, 22, 40, 0.90) 100%),
-    #0a1628 url('../assets/photo-bg.webp') center / cover no-repeat;
+    #0a1628 url('../../assets/photo-bg.webp') center / cover no-repeat;
   background-size: 100% 100%, 100% 100%, 100% 100%, 260% 260%, cover;
   animation: auth-gradient 16s ease infinite;
 }
@@ -39,7 +39,7 @@
       radial-gradient(720px 480px at 92% 92%, rgba(59, 109, 200, 0.40), transparent 65%),
       radial-gradient(520px 360px at 85% 12%, rgba(20, 150, 160, 0.20), transparent 65%),
       linear-gradient(125deg, rgba(10, 22, 40, 0.90) 0%, rgba(13, 35, 71, 0.84) 35%, rgba(23, 64, 126, 0.76) 62%, rgba(13, 35, 71, 0.84) 82%, rgba(10, 22, 40, 0.90) 100%),
-      url('../assets/photo-bg-sm.webp');
+      url('../../assets/photo-bg-sm.webp');
   }
 }
 

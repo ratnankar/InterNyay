@@ -10,6 +10,7 @@ import useSeeMore from '../../hooks/useSeeMore'
 import SeeMore from '../common/SeeMore'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
+import SearchInput from '../common/SearchInput'
 
 // Tribunal types. The high-value bench and the appellate tribunal can exist only once each
 const KINDS = [
@@ -159,12 +160,7 @@ export default function DrtJurisdictionAdmin() {
     <>
       <div className="admin__toolbar">
         {/* Search box */}
-        <input
-          className="form-input"
-          placeholder="Search tribunals or police stations…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <SearchInput placeholder="Search tribunals or police stations…" value={search} onChange={setSearch} />
         <button type="button" className="btn-gold" onClick={() => startEdit(null)}>+ Add tribunal</button>
         <span className="admin__count">
           {loading && !directory ? 'Loading…' : `${visible.length} record${visible.length === 1 ? '' : 's'}`}

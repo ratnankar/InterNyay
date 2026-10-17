@@ -1,0 +1,100 @@
+/* ==========================================================================
+   Colour blending. Loaded last.
+
+   A CSS gradient cannot be animated: when a button or tab goes from one gradient to another (hover), or from a flat
+   or empty background to a gradient (a tab or menu item becoming active), the browser does not blend the two, it
+   swaps them in one frame. That was the "colours not blended" jump on every gold button, tab, filter pill, sidebar
+   item and the selected calendar day.
+
+   Fix: the gradient stops are registered colour variables (@property) and the variables are transitioned, so the
+   browser blends every stop smoothly. Inactive items carry the same gradient with fully transparent gold stops
+   (same hue, alpha 0), so a fade-in goes through gold, never through grey or white.
+   Browsers without @property support simply keep the old instant swap.
+   ========================================================================== */
+
+@property --gd-top { syntax: '<color>'; inherits: false; initial-value: rgba(236, 210, 129, 0); }
+@property --gd-mid { syntax: '<color>'; inherits: false; initial-value: rgba(216, 184, 86, 0); }
+@property --gd-bot { syntax: '<color>'; inherits: false; initial-value: rgba(191, 154, 58, 0); }
+@property --nd-a   { syntax: '<color>'; inherits: false; initial-value: rgba(240, 70, 70, 0); }
+@property --nd-b   { syntax: '<color>'; inherits: false; initial-value: rgba(240, 70, 70, 0); }
+
+:root {
+  --gd-fade: 0.2s;
+  --gd-blend: --gd-top var(--gd-fade) ease, --gd-mid var(--gd-fade) ease, --gd-bot var(--gd-fade) ease;
+}
+
+/* ---------- 1. Gold buttons: normal -> hover ---------- */
+.btn-gold, .auth-btn, .calc-submit-btn, .pricing-card__cta, .auth-btn--admin, .lx .lp-btn--gold,
+.auth-btn:not(.auth-btn--admin) {
+  --gd-top: #ecd281; --gd-mid: #d8b856; --gd-bot: #bf9a3a;
+  background-image: linear-gradient(180deg, var(--gd-top) 0%, var(--gd-mid) 52%, var(--gd-bot) 100%);
+  background-color: #d8b856;
+}
+.btn-gold:hover:not(:disabled), .auth-btn:hover:not(:disabled), .calc-submit-btn:hover:not(:disabled),
+.pricing-card__cta:hover:not(:disabled), .auth-btn--admin:hover:not(:disabled), .lx .lp-btn--gold:hover:not(:disabled),
+.auth-btn:not(.auth-btn--admin):hover:not(:disabled) {
+  --gd-top: #f2dc92; --gd-mid: #e0c062; --gd-bot: #c8a141;
+  background-image: linear-gradient(180deg, var(--gd-top) 0%, var(--gd-mid) 52%, var(--gd-bot) 100%);
+}
+.btn-gold, .calc-submit-btn, .pricing-card__cta, .auth-btn, .auth-btn--admin {
+  transition: --gd-top var(--gd-fade) ease, --gd-mid var(--gd-fade) ease, --gd-bot var(--gd-fade) ease,
+              transform 0.2s var(--ease-out, ease), box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.lx .lp-btn--gold {
+  transition: --gd-top var(--gd-fade) ease, --gd-mid var(--gd-fade) ease, --gd-bot var(--gd-fade) ease,
+              filter .15s, color .15s, border-color .15s, transform .2s cubic-bezier(.22, 1, .36, 1), box-shadow .2s;
+}
+
+/* ---------- 2. Items that turn gold when active (tabs, sidebar, filter pills, to do list, calendar day) ----------
+   Every one carries an invisible gold gradient while inactive; the active state only raises the stops. */
+.nav-item, .nav-item:hover,
+.admin__tab, .admin__tab:hover, .admin__subtab, .admin__subtab:hover, .auth-tab, .auth-tab:hover,
+.todo-sidebar__item, .todo-sidebar__item:hover,
+.page-header .case-filter-btn, .page-header .case-filter-btn:hover,
+.cal-day:not(.cal-day--holiday-both), .cal-day--selected {
+  background-image: linear-gradient(180deg, var(--gd-top) 0%, var(--gd-mid) 52%, var(--gd-bot) 100%);
+  background-origin: border-box;
+}
+.nav-item.active, .admin__tab--active, .admin__subtab--active, .auth-tab--active,
+.todo-sidebar__item.active, .page-header .case-filter-btn--active, .page-header .case-filter-btn--active:hover,
+.cal-day--selected {
+  --gd-top: #ecd281; --gd-mid: #d8b856; --gd-bot: #bf9a3a;
+  background-image: linear-gradient(180deg, var(--gd-top) 0%, var(--gd-mid) 52%, var(--gd-bot) 100%);
+}
+.nav-item        { transition: background-color 0.2s, color 0.2s, transform 0.2s var(--ease-out, ease), box-shadow 0.2s, var(--gd-blend); }
+.admin__tab      { transition: background-color 0.2s, color 0.2s, transform 0.2s var(--ease-out, ease), box-shadow 0.2s, filter 0.2s, var(--gd-blend); }
+.admin__subtab   { transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, var(--gd-blend); }
+.auth-tab        { transition: background-color 0.25s, color 0.25s, box-shadow 0.25s, var(--gd-blend); }
+.todo-sidebar__item { transition: background-color 0.15s ease, color 0.15s ease, var(--gd-blend); }
+.page-header .case-filter-btn { transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, var(--gd-blend); }
+.cal-day         { transition: all 0.15s, var(--gd-blend); }
+
+/* ---------- 3. Sidebar "Log out": the red wash fades in instead of appearing ---------- */
+.nav-item.nav-item--danger, .nav-item.nav-item--danger:hover {
+  background-image: linear-gradient(90deg, var(--nd-a), var(--nd-b));
+}
+.nav-item.nav-item--danger:hover { --nd-a: rgba(240, 70, 70, 0.26); --nd-b: rgba(240, 70, 70, 0.06); }
+.nav-item.nav-item--danger {
+  transition: background-color 0.2s, color 0.2s, transform 0.2s var(--ease-out, ease), box-shadow 0.2s,
+              --nd-a 0.2s ease, --nd-b 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-gold, .auth-btn, .calc-submit-btn, .pricing-card__cta, .auth-btn--admin, .lx .lp-btn--gold,
+  .nav-item, .admin__tab, .admin__subtab, .auth-tab, .todo-sidebar__item,
+  .page-header .case-filter-btn, .cal-day { transition-duration: 0.01s; }
+}
+
+/* ---------- Sidebar user block and its menu ----------
+   The user block had a faint white-to-transparent sheen with a hard right and bottom edge, and the open menu had no
+   background of its own (only a dark shadow), so a pale rectangle with dark outlines showed against the navy sidebar.
+   The sheen is removed so the block takes the sidebar's own gradient, and the menu is a solid navy panel (a step lighter
+   than the sidebar, with a hairline edge and a soft shadow) so it blends in as one surface. */
+.sidebar__user { background: none; }
+.sidebar__user-menu {
+  background: #10234a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px;
+  box-sizing: border-box;
+  box-shadow: 0 14px 28px -12px rgba(2, 8, 20, 0.6);
+}

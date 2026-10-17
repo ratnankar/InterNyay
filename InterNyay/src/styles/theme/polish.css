@@ -331,8 +331,8 @@
 /* Chat panel header and messages area */
 .chat__header { box-shadow: inset 0 -1px 0 rgba(201, 168, 76, 0.35); }
 
-/* Mobile top bar */
-.mobile-topbar { background: var(--grad-navy); }
+/* Top bar (shown below 860px) */
+.topbar { background: var(--grad-navy); }
 
 /* Pricing featured card: gold sheen across the top */
 .pricing-card--featured { background-image: linear-gradient(180deg, rgba(201, 168, 76, 0.14) 0%, transparent 40%); background-color: #fffdf6; }

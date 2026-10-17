@@ -7,7 +7,7 @@ const PAGE_GAP = 10
 const SIDE_PAD = 8
 const MAX_AUTO_FIT = 1100 // widest a page is drawn at full length on big screens
 
-// Fallback width before ResizeObserver fires so pages never wait at 0px on mobile modals
+// Fallback width before ResizeObserver fires so pages never wait at 0px in phone modals
 function initialViewerWidth() {
   if (typeof window === 'undefined') return 320
   return Math.max(240, Math.min(window.innerWidth - 48, 860))

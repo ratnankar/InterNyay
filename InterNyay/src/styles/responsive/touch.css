@@ -1,4 +1,4 @@
-/* ===== merged from mobile-touch.css ===== */
+/* ===== Part 1: field sizes and touch targets ===== */
 /* Phone and tablet touch fixes. Imported last so no earlier rule overrides it.
    1. Field sizes (see note below).
    2. Fingers need bigger targets than a mouse.
@@ -104,7 +104,7 @@
   .profile-reset-link,
   .notif-page__back,
   .qa-copy-btn,
-  .mobile-topbar__brand,
+  .topbar__brand,
   .lx-brand,
   .lx-footer__col :is(a, button),
   .lx-menu :is(a, button) { display: inline-flex; align-items: center; min-height: 40px; }
@@ -143,9 +143,9 @@
   }
 }
 
-/* ===== merged from mobile-polish.css ===== */
+/* ===== Part 2: touch polish ===== */
 /* ==========================================================================
-   Mobile polish (loaded last): readable text, finger-sized targets, a chat button that stays out of the way,
+   Touch polish (loaded last): readable text, finger-sized targets, a chat button that stays out of the way,
    and tidier case details on small phones. Everything here is limited to phone / tablet widths or touch screens.
    ========================================================================== */
 
@@ -165,7 +165,7 @@
 
 /* ---------- Touch: links and small buttons get a 40px-tall hit area ---------- */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
-  .mobile-topbar__brand,
+  .topbar__brand,
   .notif-page__back,
   .auth-back-link,
   .auth-link-btn,

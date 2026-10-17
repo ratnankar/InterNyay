@@ -3,7 +3,7 @@
    App skin: gives every signed-in screen the look of the landing page.
    Same language as the landing (lx-*): ink navy, court blue, gold actions, Playfair headings,
    cool mist surfaces, white cards with hairline borders and layered soft shadows, pill chips.
-   Loaded after polish.css and motion.css (so it wins ties) and before mobile.css (so phone layout rules still win).
+   Loaded after polish.css and motion.css (so it wins ties) and before responsive/small-screen.css (so phone layout rules still win).
    ========================================================================== */
 
 :root {
@@ -180,11 +180,11 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 .auth-page::before { background: rgba(201, 168, 76, 0.10); }
 .choose-plan { background: transparent; }
 
-/* ---------- Mobile top bar: frosted like the landing nav ---------- */
+/* ---------- Top bar (shown below 860px): frosted like the landing nav ---------- */
 @media (max-width: 860px) {
-  .mobile-topbar { -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom: 1px solid rgba(10, 22, 40, 0.08); box-shadow: 0 10px 30px -18px rgba(10, 22, 40, 0.35); }
-  .mobile-topbar__brand { color: var(--sk-ink); }
-  .mobile-topbar__hamburger span { background: var(--sk-ink); }
+  .topbar { -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom: 1px solid rgba(10, 22, 40, 0.08); box-shadow: 0 10px 30px -18px rgba(10, 22, 40, 0.35); }
+  .topbar__brand { color: var(--sk-ink); }
+  .topbar__hamburger span { background: var(--sk-ink); }
   .page-header--hero { padding: 0 0 1rem; border-radius: 0; }
   .modal, .drawer { border-radius: 16px; }
   .btn-gold:hover:not(:disabled), .case-card:hover, .client-card:hover { transform: none; }
@@ -229,7 +229,7 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 .admin-chart__title { font-size: var(--fs-md); }
 .stat-card__value { font-size: 1.9rem; }
 
-/* Admin and sub tabs: one calm segmented bar. Wide screens wrap onto a second row so every tab stays visible; phones scroll sideways (mobile.css) */
+/* Admin and sub tabs: one calm segmented bar. When the tabs do not fit, the bar scrolls sideways on every screen size (late-fixes.css) */
 .admin__tabs, .admin__subtabs {
   display: flex; flex-wrap: wrap; gap: 4px; padding: 5px; min-width: 0; max-width: 100%; box-sizing: border-box; scrollbar-width: none;
 }
@@ -413,9 +413,9 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 /* Plan picker: lift it above the blurred background orbs (only .auth-container was lifted, so the blue orb washed over the Firm card) */
 .choose-plan { position: relative; z-index: 1; }
 
-/* Sign Out: a clear red on the navy sidebar, a touch softer than full-strength; slightly stronger background and glow on hover */
+/* Sign Out: a clear red on the navy sidebar, a touch softer than full-strength. The red background and glow only appear on hover, never at rest */
 .nav-item.nav-item--danger { color: rgba(255, 100, 100, 0.85); }
-.nav-item.nav-item--danger .nav-item__icon { color: #f55f5f; filter: drop-shadow(0 0 3px rgba(245, 95, 95, 0.25)); }
+.nav-item.nav-item--danger .nav-item__icon { color: #f55f5f; filter: none; }
 
 .nav-item.nav-item--danger:hover {
   background: linear-gradient(90deg, rgba(240, 70, 70, 0.26), rgba(240, 70, 70, 0.06));
@@ -487,18 +487,18 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
    mark + 8-10px gap + wordmark, centred on the same line; the sidebar logo starts at the same left edge as the menu items */
 .brand-mark { display: block; flex: none; }
 .sidebar__brand { padding-left: 14px; }
-.sidebar__brand-row, .mobile-topbar__brand, .lx .lx-brand, .errpage__brand, .invoice__brand, .lx .lx-footer__logo {
+.sidebar__brand-row, .topbar__brand, .lx .lx-brand, .errpage__brand, .invoice__brand, .lx .lx-footer__logo {
   display: inline-flex; align-items: center; line-height: 1.1;
 }
 .sidebar__brand-row { display: flex; gap: 8px; }
-.mobile-topbar__brand { gap: 8px; }
+.topbar__brand { gap: 8px; }
 .errpage__brand, .invoice__brand, .lx .lx-footer__logo { gap: 8px; }
 .lx .lx-footer__logo { display: flex; }
 /* The tagline lines up under the wordmark: mark width (28px) + gap (8px) */
 .sidebar__brand-tag { padding-left: 36px; }
 
 /* Admin tabs: always one row, never wrapping onto a second line. When the tabs do not all fit, the bar slides sideways
-   (swipe, trackpad, Shift + wheel or the thin gold slider underneath). Doubled class names so this wins over the earlier rules and mobile.css */
+   (swipe, trackpad, Shift + wheel or the thin gold slider underneath). Doubled class names so this wins over the earlier rules and responsive/small-screen.css */
 .admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs {
   flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
   scrollbar-width: none; cursor: grab;
@@ -524,7 +524,7 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 /* ===== merged from controls.css ===== */
 /* ==========================================================================
    Controls: a light, flat look for filter pills, sort dropdowns, the Filter menu,
-   toggles, chips and small buttons. Loaded after appskin.css and before mobile.css.
+   toggles, chips and small buttons. Loaded after appskin.css and before responsive/small-screen.css.
    Single-class selectors so the navy page-header variants in appskin.css keep their look.
    ========================================================================== */
 

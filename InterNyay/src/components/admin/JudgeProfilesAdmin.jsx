@@ -13,6 +13,7 @@ import ModalPortal from '../common/ModalPortal'
 import { confirmDialog } from '../../utils/confirmDialog'
 import { getErrorMessage } from '../../utils/errorMessages'
 import useSessionState from '../../hooks/useSessionState'
+import SearchInput from '../common/SearchInput'
 
 // Admin screen for the judges themselves: name and photo only.
 // Where a judge sits (court, building, court no., contacts ...) is managed in the Listing section
@@ -126,7 +127,7 @@ export default function JudgeProfilesAdmin() {
       {cropper}
 
       <div className="admin__toolbar">
-        <input className="form-input" placeholder="Search judges…" value={search} onChange={e => setSearch(e.target.value)} />
+        <SearchInput placeholder="Search judges…" value={search} onChange={setSearch} />
         <Dropdown className="form-input" wrapperClassName="u-maxw-240" value={view} onChange={e => setView(e.target.value)}>
           <option value="all">All judges</option>
           <option value="free">Not holding a court</option>

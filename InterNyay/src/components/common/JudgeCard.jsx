@@ -78,13 +78,13 @@ export default function JudgeCard({ judge, actions, tags, note }) {
           </Field>
         )}
 
-        {(judge.courtReaderName || judge.courtReaderMobile) && (
+        {(judge.courtReaderName || judge.courtReaderPhone) && (
           <Field label="Court Reader">
             <span className="qa-cell-stack">
               {judge.courtReaderName && <span>{judge.courtReaderName}</span>}
-              {judge.courtReaderMobile && (
-                <a className="qa-link" href={`tel:${judge.courtReaderMobile.replace(/[\s-]/g, '')}`}>
-                  {judge.courtReaderMobile}
+              {judge.courtReaderPhone && (
+                <a className="qa-link" href={`tel:${judge.courtReaderPhone.replace(/[\s-]/g, '')}`}>
+                  {judge.courtReaderPhone}
                 </a>
               )}
             </span>

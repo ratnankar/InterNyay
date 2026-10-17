@@ -63,7 +63,9 @@
 .case-filter-menu__value-wrap {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -72,7 +74,8 @@
   color: var(--color-text-muted);
   font-size: var(--fs-xs);
   text-align: right;
-  max-width: 130px;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

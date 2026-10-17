@@ -1,7 +1,7 @@
-/* Mobile alignment pass. Loaded last so it settles clashes between the older phone files.
+/* Alignment pass. Loaded last so it settles clashes between the older phone files.
    Found by reading every stylesheet for phone-width conflicts. Everything is inside phone media queries, desktop is unchanged.
 
-   1. Side margin: hierarchy.css sets the page side space to 10px on phones, but the scrolling filter bars (mobile.css, mobile-polish.css)
+   1. Side margin: hierarchy.css sets the page side space to 10px on phones, but the scrolling filter bars (responsive/small-screen.css, responsive/touch.css)
       still bled out by 14px / 12px, so they were cut off at the screen edge and sat out of line with the cards. One variable now drives both.
    2. Rows of buttons or labels that cannot wrap (admin toolbar, row actions, panel headers) now wrap onto the next line instead of being clipped. */
 
@@ -78,7 +78,7 @@
 /* ==========================================================================
    Admin console, phones only (640px and narrower). Desktop is not touched.
    Found by rendering the admin pages at 360px and 390px:
-   1. Dropdown Options chips: mobile-final.css forces 40px height and width on every .options-admin__list, which beat admin.css.
+   1. Dropdown Options chips: responsive/small-screen-extra.css forces 40px height and width on every .options-admin__list, which beat admin.css.
    2. Stacked table cards: a second frame around each card, uneven button gaps, notes beside the value instead of under it,
       and the "open" arrow on its own left-aligned row.
    3. Toolbars: the search box was full width but the filter and the main button were not.
@@ -148,7 +148,7 @@
      Pills: filters, option chips, fee-type toggle                32px  13px text
      Sub pills and sub tabs                                       30-32px  12-13px text
      Buttons and toggles on a row or card                         30px  12px text   9px corners
-   mobile-touch.css, mobile-v2.css and mobile-final.css gave these controls a flat 40px that the scale never overrode.
+   responsive/touch.css, responsive/small-screen-extra.css and responsive/small-screen-extra.css gave these controls a flat 40px that the scale never overrode.
    ========================================================================== */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
   /* Pills */
@@ -173,7 +173,7 @@
   /* Plans tick boxes ("Free", "Coming soon") sit in the same grid row as fields, so they take the field size */
   .plans-admin__free, .plans-admin__grid .plans-admin__free, .plans-admin__confirm .form-input { box-sizing: border-box; height: 34px; min-height: 34px; font-size: 0.8125rem; }
 
-  /* Paid / Unpaid chips: the finger area is still enlarged by their ::after in mobile-touch.css */
+  /* Paid / Unpaid chips: the finger area is still enlarged by their ::after in responsive/touch.css */
   .paid-status-btn, .fee-status-btn { min-height: 30px; }
 }
 

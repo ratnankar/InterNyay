@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Icon from '../common/Icon'
+import SearchInput from '../common/SearchInput'
 
 // Name with spaces collapsed and lower case
 const norm = (name) => String(name || '').trim().replace(/\s+/g, ' ').toLowerCase()
@@ -26,7 +27,7 @@ export default function JudgeProfilePicker({ judges, value, onChange, excludeIds
 
   return (
     <>
-      <input className="form-input" placeholder="Search judges…" value={query} onChange={e => setQuery(e.target.value)} />
+      <SearchInput placeholder="Search judges…" value={query} onChange={setQuery} />
       <div className="change-judge__list">
         {shown.length === 0 && <p className="admin__hint">No judge found. Add the judge in the Judges section first, or add a new judge here.</p>}
         {shown.map(j => (

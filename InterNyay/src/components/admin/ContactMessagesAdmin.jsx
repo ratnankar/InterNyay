@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import useOverlayClose from '../../hooks/useOverlayClose'
@@ -15,6 +15,7 @@ import SeeMore from '../common/SeeMore'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
+import SearchInput from '../common/SearchInput'
 
 // Status filters for the message list
 const FILTERS = [
@@ -42,8 +43,11 @@ const SENT_TOAST = {
 }
 
 // Admin inbox for contact messages from users and landing page visitors, with replies
-export default function ContactMessagesAdmin() {
+export default function ContactMessagesAdmin({ onLoaded }) {
   const { addToast } = useApp()
+  // Latest onLoaded callback, kept in a ref so a new function from the parent never re-triggers the load
+  const onLoadedRef = useRef(onLoaded)
+  onLoadedRef.current = onLoaded
 
   // Messages, loading flag, and which source tab is showing (account users or landing page)
   const [rows, setRows]       = useState([])
@@ -69,7 +73,10 @@ export default function ContactMessagesAdmin() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      setRows(await api.admin.contactMessages.list())
+      const list = await api.admin.contactMessages.list()
+      setRows(list)
+      // Tell the Admin page which messages the admin has now been shown, so the Overview alert can clear
+      if (Array.isArray(list)) onLoadedRef.current?.(list)
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not load messages'), 'error')
     } finally {
@@ -183,6 +190,7 @@ export default function ContactMessagesAdmin() {
   return (
     <>
       {/* Tabs to switch between account messages and landing page queries (same look as the other admin sub tabs) */}
+      <div className="contact-subbar">
       <div className="admin__subtabs">
         <button
           className={`admin__subtab${source === 'ACCOUNT' ? ' admin__subtab--active' : ''}`}
@@ -197,15 +205,19 @@ export default function ContactMessagesAdmin() {
           Landing page queries{newBySource.LANDING > 0 ? ` (${newBySource.LANDING} new)` : ''}
         </button>
       </div>
+        {/* Reloads the messages from the server (new messages and replies from other devices) */}
+        <button type="button" className="btn-outline btn-outline--sm contact-subbar__refresh"
+          onClick={load} disabled={loading} aria-busy={loading}>
+          <span className="admin__refresh-label">
+            <span className={loading ? 'is-hidden' : ''} aria-hidden={loading}>Refresh</span>
+            <span className={loading ? '' : 'is-hidden'} aria-hidden={!loading}>Refreshing…</span>
+          </span>
+        </button>
+      </div>
 
       {/* Search box, status filters and message count */}
       <div className="admin__toolbar">
-        <input
-          className="form-input"
-          placeholder="Search messages…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <SearchInput placeholder="Search messages…" value={search} onChange={setSearch} />
         <div className="contact-filters">
           {filters.map(f => (
             <button

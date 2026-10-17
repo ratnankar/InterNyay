@@ -4,6 +4,7 @@ import Dropdown from '../common/Dropdown'
 import { useApp } from '../../context/AppContext'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { formatContactDate } from '../../constants/contact'
+import SearchInput from '../common/SearchInput'
 
 const PAGE_SIZE = 25
 
@@ -106,12 +107,7 @@ export default function LoginLogAdmin({ user = null }) {
       </div>}
 
       <div className="admin__toolbar">
-        {!user && <input
-          className="form-input"
-          placeholder="Search email or IP address…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />}
+        {!user && <SearchInput placeholder="Search email or IP address…" value={search} onChange={setSearch} />}
 
         <Dropdown
           className="form-input"

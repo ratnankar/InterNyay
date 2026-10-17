@@ -11,6 +11,7 @@ import SeeMore from '../common/SeeMore'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
+import SearchInput from '../common/SearchInput'
 
 // Tabs of the police directory admin
 const VIEWS = [
@@ -207,8 +208,7 @@ function StationsView({ directory }) {
     <>
       {/* Search box, district filter and add button */}
       <Toolbar count={plural(visible.length, 'police station')}>
-        <input className="form-input" placeholder="Search name, PIN, sub-division…"
-               value={search} onChange={e => setSearch(e.target.value)} />
+        <SearchInput placeholder="Search name, PIN, sub-division…" value={search} onChange={setSearch} />
         <Dropdown className="form-input" wrapperClassName="u-maxw-200" value={districtFilter}
                 onChange={e => setDistrictFilter(e.target.value)} aria-label="Filter by district">
           <option value="">All districts</option>
@@ -347,7 +347,7 @@ function SubDivisionsView({ directory }) {
     <>
       {/* Search box, district filter and add button */}
       <Toolbar count={plural(visible.length, 'sub-division')}>
-        <input className="form-input" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} />
+        <SearchInput placeholder="Search…" value={search} onChange={setSearch} />
         <Dropdown className="form-input" wrapperClassName="u-maxw-200" value={districtFilter}
                 onChange={e => setDistrictFilter(e.target.value)} aria-label="Filter by district">
           <option value="">All districts</option>

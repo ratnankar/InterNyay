@@ -610,6 +610,7 @@ function JudgesOnLeaveBody({ onSelectJudge }) {
             ? <p className="qa-empty">{query.trim() ? 'No matching leave in the archive.' : 'No leave in the archive.'}</p>
             : (
               <ArchiveTree
+  stateKey="judges_leave"
                 items={archiveEntries}
                 getDate={archiveEntryDate}
                 forceOpen={!!query.trim()}

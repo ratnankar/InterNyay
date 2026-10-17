@@ -3,7 +3,7 @@
    Fonts: Source Sans 3 for text, buttons and fields; Playfair Display for titles (set in landingcards.css).
    Weights: 400 body, 500 field values and menu items, 600 labels, buttons and titles, 700 table headings, numbers and badges.
    (Only 400, 500, 600 and 700 are loaded, so no other weight is used.)
-   Sizes come from the --fs-* tokens in variables.css. Phones use smaller tokens (mobile.css) and never go under 12px.
+   Sizes come from the --fs-* tokens in variables.css. Phones use smaller tokens (responsive/small-screen.css) and never go under 12px.
    ========================================================================== */
 
 /* ---------- Desktop (computer, window wider than 768px) ---------- */

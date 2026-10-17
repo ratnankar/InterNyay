@@ -15,6 +15,7 @@ import ValidityFields from './ValidityFields'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
+import SearchInput from '../common/SearchInput'
 
 const issuedDate = row => row.issuedOn
 
@@ -190,12 +191,7 @@ export default function DutyMagistrateAdmin() {
 
       {/* Search box, add button and entry count */}
       <div className="admin__toolbar">
-        <input
-          className="form-input"
-          placeholder="Search…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <SearchInput placeholder="Search…" value={search} onChange={setSearch} />
         <button type="button" className="btn-gold" onClick={() => startEdit(null)}>+ Add entry</button>
         <span className="admin__count">
           {loading ? 'Loading…' : `${visible.length} entr${visible.length === 1 ? 'y' : 'ies'}`}
@@ -208,6 +204,7 @@ export default function DutyMagistrateAdmin() {
         </div>
       ) : (
         <ArchiveTree
+  stateKey="duty"
           items={visible}
           getDate={issuedDate}
           forceOpen={!!search.trim()}

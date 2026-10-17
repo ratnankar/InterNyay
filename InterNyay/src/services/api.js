@@ -820,10 +820,18 @@ export const contact = {
   markSeen: (id)    => post(`/contact/${id}/seen`),
 }
 
-// Chat assistant
+// Chat assistant. Every chat is saved on the server: send() and addToHistory() put messages into the chat named by
+// conversationId (empty starts a new chat) and the reply says which chat that is
 export const chat = {
   status: ()         => get('/chat/status'),
-  send:   (messages) => post('/chat', { body: { messages } }),
+  send:   (messages, conversationId) => post('/chat', { body: { messages, conversationId: conversationId ?? null } }),
+  // The chat list (latest first), one chat with its messages, deleting one chat and deleting all of them
+  conversations:      ()   => get('/chat/conversations'),
+  conversation:       (id) => get(`/chat/conversations/${id}`),
+  deleteConversation: (id) => del(`/chat/conversations/${id}`),
+  clearAll:           ()   => del('/chat/conversations'),
+  // Adds messages to a chat without asking the AI (the built-in support answer)
+  addToHistory: (messages, conversationId) => post('/chat/history', { body: { messages, conversationId: conversationId ?? null } }),
 }
 
 // Everything grouped into one object so components can call api.cases.list() etc.

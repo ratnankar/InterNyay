@@ -10,6 +10,7 @@ import useSeeMore from '../../hooks/useSeeMore'
 import SeeMore from '../common/SeeMore'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
+import SearchInput from '../common/SearchInput'
 
 // Commission types. State and National commissions can exist only once each
 const KINDS = [
@@ -139,12 +140,7 @@ export default function ConsumerJurisdictionAdmin() {
     <>
       {/* Search box, add button and record count */}
       <div className="admin__toolbar">
-        <input
-          className="form-input"
-          placeholder="Search commissions or police stations…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <SearchInput placeholder="Search commissions or police stations…" value={search} onChange={setSearch} />
         <button type="button" className="btn-gold" onClick={() => startEdit(null)}>+ Add commission</button>
         <span className="admin__count">
           {loading && !directory ? 'Loading…' : `${visible.length} record${visible.length === 1 ? '' : 's'}`}

@@ -1,0 +1,459 @@
+/* ===== Part 1: late small-screen fixes ===== */
+@media (max-width: 860px) {
+  .bottom-nav__item {
+    justify-content: flex-start;
+    text-align: center;
+  }
+  .qa-cards {
+    align-items: stretch;
+  }
+  .qa-card {
+    height: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .lx .lx-stage {
+    padding-top: 4.25rem;
+  }
+  .lx .lx-notif--wa {
+    top: 0.35rem;
+    right: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .todo-body {
+    align-items: stretch;
+  }
+  .todo-main {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .pin-input {
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+  }
+  .pin-input__toggle {
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0.5rem;
+    width: 2.2rem;
+    height: 3rem;
+  }
+  .client-detail__info-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 360px) {
+  .lx .lx-brand {
+    min-width: 0;
+    gap: 8px;
+    font-size: 1.2rem;
+  }
+  .lx .lx-nav__row {
+    gap: 0.5rem;
+  }
+  .lx .lx-nav__actions {
+    gap: 0.375rem;
+  }
+  .lx .lx-nav__actions .lp-btn.lp-btn {
+    padding: 0 12px;
+  }
+}
+
+/* ===== merged from desktop-fixes.css ===== */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .notifications-panel__more {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    height: var(--d-card);
+    min-height: var(--d-card);
+    padding: 0 14px;
+    font-size: var(--d-card-fs);
+    border-radius: var(--d-radius);
+  }
+
+  .todo-sidebar__item,
+  .todo-sidebar__item.active {
+    box-sizing: border-box;
+    height: var(--d-ctl);
+    min-height: var(--d-ctl);
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--d-ctl-fs);
+    font-weight: var(--w-semibold);
+    border-radius: var(--d-radius);
+  }
+
+  .leave-cal__grid-wrap {
+    --cal-day-size: 36px;
+  }
+
+  .admin table :is(button, a):is(.btn-outline, .btn-gold, .btn-danger).btn-outline--sm,
+  .admin .admin__actions :is(button, a):is(.btn-outline, .btn-gold, .btn-danger).btn-outline--sm {
+    box-sizing: border-box;
+    height: var(--d-row);
+    min-height: var(--d-row);
+    padding: 0 10px;
+    font-size: var(--d-row-fs);
+    line-height: 1.2;
+    border-radius: var(--d-radius);
+  }
+
+  .case-status__option,
+  .case-status__option.case-status__option--selected {
+    box-sizing: border-box;
+    height: var(--d-card);
+    min-height: var(--d-card);
+    padding: 0 14px;
+    font-size: var(--d-card-fs);
+    font-weight: var(--w-semibold);
+  }
+
+  .wa-days-toggle__btn {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--d-card);
+    min-height: var(--d-card);
+    padding: 0 14px;
+    font-size: var(--d-card-fs);
+  }
+
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a).btn-gold.btn-gold.btn-gold {
+    font-weight: var(--w-bold);
+  }
+
+  .admin__tabs.admin__tabs .admin__tab,
+  .admin__subtabs.admin__subtabs .admin__subtab,
+  .admin__subtabs .admin__subtab,
+  .btn-icon {
+    border-radius: var(--d-radius);
+  }
+
+  .admin .admin__header-actions :is(button, a).btn-outline.btn-outline--sm {
+    box-sizing: border-box;
+    height: var(--d-main);
+    min-height: var(--d-main);
+    padding: 0 20px;
+    font-size: var(--d-main-fs);
+    line-height: 1.2;
+    border-radius: var(--d-radius);
+  }
+}
+
+/* ===== merged from desktop-align.css ===== */
+/* Desktop alignment fixes (keep last). */
+@media (min-width: 900px) {
+  /* Admin tab bars: one row that scrolls sideways when the window is too narrow (same as on phones), no second row.
+     A thin gold scrollbar shows on desktop so mouse users can see and drag it; the edge fade shows more tabs are hidden. */
+  .admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs {
+    flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; cursor: default;
+    scrollbar-width: thin; scrollbar-color: rgba(201, 168, 76, 0.7) transparent;
+  }
+  .admin__tabs.admin__tabs::-webkit-scrollbar, .admin__subtabs.admin__subtabs::-webkit-scrollbar { display: block; height: 6px; }
+  .admin__tabs.admin__tabs::-webkit-scrollbar-thumb, .admin__subtabs.admin__subtabs::-webkit-scrollbar-thumb { background: rgba(201, 168, 76, 0.7); border-radius: 999px; }
+  .admin__tabs.admin__tabs::-webkit-scrollbar-track, .admin__subtabs.admin__subtabs::-webkit-scrollbar-track { background: transparent; }
+  .admin__tabs.admin__tabs .admin__tab, .admin__subtabs.admin__subtabs .admin__subtab { flex: 0 0 auto; white-space: nowrap; }
+  .admin__tabs.admin__tabs { justify-content: flex-start; }
+
+  /* Quick Access cards: fill each row, equal height, content centred the same way */
+  .qa-cards { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: stretch; }
+  .qa-card { min-height: 92px; }
+  .qa-card__label { line-height: 1.25; }
+
+  /* Admin: "+ Add plan" fits its text */
+  .admin .plans-layout__side .plans-layout__add { width: auto; min-width: max-content; flex: none; white-space: nowrap; overflow: visible; }
+}
+
+/* Dashboard side card title stays on one line next to its badge */
+.dashboard__side .notifications-panel__header .section-title {
+  font-size: var(--fs-base); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Landing page: decorative orbs and the marquee never widen the page */
+.lx { overflow-x: clip; }
+
+/* Scrollbar space is always reserved, so content no longer jumps sideways when a page becomes long enough to scroll.
+   (Phones and tablets use overlay scrollbars, so this costs them nothing.) */
+html { scrollbar-gutter: stable; }
+.app-main, .sidebar, .modal, .modal__body, .drawer__body, .file-numbers__list, .client-result-list { scrollbar-gutter: stable; }
+
+/* Admin header Refresh button. "Refresh" and "Refreshing…" sit in one grid cell and the unused one is only hidden,
+   so the button is always as wide as the longer label and its right edge never moves.
+   Its height and text size come from the "Level 1" desktop rule above (.btn-outline--sm inside .admin__header-actions). */
+.admin .admin__header-actions button.admin__refresh {
+  justify-content: center;
+  white-space: nowrap;
+}
+.admin__refresh-label { display: inline-grid; }
+.admin__refresh-label > span { grid-area: 1 / 1; text-align: center; }
+.admin__refresh-label > .is-hidden { visibility: hidden; }
+
+/* Admin Refresh button: same height as the other 36px controls, smaller text, and a normal arrow while it works
+   (it used to switch to the busy cursor, which looked like the whole page was loading). */
+.admin .admin__header-actions button.admin__refresh.btn-outline.btn-outline--sm {
+  box-sizing: border-box;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.admin .admin__header-actions button.admin__refresh.btn-outline.btn-outline--sm:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* ---------- Search bars: one look everywhere ----------
+   Every search box sits on the same white card and has the magnifier on the left. */
+.search-card,
+.list-toolbar:has(.doc-search-wrap),
+.todo-filter-bar,
+.admin__toolbar:has(.doc-search-wrap) {
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid var(--lc-line);
+  border-radius: var(--lc-radius);
+  box-shadow: var(--lc-shadow);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.search-card .doc-search-wrap { margin-bottom: 0; }
+.todo-filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
+
+/* The search box inside admin toolbars fills the free space like the user pages (it was a narrow 260px box with no icon) */
+.admin__toolbar .doc-search-wrap { flex: 1 1 240px; min-width: 200px; max-width: 420px; margin-bottom: 0; }
+.admin__toolbar .doc-search-wrap .form-input.doc-search-input { max-width: none; width: 100%; }
+
+/* Icon room and one height for every search input (desktop sizing comes from the --ctl-h / --d-ctl rules above) */
+.doc-search-wrap .form-input.doc-search-input,
+.todo-search-wrap .form-input.todo-search-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--ctl-h, 40px);
+  min-height: var(--ctl-h, 40px);
+  padding-left: 38px;
+  padding-right: 34px;
+}
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .doc-search-wrap .form-input.doc-search-input,
+  .todo-search-wrap .form-input.todo-search-input { height: var(--d-ctl, 36px); min-height: var(--d-ctl, 36px); }
+}
+.doc-search-icon { color: var(--sk-muted, #6b7689); z-index: 1; }
+.doc-search-wrap:focus-within .doc-search-icon { color: var(--ctl-gold-text, var(--color-gold)); }
+.doc-search-wrap { min-width: 0; }
+
+/* Search boxes in pickers and dialogs (police station, case, client): same magnifier, drawn in the field itself */
+.picker__field input.form-input[type="search"],
+.client-search-row .form-input,
+.legal-fill__search > input.form-input {
+  padding-left: 38px;
+  background-repeat: no-repeat;
+  background-position: 12px 50%;
+  background-size: 16px 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7689' d='M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5'/%3E%3C/svg%3E");
+}
+.picker__field input[type="search"]::-webkit-search-cancel-button { display: none; }
+
+@media (max-width: 640px) {
+  .search-card,
+  .list-toolbar:has(.doc-search-wrap),
+  .todo-filter-bar,
+  .admin__toolbar:has(.doc-search-wrap) { padding: 0.75rem; }
+  .admin__toolbar .doc-search-wrap { flex-basis: 100%; max-width: none; }
+}
+
+/* ---------- Phones and tablets: search boxes, sort / filter boxes and their labels ----------
+   The typed text, the hint text inside the box, the "Sort:" label and the closed dropdown all use one size (15px),
+   so the row no longer mixes small and large text. Placed last so it wins over the older compact rules. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .app-main .doc-search-wrap .form-input.doc-search-input,
+  .app-main .todo-search-wrap .form-input.todo-search-input,
+  .admin .doc-search-wrap .form-input.doc-search-input,
+  .search-card .form-input.doc-search-input,
+  .picker__field input.form-input[type="search"],
+  .client-search-row .form-input,
+  .legal-fill__search > input.form-input,
+  .qa-jur-search-row__input {
+    height: 42px; min-height: 42px; font-size: 0.9375rem; line-height: 1.25;
+    padding-left: 40px; padding-right: 36px; border-radius: 10px;
+  }
+  .doc-search-wrap .form-input.doc-search-input::placeholder,
+  .todo-search-wrap .form-input.todo-search-input::placeholder,
+  .picker__field input.form-input[type="search"]::placeholder,
+  .client-search-row .form-input::placeholder,
+  .legal-fill__search > input.form-input::placeholder {
+    font-size: 0.9375rem; text-overflow: ellipsis;
+  }
+  .doc-search-icon { left: 13px; font-size: 1.1rem; }
+  .doc-search-icon .icon { width: 1.1em; height: 1.1em; }
+
+  .sort-control .dropdown__input.dropdown__input,
+  .doc-filter-group .dropdown__input.dropdown__input,
+  .doc-filter-group .doc-filter-select.doc-filter-select,
+  .todo-filters .dropdown__input.dropdown__input,
+  .txn-timeline-filter .dropdown__input.dropdown__input,
+  .admin__toolbar .dropdown__input.dropdown__input {
+    height: 42px; min-height: 42px; font-size: 0.9375rem; padding-left: 12px; padding-right: 30px;
+  }
+  .sort-control label, .doc-filter-label, .doc-filter-group label {
+    font-size: 0.9375rem; font-weight: 600; color: var(--sk-ink, var(--color-navy));
+  }
+  .sort-control, .doc-filter-group { gap: 8px; }
+}
+
+/* Documents filter card: the row inside it carries no bottom margin of its own (the phone rule for .doc-filter-row added 14px
+   under "Sort:", so the card had a gap at the bottom that the other search cards do not have) */
+.doc-filter-bar .doc-filter-row,
+.doc-filter-bar .doc-search-wrap,
+.doc-filter-bar .doc-filter-group { margin-bottom: 0; }
+.doc-filter-bar > :last-child { margin-bottom: 0; }
+
+/* Chat assistant button: no white flash on hover.
+   The button is a navy gradient, but its hover rule swapped it for a plain colour and the background transition
+   faded through transparent (the page showed through as white for a moment). The gradient now stays on hover;
+   only the lift and a slight brightening animate. */
+.chat__launcher,
+.chat__launcher:hover,
+.chat__launcher:focus-visible {
+  background: var(--grad-navy);
+  background-color: var(--color-navy);
+}
+.chat__launcher {
+  transition: transform 0.2s var(--ease-spring), filter 0.2s ease, box-shadow 0.2s ease;
+}
+.chat__launcher:hover { filter: brightness(1.15); }
+
+/* ---------- AI assistant: responsive layout ----------
+   Older rules disagreed (a 72% bottom sheet in one file, full height in another), and the full-height panel had its header
+   under the phone's status bar / notch. One definition per screen size, last so it wins. */
+
+/* Every touch screen: typed text at 16px (smaller makes iPhones zoom in when the box is tapped), 44px tap targets, and the
+   message list scrolls on its own without dragging the page behind it */
+@media (hover: none) and (pointer: coarse), (max-width: 768px) {
+  .chat__input { font-size: 1rem; min-height: 44px; box-sizing: border-box; }
+  .chat__send { width: 44px; height: 44px; }
+  .chat__icon-btn { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .chat__body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+}
+
+/* Tablets: the panel keeps its corner position but never covers more than the visible screen, and sits above the bottom bar */
+@media (min-width: 521px) and (max-width: 768px) {
+  .chat__panel {
+    right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: min(400px, calc(100vw - 32px));
+    height: min(600px, calc(100dvh - 32px));
+    max-height: calc(100dvh - 32px);
+  }
+}
+
+/* Phones: the panel fills the visible screen (dvh follows the browser bar and the keyboard); the header clears the notch,
+   the footer clears the home indicator */
+@media (max-width: 520px) {
+  .chat__panel {
+    inset: 0;
+    width: 100%; max-width: 100%;
+    height: 100dvh; max-height: 100dvh;
+    padding: 0;
+    border: 0; border-radius: 0; box-shadow: none;
+  }
+  .chat__header { padding: calc(12px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-right, 0px)) 12px calc(14px + env(safe-area-inset-left, 0px)); }
+  .chat__body { padding: 14px calc(14px + env(safe-area-inset-right, 0px)) 14px calc(14px + env(safe-area-inset-left, 0px)); }
+  .chat__footer { padding: 10px calc(14px + env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) calc(14px + env(safe-area-inset-left, 0px)); }
+  .chat__title-main { font-size: var(--fs-md); }
+  .chat__prompt { min-height: 44px; display: flex; align-items: center; }
+}
+/* Very narrow phones: one suggestion per row so the text is not squeezed into half a column */
+@media (max-width: 359px) {
+  .chat__prompts { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Phones turned sideways: little height, so the header and footer shrink and the panel becomes a side sheet */
+@media (max-height: 480px) and (orientation: landscape) {
+  .chat__panel { inset: 0 0 0 auto; width: min(460px, 100%); height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .chat__header { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: 6px; }
+  .chat__title-sub { display: none; }
+  .chat__body { padding-top: 10px; padding-bottom: 10px; gap: 10px; }
+  .chat__welcome-text { display: none; }
+  .chat__footer { padding-top: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* AI assistant on large monitors: a little wider and taller so long answers (case lists, tables) fit comfortably.
+   The toast column moves with it so toasts never sit under the panel. */
+@media (min-width: 1400px) and (min-height: 760px) {
+  .chat__panel { width: 440px; height: 660px; }
+  body:has(.chat__panel) .toast-container { right: calc(24px + 440px + 16px); }
+}
+
+/* ---------- AI assistant: voice input ---------- */
+.chat__voicebar {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 6px var(--space-md);
+  background: var(--color-surface);
+  border-top: var(--border-default);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+.chat__settings-wrap { position: relative; display: flex; }
+.chat__icon-btn--active { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.chat__settings {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 6; width: 240px; max-width: calc(100vw - 32px);
+  display: flex; flex-direction: column; gap: 6px; padding: 12px;
+  background: var(--color-surface); color: var(--color-text);
+  border: var(--border-default); border-radius: var(--border-radius-md); box-shadow: var(--shadow-lg);
+}
+.chat__settings-field { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.chat__settings-label { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted); }
+.chat__settings select {
+  width: 100%; padding: 6px 28px 6px 10px; font: inherit; font-weight: 600; color: var(--color-text);
+  background-color: var(--color-surface); border: var(--border-input); border-radius: 8px; cursor: pointer;
+}
+.chat__settings select:disabled { opacity: 0.5; cursor: not-allowed; }
+.chat__settings-hint { margin: 0; font-size: var(--fs-xs); color: var(--color-text-muted); }
+.chat__voicebar-status { flex: 1 1 140px; min-width: 0; }
+.chat__voicebar-status--error { color: var(--color-critical); }
+.chat__voicebar + .chat__footer { border-top: 0; padding-top: 4px; }
+
+.chat__mic {
+  flex: 0 0 auto; width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-navy); background: var(--color-surface-2, #eef1f6);
+  border: var(--border-default); border-radius: var(--border-radius-md); cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.chat__mic:hover:not(:disabled) { border-color: var(--color-gold); background: var(--color-gold-light); }
+.chat__mic:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+.chat__mic:disabled { opacity: 0.45; cursor: not-allowed; }
+.chat__mic--on, .chat__mic--on:hover:not(:disabled) {
+  color: #fff; background: #d0342c; border-color: #d0342c;
+  animation: chat-mic-pulse 1.4s ease-out infinite;
+}
+@keyframes chat-mic-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(208, 52, 44, 0.45); }
+  100% { box-shadow: 0 0 0 10px rgba(208, 52, 44, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .chat__mic--on { animation: none; } }
+
+@media (hover: none) and (pointer: coarse), (max-width: 768px) {
+  .chat__mic { width: 44px; height: 44px; }
+  .chat__settings select { font-size: 1rem; padding: 6px 28px 6px 10px; min-height: 40px; }
+}
+@media (max-width: 520px) {
+  .chat__voicebar { padding-left: calc(14px + env(safe-area-inset-left, 0px)); padding-right: calc(14px + env(safe-area-inset-right, 0px)); }
+}
+@media (max-height: 480px) and (orientation: landscape) { .chat__voicebar { padding-top: 3px; padding-bottom: 3px; } }

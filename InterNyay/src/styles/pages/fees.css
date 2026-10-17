@@ -590,7 +590,7 @@
   min-width: 0;
 }
 
-/* "View ›" is centred on the same line as the title and matches its size (phones shrink it to 12px in mobile-final.css) */
+/* "View ›" is centred on the same line as the title and matches its size (phones shrink it to 12px in responsive/small-screen-extra.css) */
 .case-detail__transactions-meta {
   display: inline-flex;
   align-items: center;

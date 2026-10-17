@@ -195,8 +195,8 @@
   font-size: var(--fs-xs);
 }
 
-/* Mobile top bar, sidebar close button and overlay */
-.mobile-topbar {
+/* Top bar (shown below 860px), sidebar close button and overlay */
+.topbar {
   display: none;
 }
 
@@ -216,7 +216,7 @@
     overflow: visible;
   }
 
-  .mobile-topbar {
+  .topbar {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -230,7 +230,7 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
-  .mobile-topbar__hamburger {
+  .topbar__hamburger {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -241,14 +241,14 @@
     padding: 0;
   }
 
-  .mobile-topbar__hamburger span {
+  .topbar__hamburger span {
     display: block;
     width: 22px;
     height: 2px;
     border-radius: 2px;
   }
 
-  .mobile-topbar__brand {
+  .topbar__brand {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -391,7 +391,15 @@
 .sidebar__account-name { font-weight: 600; color: #fff; }
 .sidebar__account-sub { font-size: 0.72rem; color: rgba(255, 255, 255, 0.55); }
 
-.sidebar__user-menu { max-height: 70vh; overflow-y: auto; }
+.sidebar__user-menu { max-height: 70vh; overflow-y: auto; overflow-x: hidden; }
+/* Menu labels stay on one line next to a fixed-size icon tile, so every row lines up the same way */
+.sidebar__user-menu-item .nav-item__icon { flex: none; }
+.sidebar__user-menu-text { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Room for the labels: the pop-up reaches a little past the user block (still inside the sidebar) and the rows use tighter
+   side spacing, so "Add another account" fits whole. The dots (…) only appear when a label is really longer than the space */
+.sidebar__user-menu { left: -0.5rem; right: -0.5rem; }
+.sidebar__user-menu-item,
+.sidebar__user-menu-item--account { padding-left: 8px; padding-right: 8px; gap: 8px; }
 /* Sidebar entries are real links (so they can open in a new tab): same look as the buttons they replaced */
 a.nav-item,
 a.brand-link,
@@ -410,8 +418,8 @@ a.sidebar__user-menu-item { text-decoration: none; box-sizing: border-box; }
 }
 
 @keyframes route-loading-slide {
-  from { background-position: -40% 0; }
-  to { background-position: 140% 0; }
+  from { background-position: -67% 0; }
+  to { background-position: 167% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

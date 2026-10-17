@@ -1,5 +1,5 @@
 /* In-app confirmation dialog (replaces the browser's window.confirm). Imported last so it wins over the generic modal rules */
-.overlay.confirm-overlay { z-index: 980; } /* above every modal and the mobile sidebar, below the toasts (999) */
+.overlay.confirm-overlay { z-index: 980; } /* above every modal and the small-screen sidebar, below the toasts (999) */
 
 .modal.confirm-dialog { max-width: 420px; padding: 1.5rem; }
 
@@ -23,7 +23,7 @@
 .btn-danger:focus-visible, .btn-outline:focus-visible, .btn-gold:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
 
 @media (max-width: 640px) {
-  /* The generic mobile rules turn modals into bottom sheets; keep this one compact */
+  /* The generic small-screen rules turn modals into bottom sheets; keep this one compact */
   .modal.confirm-dialog { padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px)); height: auto; }
   .modal.confirm-dialog .confirm-dialog__actions { flex-direction: column-reverse; }
   .modal.confirm-dialog .confirm-dialog__actions button { width: 100%; }

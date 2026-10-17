@@ -36,7 +36,7 @@ src/
 ├── assets/                   background photo (photo-bg.webp for desktop, photo-bg-sm.webp for phones) used on the sign-in pages and landing hero
 ├── hooks/                    WhatsApp, notifications, PDF viewer, image crop, police directory …
 ├── constants/, utils/        catalogues (courts, case types, holidays) and helpers
-└── styles/                   one stylesheet per area, imported from index.css
+└── styles/                   CSS grouped by role (see "Styles" below), all imported from index.css
 ```
 
 Administrators sign in at `/admin` (or `?admin=1`); the normal sign-in page has no admin option.
@@ -73,16 +73,30 @@ uploaded documents and the legal form fill window. After pulling this change run
 
 ## Styles
 
-All CSS lives in `src/styles/`, one file per area, pulled in by `src/index.css`. Order matters: later imports win when two rules have the same specificity, so keep new overrides in the file that matches their area and do not repeat a selector and property that an earlier file already sets (edit the earlier rule instead). `bottom-nav.css` is imported by the sidebar component and `fonts.css` by `main.jsx`. Breakpoints used most: 860px (sidebar to top bar) and 640px (phones).
+All CSS lives in `src/styles/`, grouped by what it styles, and `src/index.css` imports every file in a fixed order.
+
+| Folder | What is inside |
+|---|---|
+| `base/` | design tokens (`variables`), reset, fonts, text scale, icons |
+| `layout/` | app shell: sidebar, top bar, bottom navigation |
+| `components/` | shared pieces: buttons, forms, modals, calendar, notifications, chat, case cards |
+| `pages/` | one file per screen: auth, pricing, dashboard, cases, fees, landing, error pages … |
+| `admin/` | admin console |
+| `theme/` | cross-cutting skin and size passes: polish, appskin, control sizes, weights, late fixes |
+| `responsive/` | small-screen and touch rules, layered on top of everything else |
+
+Order matters: later imports win when two rules have the same specificity, so a new rule goes in the file that matches its area, and `index.css` keeps the order. Do not repeat a selector and property that an earlier file already sets (edit the earlier rule instead). `layout/bottom-nav.css` is imported by the sidebar component and `base/fonts.css` by `main.jsx`. Breakpoints used most: 860px (sidebar to top bar) and 640px (phones).
+
+Naming: files are named after what they style, not after a device. New phone or tablet rules for a feature belong in that feature's own file inside an `@media` block at the bottom. The four `responsive/` files are older layers that still depend on import order, so move rules out of them one feature at a time and check the page at 360px and 390px wide after each move.
 
 ## Where sizes and text styles live
 
 | What | File |
 |---|---|
-| Desktop buttons, fields, search, filter, sort (one place, change the numbers in `:root`) | `src/styles/desktop-sizes.css` |
-| Sign in, Register, plan, court preference, Google sign-up window (desktop and phone) | `src/styles/auth-flow.css` |
-| Text scale: tables, labels, subtitles (desktop and phone) | `src/styles/typography.css` |
-| Phone and tablet field / button sizes in the app | `src/styles/unified.css` |
-| Size tokens (`--fs-*`) and phone overrides | `src/styles/variables.css`, `src/styles/mobile.css` |
+| Desktop buttons, fields, search, filter, sort (one place, change the numbers in `:root`) | `src/styles/theme/control-sizes.css` |
+| Sign in, Register, plan, court preference, Google sign-up window (desktop and phone) | `src/styles/pages/auth-flow.css` |
+| Text scale: tables, labels, subtitles (desktop and phone) | `src/styles/base/typography.css` |
+| Phone and tablet field / button sizes in the app | `src/styles/theme/unified.css` |
+| Size tokens (`--fs-*`) and phone overrides | `src/styles/base/variables.css`, `src/styles/responsive/small-screen.css` |
 
 These files are imported last in `src/index.css`; keep them last so they win over older rules.

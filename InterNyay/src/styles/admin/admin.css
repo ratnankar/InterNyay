@@ -74,7 +74,7 @@
 /* Horizontal bar chart */
 .admin-bar {
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr) 36px;
+  grid-template-columns: minmax(110px, 40%) minmax(0, 1fr) 36px;
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
@@ -582,6 +582,14 @@ td.admin__actions > * + * { margin-left: 6px; }
   margin-bottom: var(--space-xl);
 }
 
+/* Contact Messages: sub tabs on the left, Refresh button on the right of the same row */
+.contact-subbar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: var(--space-md); margin-bottom: var(--space-xl);
+}
+.contact-subbar .admin__subtabs.admin__subtabs { margin-bottom: 0; }
+.contact-subbar__refresh { margin-left: auto; justify-content: center; white-space: nowrap; }
+
 /* Rounded pills: white with a gold edge, the open one is filled with the same gold as the main tabs */
 .admin__subtab {
   background: var(--color-surface);
@@ -891,7 +899,7 @@ td.admin__actions > * + * { margin-left: 6px; }
 .options-admin__nested .options-admin__add { margin: 0; padding: 12px 16px; background: var(--color-surface-alt); }
 .options-admin__add .btn-gold { height: var(--ctl-h); padding: 0 18px; white-space: nowrap; }
 @media (max-width: 640px) {
-  /* Dropdown Options chips: gaps only (their size is set in mobile-align.css) */
+  /* Dropdown Options chips: gaps only (their size is set in responsive/alignment.css) */
   .options-admin__lists { gap: 6px; margin: 8px 0; }
   .options-admin__panel { padding: 12px; }
   .options-admin__row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; padding: 10px 0; }
@@ -910,7 +918,7 @@ td.admin__actions > * + * { margin-left: 6px; }
 }
 .options-admin__panel > .admin__hint { margin: 0 0 12px; }
 /* Overview: the "Needs attention" list */
-.admin-attention { display: flex; flex-direction: column; gap: 10px; margin-bottom: var(--space-lg); border-left: 3px solid var(--color-gold); }
+.admin-attention { display: flex; flex-direction: column; gap: 10px; margin-bottom: var(--space-lg); padding: 1rem 1.25rem; border-left: 3px solid var(--color-gold); }
 .admin-attention .admin-chart__title { margin: 0; }
 .admin-attention__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .admin-attention__list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
@@ -973,7 +981,8 @@ td.admin__actions > * + * { margin-left: 6px; }
 .modal--loglist .admin__table td:last-child { white-space: normal; min-width: 140px; }
 
 /* ---------- Button hierarchy ----------
-   Level 1  page and dialog actions (+ Add, Save, Push, Cancel, Refresh): 38px, 14px text, same height side by side
+   Level 1  page and dialog actions (+ Add, Save, Push, Cancel): 38px, 14px text, same height side by side
+   (the header Refresh button gets the same size on desktop from theme/late-fixes.css)
    Level 2  actions on a row or card (Edit, Change judge, Remove, Copy): 30px, 12px text
    Level 3  section switch (Listing / Judges): 32px, 13px text (see above)
    Doubled-class selectors so these win over the older button rules */

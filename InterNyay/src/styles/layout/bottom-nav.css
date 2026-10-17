@@ -1,4 +1,4 @@
-/* Mobile bottom navigation interaction and active-icon animations. */
+/* Bottom navigation (small screens) interaction and active-icon animations. */
 .bottom-nav__item {
   position: relative;
   overflow: hidden;

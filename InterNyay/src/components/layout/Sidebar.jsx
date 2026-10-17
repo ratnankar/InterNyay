@@ -9,7 +9,7 @@ import Icon from '../common/Icon'
 import usePlanFeatures from '../../hooks/usePlanFeatures'
 import { getAccounts, accountIdOf } from '../../utils/accounts'
 import { ADMIN_PATH, HOME_PATH, navToPath } from '../../routes/paths'
-import '../../styles/bottom-nav.css'
+import '../../styles/layout/bottom-nav.css'
 
 // Menu items that depend on a plan feature (hidden if the plan doesn't include it)
 const NAV_FEATURE = {
@@ -34,7 +34,7 @@ const NAV_ITEMS = [
   { id: 'quickaccess',  icon: 'bolt',  label: 'Quick Access' },
 ]
 
-// Primary mobile tabs; the More tab opens the existing drawer for all other pages.
+// Primary tabs on small screens; the More tab opens the existing drawer for all other pages.
 const BOTTOM_ITEMS = [
   { id: 'dashboard', icon: 'bank', label: 'Home' },
   { id: 'cases', icon: 'folder', label: 'Cases' },
@@ -63,11 +63,11 @@ function Avatar({ picture }) {
   return <div className="sidebar__avatar"><Icon name="user" /></div>
 }
 
-// Left navigation menu (becomes a slide-in drawer on mobile) with the user block and sign out button
+// Left navigation menu (becomes a slide-in drawer on small screens) with the user block and sign out button
 export default function Sidebar() {
   const { activeNav, setActiveNav, currentUser, handleLogout, switchAccount, addAccount, isAdmin, isAssociate } = useApp()
   // Whether the drawer is open on small screens
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Sign-out confirmation dialog (built into the sidebar so it always shows on the app UI)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
@@ -101,8 +101,8 @@ export default function Sidebar() {
 
   // Close the drawer with Escape and prevent background scrolling while it is open.
   useEffect(() => {
-    if (!mobileOpen) return undefined
-    const onKey = e => { if (e.key === 'Escape') setMobileOpen(false) }
+    if (!menuOpen) return undefined
+    const onKey = e => { if (e.key === 'Escape') setMenuOpen(false) }
     const prevOverflow = document.body.style.overflow
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
@@ -110,13 +110,13 @@ export default function Sidebar() {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
     }
-  }, [mobileOpen])
+  }, [menuOpen])
 
   // Swipe left on the drawer to close it.
   const swipeStartX = useRef(null)
   const onDrawerTouchStart = e => { swipeStartX.current = e.touches[0].clientX }
   const onDrawerTouchEnd = e => {
-    if (swipeStartX.current !== null && e.changedTouches[0].clientX - swipeStartX.current < -60) setMobileOpen(false)
+    if (swipeStartX.current !== null && e.changedTouches[0].clientX - swipeStartX.current < -60) setMenuOpen(false)
     swipeStartX.current = null
   }
 
@@ -150,7 +150,7 @@ export default function Sidebar() {
 
   // Close the drawer and the account pop-up (the links themselves do the navigating)
   const closeMenus = () => {
-    setMobileOpen(false)
+    setMenuOpen(false)
     setUserMenuOpen(false)
   }
 
@@ -182,36 +182,36 @@ export default function Sidebar() {
     </span>
   )
 
-  // Mobile top bar, drawer overlay, then the sidebar itself
+  // Top bar, drawer overlay, then the sidebar itself
   return (
     <>
-      {/* Top bar with the hamburger button (mobile only) */}
-      <div className="mobile-topbar">
+      {/* Top bar with the hamburger button (small screens only) */}
+      <div className="topbar">
         <button type="button"
-          className="mobile-topbar__hamburger"
-          onClick={() => setMobileOpen(true)}
+          className="topbar__hamburger"
+          onClick={() => setMenuOpen(true)}
           aria-label="Open menu"
-          aria-expanded={mobileOpen}
+          aria-expanded={menuOpen}
         >
           <span />
           <span />
           <span />
         </button>
-        <Link to={homePath} className="mobile-topbar__brand brand-link" onClick={closeMenus} aria-label="Go to dashboard">
+        <Link to={homePath} className="topbar__brand brand-link" onClick={closeMenus} aria-label="Go to dashboard">
           <BrandMark size="sm" />
           <span>InterNyay</span>
         </Link>
       </div>
 
       {/* Dark overlay behind the open drawer; tapping it closes the menu */}
-      {mobileOpen && (
-        <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />
+      {menuOpen && (
+        <div className="sidebar-overlay" onClick={() => setMenuOpen(false)} />
       )}
 
-      <div className={`sidebar${mobileOpen ? ' sidebar--open' : ''}`} onTouchStart={onDrawerTouchStart} onTouchEnd={onDrawerTouchEnd}>
+      <div className={`sidebar${menuOpen ? ' sidebar--open' : ''}`} onTouchStart={onDrawerTouchStart} onTouchEnd={onDrawerTouchEnd}>
         <button type="button"
           className="sidebar__close"
-          onClick={() => setMobileOpen(false)}
+          onClick={() => setMenuOpen(false)}
           aria-label="Close menu"
         >
           <Icon name="close" />
@@ -252,7 +252,7 @@ export default function Sidebar() {
                 onClick={closeMenus}
               >
                 <span className="nav-item__icon"><Icon name="user" /></span>
-                My Profile
+                <span className="sidebar__user-menu-text">My Profile</span>
               </Link>
               {!isAssociate && (
                 <Link
@@ -262,7 +262,7 @@ export default function Sidebar() {
                   onClick={closeMenus}
                 >
                   <span className="nav-item__icon"><Icon name="card" /></span>
-                  My Plan
+                  <span className="sidebar__user-menu-text">My Plan</span>
                 </Link>
               )}
               <Link
@@ -272,7 +272,7 @@ export default function Sidebar() {
                 onClick={closeMenus}
               >
                 <span className="nav-item__icon"><Icon name="mail" /></span>
-                Contact Us
+                <span className="sidebar__user-menu-text">Contact Us</span>
                 {unreadBadge}
               </Link>
 
@@ -308,7 +308,7 @@ export default function Sidebar() {
                 onClick={addAccount}
               >
                 <span className="nav-item__icon"><Icon name="user" /></span>
-                Add another account
+                <span className="sidebar__user-menu-text">Add another account</span>
               </button>
             </div>
           )}
@@ -352,8 +352,8 @@ export default function Sidebar() {
                 <span>{label}</span>
               </Link>
             ))}
-            <button type="button" className="bottom-nav__item" onClick={() => setMobileOpen(true)}
-              aria-label="More pages" aria-expanded={mobileOpen}
+            <button type="button" className="bottom-nav__item" onClick={() => setMenuOpen(true)}
+              aria-label="More pages" aria-expanded={menuOpen}
               aria-current={activeNav && !BOTTOM_ITEMS.some(i => i.id === activeNav) ? 'page' : undefined}>
               <span className="bottom-nav__icon" aria-hidden="true">⋯</span>
               <span>More</span>

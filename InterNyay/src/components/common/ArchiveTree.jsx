@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useId, useMemo } from 'react'
+import useSessionState from '../../hooks/useSessionState'
 import { groupByYearMonth } from '../../utils/archiveUtils'
 
 function Head({ level, open, label, count, onToggle }) {
@@ -16,9 +17,26 @@ function Head({ level, open, label, count, onToggle }) {
   )
 }
 
-export default function ArchiveTree({ items, getDate, withDays = false, forceOpen = false, defaultMonth, renderItems }) {
+// Year > month (> day) collapsible list.
+// stateKey keeps which groups are open while the admin/advocate stays signed in (a refresh keeps them); without it the state is local
+export default function ArchiveTree({ items, getDate, withDays = false, forceOpen = false, defaultMonth, renderItems, stateKey }) {
   const tree = useMemo(() => groupByYearMonth(items, getDate, withDays), [items, getDate, withDays])
-  const [overrides, setOverrides] = useState({})
+  const fallbackId = useId()
+  const [overrides, setOverrides] = useSessionState(`archive_${stateKey ?? fallbackId}`, {})
+
+  // Every group key in the tree, for Expand all / Collapse all
+  const allKeys = useMemo(() => {
+    const keys = []
+    tree.forEach(year => {
+      keys.push(year.key)
+      year.months.forEach(month => {
+        keys.push(month.key)
+        if (withDays) month.days.forEach(day => keys.push(day.key))
+      })
+    })
+    return keys
+  }, [tree, withDays])
+  const setAll = open => setOverrides(Object.fromEntries(allKeys.map(k => [k, open])))
 
   const defaults = useMemo(() => {
     const keys = new Set()
@@ -39,6 +57,14 @@ export default function ArchiveTree({ items, getDate, withDays = false, forceOpe
 
   return (
     <div className="archive">
+      {/* Only worth showing when there is more than a year and a month to open */}
+      {!forceOpen && allKeys.length > 2 && (
+        <div className="archive__tools">
+          <button type="button" className="btn-outline btn-outline--sm" onClick={() => setAll(true)}>Expand all</button>
+          <button type="button" className="btn-outline btn-outline--sm" onClick={() => setAll(false)}>Collapse all</button>
+        </div>
+      )}
+
       {tree.map(year => {
         const yearKey = year.key
         const yearOpen = isOpen(yearKey)

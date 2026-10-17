@@ -361,7 +361,7 @@
   background: var(--color-surface);
   border: var(--border-input);
   border-radius: var(--border-radius-md);
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem; /* same gap under it as the Judges list search (.qa-search) */
   transition: border-color 0.15s ease;
 }
 .qa-pd-search:focus-within { border-color: var(--color-gold); }
@@ -379,6 +379,7 @@
   padding: 11px 0;
   min-width: 0;
 }
+.qa-pd-search__input { text-overflow: ellipsis; } /* the long hint is cut with … instead of mid-letter on a narrow screen */
 .qa-pd-search__input::placeholder { color: var(--color-text-faint); }
 .qa-pd-search__input::-webkit-search-cancel-button { display: none; }
 

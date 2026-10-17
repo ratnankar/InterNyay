@@ -1,6 +1,6 @@
 /* Phones only (760px and narrower, the landing page's own phone breakpoint): landing page buttons use the
    application size (38px tall, 10px corners, 14px semibold text). Desktop and tablet keep their original sizes.
-   Colours, gold gradient and hover effects are unchanged. Loaded last so it wins over landing, mobile and touch rules. */
+   Colours, gold gradient and hover effects are unchanged. Loaded last so it wins over landing, small-screen and touch rules. */
 @media (max-width: 760px) {
   :is(.lx, body) .lp-btn.lp-btn,
   :is(.lx, body) .lp-btn.lp-btn.lp-btn--lg,

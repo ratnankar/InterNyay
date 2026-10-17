@@ -26,6 +26,7 @@ import {
   buildSourceNote,
 } from '../utils/policeDirectory'
 import SuggestInput from '../components/common/SuggestInput'
+import SearchInput from '../components/common/SearchInput'
 import PdfFrame from '../components/common/PdfFrame'
 import { printPdfUrl } from '../utils/printPdf'
 import { canEmbedPdf } from '../utils/pdfSupport'
@@ -156,13 +157,13 @@ function JudgesList({ initialQuery }) {
       <DistrictPdfBar section="JUDGES_LIST" district={district} />
 
       {/* Search box */}
-      <input
-        className="qa-search"
-        type="search"
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        placeholder="Search by name, designation, court number or jurisdiction"
-      />
+      <div className="card search-card">
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by name, designation, court number or jurisdiction"
+        />
+      </div>
 
       {/* Vacant courts (no judge between two transfers), shown only when there are any */}
       {(vacantCount > 0 || vacantOnly) && (
@@ -241,6 +242,7 @@ function BailRoster() {
           ? <p className="qa-empty">No bail roster entries found.</p>
           : (
             <ArchiveTree
+              stateKey={`qa_bail_${district}`}
               items={roster}
               getDate={rosterIssuedDate}
               renderItems={monthItems => (
@@ -329,6 +331,7 @@ function DutyMagistrate() {
           ? <p className="qa-empty">No duty magistrate entries found.</p>
           : (
             <ArchiveTree
+              stateKey={`qa_duty_${district}`}
               items={roster}
               getDate={rosterIssuedDate}
               renderItems={monthItems => (
@@ -649,19 +652,12 @@ function PoliceDirectory() {
   return (
     <div className="qa-pd">
       {/* Search box */}
-      <div className="qa-pd-search">
-        <span className="qa-pd-search__icon"><Icon name="search" /></span>
-        <input
-          className="qa-pd-search__input"
-          type="search"
+      <div className="card search-card">
+        <SearchInput
           value={query}
-          onChange={e => { setQuery(e.target.value); setOpenKey(null) }}
+          onChange={v => { setQuery(v); setOpenKey(null) }}
           placeholder="Search by police station — e.g. Saket, Kalkaji, Tilak Nagar, 110017"
-          autoComplete="off"
         />
-        {query && (
-          <button type="button" className="qa-pd-search__clear" onClick={() => setQuery('')}><Icon name="close" /></button>
-        )}
       </div>
 
       {/* District filter buttons */}

@@ -2,7 +2,7 @@
    Landing look for every screen: the landing page's white card, its fonts and its gold button,
    on every app screen (cards, Sign in / Register / Admin sign in, Plans, Profile & preferences, Admin console).
    Colours, borders, shadows and fonts only: layout, spacing and phone rules are untouched.
-   Loaded after the other skins so it wins ties; mobile-touch.css still comes after it.
+   Loaded after the other skins so it wins ties; responsive/touch.css still comes after it.
    ========================================================================== */
 
 :root {

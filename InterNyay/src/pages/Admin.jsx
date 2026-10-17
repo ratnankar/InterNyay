@@ -43,6 +43,7 @@ import { confirmDialog } from '../utils/confirmDialog'
 import ModalPortal from '../components/common/ModalPortal'
 import useUnsavedGuard from '../hooks/useUnsavedGuard'
 import AdminPasswordModal from '../components/modals/AdminPasswordModal'
+import SearchInput from '../components/common/SearchInput'
 
 // Admin sidebar: groups of tabs, each group with an icon and its tabs
 const TAB_GROUPS = [
@@ -182,6 +183,34 @@ function validateUserField(key, rawValue, isNew) {
   return null
 }
 
+// Contact messages: the alert on the Overview stays until the admin opens the Contact Messages tab.
+// The highest message id the admin has seen is kept per admin in this browser, so reading a message is not what clears the alert
+const contactSeenKey = userId => `internyay_contact_seen_${userId ?? 'admin'}`
+function readContactSeen(userId) {
+  try {
+    const raw = localStorage.getItem(contactSeenKey(userId))
+    return raw === null ? null : Number(raw)
+  } catch {
+    return null
+  }
+}
+function writeContactSeen(userId, list) {
+  const maxId = list.reduce((m, r) => Math.max(m, Number(r.id) || 0), 0)
+  try {
+    const prev = readContactSeen(userId)
+    if (prev === null || maxId > prev) localStorage.setItem(contactSeenKey(userId), String(maxId))
+  } catch {
+    return
+  }
+}
+// Messages the admin has not seen yet. Before the tab was ever opened, the messages still marked New are counted
+function countUnseenContact(list, userId) {
+  const seen = readContactSeen(userId)
+  return seen === null
+    ? list.filter(m => m.status === 'NEW').length
+    : list.filter(m => Number(m.id) > seen).length
+}
+
 // Admin page: dashboard stats, accounts, plans, Quick Access data, court updates, legal forms and contact messages
 // Holiday date used to group the holidays list by year and month
 const holidayDate = h => h.date
@@ -207,7 +236,7 @@ export default function Admin() {
   const [stats,    setStats]    = useState(null)
   const [users,    setUsers]    = useState([])
   const [planList, setPlanList] = useState([])
-  // Contact messages nobody has opened yet, shown on the Overview (null until loaded)
+  // Contact messages that came in since the admin last opened the Contact Messages tab, shown on the Overview (null until loaded)
   const [newMessages, setNewMessages] = useState(null)
   // Options for the account Plan dropdown, taken from the plans table (coming soon plans are left out unless the account is already on one)
   // Only plans shown to this kind of account are offered: ADVOCATE plans for advocates, BUSINESS plans for business
@@ -267,26 +296,30 @@ export default function Admin() {
   const notifOverlay    = useOverlayClose(closeNotifForm, { backdrop: false })
   const holidayOverlay  = useOverlayClose(closeHolidayEditor, { backdrop: false })
 
-  // Admin only: load stats, users and plans together, falling back to empty data if one fails
+  // Admin only: load stats, users and plans together.
+  // A request that fails keeps the data already on screen (it is never replaced by an empty list) and the admin is told.
+  // Returns true when all three loaded.
   const load = useCallback(async () => {
-
-    if (!isAdmin) return
-
+    if (!isAdmin) return true
     setLoading(true)
-
     try {
-      const [statsRes, usersRes, plansRes] = await Promise.all([
-        api.admin.stats().catch(() => null),
-        api.admin.users.list().catch(() => []),
-        api.admin.plans.list().catch(() => []),
+      const [statsRes, usersRes, plansRes] = await Promise.allSettled([
+        api.admin.stats(),
+        api.admin.users.list(),
+        api.admin.plans.list(),
       ])
-
-      setStats(statsRes)
-      setUsers(Array.isArray(usersRes) ? usersRes : [])
-      setPlanList(Array.isArray(plansRes) ? plansRes : [])
-
-    } catch (e) {
-      addToast(getErrorMessage(e, 'Could not load admin data'), 'error')
+      const failed = []
+      if (statsRes.status === 'fulfilled') setStats(statsRes.value)
+      else failed.push('overview numbers')
+      if (usersRes.status === 'fulfilled') setUsers(Array.isArray(usersRes.value) ? usersRes.value : [])
+      else failed.push('accounts')
+      if (plansRes.status === 'fulfilled') setPlanList(Array.isArray(plansRes.value) ? plansRes.value : [])
+      else failed.push('plans')
+      if (failed.length) {
+        const reason = [statsRes, usersRes, plansRes].find(r => r.status === 'rejected')?.reason
+        addToast(getErrorMessage(reason, `Could not load ${failed.join(', ')}. Showing the last data.`), 'error')
+      }
+      return failed.length === 0
     } finally {
       setLoading(false)
     }
@@ -312,9 +345,9 @@ export default function Admin() {
     if (!isAdmin || tab !== 'overview') return
     api.admin.plans.list().then(r => { if (Array.isArray(r)) setPlanList(r) }).catch(() => {})
     api.admin.contactMessages.list()
-      .then(r => setNewMessages(Array.isArray(r) ? r.filter(m => m.status === 'NEW').length : null))
+      .then(r => setNewMessages(Array.isArray(r) ? countUnseenContact(r, currentUser?.id) : null))
       .catch(() => setNewMessages(null))
-  }, [isAdmin, tab])
+  }, [isAdmin, tab, currentUser?.id])
 
   // Auto-refresh the Overview every 5 minutes while it is open and the browser tab is visible. It runs quietly (no loading state,
   // no blinking), only re-reads stats, plans and new messages, and keeps the old numbers if a request fails.
@@ -328,7 +361,7 @@ export default function Admin() {
       api.admin.stats().then(r => { if (r) setStats(r) }).catch(() => {})
       api.admin.plans.list().then(r => { if (Array.isArray(r)) setPlanList(r) }).catch(() => {})
       api.admin.contactMessages.list()
-        .then(r => { if (Array.isArray(r)) setNewMessages(r.filter(m => m.status === 'NEW').length) })
+        .then(r => { if (Array.isArray(r)) setNewMessages(countUnseenContact(r, currentUser?.id)) })
         .catch(() => {})
     }
     const timer = setInterval(() => {
@@ -342,17 +375,19 @@ export default function Admin() {
       clearInterval(timer)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [isAdmin, tab])
+  }, [isAdmin, tab, currentUser?.id])
 
   // Admin only: load court calendars
   const loadCalendars = useCallback(async () => {
-    if (!isAdmin) return
+    if (!isAdmin) return true
     setCalendarLoading(true)
     try {
       const res = await api.courtCalendar.list()
       setCalendars(Array.isArray(res) ? res : [])
+      return true
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not load court calendars'), 'error')
+      return false
     } finally {
       setCalendarLoading(false)
     }
@@ -360,13 +395,15 @@ export default function Admin() {
 
   // Admin only: load legal forms
   const loadForms = useCallback(async () => {
-    if (!isAdmin) return
+    if (!isAdmin) return true
     setFormsLoading(true)
     try {
       const res = await api.legalForms.list()
       setForms(Array.isArray(res) ? res : [])
+      return true
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not load legal forms'), 'error')
+      return false
     } finally {
       setFormsLoading(false)
     }
@@ -374,13 +411,15 @@ export default function Admin() {
 
   // Admin only: load notifications
   const loadNotifs = useCallback(async () => {
-    if (!isAdmin) return
+    if (!isAdmin) return true
     setNotifsLoading(true)
     try {
       const res = await api.notifications.list()
       setNotifs(Array.isArray(res) ? res : [])
+      return true
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not load notifications'), 'error')
+      return false
     } finally {
       setNotifsLoading(false)
     }
@@ -388,13 +427,15 @@ export default function Admin() {
 
   // Admin only: load holidays
   const loadHolidays = useCallback(async () => {
-    if (!isAdmin) return
+    if (!isAdmin) return true
     setHolidaysLoading(true)
     try {
       const res = await api.holidays.list()
       setHolidaysList(Array.isArray(res) ? res : [])
+      return true
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not load holidays'), 'error')
+      return false
     } finally {
       setHolidaysLoading(false)
     }
@@ -407,6 +448,23 @@ export default function Admin() {
     if (tab === 'notifications' && notifs.length === 0 && !notifsLoading) loadNotifs()
     if (tab === 'holidays' && holidays.length === 0 && !holidaysLoading) loadHolidays()
   }, [tab])
+
+  // Refresh button: reloads the account data and the open tab. Tabs that load their own data are re-created,
+  // which makes them fetch again (an unsaved edit inside such a tab is discarded)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const refreshBusy = loading
+    || (tab === 'calendar' && calendarLoading) || (tab === 'forms' && formsLoading)
+    || (tab === 'notifications' && notifsLoading) || (tab === 'holidays' && holidaysLoading)
+  const refreshAll = useCallback(async () => {
+    setRefreshKey(k => k + 1)
+    const jobs = [load()]
+    if (tab === 'calendar') jobs.push(loadCalendars())
+    if (tab === 'forms') jobs.push(loadForms())
+    if (tab === 'notifications') jobs.push(loadNotifs())
+    if (tab === 'holidays') jobs.push(loadHolidays())
+    const results = await Promise.all(jobs)
+    if (results.every(Boolean)) addToast('Refreshed')
+  }, [tab, load, loadCalendars, loadForms, loadNotifs, loadHolidays, addToast])
 
   // Password popup for permanent actions (null when closed)
   const [passwordPrompt, setPasswordPrompt] = useState(null)
@@ -1000,8 +1058,12 @@ export default function Admin() {
         </div>
         <div className="admin__header-actions">
           <button type="button" className="btn-outline btn-outline--sm admin__refresh"
-            onClick={() => load()} disabled={loading} aria-busy={loading}>
-            {loading ? 'Refreshing…' : 'Refresh'}
+            onClick={refreshAll} disabled={refreshBusy} aria-busy={refreshBusy}>
+            {/* Both labels share one grid cell, so the button keeps the width of the longer one and its edge never moves */}
+            <span className="admin__refresh-label">
+              <span className={refreshBusy ? 'is-hidden' : ''} aria-hidden={refreshBusy}>Refresh</span>
+              <span className={refreshBusy ? '' : 'is-hidden'} aria-hidden={!refreshBusy}>Refreshing…</span>
+            </span>
           </button>
         </div>
       </div>
@@ -1045,12 +1107,7 @@ export default function Admin() {
           {/* Search, account type filter, new advocate button and record count */}
           <div className="admin__toolbar">
 
-            <input
-              className="form-input"
-              placeholder="Search…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+            <SearchInput placeholder="Search…" value={search} onChange={setSearch} />
 
             <Dropdown
               className="form-input"
@@ -1338,6 +1395,7 @@ export default function Admin() {
             </div>
           ) : (
             <ArchiveTree
+  stateKey="holidays"
               items={holidays}
               getDate={holidayDate}
               renderItems={monthItems => (
@@ -1383,37 +1441,37 @@ export default function Admin() {
       )}
 
       {/* Quick Access, court update and plan tabs are separate admin components */}
-      {tab === 'courts' && <CourtsAdmin />}
+      {tab === 'courts' && <CourtsAdmin key={refreshKey} />}
 
-      {tab === 'judges' && <JudgesAdmin />}
+      {tab === 'judges' && <JudgesAdmin key={refreshKey} />}
 
-      {tab === 'leave' && <JudgeLeaveAdmin />}
+      {tab === 'leave' && <JudgeLeaveAdmin key={refreshKey} />}
 
-      {tab === 'bail' && <BailRosterAdmin />}
+      {tab === 'bail' && <BailRosterAdmin key={refreshKey} />}
 
-      {tab === 'duty' && <DutyMagistrateAdmin />}
+      {tab === 'duty' && <DutyMagistrateAdmin key={refreshKey} />}
 
       {/* Successor courts tab: court history by court, district and building; periods are added, edited and deleted here, the current one too (the judge follows it) */}
-      {tab === 'successor' && <SuccessorCourts admin />}
+      {tab === 'successor' && <SuccessorCourts key={refreshKey} admin />}
 
-      {tab === 'police' && <PoliceAdmin />}
+      {tab === 'police' && <PoliceAdmin key={refreshKey} />}
 
-      {tab === 'consumer' && <ConsumerJurisdictionAdmin />}
+      {tab === 'consumer' && <ConsumerJurisdictionAdmin key={refreshKey} />}
 
-      {tab === 'drt' && <DrtJurisdictionAdmin />}
+      {tab === 'drt' && <DrtJurisdictionAdmin key={refreshKey} />}
 
-      {tab === 'plans' && <PlansAdmin />}
+      {tab === 'plans' && <PlansAdmin key={refreshKey} />}
 
       {/* Fee calculator tab: filings, fee scales and notes used by the Court Fee Calculator */}
-      {tab === 'feecalc' && <FeeCalculatorAdmin />}
+      {tab === 'feecalc' && <FeeCalculatorAdmin key={refreshKey} />}
 
       {/* Dropdown choices */}
-      {tab === 'options' && <OptionsAdmin />}
+      {tab === 'options' && <OptionsAdmin key={refreshKey} />}
 
-      {tab === 'contact' && <ContactMessagesAdmin />}
+      {tab === 'contact' && <ContactMessagesAdmin key={refreshKey} onLoaded={list => { writeContactSeen(currentUser?.id, list); setNewMessages(0) }} />}
 
       {/* Sign-in history */}
-      {tab === 'loginlog' && <LoginLogAdmin />}
+      {tab === 'loginlog' && <LoginLogAdmin key={refreshKey} />}
 
       {/* Login activity of one account, opened from its profile */}
       {logUser && <UserLoginLogsModal user={logUser} onClose={() => setLogUser(null)} />}

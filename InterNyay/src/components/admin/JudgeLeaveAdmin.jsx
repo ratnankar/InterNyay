@@ -12,6 +12,7 @@ import { getErrorMessage } from '../../utils/errorMessages'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
+import SearchInput from '../common/SearchInput'
 
 const leaveStartDate = r => r.leaveFrom
 
@@ -254,8 +255,7 @@ export default function JudgeLeaveAdmin() {
 
       {/* Court filter, search, add and refresh buttons, and entry count */}
       <div className="admin__toolbar">
-        <input className="form-input" placeholder="Search judge, reason…"
-               value={search} onChange={e => setSearch(e.target.value)} />
+        <SearchInput placeholder="Search judge, reason…" value={search} onChange={setSearch} />
 
         <Dropdown className="form-input" wrapperClassName="u-maxw-180" value={court}
                 onChange={e => setCourt(e.target.value)} aria-label="Filter by court">
@@ -323,6 +323,7 @@ export default function JudgeLeaveAdmin() {
         renderTable(current)
       ) : (
         <ArchiveTree
+  stateKey="leave"
           items={archived}
           getDate={leaveStartDate}
           forceOpen={!!search.trim()}

@@ -24,6 +24,7 @@ import SeeMore from '../common/SeeMore'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
+import SearchInput from '../common/SearchInput'
 // Patterns used to check the court email and the virtual court link
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const LINK_PATTERN = /^https?:\/\/\S+$/
@@ -36,7 +37,7 @@ const TEXT_FIELDS = [
   { key: 'courtEmail',        label: 'Court email ID',               type: 'email' },
   { key: 'virtualCourtLink',  label: 'Virtual court hearing link',   type: 'url' },
   { key: 'courtReaderName',   label: 'Court reader name' },
-  { key: 'courtReaderMobile', label: 'Court reader mobile number',   type: 'tel' },
+  { key: 'courtReaderPhone', label: 'Court reader mobile number',   type: 'tel' },
 ]
 
 // Blank form for a new listing
@@ -69,8 +70,8 @@ function validate(form) {
     errors.virtualCourtLink = 'Link must start with http:// or https://'
   }
 
-  const phoneError = indianPhoneError(form.courtReaderMobile)
-  if (phoneError) errors.courtReaderMobile = phoneError
+  const phoneError = indianPhoneError(form.courtReaderPhone)
+  if (phoneError) errors.courtReaderPhone = phoneError
 
   return errors
 }
@@ -309,12 +310,7 @@ export default function ListingAdmin() {
 
       {/* Search box, district filter, add button and judge count */}
       <div className="admin__toolbar">
-        <input
-          className="form-input"
-          placeholder="Search…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <SearchInput placeholder="Search…" value={search} onChange={setSearch} />
         <Dropdown className="form-input" wrapperClassName="u-maxw-200" value={districtFilter} onChange={e => setDistrictFilter(e.target.value)}>
           <option value="">All districts</option>
           {districtNames.map(c => <option key={c} value={c}>{c}</option>)}
@@ -471,7 +467,7 @@ export default function ListingAdmin() {
                       type={f.type || 'text'}
                       value={editing.form[f.key]}
                       onChange={e => setField(f.key, e.target.value)}
-                      {...(f.key === 'courtReaderMobile' ? { inputMode: 'tel', maxLength: 16 } : {})}
+                      {...(f.key === 'courtReaderPhone' ? { inputMode: 'tel', maxLength: 16 } : {})}
                     />
                     {errors[f.key] && <p className="admin__hint admin__hint--error">{errors[f.key]}</p>}
                     {f.key === 'virtualCourtLink' && editing.form.virtualCourtLink.trim() && !errors.virtualCourtLink && (

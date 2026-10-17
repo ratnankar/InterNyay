@@ -117,6 +117,7 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <ArchiveTree
+  stateKey="notifs"
           items={visible}
           getDate={notificationDate}
           forceOpen={!!search.trim()}

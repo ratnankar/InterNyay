@@ -1,8 +1,8 @@
-/* ===== merged from mobile-v2.css ===== */
-/* Mobile v2: overrides loaded after existing styles, focused on phones and touch screens. */
+/* ===== Part 1: small-screen overrides ===== */
+/* Small-screen pass 1: overrides loaded after existing styles, focused on phones and touch screens. */
 @media (max-width: 860px) {
   .overlay { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(10, 22, 40, 0.62); }
-  .mobile-topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: #fff; }
+  .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: #fff; }
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -62,8 +62,8 @@
 
 @media print { .bottom-nav { display: none; } }
 
-/* ===== merged from mobile-final.css ===== */
-/* Final phone pass (keep after mobile-v2.css). Found by opening every page and pop-up at 360px and 390px wide:
+/* ===== Part 2: final small-screen pass ===== */
+/* Final phone pass (keep after responsive/small-screen-extra.css). Found by opening every page and pop-up at 360px and 390px wide:
    1. Small buttons and links were 17-30px tall, under the 40px a finger needs.
    2. Badges, chips and captions were 10-11px; 12px is the floor on a phone.
    3. Documents rows pushed their buttons off the screen; wide tables scrolled sideways.

@@ -17,6 +17,7 @@ export default function NotificationArchive({ items, loading, onEdit, onRemove }
 
   return (
     <ArchiveTree
+  stateKey="admin_notifs"
       items={items}
       getDate={notificationDate}
       renderItems={monthItems => (

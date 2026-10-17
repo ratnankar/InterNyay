@@ -32,7 +32,7 @@
 
 /* ===== merged from landing2.css ===== */
 /* ==========================================================================
-   Landing page (lx-*). Scoped under .lx so the app-wide polish and mobile rules cannot fight it.
+   Landing page (lx-*). Scoped under .lx so the app-wide polish and small-screen rules cannot fight it.
    Palette: ink navy, court blue, gold for actions, a cool mist for alternate sections.
    ========================================================================== */
 .lx {
@@ -448,13 +448,13 @@
 .lx .lx-hero {
   background:
     linear-gradient(90deg, rgba(247, 249, 252, 0.97) 0%, rgba(247, 249, 252, 0.92) 45%, rgba(247, 249, 252, 0.74) 100%),
-    #f7f9fc url('../assets/photo-bg.webp') center / cover no-repeat;
+    #f7f9fc url('../../assets/photo-bg.webp') center / cover no-repeat;
 }
 @media (max-width: 700px) {
   .lx .lx-hero {
     background:
       linear-gradient(180deg, rgba(247, 249, 252, 0.96) 0%, rgba(247, 249, 252, 0.88) 100%),
-      #f7f9fc url('../assets/photo-bg-sm.webp') center / cover no-repeat;
+      #f7f9fc url('../../assets/photo-bg-sm.webp') center / cover no-repeat;
   }
 }
 .lx .lx-hero::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(22, 56, 111, 0.13) 1px, transparent 1px); background-size: 26px 26px; -webkit-mask-image: radial-gradient(ellipse 60% 60% at 72% 40%, #000 0%, transparent 75%); mask-image: radial-gradient(ellipse 60% 60% at 72% 40%, #000 0%, transparent 75%); pointer-events: none; }
@@ -469,9 +469,9 @@
 .lx .lx-live.is-live .lx-orb--a, .lx .lx-live.is-live .lx-orb--d { animation: lx-drift-a 16s ease-in-out infinite; }
 .lx .lx-live.is-live .lx-orb--b, .lx .lx-live.is-live .lx-orb--c { animation: lx-drift-b 19s ease-in-out infinite; }
 
-.lx .lx-shine { background: linear-gradient(100deg, #8a6a1c 0%, #c9a84c 28%, #e8cd7a 50%, #b08a2e 72%, #8a6a1c 100%); background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.lx .lx-shine { background: linear-gradient(100deg, #8a6a1c 0%, #c9a84c 28%, #e8cd7a 50%, #b08a2e 72%, #8a6a1c 100%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 .lx .lx-live.is-live .lx-shine { animation: lx-shimmer 5.5s linear infinite; }
-@keyframes lx-shimmer { to { background-position: -240% 0; } }
+@keyframes lx-shimmer { from { background-position: 0 0; } to { background-position: -200% 0; } }
 
 /* Sample case record: leans toward the pointer, and a gold scan line sweeps over it as if it were syncing */
 .lx .lx-case { overflow: hidden; transform: perspective(1100px) rotateY(calc(var(--mx, 0) * 5deg)) rotateX(calc(var(--my, 0) * -4deg)); transition: transform .25s ease-out; will-change: transform; }
