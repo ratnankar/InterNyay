@@ -82,7 +82,7 @@ All CSS lives in `src/styles/`, one file per area, pulled in by `src/index.css`.
 | Desktop buttons, fields, search, filter, sort (one place, change the numbers in `:root`) | `src/styles/desktop-sizes.css` |
 | Sign in, Register, plan, court preference, Google sign-up window (desktop and phone) | `src/styles/auth-flow.css` |
 | Text scale: tables, labels, subtitles (desktop and phone) | `src/styles/typography.css` |
-| Phone and tablet field / button sizes in the app | `src/styles/unified.css`, `src/styles/hierarchy.css` |
+| Phone and tablet field / button sizes in the app | `src/styles/unified.css` |
 | Size tokens (`--fs-*`) and phone overrides | `src/styles/variables.css`, `src/styles/mobile.css` |
 
 These files are imported last in `src/index.css`; keep them last so they win over older rules.

@@ -1,6 +1,6 @@
 // When a row of buttons runs out of room (it would wrap or spill over), the buttons that have an icon drop their words and
 // show the icon only. The words stay available to screen readers (aria-label) and as a hover tooltip.
-// Nothing is moved in the page: the group just gets a data-compact attribute that the CSS in styles/hierarchy.css reacts to.
+// Nothing is moved in the page: the group just gets a data-compact attribute that the CSS in styles/unified.css reacts to.
 const BUTTONS = '.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary'
 
 // Words of a button (its own text, not the icon's)

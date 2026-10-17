@@ -1,3 +1,303 @@
+/* ===== merged from hierarchy.css ===== */
+/* ==========================================================================
+   THE size scale for bars, fields and buttons (keep last: it settles the sizes of everything above)
+   Admin bars and buttons on wide screens:
+     Level 1  main tab bar         44px  15px text
+     Level 2  sub tab bar          38px  14px text
+     Level 3  toolbar (search, dropdown, + Add)   34px  13px text, all the same height
+     Level 4  buttons on a table row / card       28px  12px text
+   ========================================================================== */
+.admin__tabs.admin__tabs .admin__tab { min-height: 44px; font-size: 0.9375rem; }
+.admin__subtabs.admin__subtabs .admin__subtab { min-height: 38px; font-size: 0.875rem; }
+
+/* Wide touch screens (tablets). Desktop sizes live in desktop-sizes.css; phones have their own sizes further down */
+@media (min-width: 861px) and (hover: none), (min-width: 861px) and (pointer: coarse) {
+  .admin .admin__toolbar { align-items: center; gap: 10px; }
+  .admin .admin__toolbar .form-input,
+  .admin .admin__toolbar .dropdown__input,
+  .admin .admin__toolbar input.form-input {
+    box-sizing: border-box; height: 34px; min-height: 34px; padding-top: 0; padding-bottom: 0; font-size: 0.8125rem; line-height: 1.2;
+  }
+  .admin .admin__toolbar .dropdown { display: flex; align-items: center; }
+  .admin .admin__toolbar button.btn-gold,
+  .admin .admin__toolbar button.btn-outline:not(.btn-outline--sm),
+  .admin .admin__toolbar button.btn-danger {
+    box-sizing: border-box; height: 34px; min-height: 34px; padding: 0 16px; font-size: 0.8125rem; line-height: 1.2; border-radius: 10px;
+  }
+  .admin .admin__count { font-size: 0.75rem; }
+  .admin table button.btn-outline,
+  .admin table button.btn-danger,
+  .admin table button.btn-gold,
+  .admin .admin__actions button {
+    min-height: 28px; padding: 0 10px; font-size: 0.75rem; line-height: 1.2;
+  }
+}
+
+/* Image preview: the popup is only as big as the picture (never bigger than the window) */
+.modal.pdf-modal.pdf-modal--image { width: auto; min-width: min(560px, 94vw); max-width: 94vw; }
+.pdf-modal__image-box { display: flex; justify-content: center; align-items: center; background: var(--color-bg); border-radius: var(--border-radius-md); overflow: hidden; }
+.pdf-modal__image { display: block; max-width: 100%; max-height: 75vh; width: auto; height: auto; object-fit: contain; }
+
+/* Profile row in the sidebar: the arrow sits right after the name */
+.sidebar__user-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.sidebar__user-name-row .sidebar__user-name { flex: 0 1 auto; min-width: 0; }
+.sidebar__user-name-row .sidebar__user-caret { margin: 0 0 0 2px; }
+
+/* Rename pencil: right beside the document name, lifted a little */
+.doc-row__name, .case-detail__doc-name { justify-content: flex-start; }
+.doc-rename-btn { margin-left: 0.3em; transform: translateY(-2px); }
+
+/* Preview window header: a little more room between Print, Open in new tab, Download and Close */
+.pdf-modal__actions { gap: 12px; }
+.pdf-modal__actions .btn-icon { margin-left: 2px; }
+
+/* ==========================================================================
+   Sort / filter dropdowns: the closed box is compact on phones and tablets only (desktop keeps the normal size from polish.css; the list that opens is never shrunk)
+   ========================================================================== */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .sort-control .dropdown__input.dropdown__input,
+  .doc-filter-group .dropdown__input.dropdown__input,
+  .doc-filter-group .doc-filter-select.doc-filter-select,
+  .todo-filters .dropdown__input.dropdown__input,
+  .txn-timeline-filter .dropdown__input.dropdown__input {
+    height: 34px; min-height: 34px; padding: 0 28px 0 12px; font-size: 0.8125rem; line-height: 1.2; border-radius: 10px;
+  }
+  .sort-control .dropdown__chevron, .doc-filter-group .dropdown__chevron, .todo-filters .dropdown__chevron { font-size: 0.75rem; right: 10px; }
+  .sort-control label, .doc-filter-label { font-size: 0.8125rem; }
+}
+
+/* ==========================================================================
+   Icon-only buttons: a row of buttons that runs out of room (see utils/compactButtons.js) shows icons without words
+   ========================================================================== */
+[data-compact] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):has(> svg.icon) {
+  font-size: 0; gap: 0; padding-left: 0; padding-right: 0; min-width: 36px; width: 36px; flex: 0 0 auto;
+}
+[data-compact] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):has(> svg.icon) > svg.icon {
+  width: 18px; height: 18px; margin: 0;
+}
+
+/* ==========================================================================
+   Phones and tablets: one size for every field and button
+     Fields (typing boxes and dropdowns)            38px, 14px text (no iOS zoom: viewport has maximum-scale=1)
+     Page and dialog buttons                        38px, 14px text
+     Other buttons                                  34px, 13px text
+     Toolbar, search and filter controls            36px, 14px text
+     Buttons on a row or card                       34px, 13px text
+   ========================================================================== */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  input.form-input, .form-input.dropdown__input, .dropdown__input.dropdown__input,
+  select.form-input {
+    box-sizing: border-box; height: 38px; min-height: 38px; padding-top: 0; padding-bottom: 0; line-height: 1.25;
+    font-size: 14px; border-radius: 10px;
+  }
+  input.form-input { padding-left: 12px; padding-right: 12px; }
+  .dropdown__input.dropdown__input { padding-right: 32px; }
+  textarea.form-input { padding: 10px 12px; font-size: 14px; line-height: 1.4; border-radius: 10px; }
+  .form-label, .form-group > label { font-size: 0.8125rem; }
+  .form-grid-2 { align-items: end; }
+
+  .modal .form-actions button.btn-gold,
+  .modal .form-actions button.btn-outline,
+  .modal .form-actions button.btn-danger,
+  .page-header > button.btn-gold, .page-header > button.btn-outline {
+    box-sizing: border-box; height: 38px; min-height: 38px; padding: 0 16px; font-size: 0.875rem; line-height: 1.2;
+  }
+
+  /* Every other button in the app, dialogs and drawers: 34px, 13px text. Low specificity on purpose, so the toolbar,
+     small, icon-only and header buttons above and below keep their own sizes. */
+  :where(.app-main, .modal, .drawer) :is(button, a):is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm) {
+    box-sizing: border-box; min-height: 34px; padding-top: 0; padding-bottom: 0; padding-left: 14px; padding-right: 14px;
+    font-size: 0.8125rem; line-height: 1.2; border-radius: 9px;
+  }
+
+  .list-toolbar .doc-search-input, .doc-filter-row .doc-search-input, .todo-search-input,
+  .list-toolbar .btn-outline, .doc-filter-row .btn-outline, .case-filter-menu > .btn-outline, .list-toolbar .case-filter-btn,
+  .sort-control .dropdown__input.dropdown__input, .doc-filter-group .dropdown__input.dropdown__input,
+  .doc-filter-group .doc-filter-select.doc-filter-select, .todo-filters .dropdown__input.dropdown__input,
+  .txn-timeline-filter .dropdown__input.dropdown__input, .txn-timeline-filter .form-input {
+    height: 36px; min-height: 36px; font-size: 0.875rem;
+  }
+
+  button.btn-outline.btn-outline--sm, .modal button.btn-outline.btn-outline--sm, .admin table button.btn-outline,
+  .judge-card__actions button, .doc-row__actions button, .doc-row__actions a {
+    box-sizing: border-box; min-height: 34px; padding: 0 12px; font-size: 0.8125rem; line-height: 1.2;
+  }
+}
+
+/* ==========================================================================
+   Phone keyboard: the chat button stays out of the way while you type
+   ========================================================================== */
+html.kb-open .chat__launcher { display: none; }
+
+/* Dashboard greeting stays on one line (when the name cannot fit, the page shows "Counsel" instead) */
+.page-header__main { min-width: 0; flex: 1 1 auto; }
+.page-title--one-line { white-space: nowrap; overflow: hidden; }
+.page-header--hero .page-title--one-line { overflow-wrap: normal; }
+
+/* Preview and form windows: the title never runs into the buttons. It takes the room that is left and is cut with "…";
+   when even that is too little the buttons drop under it (and show icons only, see compactButtons.js) */
+.pdf-modal .modal__header { flex-wrap: wrap; gap: 12px 24px; }
+.pdf-modal .modal__title { flex: 1 1 220px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xl); }
+.pdf-modal .pdf-modal__actions { flex: 0 0 auto; margin-left: auto; }
+
+/* Fillable form: zoom bar under the pages */
+.pdf-form__bar { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 0 0; font-size: 0.8125rem; color: var(--color-text-muted); }
+.pdf-form__bar button { width: 32px; height: 32px; border: 1px solid var(--sk-line, #dde4ee); border-radius: 10px; background: #fff; font-size: 1rem; line-height: 1; cursor: pointer; }
+.pdf-form__bar button:disabled { opacity: 0.4; cursor: default; }
+.pdf-form__bar span { min-width: 3.2em; text-align: center; }
+.pdf-form .pdf-canvas__msg { padding: 2rem 1rem; }
+
+/* ==========================================================================
+   Phones: document rows, case buttons and case details line up
+   Buttons on a card or row   36px high, 13px text (Edit Case, Delete Case, Upload Document, Open)
+   Icon buttons on a row      36px square
+   ========================================================================== */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+
+  /* Edit Case / Delete Case and Upload Document: same height and text as the other card buttons */
+  .case-detail__actions-right > button,
+  .case-detail__actions > button {
+    box-sizing: border-box; height: 36px; min-height: 36px; padding: 0 14px;
+    font-size: 0.8125rem; line-height: 1.2; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+  }
+  .case-detail__actions-right { gap: 8px; }
+  /* Edit and Delete on a client's details: same size as Edit Case / Delete Case */
+  .client-detail__header > .btn-outline {
+    box-sizing: border-box; height: 36px; min-height: 36px; padding: 0 14px; font-size: 0.8125rem;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px;
+  }
+
+  /* A document or evidence row: icon and name on top, the buttons on their own line underneath,
+     so every row has the same shape whatever the length of the file name */
+  .case-detail__doc-row,
+  .exp-card__body .case-detail__doc-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 10px; row-gap: 8px;
+    align-items: start;
+    padding: 10px 8px;
+  }
+  .case-detail__doc-row > .case-detail__doc-icon { grid-row: 1; grid-column: 1; margin-top: 2px; }
+  .case-detail__doc-row > .case-detail__doc-body { grid-row: 1; grid-column: 2; min-width: 0; flex: none; }
+  .case-detail__doc-row > .case-detail__doc-actions {
+    grid-row: 2; grid-column: 2;
+    display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; width: 100%;
+  }
+  .case-detail__doc-name { overflow-wrap: anywhere; line-height: 1.35; }
+
+  /* Open takes the free width, the delete icon stays a square at the end */
+  .case-detail__doc-actions button.btn-outline.btn-outline--sm {
+    flex: 1 1 auto; box-sizing: border-box; height: 34px; min-height: 34px; padding: 0 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.8125rem !important;
+  }
+  .case-detail__doc-actions .btn-icon {
+    flex: 0 0 auto; box-sizing: border-box; width: 36px; height: 34px; min-width: 36px; min-height: 34px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* The rename pencil keeps a small look but a finger can still hit it */
+  .case-detail__doc-name .doc-rename-btn { width: 28px; height: 28px; min-width: 28px; min-height: 28px; margin-left: 4px; transform: none; }
+}
+
+/* ==========================================================================
+   Phones: Quick Access panel header and case details a little smaller
+   ========================================================================== */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+
+  /* Panel (Find Jurisdiction, Judges List ...): rounded corners clip the header, smaller title and close button */
+  .qa-panel { overflow: hidden; border-radius: 20px; border-width: 1px; }
+  .qa-panel__header { border-radius: 19px 19px 0 0; }
+  .qa-panel__header { gap: 10px; padding: 12px 14px; align-items: center; }
+  .qa-panel__icon { font-size: 1.125rem; flex: 0 0 auto; }
+  .qa-panel__header > div { min-width: 0; flex: 1 1 auto; }
+  .qa-panel__title { font-size: var(--fs-md); line-height: 1.25; }
+  .qa-panel__sub {
+    font-size: var(--fs-xs); line-height: 1.3; margin-top: 1px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .qa-panel .qa-close {
+    box-sizing: border-box; flex: 0 0 auto; width: 30px; height: 30px; min-width: 30px; min-height: 30px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
+  }
+  .qa-panel__body { padding: 12px; }
+}
+
+/* Opened case details (Case Nature, Case No ...): two even columns, the same size as before, lined up at the top */
+@media (max-width: 480px) {
+  .case-fields tr { align-items: start; column-gap: 16px; padding: 10px 12px; }
+  .case-fields th, .case-fields td { min-width: 0; text-align: left; }
+  .case-fields__label { line-height: 1.3; padding-bottom: 3px; }
+  .case-fields__value, .case-fields__value--mono { line-height: 1.35; overflow-wrap: anywhere; word-break: normal; }
+}
+
+/* Case card before it is opened (Case Nature, File No, CNR No ...): smaller text and tighter rows on phones */
+@media (max-width: 640px) {
+  .case-list > .case-card:not(.case-card--open) .case-summary-fields { column-gap: 16px; row-gap: 8px; }
+  .case-list > .case-card .case-summary-fields__row { gap: 1px; line-height: 1.3; }
+  .case-list > .case-card .case-summary-fields__label { font-size: 0.75rem; line-height: 1.3; }
+  .case-list > .case-card .case-summary-fields__value { font-size: 0.8125rem; font-weight: 500; line-height: 1.3; }
+  .case-list > .case-card .case-summary-fields__value--mono { font-size: 0.75rem; letter-spacing: 0; }
+}
+
+/* ==========================================================================
+   Phones: less empty space at the sides, WhatsApp reminders fit the card
+   Side space (page + card + panel) was about 38px each side, now about 28px when a case is opened, 22px otherwise
+   ========================================================================== */
+@media (max-width: 860px) {
+  .app-main {
+    padding-left: max(0.625rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.625rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (max-width: 768px) {
+  .card.case-card { padding: 12px; }
+  /* An opened case: its panel gets nearly the whole card width */
+  .card.case-card:has(> .case-detail) { padding: 12px 8px; }
+  .card.case-card:has(> .case-detail) > .case-card__header { padding-left: 4px; padding-right: 4px; }
+  .card.case-card .case-detail,
+  .case-card .case-detail { margin-top: 10px; padding: 10px; }
+
+  /* WhatsApp reminders: the switch, the Send reminder now button and the 1 / 2 days choice stack inside the card width */
+  .case-detail__whatsapp { margin-top: 12px; padding-top: 12px; min-width: 0; }
+  .case-detail__whatsapp-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .case-detail__whatsapp-row > button.btn-outline {
+    width: 100%; box-sizing: border-box; height: 36px; min-height: 36px; padding: 0 14px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+    font-size: 0.8125rem !important;
+  }
+  .case-detail__whatsapp-timing { flex-wrap: wrap; gap: 8px 10px; min-width: 0; }
+  .case-detail__whatsapp-timing .wa-days-toggle { flex: 1 1 100%; max-width: 100%; min-width: 0; }
+  .case-detail__whatsapp-timing .wa-days-toggle__btn {
+    flex: 1 1 0; min-width: 0; min-height: 36px; padding: 0 8px; font-size: 0.8125rem; white-space: nowrap;
+  }
+}
+
+/* Dashboard greeting (phones): the title and date sit on the left edge, level with the button underneath
+   (appskin.css centred them), and the New Case button is the normal 38px page-button size, not 44px */
+@media (max-width: 560px) {
+  .page-header.page-header--hero { align-items: stretch; }
+  .page-header.page-header--hero > .page-header__main { align-self: stretch; text-align: left; }
+  .page-header.page-header--hero > .btn-gold { min-height: 38px; height: 38px; font-size: 0.875rem; }
+}
+
+/* Option chips (court and district filters, case filters, court preferences, contact and fee filters), phones and tablets:
+   32px high with 12px text instead of 40px / 13px. Filter-bar buttons beside the search box keep their 36px. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .qa-filter-btn,
+  .case-filter-btn,
+  .contact-filters button,
+  .court-pref__chip,
+  .txn-period__chips .case-filter-btn {
+    box-sizing: border-box; min-height: 32px; height: auto; padding: 0 12px; font-size: 0.75rem; line-height: 1.2;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .qa-filter-row, .case-filters, .contact-filters, .court-pref__chips { gap: 6px; }
+  .qa-filter-btn--sub { min-height: 30px; }
+}
+
+/* ===== merged from unified.css ===== */
 /* Phone and tablet sizes for fields, buttons, filters and search. Desktop has its own file: desktop-sizes.css */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
   :is(.admin, .app-main, .modal, .drawer) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input, .form-input.dropdown__input) {

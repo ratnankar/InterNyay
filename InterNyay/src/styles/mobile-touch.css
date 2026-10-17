@@ -1,3 +1,4 @@
+/* ===== merged from mobile-touch.css ===== */
 /* Phone and tablet touch fixes. Imported last so no earlier rule overrides it.
    1. Field sizes (see note below).
    2. Fingers need bigger targets than a mouse.
@@ -130,4 +131,142 @@
 @media (hover: none) and (pointer: coarse) {
   .admin__subtab,
   .plans-admin__toggle-head { min-height: 40px; }
+}
+
+/* iOS Safari zooms the page when a field under 16px gets focus. Pinch-zoom is
+   now allowed (accessibility), so keep every touch-screen field at 16px. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ===== merged from mobile-polish.css ===== */
+/* ==========================================================================
+   Mobile polish (loaded last): readable text, finger-sized targets, a chat button that stays out of the way,
+   and tidier case details on small phones. Everything here is limited to phone / tablet widths or touch screens.
+   ========================================================================== */
+
+/* ---------- Text: nothing below 12px on small screens ---------- */
+@media (max-width: 768px) {
+  .sidebar__brand-tag, .sidebar__user-bar, .cal-day__count, .calendar__legend-item,
+  .case-card__status, .case-card__hearing-label, .case-card__hearing-when,
+  .badge, .form-label, .stat-card__label, .doc-filter-label, .sort-control label,
+  .todo-status, .todo-category-tag, .todo-due-date,
+  .calc-info-card__note, .calc-quick-row__label, .calc-quick-row__fee,
+  .qa-copy-btn, .auth-logo__tagline, .auth-hint, .auth-footer-note,
+  .lx-ticks, .lp-fineprint, .district-pdfs__count, .district-pdfs__hint,
+  .admin__table th {
+    font-size: max(0.75rem, 12px);
+  }
+}
+
+/* ---------- Touch: links and small buttons get a 40px-tall hit area ---------- */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .mobile-topbar__brand,
+  .notif-page__back,
+  .auth-back-link,
+  .auth-link-btn,
+  .profile-reset-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+  .qa-copy-btn { min-height: 36px; padding-left: 12px; padding-right: 12px; }
+  .spec-chip__x { position: relative; }
+  .spec-chip__x::after { content: ''; position: absolute; inset: -12px -8px; }
+  .lx-menu a, .lx-footer a { min-width: 40px; }
+}
+
+/* ---------- Chat button: smaller, tucked into the corner, and the page leaves room for it ---------- */
+@media (max-width: 768px) {
+  .chat__launcher {
+    width: 46px;
+    height: 46px;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    opacity: 0.94;
+  }
+  .app-main { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 520px) {
+  /* The open chat fills the visible screen, not the taller "100vh" that sits behind the browser bar */
+  .chat__panel { height: 100vh; height: 100dvh; max-height: 100dvh; }
+}
+
+/* ---------- Filter chips: the edge-to-edge scroller matches the page padding on the smallest phones ---------- */
+@media (max-width: 400px) {
+  .case-filters { margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px; }
+}
+
+/* ---------- To-do list never wider than the screen ---------- */
+.todo-main, .todo-list, .todo-item { min-width: 0; max-width: 100%; }
+.todo-item { overflow-wrap: anywhere; }
+
+/* ---------- Case details on a phone ---------- */
+@media (max-width: 560px) {
+  /* Status buttons share one row instead of wrapping ("Withdrawn" dropped to a second line) */
+  .case-status { display: flex; width: 100%; }
+  .case-status__group { display: flex; width: 100%; }
+  .case-status__option { flex: 1 1 auto; min-width: 0; padding: 10px 4px; font-size: 0.75rem; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  /* Case fields: label above value, two pairs per row, so long numbers (CS/101/2025) stay on one line */
+  .case-fields, .case-fields tbody { display: block; }
+  .case-fields tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-auto-flow: column;
+    grid-template-rows: auto auto;
+    column-gap: 14px;
+    border-bottom: var(--hairline);
+    padding: 8px 6px;
+  }
+  .case-fields tr:last-child { border-bottom: none; }
+  .case-fields tr:has(td[colspan="3"]) { grid-template-columns: minmax(0, 1fr); }
+  .case-fields th, .case-fields td { display: block; width: auto; padding: 0; border: none; }
+  .case-fields__label { width: auto; padding-bottom: 2px; }
+  .case-fields__value, .case-fields__value--mono { width: auto; font-size: var(--fs-base); }
+}
+
+/* ---------- Phones in landscape: modals and the menu fit the short screen ---------- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .modal { max-height: 100dvh; }
+  .app-main { padding-top: 0.75rem; }
+}
+
+/* ---------- Cases: filter summary on a phone ---------- */
+@media (max-width: 560px) {
+  .case-filter-chip__remove { position: relative; }
+  .case-filter-chip__remove::after { content: ''; position: absolute; inset: -9px; }
+  .case-filter-chips__clear { min-height: 36px; padding: 4px 8px; }
+}
+
+
+/* ------------------------------------------------------------------------------------------------
+   Third pass (phone audit at 360 / 390px): greeting, profile e-mail, Expenses filter, To-do empty state
+   ------------------------------------------------------------------------------------------------ */
+@media (max-width: 560px) {
+  /* Dashboard: a long advocate name wrapped onto four lines beside the New Case button.
+     The greeting now takes the full width and the button sits underneath it */
+  .page-header--hero { flex-direction: column; align-items: stretch; gap: 12px; }
+  .page-header--hero .page-title { font-size: clamp(1.35rem, 6vw, 1.7rem); overflow-wrap: anywhere; }
+  .page-header--hero > .btn-gold { width: 100%; min-height: 44px; }
+}
+
+@media (max-width: 480px) {
+  /* Profile: an e-mail address was cut in the middle of a word ("example.co / m") in the half-width column */
+  .profile-view-item:has(.profile-view-item__value--email) { grid-column: 1 / -1; }
+  .profile-view-item__value { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 640px) {
+  /* Expenses: "Submitted By" shared a row with the Paid / Due pills and its dropdown shrank to "A." */
+  .list-toolbar > .sort-control:has(#expense-associate-filter) { flex: 1 1 100%; }
+
+  /* To-do list: the "All caught up" message hugged the left edge instead of being centred */
+  .todo-main .empty-state { width: 100%; margin-left: auto; margin-right: auto; text-align: center; }
 }

@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 // position: fixed backdrop clipped to that parent's box (parent transforms, backdrop-filter and
 // overflow all re-anchor "fixed"), so the backdrop stopped part-way down and the window was cut off.
 //
-// When the popup closes, a non-clickable copy of it fades out (motion.css) and is then removed,
+// When the popup closes, a non-clickable copy of it fades out (polish.css) and is then removed,
 // so closing is not an instant disappearance.
 export default function ModalPortal({ children }) {
   const ref = useRef(null)

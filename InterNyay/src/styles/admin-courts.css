@@ -1,3 +1,4 @@
+/* ===== merged from courts-tree.css ===== */
 /* Admin > Courts tree: one clear hierarchy.
    Court -> District -> Building -> Court no. Each level sits one step in from its parent, headings step down in size,
    and the add rows (district / building + court no.) have the same control sizes at every level. Keep last. */
@@ -56,4 +57,32 @@
   .courts-admin .courts-adder .courts-adder__field { flex: 1 1 100%; width: 100%; }
   .courts-admin .courts-adder .courts-adder__input { flex: 1 1 0; width: auto; }
   .courts-admin .courts-tree .courts-chips { padding-left: var(--space-md); padding-right: var(--space-md); }
+}
+
+/* ===== merged from listing-form.css ===== */
+/* Admin > Listing edit form: the "correction" block spans the form and lines up with the two columns above and below it.
+   Keep last. */
+
+.admin__form .admin__correction {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* checkbox sits on the first line of its text, however long the text wraps */
+.admin__correction .admin__check {
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-top: 0;
+  line-height: 1.4;
+}
+.admin__correction .admin__check input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; }
+
+/* the date takes exactly one column, like the fields above it */
+.admin__correction .admin__subfield-label { margin-top: var(--space-xs); }
+.admin__correction .form-input[type="date"] { width: calc(50% - (var(--space-md) / 2)); max-width: 100%; }
+.admin__correction .admin__hint { margin: 0; }
+
+@media (max-width: 700px) {
+  .admin__correction .form-input[type="date"] { width: 100%; }
 }

@@ -1,3 +1,4 @@
+/* ===== merged from appskin.css ===== */
 /* ==========================================================================
    App skin: gives every signed-in screen the look of the landing page.
    Same language as the landing (lx-*): ink navy, court blue, gold actions, Playfair headings,
@@ -519,3 +520,215 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 /* Tabs share spare width evenly on a wide screen but never shrink below their own text */
 .admin__tab.admin__tab { flex: 1 0 auto; }
 .admin__subtab.admin__subtab { flex: 0 0 auto; }
+
+/* ===== merged from controls.css ===== */
+/* ==========================================================================
+   Controls: a light, flat look for filter pills, sort dropdowns, the Filter menu,
+   toggles, chips and small buttons. Loaded after appskin.css and before mobile.css.
+   Single-class selectors so the navy page-header variants in appskin.css keep their look.
+   ========================================================================== */
+
+:root {
+  --ctl-line:       #dde4ee;
+  --ctl-line-hover: #c3cfe0;
+  --ctl-gold-tint:  #fdf6e3;
+  --ctl-gold-text:  #8f7226;   /* readable dark gold for text and icons on white */
+}
+
+/* ---------- Toolbars ---------- */
+.list-toolbar, .admin__toolbar { gap: 10px 12px; }
+.list-toolbar { margin-bottom: 1.1rem; }
+.admin__count { font-size: var(--fs-sm); color: var(--sk-muted); }
+
+/* ---------- Search clear button ---------- */
+.doc-search-clear {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; color: var(--sk-muted); cursor: pointer; transition: background .15s, color .15s;
+}
+.doc-search-clear:hover { background: var(--sk-mist); color: var(--sk-ink); }
+.doc-search-clear .icon { width: 12px; height: 12px; }
+
+/* ---------- Filter pills (status, court, district, period, messages) ---------- */
+.case-filters, .qa-filter-row, .contact-filters, .txn-period__chips { gap: 6px; }
+
+.case-filter-btn, .qa-filter-btn {
+  background: #fff; color: var(--color-text-mid);
+  border: 1.5px solid var(--ctl-line);
+  font-family: var(--font-body); cursor: pointer; box-shadow: none;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.case-filter-btn:hover, .qa-filter-btn:hover {
+  background: var(--sk-mist); color: var(--sk-ink); border-color: var(--ctl-line-hover); box-shadow: none;
+}
+.case-filter-btn:focus-visible, .qa-filter-btn:focus-visible { outline: none; box-shadow: var(--sk-focus); }
+
+.case-filter-btn--active, .qa-filter-btn.active,
+.case-filter-btn--active:hover, .qa-filter-btn.active:hover {
+  background: var(--sk-ink); color: #fff; border-color: var(--sk-ink); box-shadow: none;
+}
+
+.qa-filter-row--sub { margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--ctl-line); }
+.qa-filter-btn--sub { background: transparent; }
+
+/* Pills on the navy page band keep the ghost look from appskin.css */
+.page-header .case-filter-btn, .page-header .case-filter-btn:hover { box-shadow: none; }
+
+/* Year picker on Transactions / Expenses */
+.txn-year-select, .txn-period__chips .txn-year-select { min-height: 34px; border-radius: 999px; background: #fff; border-width: 1.5px; }
+.txn-year-select--active { background: var(--sk-ink); color: #fff; border-color: var(--sk-ink); }
+
+/* ---------- Sort and labelled dropdowns: plain label, normal dropdown ---------- */
+.sort-control, .doc-filter-group { background: none; border: 0; padding: 0; box-shadow: none; gap: 8px; }
+.sort-control label, .doc-filter-label { font-size: var(--fs-sm); font-weight: 600; color: var(--sk-muted); letter-spacing: 0; text-transform: none; }
+.sort-control .dropdown__input, .doc-filter-group .doc-filter-select, .doc-filter-group .dropdown__input,
+.todo-filters .dropdown__input, .txn-timeline-filter .dropdown__input {
+  background: #fff; border: 1px solid var(--ctl-line); border-radius: 10px; box-shadow: none; font-weight: 600; color: var(--sk-ink);
+}
+.sort-control .dropdown__input:hover, .doc-filter-group .doc-filter-select:hover, .todo-filters .dropdown__input:hover { border-color: var(--ctl-line-hover); background: #fff; }
+.sort-control .dropdown__input:focus, .doc-filter-group .doc-filter-select:focus, .todo-filters .dropdown__input:focus { border-color: var(--color-gold); box-shadow: var(--sk-focus); background: #fff; }
+.dropdown__chevron { color: var(--sk-muted); }
+
+.picker__list { border: 1px solid var(--sk-line); border-radius: 12px; padding: 4px; }
+.picker__option { border-bottom: 0; border-radius: 8px; }
+.picker__option:hover, .picker__option--active { background: var(--sk-mist); }
+.dropdown__option--selected { background: var(--ctl-gold-tint); color: var(--sk-ink); font-weight: 600; }
+
+/* ---------- Filter button, count badge and panel ---------- */
+.case-filter-menu > .btn-outline {
+  gap: 8px; background: #fff; color: var(--sk-ink); border: 1px solid var(--ctl-line); font-weight: 600; box-shadow: none;
+}
+.case-filter-menu > .btn-outline:hover:not(:disabled) { background: var(--sk-mist); color: var(--sk-ink); border-color: var(--ctl-line-hover); box-shadow: none; }
+.case-filter-menu > .btn-outline.case-filter-menu__trigger--active { border-color: var(--color-gold); background: var(--ctl-gold-tint); }
+.case-filter-menu__count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px; background: var(--sk-ink); color: #fff; font-size: 11px; font-weight: 700; line-height: 1;
+}
+.case-filter-menu__panel { padding: 6px; }
+.case-filter-menu__field + .case-filter-menu__field { border-top: 0; }
+.case-filter-menu__row { border-radius: 8px; }
+.case-filter-menu__row:hover { background: var(--sk-mist); }
+.case-filter-menu__field-clear:hover { background: var(--sk-ink); color: #fff; }
+.case-filter-menu__control { border-radius: 8px; margin: 2px 0 4px; padding: 10px 12px 12px; }
+
+/* ---------- Applied-filter chips ---------- */
+.case-filter-chip { border: 1px solid var(--ctl-line); background: var(--sk-mist); font-weight: 600; }
+.case-filter-chip__remove { background: #fff; }
+.case-filter-chip__remove:hover { background: var(--sk-ink); color: #fff; }
+.case-filter-chips__clear { text-decoration: none; border-radius: 8px; color: var(--sk-muted); }
+.case-filter-chips__clear:hover { background: var(--sk-mist); color: var(--sk-ink); }
+.picker__chip, .courts-chip { border-radius: 999px; border: 1px solid var(--ctl-line); background: var(--sk-mist); color: var(--sk-ink); }
+.picker__chip-x:hover { background: var(--sk-ink); color: #fff; }
+
+/* ---------- Segmented toggles and tabs ---------- */
+
+.admin__tab:focus-visible, .admin__subtab:focus-visible { outline: none; box-shadow: var(--sk-focus); }
+
+/* ---------- Small action buttons ---------- */
+.btn-outline, .btn-gold, .btn-danger { gap: 6px; }
+.btn-outline { border-color: var(--ctl-line-hover); }
+.btn-outline:hover:not(:disabled) { box-shadow: none; }
+.btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-outline--danger { border-color: #e6bcbc; }
+/* Main buttons placed side by side (Cancel + Save, Check + Move...) share one height; their natural heights differ by 1-3px.
+   :where() keeps this at zero specificity, so every rule that sets its own min-height still wins. Small buttons are left alone. */
+:where(
+  :is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm):has(+ :is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm)),
+  :is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm) + :is(.btn-gold, .btn-outline, .btn-danger):not(.btn-outline--sm)
+) { min-height: 38px; }
+/* The compact Admin option rows keep their own 32px buttons */
+.options-admin__actions :is(.btn-gold, .btn-outline, .btn-danger) { min-height: 0; }
+/* Show/hide password button: keyboard focus ring (the base rule removes the browser outline) */
+.password-field__toggle:focus-visible { outline: none; box-shadow: var(--sk-focus); border-radius: 6px; }
+.btn-outline:focus-visible, .btn-danger:focus-visible, .btn-icon:focus-visible { outline: none; box-shadow: var(--sk-focus); }
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; transition: color .15s, background .15s; }
+.btn-icon:hover { background: var(--sk-mist); color: var(--sk-ink); }
+.qa-retry-btn { border-radius: 10px; border: 1px solid var(--ctl-line-hover); background: #fff; color: var(--sk-ink); font-weight: 600; cursor: pointer; }
+.qa-retry-btn:hover { background: var(--sk-mist); }
+
+/* ---------- Utilities: replace repeated inline styles. !important keeps them equal to the inline styles they replaced ---------- */
+.u-hidden { display: none !important; }
+.u-mt-0 { margin-top: 0px !important; } .u-mb-0 { margin-bottom: 0px !important; }
+.u-mb-2 { margin-bottom: 2px !important; }
+.u-mt-4 { margin-top: 4px !important; } .u-ml-4 { margin-left: 4px !important; }
+.u-mt-6 { margin-top: 6px !important; } .u-mb-6 { margin-bottom: 6px !important; }
+.u-mt-8 { margin-top: 8px !important; } .u-mb-8 { margin-bottom: 8px !important; } .u-ml-8 { margin-left: 8px !important; }
+.u-mt-10 { margin-top: 10px !important; }
+.u-mt-12 { margin-top: 12px !important; } .u-mb-12 { margin-bottom: 12px !important; }
+.u-mt-16 { margin-top: 16px !important; } .u-mb-16 { margin-bottom: 16px !important; }
+.u-mt-24 { margin-top: 24px !important; } .u-mb-24 { margin-bottom: 24px !important; }
+
+/* More utilities (replace the last repeated inline styles) */
+.u-row-6 { display: flex !important; align-items: center !important; gap: 6px !important; }
+.u-row-8 { display: flex !important; align-items: center !important; gap: 8px !important; }
+.u-flex-8 { display: flex !important; gap: 8px !important; }
+.u-flex-1 { flex: 1 !important; }
+.u-pointer { cursor: pointer !important; }
+.u-m-0 { margin: 0 !important; }
+.u-justify-center { justify-content: center !important; }
+.u-justify-start { justify-content: flex-start !important; }
+.u-nowrap { white-space: nowrap !important; }
+.u-center { text-align: center !important; }
+.u-bold { font-weight: 600 !important; }
+.u-muted { color: var(--color-text-muted) !important; }
+.u-pad-32 { padding: 2rem !important; }
+
+.u-w-110 { width: 110px !important; } .u-w-130 { width: 130px !important; } .u-w-160 { width: 160px !important; }
+.u-maxw-180 { max-width: 180px !important; } .u-maxw-200 { max-width: 200px !important; } .u-maxw-240 { max-width: 240px !important; } .u-maxw-none { max-width: none !important; }
+.u-maxh-none { max-height: none !important; }
+.u-minw-0 { min-width: 0 !important; }
+.u-ml-auto { margin-left: auto !important; }
+.u-mb-20 { margin-bottom: 20px !important; }
+.u-flex { display: flex !important; }
+.u-inline-flex { display: inline-flex !important; }
+.u-items-start { align-items: flex-start !important; }
+.u-items-end { align-items: flex-end !important; }
+.u-wait { cursor: wait !important; }
+.u-critical { color: var(--color-critical) !important; }
+.u-note-sm { font-size: var(--fs-sm); color: var(--color-text-muted); margin-top: 2px; }
+.u-muted-normal { font-weight: 400; color: var(--color-text-muted); }
+.u-faint-xs { font-size: var(--fs-xs); opacity: 0.65; }
+.u-faint-xs--over { opacity: 1; color: var(--color-critical); }
+.u-empty-state { text-align: center; padding: 3rem; color: var(--color-text-faint); }
+.u-actions-center { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.u-scroll-140 { max-height: 140px; overflow-y: auto; }
+.admin__form--single { grid-template-columns: 1fr !important; }
+.admin__subform { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; border: 1px solid var(--color-bg); border-radius: var(--ctl-radius, 10px); }
+.form-field-group--full { grid-column: 1 / -1; }
+.expenses-row { display: flex; align-items: center; gap: 8px; margin-top: 0.75rem; max-width: 360px; }
+.expenses-row--upload { gap: 12px; max-width: none; }
+.qa-link--reset { background: none; border: 0; padding: 0; cursor: pointer; }
+@media (max-width: 640px) { .admin__subform { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Leftover states: keyboard focus, row hover, clickable cards, disabled ---------- */
+.nav-item:focus-visible, .todo-sidebar__item:focus-visible, .qa-card:focus-visible, .case-card:focus-visible,
+.client-card:focus-visible, .pricing-card__cta:focus-visible, .lp-btn:focus-visible,
+a:focus-visible, summary:focus-visible { outline: none; box-shadow: var(--sk-focus); }
+.case-card, .client-card, .qa-card { cursor: pointer; }
+.admin__table tbody tr:hover, .qa-table tbody tr:hover, .fee-summary__table tbody tr:hover { background: var(--sk-mist); }
+.admin__table tbody tr, .qa-table tbody tr, .fee-summary__table tbody tr { transition: background .12s; }
+button:disabled, .btn-gold:disabled, .btn-danger:disabled { cursor: not-allowed; }
+.form-input:disabled, .dropdown--disabled .dropdown__input { background: var(--sk-mist); color: var(--sk-muted); cursor: not-allowed; }
+.form-input::placeholder, .doc-search-input::placeholder { color: #8b96a9; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--sk-ink); }
+
+/* To-do search box gets the same icon spacing as the other search boxes */
+.todo-search-wrap .todo-search-input { padding-left: 38px; }
+.todo-search-wrap:focus-within .doc-search-icon { color: var(--ctl-gold-text); }
+/* Year pill: text centred between the two edges (the arrow sits in the right padding) */
+.txn-period__chips .txn-year-select, .txn-year-select { width: 74px; padding-left: 10px; padding-right: 20px; text-align: center; }
+.txn-year-select ~ .dropdown__chevron { right: 8px; }
+
+/* Multiple specializations: selected chips and the "Other" entry row */
+.spec-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.spec-chip { gap: 6px;
+  padding: 4px 6px 4px 10px;
+  background: rgba(127, 127, 127, 0.14);
+}
+.spec-chip__x {
+  border: 0; background: transparent; cursor: pointer; font-size: 1rem; line-height: 1;
+  color: inherit; padding: 0 4px; border-radius: 50%;
+}
+.spec-chip__x:hover { background: rgba(127, 127, 127, 0.28); }
+.spec-other { display: flex; gap: 8px; margin-top: 8px; }
+.spec-other input { flex: 1; min-width: 0; }

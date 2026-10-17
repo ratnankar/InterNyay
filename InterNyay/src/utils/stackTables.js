@@ -1,6 +1,6 @@
 // Phones: wide data tables (expenses, transactions, every admin list) are shown as one card per row instead of a sideways scroll.
 // This copies each column heading onto its cells (data-label) so the card can say what every value is. The look itself is
-// CSS only (styles/mobile-final.css, tables up to 640px wide); on a wide screen nothing changes.
+// CSS only (styles/mobile-overrides.css, tables up to 640px wide); on a wide screen nothing changes.
 const SELECTOR = 'table.txn-table, table.admin__table'
 
 function label(table) {
