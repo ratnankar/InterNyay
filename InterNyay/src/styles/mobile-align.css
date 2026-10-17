@@ -72,3 +72,75 @@
   .account-action__text { max-width: none; }
   .account-action .btn-outline { width: 100%; }
 }
+
+/* ==========================================================================
+   Admin console, phones only (640px and narrower). Desktop is not touched.
+   Found by rendering the admin pages at 360px and 390px:
+   1. Dropdown Options chips: mobile-final.css forces 40px height and width on every .options-admin__list, which beat admin.css.
+   2. Stacked table cards: a second frame around each card, uneven button gaps, notes beside the value instead of under it,
+      and the "open" arrow on its own left-aligned row.
+   3. Toolbars: the search box was full width but the filter and the main button were not.
+   4. Count cards: the label and number were centred, so neighbouring cards did not line up.
+   ========================================================================== */
+@media (max-width: 640px) {
+
+  /* 1. Dropdown Options chips: compact pills that wrap tightly */
+  .options-admin__lists { gap: 6px; margin: 8px 0 10px; }
+  .options-admin__list { min-height: 32px; min-width: 0; padding: 5px 12px; line-height: 1.3; }
+
+  /* 2. Stacked table cards (one card per row) */
+  /* The table wrapper keeps its frame only on wide screens; the cards carry their own border */
+  .admin__table-wrap:has(> table.is-stackable) {
+    overflow: visible; background: transparent; border: 0; box-shadow: none; padding: 0; border-radius: 0;
+  }
+
+  /* A second line under a value (associates count, field count, hint) sits under it, right-aligned, instead of beside it */
+  .admin__table.is-stackable td { flex-wrap: wrap; row-gap: 2px; }
+  .admin__table.is-stackable td > :is(.u-faint-xs, .admin__hint) {
+    flex: 1 1 100%; margin: 0; text-align: right; order: 2;
+  }
+  .admin__table.is-stackable td > .admin__pill--inline,
+  .admin__table.is-stackable td > .u-ml-8 { margin-left: 0; }
+
+  /* Row buttons: one even row across the card, same gap everywhere */
+  .admin__table.is-stackable td.admin__actions {
+    justify-content: stretch; gap: 8px; padding-top: 12px !important; padding-bottom: 12px !important;
+  }
+  .admin__table.is-stackable td.admin__actions > * { margin: 0; flex: 1 1 auto; min-width: 0; justify-content: center; }
+  .admin__table.is-stackable td.admin__actions::before { content: none; }
+
+  /* Order cell (grip and arrows): label on the left, the controls together on the right */
+  .admin__table.is-stackable td.u-nowrap { justify-content: flex-end; gap: 8px; }
+  .admin__table.is-stackable td.u-nowrap::before { margin-right: auto; }
+  .admin__table.is-stackable td.u-nowrap > .u-ml-4 { margin-left: 0; }
+
+  /* The arrow that opens a row: one slim line at the right edge of the card */
+  .admin__table.is-stackable td.admin__open-col {
+    width: auto; min-height: 0; justify-content: flex-end; text-align: right;
+    padding: 8px 0 4px !important;
+  }
+
+  /* 3. Toolbars: every field and the main button use the full width, the count sits on its own line underneath */
+  .admin__toolbar .dropdown { flex: 1 1 100%; max-width: none; width: 100%; }
+  .admin__toolbar > :is(button.btn-gold, button.btn-outline, button.btn-danger) { flex: 1 1 auto; justify-content: center; }
+  .courts-add .admin__toolbar .dropdown { flex: 1 1 100%; max-width: none; }
+
+  /* Courts add panel: its own rule (courts-add .admin__toolbar > .btn-gold) kept the button narrow */
+  .courts-add .admin__toolbar > .btn-gold { flex: 1 1 100%; }
+
+  /* Case types under a relief: name on its own full-width line (grip at the right), the five icon buttons in an even row below,
+     the same layout as the relief rows above them, instead of the grip dropping under a squeezed name */
+  .options-admin__nested .options-admin__row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
+  .options-admin__nested .options-admin__actions--compact { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+
+  /* Court number adder: the input and its Add button share one row */
+  .courts-adder { flex-wrap: nowrap; }
+  .courts-adder .courts-adder__input { flex: 1 1 0; width: auto; max-width: none; }
+  .courts-adder .courts-btn { flex: 0 0 auto; padding: 0 16px; }
+
+  /* 4. Count cards: label on top, number at the bottom, so cards in one row line up */
+  .admin__stats .stat-card { justify-content: space-between; }
+
+  /* Header: the Refresh button lines up with the left edge of the title */
+  .admin__header-actions { justify-content: flex-start; }
+}
