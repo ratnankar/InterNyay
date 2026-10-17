@@ -78,18 +78,105 @@
   }
 }
 
-/* ---------- 5. Phones: the two calendar buttons are the same width and line up with the legend above ---------- */
+/* ---------- 5. Phones: the two calendar buttons sit in one row, equal width, text on one line ----------
+   Each button never gets narrower than its own text (min-width: max-content) and shares the rest of the row equally,
+   so on a very narrow screen they wrap onto two full-width rows instead of squeezing the text. */
 @media (max-width: 640px) {
   .calendar__cross-box {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
     gap: 8px;
     margin-top: 12px;
   }
   .calendar__cross-box > button.calendar__cross-btn.calendar__cross-btn {
     flex: 1 1 0;
-    min-width: 0;
-    padding: 6px 10px;
-    white-space: normal;
+    width: auto;
+    min-width: max-content;
+    padding: 6px 8px;
+    white-space: nowrap;
     line-height: 1.25;
     gap: 6px;
+  }
+}
+
+/* ---------- 5b. Touch screens: no stuck hover ----------
+   After a tap the phone keeps the button in its hover state, which turned it solid black (appskin.css) until the next tap elsewhere.
+   On touch screens the buttons keep their normal look; the gold "cross is on" look stays. */
+@media (hover: none), (pointer: coarse) {
+  .calendar__cross-box > button.calendar__cross-btn.calendar__cross-btn:hover:not(:disabled) {
+    background: #fff;
+    color: var(--sk-ink, var(--color-navy));
+    border-color: var(--ctl-line-hover, #c3cfe0);
+    box-shadow: none;
+    transform: none;
+  }
+  .calendar__cross-box > button.calendar__cross-btn.calendar__cross-btn.calendar__cross-btn--on:hover:not(:disabled) {
+    background: var(--color-gold-light);
+    border-color: var(--color-gold);
+  }
+}
+
+/* ---------- 6. Phones: Admin > Courts ----------
+   a. The four "Add court / district / building / court no." pills sit in an even 2 x 2 grid (the last one used to wrap alone).
+   b. The count badge is the same size at every level, so the numbers and the Remove buttons form straight columns.
+   c. The add row (district / building + court no.) ends on the same line as the Remove buttons above it.
+   d. Even spacing between the fields in the add panel. */
+@media (max-width: 640px) {
+  /* a. */
+  .courts-add > .admin__toolbar:first-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-items: stretch;
+  }
+  .courts-add > .admin__toolbar:first-child > .qa-filter-btn {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .courts-add > .admin__toolbar:first-child > .admin__count {
+    grid-column: 1 / -1;
+    margin: 2px 0 0;
+  }
+
+  /* b. */
+  .courts-admin .courts-tree .archive__count.archive__count {
+    box-sizing: border-box;
+    flex: 0 0 28px;
+    width: 28px;
+    min-width: 28px;
+    padding: 1px 0;
+    text-align: center;
+  }
+
+  /* c. */
+  .courts-admin .courts-adder {
+    padding-right: var(--space-md);
+  }
+
+  /* d. */
+  .courts-add > .admin__toolbar + .admin__toolbar {
+    gap: 10px;
+  }
+  .courts-add .courts-check {
+    min-height: 24px;
+  }
+}
+
+/* ---------- 7. Calendar day circles are round and keep the full 40px touch size ----------
+   touch.css gave every day cell min-height: 40px while the width stayed at the day size (34px on phones, 36px on tablets),
+   which stretched the circles into ovals. Width and height are now both 40px (smaller only when a very narrow screen has
+   less than 40px per column), so the circles are round and as big as the old height. */
+@media (hover: none), (pointer: coarse), (max-width: 860px) {
+  .calendar .cal-day.cal-day,
+  .leave-cal__grid-wrap .cal-day.cal-day {
+    width: 100%;
+    max-width: 40px;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 1;
   }
 }
