@@ -1,0 +1,31 @@
+/* Desktop alignment fixes (keep last). */
+@media (min-width: 900px) {
+  /* Admin tab bars: wrap onto a second row instead of cutting tabs off at the edge */
+  .admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs {
+    flex-wrap: wrap; overflow: visible; cursor: default;
+    -webkit-mask-image: none !important; mask-image: none !important;
+  }
+  .admin__tabs.admin__tabs .admin__tab { flex: 0 1 auto; white-space: nowrap; }
+  .admin__tabs.admin__tabs { justify-content: flex-start; }
+
+  /* Quick Access cards: fill each row, equal height, content centred the same way */
+  .qa-cards { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: stretch; }
+  .qa-card { min-height: 92px; }
+  .qa-card__label { line-height: 1.25; }
+
+  /* Admin: "+ Add plan" fits its text */
+  .admin .plans-layout__side .plans-layout__add { width: auto; min-width: max-content; flex: none; white-space: nowrap; overflow: visible; }
+}
+
+/* Dashboard side card title stays on one line next to its badge */
+.dashboard__side .notifications-panel__header .section-title {
+  font-size: var(--fs-base); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Landing page: decorative orbs and the marquee never widen the page */
+.lx { overflow-x: clip; }
+
+/* Scrollbar space is always reserved, so content no longer jumps sideways when a page becomes long enough to scroll.
+   (Phones and tablets use overlay scrollbars, so this costs them nothing.) */
+html { scrollbar-gutter: stable; }
+.app-main, .sidebar, .modal, .modal__body, .drawer__body, .file-numbers__list, .client-result-list { scrollbar-gutter: stable; }

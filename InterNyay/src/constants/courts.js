@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import api from '../services/api'
+import { onLiveRefresh } from '../utils/liveRefresh'
 
 // Courts, districts, buildings and court numbers all come from the court table in the database.
 // Nothing about them is written in the frontend: this file only loads the table and answers questions about it.
@@ -50,9 +51,9 @@ export function loadCourts(force = false) {
   return inFlight
 }
 
-// Pick up changes an admin made in another tab or session whenever this one is looked at again
+// Pick up changes an admin made in another tab or session whenever this one is looked at again, and every few minutes
 if (typeof window !== 'undefined') {
-  window.addEventListener('focus', () => { if (snapshot.loaded) loadCourts(true).catch(() => {}) })
+  onLiveRefresh(() => { if (snapshot.loaded) loadCourts(true).catch(() => {}) })
 }
 
 // Forget the table on sign-out so the next user loads a fresh copy

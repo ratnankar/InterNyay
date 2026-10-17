@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { plansApi } from '../services/api'
 import { useApp } from '../context/AppContext'
+import { onLiveRefresh } from '../utils/liveRefresh'
 
 // Tells components which features the user's subscription plan includes
 export default function usePlanFeatures() {
@@ -16,6 +17,11 @@ export default function usePlanFeatures() {
     plansApi.features().then(k => { if (!cancelled) setKeys(k) }).catch(() => { if (!cancelled) setKeys(null) })
     return () => { cancelled = true }
   }, [loggedIn, isAdmin, who])
+  // A plan changed by the admin (its features, or this user moved to another plan) shows without a refresh
+  useEffect(() => {
+    if (!loggedIn || isAdmin) return undefined
+    return onLiveRefresh(() => { plansApi.features().then(k => setKeys(k)).catch(() => {}) })
+  }, [loggedIn, isAdmin])
   // can('feature_key') returns true if the plan includes it (or if plan info isn't loaded yet)
   return { keys, can: key => keys == null || keys.includes(key) }
 }

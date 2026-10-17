@@ -5,7 +5,9 @@ import Dropdown from '../common/Dropdown'
 const withCurrent = (list, value) => (value && !list.includes(value) ? [...list, value] : list)
 
 // Building and court no. dropdowns, filled from the court table for the chosen court and district.
-// The court no. list follows the building. New buildings and court numbers are added under Admin > Courts
+// The court no. list follows the building. New buildings and court numbers are added under Admin > Courts.
+// Only the chosen district's own buildings and court numbers are listed: ones that have no district yet are not offered here;
+// they are moved into a district under Admin > Courts.
 export default function CourtPlaceFields({ court, district, building, courtNo, onChange, error }) {
   useCourts()
 

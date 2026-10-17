@@ -199,6 +199,8 @@ export const courts = {
   remove: (id, scope = 'row') => del(`/courts/${id}`, { params: { scope } }),
   // Mark a court room as a Mahila court (orders are not declared there) or clear the mark
   setMahila: (id, mahilaCourt) => put(`/courts/${id}/mahila`, { body: { mahilaCourt } }),
+  // Moves a court no. to another building and district of the same court
+  move:   (id, body) => put(`/courts/${id}/move`, { body }),
 }
 
 // Quick Access: judges on leave

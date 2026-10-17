@@ -4,6 +4,7 @@ import api from '../../services/api'
 import { useCourts, loadCourts } from '../../constants/courts'
 import Dropdown from '../common/Dropdown'
 import CourtNoAdder from './CourtNoAdder'
+import CourtNoMover from './CourtNoMover'
 import { Head } from '../common/SuccessorCourts'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { confirmDialog } from '../../utils/confirmDialog'
@@ -21,7 +22,9 @@ const NEW_BUILDING = '__new__'
 const blank = { court: '', district: '', building: '', newBuilding: '', courtNo: '', highCourt: false }
 
 // Admin: the court table behind every court, district, building and court no. list in the app.
-// Anything can be added at its own level: a court, a district, a building or a court no.
+// Anything can be added at its own level: a court, a district, a building or a court no. A building or a court no. can be
+// added without a district: it waits in the court's "No district" list and is moved into a district later (Move, or when a
+// judge is listed in it with a district chosen).
 export default function CourtsAdmin() {
   const { addToast } = useApp()
   const { rows, loaded, courtNames, highCourts, hierarchy } = useCourts()
@@ -48,7 +51,6 @@ export default function CourtsAdmin() {
     if (level === 'court') return form.court.trim() ? '' : 'Enter the court name'
     if (!form.court) return 'Choose a court'
     if (level === 'district') return form.district.trim() ? '' : 'Enter the district name'
-    if (!isHigh && !form.district) return 'Choose a district'
     if (level === 'building') return form.building.trim() ? '' : 'Enter the building'
     if (addingBuilding && !typedBuilding) return 'Enter the building'
     return form.courtNo.trim() ? '' : 'Enter the court no.'
@@ -105,16 +107,18 @@ export default function CourtsAdmin() {
       const bKey = r.building || ''
       if (!d.buildings.has(bKey)) d.buildings.set(bKey, { building: bKey, rowIds: [], nos: [] })
       const b = d.buildings.get(bKey)
-      if (r.courtNo) b.nos.push({ courtNo: r.courtNo, id: r.id, mahilaCourt: !!r.mahilaCourt })
+      if (r.courtNo) b.nos.push({ courtNo: r.courtNo, id: r.id, mahilaCourt: !!r.mahilaCourt, court: r.court, district: r.district || '', building: r.building || '' })
       else if (bKey) b.rowIds.push(r.id)
     })
     return [...courts.values()].map(c => {
       const districts = [...c.districts.values()]
+        .sort((x, y) => (x.district === '') - (y.district === ''))
         .filter(d => c.high || d.district || d.buildings.size > 1 || [...d.buildings.values()].some(b => b.building || b.nos.length))
         .map(d => {
           const named = [...d.buildings.values()].filter(b => b.building)
           const none = d.buildings.get('') || { building: '', rowIds: [], nos: [] }
-          return { ...d, buildings: new Map([['', none], ...named.map(b => [b.building, b])]) }
+          // "No building" is only listed when a court no. really has no building
+          return { ...d, buildings: new Map([...(none.nos.length ? [['', none]] : []), ...named.map(b => [b.building, b])]) }
         })
       const count = d => [...d.buildings.values()].reduce((n, b) => n + b.nos.length, 0)
       return { ...c, districts: districts.map(d => ({ ...d, count: count(d) })), count: districts.reduce((n, d) => n + count(d), 0) }
@@ -145,14 +149,17 @@ export default function CourtsAdmin() {
     }
   }
 
+  // Court no. being moved (its id), the mover opens under its chip
+  const [moving, setMoving] = useState(null)
+
   const RemoveBtn = ({ onClick, label }) => (
     <button type="button" className="courts-btn courts-btn--danger courts-row__action" aria-label={label} title={label} onClick={onClick}>Remove</button>
   )
 
-  function courtNoChips(nos) {
+  function courtNoChips(nos, high) {
     return (
       <div className="courts-chips">
-        {nos.map(n => (
+        {nos.flatMap(n => [
           <div key={n.id} className="courts-chip">
             <div className="courts-chip__main">
               <strong className="courts-chip__label">Court No. {n.courtNo}</strong>
@@ -160,13 +167,17 @@ export default function CourtsAdmin() {
             </div>
             <div className="courts-chip__actions">
               <button type="button" className="courts-btn courts-btn--gold"
+                      title="Move to another building or district of this court"
+                      onClick={() => setMoving(m => m === n.id ? null : n.id)}>Move</button>
+              <button type="button" className="courts-btn courts-btn--gold"
                       title={n.mahilaCourt ? 'Clear the Mahila court mark' : 'Mark as a Mahila court: orders are not declared there'}
                       onClick={() => toggleMahila(n)}>{n.mahilaCourt ? 'Unmark Mahila' : 'Mark Mahila'}</button>
               <button type="button" className="courts-btn courts-btn--danger" aria-label={`Remove court no. ${n.courtNo}`}
                       title="Remove" onClick={() => removeRows([n.id], `court no. ${n.courtNo}`)}>Remove</button>
             </div>
-          </div>
-        ))}
+          </div>,
+          moving === n.id && <CourtNoMover key={`${n.id}-move`} row={n} high={high} onClose={() => setMoving(null)} />,
+        ])}
       </div>
     )
   }
@@ -207,7 +218,7 @@ export default function CourtsAdmin() {
 
         {(level === 'building' || level === 'courtNo') && form.court && !isHigh && (
           <Dropdown className="form-input" value={form.district} onChange={e => set({ district: e.target.value, building: '', newBuilding: '' })}>
-            <option value="">Select district</option>
+            <option value="">No district (assign later)</option>
             {districts.map(d => <option key={d} value={d}>{d}</option>)}
           </Dropdown>
         )}
@@ -251,10 +262,15 @@ export default function CourtsAdmin() {
               {open[cKey] && (
                 <div className="archive__body">
                   {c.districts.length === 0 && <p className="courts-empty">No districts yet.</p>}
+                  {/* Court level: ask for the district (or assign it later) and the court no. It shows only while none of
+                      the districts is open (always for a high court, or a court that has no district yet). */}
+                  {(c.high || c.districts.length === 0 || !c.districts.some(d => open[`${cKey}|${d.district}`])) && (
+                    <CourtNoAdder court={c.court} askDistrict={!c.high} askBuilding={c.high} />
+                  )}
                   {c.districts.map(d => {
                     const dKey = `${cKey}|${d.district}`
                     const buildings = [...d.buildings.values()]
-                    const body = buildings.map(b => {
+                    const bucketList = buildings.map(b => {
                       const bKey = `${dKey}|${b.building}`
                       return (
                         <div key={bKey} className="archive__day">
@@ -268,22 +284,34 @@ export default function CourtsAdmin() {
                           </div>
                           {open[bKey] && (
                             <div className="archive__body">
-                              {b.nos.length ? courtNoChips(b.nos) : <p className="courts-empty">No court numbers yet.</p>}
-                              <CourtNoAdder court={c.court} district={d.district} building={b.building} />
+                              {b.nos.length ? courtNoChips(b.nos, c.high) : <p className="courts-empty">No court numbers yet.</p>}
                             </div>
                           )}
                         </div>
                       )
                     })
 
+                    // A district with no court numbers and no named building
+                    const body = buildings.length ? bucketList : [(
+                      <div key={`${dKey}|empty`} className="archive__day">
+                        <p className="courts-empty">No court numbers yet.</p>
+                      </div>
+                    )]
+
                     if (c.high) return <div key={dKey} className="courts-flat">{body}</div>
                     return (
                       <div key={dKey} className="archive__month">
                         <div className="courts-row courts-row--month">
-                          <Head level="month" open={!!open[dKey]} label={d.district} count={d.count} onToggle={() => toggle(dKey)} />
-                          {d.rowId && <RemoveBtn label="Remove district" onClick={() => remove({ id: d.rowId, district: d.district }, 'district')} />}
+                          <Head level="month" open={!!open[dKey]} label={d.district || 'No district'} count={d.count} onToggle={() => toggle(dKey)} />
+                          {d.rowId && d.district && <RemoveBtn label="Remove district" onClick={() => remove({ id: d.rowId, district: d.district }, 'district')} />}
                         </div>
-                        {open[dKey] && <div className="archive__body">{body}</div>}
+                        {open[dKey] && (
+                          <div className="archive__body">
+                            {body}
+                            {/* The district is already known here, so only the building and court no. are asked */}
+                            <CourtNoAdder court={c.court} district={d.district} askBuilding />
+                          </div>
+                        )}
                       </div>
                     )
                   })}

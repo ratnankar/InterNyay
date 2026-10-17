@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from '../services/api'
 import { getErrorMessage } from '../utils/errorMessages'
+import { onLiveRefresh } from '../utils/liveRefresh'
 
 // Factory that builds a shared, cached "directory" hook (one cache + subscriber list per directory type)
 function createDirectoryHook(fetcher, fallbackMessage) {
@@ -37,7 +38,9 @@ function createDirectoryHook(fetcher, fallbackMessage) {
     useEffect(() => {
       subscribers.add(setDirectory)
       reload()
-      return () => { subscribers.delete(setDirectory) }
+      // An admin edit made elsewhere shows up here too, quietly
+      const stopLive = onLiveRefresh(() => { fetcher().then(publish).catch(() => {}) })
+      return () => { subscribers.delete(setDirectory); stopLive() }
     }, [reload])
 
     return { directory, loading, error, reload }

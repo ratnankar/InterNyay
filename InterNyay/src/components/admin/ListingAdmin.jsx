@@ -209,12 +209,19 @@ export default function ListingAdmin() {
   }
 
   // The judge's court, district, building or court number differs from what is saved (new judges have nothing to compare to)
-  const courtNoChanged = !!editing && !editing.isNew && (
+  const placeDiffers = !!editing && !editing.isNew && (
     editing.form.courtRoomNo.trim() !== editing.originalCourtNo
     || (editing.form.building || '') !== editing.originalBuilding
     || editing.form.court !== editing.savedCourt
     || editing.form.district !== editing.savedDistrict
   )
+  // Only the district was filled in for a court room that had none: that completes the place, it is not a move,
+  // so there is no effective date to ask for
+  const onlyDistrictFilled = !!editing && !editing.isNew && editing.savedDistrict === '' && editing.form.district !== ''
+    && editing.form.court === editing.savedCourt
+    && editing.form.courtRoomNo.trim() === editing.originalCourtNo
+    && (editing.form.building || '') === editing.originalBuilding
+  const courtNoChanged = placeDiffers && !onlyDistrictFilled
 
   // Closing with unsaved changes asks Save / Discard / Cancel
   const { requestClose, dialog } = useUnsavedGuard({
@@ -419,6 +426,7 @@ export default function ListingAdmin() {
                   court={editing.form.court}
                   district={editing.form.district}
                   onChange={setCourtFields}
+                  allowNoDistrict
                 />
 
                 <CourtPlaceFields
@@ -430,7 +438,7 @@ export default function ListingAdmin() {
                 />
 
                 {courtNoChanged && (
-                  <div className="form-group">
+                  <div className="form-group admin__form-group--full admin__correction">
                     <label className="admin__check">
                       <input
                         type="checkbox"

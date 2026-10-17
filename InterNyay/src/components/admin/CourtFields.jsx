@@ -5,7 +5,8 @@ import Dropdown from '../common/Dropdown'
 export const firstDistrict = court => getDistricts(court)[0] || ''
 
 // Court and district dropdowns shared by the admin forms
-export default function CourtFields({ court, district, onChange }) {
+// allowNoDistrict adds a "No district" choice (used by Listing: court numbers are then left as they are)
+export default function CourtFields({ court, district, onChange, allowNoDistrict = false }) {
   const { courtNames } = useCourts()
   return (
     <>
@@ -30,10 +31,14 @@ export default function CourtFields({ court, district, onChange }) {
             value={district}
             onChange={e => onChange({ court, district: e.target.value })}
           >
+            {allowNoDistrict && <option value="">No district</option>}
             {getDistricts(court).map(d => (
               <option key={d} value={d}>{d}</option>
             ))}
           </Dropdown>
+          {allowNoDistrict && !district && (
+            <p className="admin__hint">No district chosen: no court number is moved into a district.</p>
+          )}
         </div>
       ) : (
         <div className="form-group">

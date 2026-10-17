@@ -33,6 +33,8 @@ import {
   noHearingDates as noHearingDatesApi
 } from '../services/api'
 import { getErrorMessage } from '../utils/errorMessages'
+import { onLiveRefresh } from '../utils/liveRefresh'
+import { loadOptions, useOptionsVersion } from '../constants/optionsStore'
 import { downloadNameOf } from '../utils/documentUtils'
 import { getAccounts, rememberAccount, syncActiveAccount, forgetAccountByToken, activateAccount } from '../utils/accounts'
 import { confirmDialog } from '../utils/confirmDialog'
@@ -245,6 +247,8 @@ export function AppProvider({ children }) {
   })
   // True after cases and clients have been fetched
   const [dataLoaded, setDataLoaded] = useState(false)
+  // Goes up when the admin's dropdown choices change, so screens using them draw again without a refresh
+  const optionsVersion = useOptionsVersion()
 
   // The transactions page needs the 4-digit PIN; this stays true only while the user is on that page
   const [transactionsUnlocked, setTransactionsUnlocked] = useState(false)
@@ -620,6 +624,14 @@ export function AppProvider({ children }) {
     if (loggedIn && currentUser?.id && !isAdmin && dataLoaded) loadCourtPreferences(true).catch(() => {})
   }, [cases.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Quiet refresh bookkeeping: a refresh result is dropped when the person changed something while it was loading,
+  // so a slow answer can never undo what they just did
+  const lastLocalChange = useRef(0)
+  const applyingRefresh = useRef(false)
+  useEffect(() => {
+    if (!applyingRefresh.current) lastLocalChange.current = Date.now()
+  }, [cases, clients, todos, advocateDocs])
+
   // After login: load the saved user, refresh the profile, then fetch all the data
   useEffect(() => {
 
@@ -772,6 +784,78 @@ export function AppProvider({ children }) {
     }
 
     loadData()
+
+    // Looks at the server again when the tab is back in view and every few minutes, so changes made on another device, or by
+    // the admin (holidays, dropdown choices, the plan), show up without a refresh. Nothing flashes and nothing is blanked on failure.
+    async function refreshQuietly() {
+      const startedAt = Date.now()
+      loadOptions().catch(() => {})
+
+      const [casesRes, clientsRes, tasksRes, allDocs, holidayList, noHearingList, hearingRes, me] = await Promise.all([
+        loadAllCases().catch(() => null),
+        clientsApi.list().catch(() => null),
+        tasksApi.list().catch(() => null),
+        documentsApi.list().catch(() => null),
+        holidaysApi.list().catch(() => null),
+        noHearingDatesApi.list().catch(() => null),
+        hearingsApi.list({ size: 1000 }).catch(() => null),
+        authApi.me().catch(() => null),
+      ])
+
+      // Calendar data and the profile do not depend on what the person is editing
+      if (Array.isArray(holidayList)) setHolidays(holidayList)
+      if (Array.isArray(noHearingList)) setNoHearingDates(new Set(noHearingList))
+      if (hearingRes) setHearingRecords(Array.isArray(hearingRes) ? hearingRes : hearingRes?.content || [])
+      if (me) {
+        setCurrentUser(prev => {
+          if (!prev) return prev
+          if (Object.keys(me).every(k => JSON.stringify(prev[k]) === JSON.stringify(me[k]))) return prev
+          const next = { ...prev, ...me }
+          localStorage.setItem('internyay_user', JSON.stringify(next))
+          return next
+        })
+      }
+
+      // Cases, clients, tasks and documents: skip this round if the person changed any of them meanwhile
+      if (lastLocalChange.current > startedAt) return
+      applyingRefresh.current = true
+      try {
+        const docs = Array.isArray(allDocs) ? allDocs : null
+
+        if (casesRes) {
+          const fresh = Array.isArray(casesRes) ? casesRes : casesRes?.content || []
+          // The case list may not carry the documents; keep the ones already loaded for a case
+          setCases(prev => {
+            const old = new Map(prev.map(c => [c.id, c]))
+            return fresh.map(c => (c.documents == null && old.get(c.id)?.documents
+              ? { ...c, documents: old.get(c.id).documents }
+              : c))
+          })
+          setSelectedCase(prev => {
+            if (!prev) return prev
+            const now = fresh.find(c => c.id === prev.id)
+            return now ? { ...prev, ...now, documents: now.documents ?? prev.documents } : prev
+          })
+        }
+
+        if (clientsRes) {
+          const list = Array.isArray(clientsRes) ? clientsRes : clientsRes?.content || []
+          setClients(prev => {
+            const old = new Map(prev.map(c => [c.id, c]))
+            return list.map(cl => ({
+              ...cl,
+              documents: docs ? docs.filter(d => d.clientId === cl.id) : (old.get(cl.id)?.documents || []),
+            }))
+          })
+        }
+        if (docs) setAdvocateDocs(docs.filter(d => !d.caseId && !d.clientId))
+        if (tasksRes) setTodos(Array.isArray(tasksRes) ? tasksRes : tasksRes?.content || [])
+      } finally {
+        setTimeout(() => { applyingRefresh.current = false }, 200)
+      }
+    }
+    const stopLive = onLiveRefresh(() => { refreshQuietly().catch(() => {}) })
+    return stopLive
 
   // Reload everything whenever the user logs in
   }, [loggedIn])
@@ -3296,6 +3380,7 @@ export function AppProvider({ children }) {
         handleSaveNextHearing,
 
         hearingsVersion,
+        optionsVersion,
         bumpHearings,
         syncCaseNextHearing,
 

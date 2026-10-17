@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from '../services/api'
 import { getErrorMessage } from '../utils/errorMessages'
+import { onLiveRefresh } from '../utils/liveRefresh'
 
 // Police directory shared by all components so it is fetched only once
 let cache = null
@@ -40,7 +41,9 @@ export default function usePoliceDirectory() {
   useEffect(() => {
     subscribers.add(setDirectory)
     reload()
-    return () => { subscribers.delete(setDirectory) }
+    // An admin edit made elsewhere shows up here too, quietly
+    const stopLive = onLiveRefresh(() => { api.police.directory().then(publish).catch(() => {}) })
+    return () => { subscribers.delete(setDirectory); stopLive() }
   }, [reload])
 
   return { directory, loading, error, reload }

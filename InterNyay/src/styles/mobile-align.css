@@ -31,7 +31,6 @@
   .todo-main__category-bar,
   .contact-meta,
   .form-template-card__header,
-  .courts-adder,
   .options-admin__add,
   .court-history-editor__buttons,
   .loginlog__pager { flex-wrap: wrap; }
@@ -43,22 +42,25 @@
   .admin__toolbar > .admin__count { margin-left: 0; flex: 1 1 100%; }
 
   /* Search / name boxes in toolbars use the full width */
-  .admin__toolbar .form-input,
-  .courts-adder .courts-adder__input { max-width: none; flex: 1 1 100%; width: 100%; }
+  .admin__toolbar .form-input { max-width: none; flex: 1 1 100%; width: 100%; }
 
   /* Title row with actions: the actions drop below the title and line up with its left edge */
   .todo-main__category-bar > :last-child,
   .form-template-card__header > :last-child { margin-left: 0; }
 }
 
-/* Phones and tablets: court / district / filter chips are full pills like on desktop.
-   unified.css gave them a 9px radius at this width through a high-specificity selector, so this repeats that selector. */
+/* Phones and tablets: court and filter chips are full pills like on desktop. The district (sub) chips under the court
+   chips are not pills on desktop, they have the small rounded corners (8px), so they keep that here too.
+   unified.css gave them a 9px radius at this width through a high-specificity selector, so these repeat that selector. */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
-  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.qa-filter-btn, .case-filter-btn):not([data-compact] > *),
-  :is(.admin, .app-main, .modal, .drawer) :is(button, a).qa-filter-btn--sub:not([data-compact] > *) {
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a):is(.qa-filter-btn, .case-filter-btn):not(.qa-filter-btn--sub, [data-compact] > *) {
     border-radius: var(--ctl-radius-pill, 999px);
   }
+  :is(.admin, .app-main, .modal, .drawer) :is(button, a).qa-filter-btn--sub:not([data-compact] > *) {
+    border-radius: 8px;
+  }
 }
+
 
 /* Phones: Account card (Deactivate / Delete). Text on top using the full width, button underneath at full width,
    so the buttons line up with each other and with the card edges instead of floating at the left. */
@@ -131,11 +133,6 @@
      the same layout as the relief rows above them, instead of the grip dropping under a squeezed name */
   .options-admin__nested .options-admin__row { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
   .options-admin__nested .options-admin__actions--compact { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-
-  /* Court number adder: the input and its Add button share one row */
-  .courts-adder { flex-wrap: nowrap; }
-  .courts-adder .courts-adder__input { flex: 1 1 0; width: auto; max-width: none; }
-  .courts-adder .courts-btn { flex: 0 0 auto; padding: 0 16px; }
 
   /* 4. Count cards: label on top, number at the bottom, so cards in one row line up */
   .admin__stats .stat-card { justify-content: space-between; }

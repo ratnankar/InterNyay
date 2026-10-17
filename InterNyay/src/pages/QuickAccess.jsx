@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { onLiveRefresh } from '../utils/liveRefresh'
 import { useApp } from '../context/AppContext'
 import useSessionState from '../hooks/useSessionState'
 import api from '../services/api'
@@ -117,19 +118,21 @@ function JudgesList({ initialQuery }) {
   const [vacantOnly, setVacantOnly] = useState(false)
 
   // Load judges from the API for the selected court and district
-  const fetchData = useCallback(async () => {
-    setLoading(true); setError(null)
+  // silent = a quiet background refresh: no spinner, and a failure keeps what is on screen
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) { setLoading(true); setError(null) }
     try {
       const result = await api.judgesList.list({
         court: court !== 'All' ? court : undefined,
         district: district !== 'All' ? district : undefined,
       })
       setJudges(Array.isArray(result) ? result : result.content || [])
-    } catch (e) { setError(getErrorMessage(e, "We couldn't load the judges list. Please try again.")) }
-    finally { setLoading(false) }
+    } catch (e) { if (!silent) setError(getErrorMessage(e, "We couldn't load the judges list. Please try again.")) }
+    finally { if (!silent) setLoading(false) }
   }, [court, district])
 
   useEffect(() => { if (ready) fetchData() }, [fetchData, ready])
+  useEffect(() => onLiveRefresh(() => { if (ready) fetchData(true) }), [fetchData, ready])
 
   // Filter loaded judges by the search text across name, designation, court room and other fields
   const vacantCount = useMemo(() => judges.filter(j => j.vacant).length, [judges])
@@ -171,7 +174,7 @@ function JudgesList({ initialQuery }) {
       )}
 
       {/* Show loading rows, an error with retry, an empty message or the judge cards */}
-      {loading ? <LoadingRows /> : error ? <ErrorState message={error} onRetry={fetchData} /> :
+      {loading ? <LoadingRows /> : error ? <ErrorState message={error} onRetry={() => fetchData()} /> :
         visible.length === 0
           ? <p className="qa-empty">No judges found.</p>
           : (
@@ -208,19 +211,21 @@ function BailRoster() {
   const [error,     setError]     = useState(null)
 
   // Load the bail roster from the API for the selected court and district
-  const fetchData = useCallback(async () => {
-    setLoading(true); setError(null)
+  // silent = a quiet background refresh: no spinner, and a failure keeps what is on screen
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) { setLoading(true); setError(null) }
     try {
       const result = await api.bailRoster.list({
         court: court !== 'All' ? court : undefined,
         district: district !== 'All' ? district : undefined,
       })
       setRoster(Array.isArray(result) ? result : result.content || [])
-    } catch (e) { setError(getErrorMessage(e, "We couldn't load the bail roster. Please try again.")) }
-    finally { setLoading(false) }
+    } catch (e) { if (!silent) setError(getErrorMessage(e, "We couldn't load the bail roster. Please try again.")) }
+    finally { if (!silent) setLoading(false) }
   }, [court, district])
 
   useEffect(() => { if (ready) fetchData() }, [fetchData, ready])
+  useEffect(() => onLiveRefresh(() => { if (ready) fetchData(true) }), [fetchData, ready])
 
   return (
     <div>
@@ -231,7 +236,7 @@ function BailRoster() {
       <DistrictPdfBar section="BAIL_ROSTER" district={district} />
 
       {/* Show loading rows, an error with retry, an empty message or the roster by year and month */}
-      {loading ? <LoadingRows /> : error ? <ErrorState message={error} onRetry={fetchData} /> :
+      {loading ? <LoadingRows /> : error ? <ErrorState message={error} onRetry={() => fetchData()} /> :
         roster.length === 0
           ? <p className="qa-empty">No bail roster entries found.</p>
           : (
@@ -294,19 +299,21 @@ function DutyMagistrate() {
   const [error,     setError]     = useState(null)
 
   // Load duty magistrates from the API for the selected court and district
-  const fetchData = useCallback(async () => {
-    setLoading(true); setError(null)
+  // silent = a quiet background refresh: no spinner, and a failure keeps what is on screen
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) { setLoading(true); setError(null) }
     try {
       const result = await api.dutyMagistrate.list({
         court: court !== 'All' ? court : undefined,
         district: district !== 'All' ? district : undefined,
       })
       setRoster(Array.isArray(result) ? result : result.content || [])
-    } catch (e) { setError(getErrorMessage(e, "We couldn't load the duty magistrate list. Please try again.")) }
-    finally { setLoading(false) }
+    } catch (e) { if (!silent) setError(getErrorMessage(e, "We couldn't load the duty magistrate list. Please try again.")) }
+    finally { if (!silent) setLoading(false) }
   }, [court, district])
 
   useEffect(() => { if (ready) fetchData() }, [fetchData, ready])
+  useEffect(() => onLiveRefresh(() => { if (ready) fetchData(true) }), [fetchData, ready])
 
   return (
     <div>
@@ -317,7 +324,7 @@ function DutyMagistrate() {
       <DistrictPdfBar section="DUTY_MAGISTRATE" district={district} />
 
       {/* Show loading rows, an error with retry, an empty message or the roster by year and month */}
-      {loading ? <LoadingRows /> : error ? <ErrorState message={error} onRetry={fetchData} /> :
+      {loading ? <LoadingRows /> : error ? <ErrorState message={error} onRetry={() => fetchData()} /> :
         roster.length === 0
           ? <p className="qa-empty">No duty magistrate entries found.</p>
           : (
@@ -371,21 +378,21 @@ function CourtCalendar() {
   const [error, setError] = useState('')
 
   // Load the years that have a calendar uploaded
-  const loadYears = useCallback(async () => {
-    setYearsLoading(true)
-    setYearsError('')
+  const loadYears = useCallback(async (silent = false) => {
+    if (!silent) { setYearsLoading(true); setYearsError('') }
     try {
       const res = await api.courtCalendar.list()
       const list = Array.isArray(res) ? res : []
       setYears([...new Set(list.map(c => c.year))].sort((a, b) => b - a))
     } catch (e) {
-      setYearsError(getErrorMessage(e, 'Could not load available calendar years.'))
+      if (!silent) setYearsError(getErrorMessage(e, 'Could not load available calendar years.'))
     } finally {
-      setYearsLoading(false)
+      if (!silent) setYearsLoading(false)
     }
   }, [])
 
   useEffect(() => { loadYears() }, [loadYears])
+  useEffect(() => onLiveRefresh(() => loadYears(true)), [loadYears])
 
   // Free the PDF blob URL when it changes or the page closes
   useEffect(() => {
@@ -417,7 +424,7 @@ function CourtCalendar() {
       {yearsLoading && <p className="qa-empty">Loading available years…</p>}
 
       {!yearsLoading && yearsError && (
-        <ErrorState message={yearsError} onRetry={loadYears} />
+        <ErrorState message={yearsError} onRetry={() => loadYears()} />
       )}
 
       {!yearsLoading && !yearsError && years.length === 0 && (

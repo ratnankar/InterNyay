@@ -1,0 +1,59 @@
+/* Admin > Courts tree: one clear hierarchy.
+   Court -> District -> Building -> Court no. Each level sits one step in from its parent, headings step down in size,
+   and the add rows (district / building + court no.) have the same control sizes at every level. Keep last. */
+
+.courts-admin .courts-tree {
+  --ct-step: 22px;
+  --ct-h: 34px;
+}
+
+/* ---------- Indentation: every nested list moves in by one step ---------- */
+.courts-admin .courts-tree .archive__year .archive__body {
+  padding: 0 0 0 var(--ct-step);
+  gap: 0;
+}
+
+/* Every heading starts at the same inner padding; the body padding above does the stepping */
+.courts-admin .courts-tree .archive__head--month,
+.courts-admin .courts-tree .archive__head--day { padding-left: var(--space-lg); }
+.courts-admin .courts-tree .archive__head--month { font-size: var(--fs-md); font-weight: 600; }
+.courts-admin .courts-tree .archive__head--day   { font-size: var(--fs-sm); font-weight: 600; color: var(--color-text-mid); }
+
+.courts-admin .courts-tree .courts-flat { padding: 0; }
+.courts-admin .courts-tree .courts-empty { padding: var(--space-sm) var(--space-lg); }
+.courts-admin .courts-tree .courts-chips { padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-lg); }
+
+/* ---------- Add rows: same size and spacing at every level ---------- */
+.courts-admin .courts-adder {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px dashed var(--color-gold-border);
+}
+
+.courts-admin .courts-adder .courts-adder__field { flex: 0 0 200px; width: 200px; min-width: 0; }
+.courts-admin .courts-adder .courts-adder__field .dropdown__input { width: 100%; }
+.courts-admin .courts-adder .courts-adder__input { flex: 0 0 150px; width: 150px; min-width: 0; padding: 0 12px; }
+
+.courts-admin .courts-adder .dropdown__input,
+.courts-admin .courts-adder .courts-adder__input,
+.courts-admin .courts-adder .courts-btn {
+  box-sizing: border-box;
+  height: var(--ct-h);
+  min-height: var(--ct-h);
+  font-size: var(--fs-sm);
+  border-radius: var(--ctl-radius);
+}
+.courts-admin .courts-adder .courts-btn { flex: 0 0 auto; padding: 0 16px; white-space: nowrap; }
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+  .courts-admin .courts-tree { --ct-step: 14px; }
+  .courts-admin .courts-adder { flex-wrap: wrap; }
+  .courts-admin .courts-adder .courts-adder__field { flex: 1 1 100%; width: 100%; }
+  .courts-admin .courts-adder .courts-adder__input { flex: 1 1 0; width: auto; }
+  .courts-admin .courts-tree .courts-chips { padding-left: var(--space-md); padding-right: var(--space-md); }
+}

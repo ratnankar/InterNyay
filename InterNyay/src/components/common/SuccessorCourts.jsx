@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { onLiveRefresh } from '../../utils/liveRefresh'
 import api from '../../services/api'
 import { useApp } from '../../context/AppContext'
 import CourtPeriodModal from '../admin/CourtPeriodModal'
@@ -157,19 +158,20 @@ export default function SuccessorCourts({ admin = false }) {
   // Period being added or edited in the admin console: { period, defaults }
   const [editor,  setEditor]  = useState(null)
 
-  const load = useCallback(async () => {
-    setLoading(true); setError(null)
+  const load = useCallback(async (silent = false) => {
+    if (!silent) { setLoading(true); setError(null) }
     try {
       const res = await api.judgesList.courtNoLog({})
       setEntries(Array.isArray(res) ? res : [])
     } catch (e) {
-      setError(getErrorMessage(e, "We couldn't load the successor courts. Please try again."))
+      if (!silent) setError(getErrorMessage(e, "We couldn't load the successor courts. Please try again."))
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => onLiveRefresh(() => load(true)), [load])
 
   const NONE = '__none'
 
@@ -315,7 +317,7 @@ export default function SuccessorCourts({ admin = false }) {
         : error ? (
           <div className="qa-empty">
             <p>{error}</p>
-            <button type="button" className="btn-outline btn-outline--sm" onClick={load}>Try again</button>
+            <button type="button" className="btn-outline btn-outline--sm" onClick={() => load()}>Try again</button>
           </div>
         )
         : tree.length === 0 ? <p className="qa-empty">{searching ? 'No courts found.' : 'No court history recorded yet.'}</p>

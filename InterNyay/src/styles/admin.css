@@ -752,16 +752,18 @@ td.admin__actions > * + * { margin-left: 6px; }
 }
 .courts-check input { margin: 0; width: 16px; height: 16px; flex: none; }
 
-.courts-adder {
-  display: flex; align-items: center; gap: 6px;
-  margin-top: var(--space-sm); padding-top: var(--space-sm);
-  border-top: 1px dashed var(--color-gold-border);
+.courts-mover {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column; gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px dashed var(--color-gold-border); border-radius: var(--ctl-radius);
 }
-.courts-adder .courts-adder__input {
-  width: 150px; flex: 0 1 150px; min-width: 0; box-sizing: border-box;
-  height: var(--ctl-h-sm); min-height: var(--ctl-h-sm); padding: 0 10px;
-  font-size: var(--fs-xs); border-radius: var(--ctl-radius);
-}
+.courts-mover__title { font-size: var(--fs-sm); color: var(--color-navy); }
+.courts-mover__fields { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.courts-mover__fields .form-input { flex: 0 1 220px; min-width: 0; }
+.courts-mover__check { min-height: 0; font-weight: 500; }
+.courts-mover__actions { display: flex; gap: 6px; }
+.courts-mover__actions .courts-btn { padding: 0 14px; }
 
 .courts-empty { margin: 0; padding: var(--space-sm) var(--space-md); font-size: var(--fs-sm); color: var(--color-text-muted); }
 
@@ -769,8 +771,8 @@ td.admin__actions > * + * { margin-left: 6px; }
   .courts-add .admin__toolbar .form-input { flex: 1 1 100%; max-width: none; }
   .courts-row__action { margin-right: var(--space-md); }
   .courts-chips { grid-template-columns: minmax(0, 1fr); }
-  .courts-adder .courts-adder__input { flex: 1 1 auto; width: auto; }
   .courts-chip { flex-wrap: wrap; }
+  .courts-mover__fields .form-input { flex: 1 1 100%; }
 }
 /* Add / edit court number period popup: the judge field spans the full width above the grid */
 .court-period-form { margin-top: var(--space-md); }
