@@ -46,6 +46,7 @@ function emptyForm() {
     court: getCourtNames()[0] || '',
     district: firstDistrict(getCourtNames()[0]),
     building: '',
+    floor: '',
     courtRoomNo: '',
     jurisdiction: '',
     courtNoFrom: '',
@@ -128,7 +129,7 @@ export default function ListingAdmin() {
       if (view === 'multi' && !(j.courtCount > 1)) return false
       if (view === 'vacant' && !j.vacant) return false
       if (!q) return true
-      return [j.name, j.designation, j.courtRoomNo, ...(j.courtNoHistory || []).map(r => r.courtRoomNo), j.building, j.court, j.district, j.jurisdiction, j.courtReaderName]
+      return [j.name, j.designation, j.courtRoomNo, ...(j.courtNoHistory || []).map(r => r.courtRoomNo), j.building, j.floor, j.court, j.district, j.jurisdiction, j.courtReaderName]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
     })
@@ -150,6 +151,7 @@ export default function ListingAdmin() {
       form.court = row.court
       form.district = row.district
       form.building = row.building || ''
+      form.floor = row.floor || ''
       form.courtRoomNo = row.courtRoomNo || ''
       form.jurisdiction = row.jurisdiction || ''
     }
@@ -169,6 +171,7 @@ export default function ListingAdmin() {
       judgeName: row?.name || '',
       originalCourtNo: row?.courtRoomNo || '',
       originalBuilding: row?.building || '',
+      originalFloor: row?.floor || '',
       // Ticked when the change fixes a wrongly saved place instead of moving the judge
       correction: false,
       // Court and district as saved: the past court number records belong to these
@@ -187,7 +190,7 @@ export default function ListingAdmin() {
   // Updates the court and district together
   // Changing the court or district clears the building and court number, they belong to the old place
   function setCourtFields(fields) {
-    setEditing(s => ({ ...s, form: { ...s.form, ...fields, building: '', courtRoomNo: '' } }))
+    setEditing(s => ({ ...s, form: { ...s.form, ...fields, building: '', floor: '', courtRoomNo: '' } }))
   }
 
   // Updates the building and court number picked from the court table
@@ -213,6 +216,7 @@ export default function ListingAdmin() {
   const placeDiffers = !!editing && !editing.isNew && (
     editing.form.courtRoomNo.trim() !== editing.originalCourtNo
     || (editing.form.building || '') !== editing.originalBuilding
+    || (editing.form.floor || '') !== editing.originalFloor
     || editing.form.court !== editing.savedCourt
     || editing.form.district !== editing.savedDistrict
   )
@@ -222,6 +226,7 @@ export default function ListingAdmin() {
     && editing.form.court === editing.savedCourt
     && editing.form.courtRoomNo.trim() === editing.originalCourtNo
     && (editing.form.building || '') === editing.originalBuilding
+    && (editing.form.floor || '') === editing.originalFloor
   const courtNoChanged = placeDiffers && !onlyDistrictFilled
 
   // Closing with unsaved changes asks Save / Discard / Cancel
@@ -429,6 +434,7 @@ export default function ListingAdmin() {
                   court={editing.form.court}
                   district={editing.form.district}
                   building={editing.form.building}
+                  floor={editing.form.floor}
                   courtNo={editing.form.courtRoomNo}
                   onChange={setPlaceFields}
                 />

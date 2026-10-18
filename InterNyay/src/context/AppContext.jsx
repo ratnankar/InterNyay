@@ -532,6 +532,8 @@ export function AppProvider({ children }) {
     court: '',
     district: '',
     courtNo: '',
+    building: '',
+    floor: '',
 
     caseNature: 'Civil',
     reliefSought: '',
@@ -1861,6 +1863,8 @@ export function AppProvider({ children }) {
       court,
       district,
       courtNo:        c.courtNo        || '',
+      building:       c.building       || '',
+      floor:          c.floor          || '',
       caseNature:     c.caseNature     || '',
       reliefSought:   c.reliefSought   || '',
       caseType:       c.caseType       || '',

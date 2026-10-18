@@ -223,11 +223,74 @@ export const getBuildings = (court, district) =>
 
 // Court numbers listed in the court table under a court and district. Pass a building ('' for none) to narrow
 // them to that building, or leave it out for every court no. of the district
-export const getCourtNos = (court, district, building) =>
+export const getCourtNos = (court, district, building, floor) =>
   uniq(snapshot.rows
     .filter(r => r.court === court && sameDistrict(r, district) && r.courtNo
-      && (building === undefined || (r.building || '') === building))
+      && (building === undefined || (r.building || '') === building)
+      && (floor === undefined || (r.floor || '') === floor))
     .map(r => r.courtNo))
+
+// Court numbers of a court and district grouped by building, in table order: [{ building, courtNos }].
+// Court numbers with no building come back under an empty building name
+export const getCourtNosByBuilding = (court, district) => {
+  const groups = new Map()
+  snapshot.rows
+    .filter(r => r.court === court && sameDistrict(r, district) && r.courtNo)
+    .forEach(r => {
+      const b = r.building || ''
+      if (!groups.has(b)) groups.set(b, [])
+      if (!groups.get(b).some(x => x.courtNo === r.courtNo && x.floor === (r.floor || ''))) {
+        groups.get(b).push({ courtNo: r.courtNo, floor: r.floor || '' })
+      }
+    })
+  return [...groups].map(([building, rooms]) => ({ building, rooms, courtNos: rooms.map(x => x.courtNo) }))
+}
+
+// Building and floor of a court no. in the court table. Only answers when the court no. is in exactly one
+// building/floor, so a number used in several buildings is never guessed
+export const findRoom = (court, district, courtNo) => {
+  const hits = getCourtNosByBuilding(court, district)
+    .flatMap(g => g.rooms.filter(r => r.courtNo === courtNo).map(r => ({ building: g.building, floor: r.floor })))
+  return hits.length === 1 ? hits[0] : { building: '', floor: '' }
+}
+
+export const getFloors = (court, district, building) =>
+  uniq(snapshot.rows
+    .filter(r => r.court === court && sameDistrict(r, district) && (r.building || '') === (building || '') && r.floor)
+    .map(r => r.floor))
+
+// Building and floor a case sits in. Taken from the case; a case saved before buildings were kept falls back
+// to the court table when its court no. is in exactly one building
+export function caseRoom(c) {
+  if (!c?.courtNo) return { building: '', floor: '' }
+  const { court, district } = splitCaseCourt(c)
+  if (c.building) {
+    if (c.floor) return { building: c.building, floor: c.floor }
+    // The case has a building but no floor saved: use the floor the court table lists for that building and court no.,
+    // when there is exactly one
+    const floors = [...new Set(snapshot.rows
+      .filter(r => r.court === court && sameDistrict(r, district) && r.building === c.building && r.courtNo === c.courtNo && r.floor)
+      .map(r => r.floor))]
+    return { building: c.building, floor: floors.length === 1 ? floors[0] : '' }
+  }
+  return findRoom(court, district, c.courtNo)
+}
+
+// "Main (Floor 2)": the building with its floor in brackets. The floor is only shown with a building, so a floor
+// with no building gives nothing
+// Floor 2 is written "Floor 2", unless the stored floor already says so (or is a word like "Ground")
+export const floorLabel = floor => {
+  const f = String(floor || '').trim()
+  if (!f) return ''
+  return /^floor\b/i.test(f) || /floor$/i.test(f) || /^[a-z]/i.test(f) && !/^\d/.test(f) && !/^[a-z]\d*$/i.test(f) ? f : `Floor ${f}`
+}
+export const buildingWithFloor = (building, floor) => (building ? (floor ? `${building} (${floorLabel(floor)})` : building) : '')
+
+// Same label for a case
+export function roomLabel(c) {
+  const { building, floor } = caseRoom(c)
+  return buildingWithFloor(building, floor)
+}
 
 // Courts above the district level (they have no district)
 export const isHighCourt = court => snapshot.highCourts.includes(court)

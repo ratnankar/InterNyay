@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import { getErrorMessage } from '../../utils/errorMessages'
-import { useCourts, getCourtNames, getDistricts, hasNamedDistricts, getBuildings, getCourtNos } from '../../constants/courts'
+import { useCourts, getCourtNames, getDistricts, hasNamedDistricts, getBuildings, getFloors, getCourtNos } from '../../constants/courts'
 import useOverlayClose from '../../hooks/useOverlayClose'
 import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
@@ -27,6 +27,7 @@ export default function CourtPeriodModal({ period, defaults = {}, onSaved, onClo
     court:       period?.court       || defaults.court       || '',
     district:    period?.district    || defaults.district    || '',
     building:    period?.building    || defaults.building    || '',
+    floor:       period?.floor       || defaults.floor       || '',
     courtRoomNo: period?.courtRoomNo || defaults.courtRoomNo || '',
     fromDate:    period?.fromDate    || '',
     tillDate:    period?.tillDate    || '',
@@ -36,7 +37,7 @@ export default function CourtPeriodModal({ period, defaults = {}, onSaved, onClo
   const patch = fields => setDraft(d => ({ ...d, ...fields }))
 
   // Changing the court picks that court's first district and clears the building and court number
-  const pickCourt = value => patch({ court: value, district: getDistricts(value)[0] || '', building: '', courtRoomNo: '' })
+  const pickCourt = value => patch({ court: value, district: getDistricts(value)[0] || '', building: '', floor: '', courtRoomNo: '' })
 
   async function save() {
     if (!editing && !judge) { addToast('Pick the judge this court number belongs to', 'error'); return }
@@ -50,6 +51,7 @@ export default function CourtPeriodModal({ period, defaults = {}, onSaved, onClo
       court: draft.court,
       district: draft.district,
       building: draft.building.trim(),
+      floor: draft.floor.trim(),
       courtRoomNo: draft.courtRoomNo.trim(),
       fromDate: draft.fromDate,
       ...(isCurrent ? {} : { tillDate: draft.tillDate }),
@@ -104,7 +106,7 @@ export default function CourtPeriodModal({ period, defaults = {}, onSaved, onClo
                   className="form-input"
                   aria-label="District"
                   value={draft.district}
-                  onChange={e => patch({ district: e.target.value, building: '', courtRoomNo: '' })}
+                  onChange={e => patch({ district: e.target.value, building: '', floor: '', courtRoomNo: '' })}
                 >
                   <option value="">District</option>
                   {withCurrent(getDistricts(draft.court), draft.district).map(d => <option key={d} value={d}>{d}</option>)}
@@ -118,12 +120,27 @@ export default function CourtPeriodModal({ period, defaults = {}, onSaved, onClo
                 className="form-input"
                 aria-label="Building"
                 value={draft.building}
-                onChange={e => patch({ building: e.target.value, courtRoomNo: '' })}
+                onChange={e => patch({ building: e.target.value, floor: '', courtRoomNo: '' })}
               >
                 <option value="">No building</option>
                 {withCurrent(getBuildings(draft.court, draft.district), draft.building).map(b => <option key={b} value={b}>{b}</option>)}
               </Dropdown>
             </div>
+
+            {withCurrent(getFloors(draft.court, draft.district, draft.building), draft.floor).length > 0 && (
+              <div className="court-history-editor__field">
+                <label className="form-label">Floor</label>
+                <Dropdown
+                  className="form-input"
+                  aria-label="Floor"
+                  value={draft.floor}
+                  onChange={e => patch({ floor: e.target.value, courtRoomNo: '' })}
+                >
+                  <option value="">No floor</option>
+                  {withCurrent(getFloors(draft.court, draft.district, draft.building), draft.floor).map(f => <option key={f} value={f}>{f}</option>)}
+                </Dropdown>
+              </div>
+            )}
 
             <div className="court-history-editor__field">
               <label className="form-label">Court number</label>
@@ -134,7 +151,7 @@ export default function CourtPeriodModal({ period, defaults = {}, onSaved, onClo
                 onChange={e => patch({ courtRoomNo: e.target.value })}
               >
                 <option value="">Court number</option>
-                {withCurrent(getCourtNos(draft.court, draft.district, draft.building), draft.courtRoomNo).map(n => <option key={n} value={n}>{n}</option>)}
+                {withCurrent(getCourtNos(draft.court, draft.district, draft.building, draft.floor), draft.courtRoomNo).map(n => <option key={n} value={n}>{n}</option>)}
               </Dropdown>
             </div>
 
@@ -154,7 +171,7 @@ export default function CourtPeriodModal({ period, defaults = {}, onSaved, onClo
 
             {isCurrent && (
               <p className="admin__hint court-period-form__full">
-                This is the judge's current court number. Saving also updates the judge's court, district, building and court number in Judges List.
+                This is the judge's current court number. Saving also updates the judge's court, district, building, floor and court number in Judges List.
               </p>
             )}
 

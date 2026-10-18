@@ -1,4 +1,4 @@
-import { useCourts, caseCourtParts } from '../../constants/courts'
+import { useCourts, caseCourtParts, roomLabel } from '../../constants/courts'
 import { caseNatureOf } from '../../utils/caseClassification'
 import { formatDisplayDate } from '../../utils/dateUtils'
 
@@ -7,6 +7,7 @@ export default function CaseSummaryFields({ caseItem: c }) {
   useCourts()
   // Split the case's court into district and court name
   const { district, court } = caseCourtParts(c)
+  const building = roomLabel(c)
 
   // Small helper to build a label/value row for the summary
   const row = (label, value, opts = {}) => ({ label, value, ...opts })
@@ -25,6 +26,7 @@ export default function CaseSummaryFields({ caseItem: c }) {
       row('District',       district),
       row('Court',          court),
       row('Court No',       c.courtNo),
+      row('Building',       building),
       row('Opposite Party', c.opposingParty),
     ]),
     shown([

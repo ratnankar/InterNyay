@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { useCourts, caseCourtParts } from '../../constants/courts'
+import { useCourts, caseCourtParts, roomLabel } from '../../constants/courts'
 import { caseClientLabels } from '../../utils/caseClients'
 import { caseNatureOf } from '../../utils/caseClassification'
 import { formatDisplayDate } from '../../utils/dateUtils'
@@ -10,6 +10,8 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null }
   useCourts()
   // Split the case's court into district and court name
   const { district, court } = caseCourtParts(c)
+  // Building and floor of the court room
+  const building = roomLabel(c)
   // Names of the clients linked to this case
   const clientNames = caseClientLabels(c, clients)
 
@@ -30,6 +32,7 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null }
   // Court No, cause list number and judge rows for a hearing
   const hearingRows = [
     row('Court No',       c.courtNo),
+    row('Building',       building),
     row('Cause List No',  causeListNo != null && causeListNo !== '' ? causeListNo : ''),
     row('Judge',          judge),
   ]
@@ -48,6 +51,7 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null }
     row('Court',         court),
     ...(isHearing ? [] : [
       row('Court No',    c.courtNo),
+      row('Building',    building),
       row('Judge',       judge),
     ]),
     row('FIR No',         c.firNo),

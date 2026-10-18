@@ -95,6 +95,12 @@ export default function useDragReorder(keys, onCommit) {
     setOrder(startKeys)
     setDragKey(moved)
     document.body.style.userSelect = 'none'
+    document.body.style.webkitUserSelect = 'none'
+    // A long press must not open the browser's menu (copy / save / share) in the middle of a drag
+    const noMenu = ev => ev.preventDefault()
+    window.addEventListener('contextmenu', noMenu, true)
+    window.addEventListener('selectstart', noMenu, true)
+    window.addEventListener('dragstart', noMenu, true)
 
     const scroller = scrollParent(heldEl)
     let lastY = e.clientY
@@ -177,6 +183,10 @@ export default function useDragReorder(keys, onCommit) {
       window.removeEventListener('pointercancel', onCancel)
       window.removeEventListener('keydown', onKey)
       document.body.style.userSelect = ''
+      document.body.style.webkitUserSelect = ''
+      window.removeEventListener('contextmenu', noMenu, true)
+      window.removeEventListener('selectstart', noMenu, true)
+      window.removeEventListener('dragstart', noMenu, true)
       followRef.current = null
       const el = rows.current[moved]
       if (el) {
@@ -211,9 +221,13 @@ export default function useDragReorder(keys, onCommit) {
 
   const gripProps = key => ({
     onPointerDown: e => startDrag(e, key),
+    // Press and hold on a phone would otherwise open the browser menu (or start a text selection) instead of the drag
+    onContextMenu: e => e.preventDefault(),
+    onDragStart: e => e.preventDefault(),
+    draggable: false,
     title: 'Press and hold, then drag up or down to move',
     'aria-label': 'Drag to reorder',
-    style: { cursor: dragKey ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none' },
+    style: { cursor: dragKey ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none', WebkitTapHighlightColor: 'transparent' },
   })
 
   // The row in hand fades, gets a gold outline and sits above the others; the rest stay as they are

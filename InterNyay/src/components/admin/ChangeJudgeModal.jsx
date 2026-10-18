@@ -8,11 +8,11 @@ import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
 import useUnsavedGuard from '../../hooks/useUnsavedGuard'
 import JudgeProfilePicker, { Thumb } from './JudgeProfilePicker'
-import { courtDistrictLabel } from '../../constants/courts'
+import { courtDistrictLabel, buildingWithFloor } from '../../constants/courts'
 import { getErrorMessage } from '../../utils/errorMessages'
 
 // "Saket Court · Building A · Court No. 12" for a listing
-const seatText = (l) => [courtDistrictLabel(l.court, l.district), l.building ? `Building ${l.building}` : '', l.courtRoomNo ? `Court No. ${l.courtRoomNo}` : '']
+const seatText = (l) => [courtDistrictLabel(l.court, l.district), l.building ? `Building ${buildingWithFloor(l.building, l.floor)}` : '', l.courtRoomNo ? `Court No. ${l.courtRoomNo}` : '']
   .filter(Boolean).join(' · ')
 
 // Dialog to change the judge of a listing. The listing stays as it is (court, building, court no., contacts, jurisdiction),
@@ -196,7 +196,7 @@ export default function ChangeJudgeModal({ listing, judges, listings, onClose, o
 
           {incomingName && (
             <div className="change-judge__result">
-              <p>Only the judge changes. Court, building, court no., designation and contacts stay as they are, and the history is kept.</p>
+              <p>Only the judge changes. Court, building, floor, court no., designation and contacts stay as they are, and the history is kept.</p>
               {mode === 'vacant'
                 ? <p>This court will show as <strong>Vacant</strong> until a judge is assigned to it.</p>
                 : <p><strong>{incomingName}</strong> will be the judge of this listing.</p>}

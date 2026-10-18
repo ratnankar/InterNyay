@@ -16,6 +16,15 @@ const TYPE_FILTERS = [
   { value: 'LOGOUT',       label: 'Sign-outs' },
 ]
 
+// App filter choices: the website or the InterNyay Calendar mobile app
+const APP_FILTERS = [
+  { value: 'ALL',      label: 'All apps' },
+  { value: 'WEB',      label: 'Web app' },
+  { value: 'CALENDAR', label: 'Calendar app' },
+]
+
+const APP_LABELS = { WEB: 'Web app', CALENDAR: 'Calendar app' }
+
 const EVENT_LABELS = { LOGIN: 'Signed in', LOGIN_FAILED: 'Failed', LOGOUT: 'Signed out' }
 const METHOD_LABELS = { PASSWORD: 'Password', GOOGLE: 'Google' }
 const roleLabel = role => (role === 'ADVOCATE' ? 'Advocate' : role === 'ASSOCIATE' ? 'Associate' : role === 'ADMIN' ? 'Admin' : '—')
@@ -50,6 +59,17 @@ function browserLabel(ua) {
   return os ? `${browser} · ${os}` : browser
 }
 
+// Browser text for the website. The Calendar app has no browser on a phone (the request names the phone's HTTP library),
+// so there it shows the phone system instead, and falls back to the browser text for the Calendar app's web version
+function deviceLabel(r) {
+  const ua = r.userAgent || ''
+  if (r.app !== 'CALENDAR') return browserLabel(ua)
+  if (/okhttp|Dalvik/i.test(ua)) return 'Calendar app · Android'
+  if (/CFNetwork|Darwin/i.test(ua)) return 'Calendar app · iOS'
+  if (!ua || /Expo|ReactNative/i.test(ua)) return 'Calendar app'
+  return browserLabel(ua)
+}
+
 // Admin view of who signed in, failed to sign in or signed out, newest first
 // With user (id and email) it shows that account's activity only, as used in the popup on an account's profile
 export default function LoginLogAdmin({ user = null }) {
@@ -58,6 +78,7 @@ export default function LoginLogAdmin({ user = null }) {
   const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(true)
   const [type, setType]       = useState('ALL')
+  const [app, setApp]         = useState('ALL')
   const [search, setSearch]   = useState('')
   const [query, setQuery]     = useState('')
   const [page, setPage]       = useState(0)
@@ -77,6 +98,7 @@ export default function LoginLogAdmin({ user = null }) {
     try {
       const res = await api.admin.loginLogs.list({
         type: type === 'ALL' ? undefined : type,
+        app: app === 'ALL' ? undefined : app,
         q: query || undefined,
         userId: user?.id,
         email: user?.email,
@@ -89,7 +111,7 @@ export default function LoginLogAdmin({ user = null }) {
     } finally {
       if (id === latest.current) setLoading(false)
     }
-  }, [type, query, page, user, addToast])
+  }, [type, app, query, page, user, addToast])
 
   useEffect(() => { load() }, [load])
 
@@ -106,7 +128,7 @@ export default function LoginLogAdmin({ user = null }) {
         </span>
       </div>}
 
-      <div className="admin__toolbar">
+      <div className="admin__toolbar loginlog__toolbar">
         {!user && <SearchInput placeholder="Search email or IP address…" value={search} onChange={setSearch} />}
 
         <Dropdown
@@ -118,6 +140,15 @@ export default function LoginLogAdmin({ user = null }) {
           {TYPE_FILTERS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </Dropdown>
 
+        <Dropdown
+          className="form-input"
+          value={app}
+          onChange={e => { setApp(e.target.value); setPage(0) }}
+          aria-label="Filter by app"
+        >
+          {APP_FILTERS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </Dropdown>
+
         <button className="btn-outline" onClick={load} disabled={loading}>Refresh</button>
 
         <span className="admin__count">
@@ -126,16 +157,16 @@ export default function LoginLogAdmin({ user = null }) {
       </div>
 
       <div className="admin__table-wrap">
-        <table className="admin__table">
+        <table className="admin__table loginlog__table">
           <thead>
             <tr>
               <th>When</th><th>Event</th><th>Email</th><th>Account</th>
-              <th>Method</th><th>IP address</th><th>Browser</th><th>Details</th>
+              <th>App</th><th>Method</th><th>IP address</th><th>Browser / device</th><th>Details</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && !loading && (
-              <tr><td colSpan={8} className="admin__empty">No records</td></tr>
+              <tr><td colSpan={9} className="admin__empty">No records</td></tr>
             )}
 
             {rows.map(r => (
@@ -148,9 +179,10 @@ export default function LoginLogAdmin({ user = null }) {
                 </td>
                 <td>{r.email || '—'}</td>
                 <td>{roleLabel(r.role)}</td>
+                <td>{APP_LABELS[r.app] || APP_LABELS.WEB}</td>
                 <td>{METHOD_LABELS[r.method] || '—'}</td>
                 <td>{r.ipAddress || '—'}</td>
-                <td title={r.userAgent || ''}>{browserLabel(r.userAgent)}</td>
+                <td title={r.userAgent || ''}>{deviceLabel(r)}</td>
                 <td>{r.failureReason || '—'}</td>
               </tr>
             ))}
@@ -173,7 +205,8 @@ export default function LoginLogAdmin({ user = null }) {
 
       <p className="loginlog__note">
         Entries are kept for {data?.retentionDays || 180} days and then deleted automatically. A sign-out is only recorded
-        when the person uses the Sign Out button; closing the browser or an expired session is not shown.
+        when the person uses the Sign Out button on the web app; closing the browser or an expired session is not shown, and the
+        Calendar app (view only) records sign-ins and failed sign-ins only.
       </p>
     </>
   )

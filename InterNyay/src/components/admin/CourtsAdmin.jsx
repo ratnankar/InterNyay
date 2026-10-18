@@ -14,12 +14,14 @@ const LEVELS = [
   { id: 'court',    label: 'Court' },
   { id: 'district', label: 'District' },
   { id: 'building', label: 'Building' },
+  { id: 'floor',    label: 'Floor' },
   { id: 'courtNo',  label: 'Court no.' },
 ]
 
 const NEW_BUILDING = '__new__'
+const NEW_FLOOR = '__new_floor__'
 
-const blank = { court: '', district: '', building: '', newBuilding: '', courtNo: '', highCourt: false }
+const blank = { court: '', district: '', building: '', newBuilding: '', floor: '', newFloor: '', courtNo: '', highCourt: false }
 
 // Admin: the court table behind every court, district, building and court no. list in the app.
 // Anything can be added at its own level: a court, a district, a building or a court no. A building or a court no. can be
@@ -45,6 +47,14 @@ export default function CourtsAdmin() {
   const chosenBuilding = addingBuilding
     ? (buildings.find(b => b.toLowerCase() === typedBuilding.toLowerCase()) || typedBuilding)
     : form.building
+  const floors = [...new Set(rows
+    .filter(r => r.court === form.court && r.district === form.district && (r.building || '') === (chosenBuilding === NEW_BUILDING ? '' : chosenBuilding) && r.floor)
+    .map(r => r.floor))]
+  const addingFloor = level === 'courtNo' && form.floor === NEW_FLOOR
+  const typedFloor = form.newFloor.trim()
+  const chosenFloor = addingFloor
+    ? (floors.find(f => f.toLowerCase() === typedFloor.toLowerCase()) || typedFloor)
+    : form.floor
 
   // What has to be filled for the chosen level
   function problem() {
@@ -52,7 +62,9 @@ export default function CourtsAdmin() {
     if (!form.court) return 'Choose a court'
     if (level === 'district') return form.district.trim() ? '' : 'Enter the district name'
     if (level === 'building') return form.building.trim() ? '' : 'Enter the building'
+    if (level === 'floor') return form.floor.trim() ? '' : 'Enter the floor'
     if (addingBuilding && !typedBuilding) return 'Enter the building'
+    if (addingFloor && !typedFloor) return 'Enter the floor'
     return form.courtNo.trim() ? '' : 'Enter the court no.'
   }
 
@@ -61,15 +73,16 @@ export default function CourtsAdmin() {
     if (msg) { addToast(msg, 'error'); return }
     setBusy(true)
     try {
-      const body = { court: form.court, district: '', building: '', courtNo: '', highCourt: false }
+      const body = { court: form.court, district: '', building: '', floor: '', courtNo: '', highCourt: false }
       if (level === 'court') body.highCourt = form.highCourt
       if (level !== 'court') body.district = form.district
       if (level === 'building') body.building = form.building
-      if (level === 'courtNo') { body.building = chosenBuilding; body.courtNo = form.courtNo }
+      if (level === 'floor') { body.building = form.building; body.floor = form.floor }
+      if (level === 'courtNo') { body.building = chosenBuilding; body.floor = chosenFloor; body.courtNo = form.courtNo }
       await api.courts.add(body)
       await loadCourts(true)
       addToast('Added to the court table')
-      setForm(f => level === 'court' ? blank : { ...f, building: level === 'courtNo' ? chosenBuilding : '', newBuilding: '', courtNo: '', district: level === 'district' ? '' : f.district })
+      setForm(f => level === 'court' ? blank : { ...f, building: level === 'courtNo' ? chosenBuilding : level === 'floor' ? f.building : '', floor: level === 'courtNo' ? chosenFloor : '', newBuilding: '', newFloor: '', courtNo: '', district: level === 'district' ? '' : f.district })
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not add'), 'error')
     } finally { setBusy(false) }
@@ -77,7 +90,7 @@ export default function CourtsAdmin() {
 
   async function remove(row, scope) {
     const what = scope === 'court' ? `the whole ${row.court} court with all its districts`
-      : scope === 'district' ? `${row.district} district with its buildings and court numbers`
+      : scope === 'district' ? `${row.district} district with its buildings, floors and court numbers`
       : 'this row'
     if (!await confirmDialog(`Remove ${what}? It is refused if judges, cases, rosters or the police directory still use it.`)) return
     try {
@@ -91,7 +104,7 @@ export default function CourtsAdmin() {
 
   const existingCourts = courtNames.concat(highCourts)
 
-  // ---- Expandable tree: Court > District > Building (when there is one) > Court no. ----
+  // ---- Expandable tree: Court > District > Building (when there is one) > Floor (when there is one) > Court no. ----
   const [open, setOpen] = useSessionState('admin_courts_open', {})
   const toggle = key => setOpen(o => ({ ...o, [key]: !o[key] }))
 
@@ -105,22 +118,26 @@ export default function CourtsAdmin() {
       if (!c.districts.has(dKey)) c.districts.set(dKey, { district: dKey, rowId: r.id, buildings: new Map() })
       const d = c.districts.get(dKey)
       const bKey = r.building || ''
-      if (!d.buildings.has(bKey)) d.buildings.set(bKey, { building: bKey, rowIds: [], nos: [] })
+      if (!d.buildings.has(bKey)) d.buildings.set(bKey, { building: bKey, rowIds: [], nos: [], floors: new Map() })
       const b = d.buildings.get(bKey)
-      if (r.courtNo) b.nos.push({ courtNo: r.courtNo, id: r.id, mahilaCourt: !!r.mahilaCourt, court: r.court, district: r.district || '', building: r.building || '' })
-      else if (bKey) b.rowIds.push(r.id)
+      const fKey = r.floor || ''
+      if (fKey && !b.floors.has(fKey)) b.floors.set(fKey, { floor: fKey, rowIds: [], nos: [] })
+      const holder = fKey ? b.floors.get(fKey) : b
+      if (r.courtNo) holder.nos.push({ courtNo: r.courtNo, id: r.id, mahilaCourt: !!r.mahilaCourt, court: r.court, district: r.district || '', building: r.building || '', floor: fKey })
+      else if (fKey || bKey) holder.rowIds.push(r.id)
     })
     return [...courts.values()].map(c => {
       const districts = [...c.districts.values()]
         .sort((x, y) => (x.district === '') - (y.district === ''))
-        .filter(d => c.high || d.district || d.buildings.size > 1 || [...d.buildings.values()].some(b => b.building || b.nos.length))
+        .filter(d => c.high || d.district || d.buildings.size > 1 || [...d.buildings.values()].some(b => b.building || b.nos.length || b.floors.size))
         .map(d => {
           const named = [...d.buildings.values()].filter(b => b.building)
-          const none = d.buildings.get('') || { building: '', rowIds: [], nos: [] }
-          // "No building" is only listed when a court no. really has no building
-          return { ...d, buildings: new Map([...(none.nos.length ? [['', none]] : []), ...named.map(b => [b.building, b])]) }
+          const none = d.buildings.get('') || { building: '', rowIds: [], nos: [], floors: new Map() }
+          // "No building" is only listed when a court no. or a floor really has no building
+          return { ...d, buildings: new Map([...(none.nos.length || none.floors.size ? [['', none]] : []), ...named.map(b => [b.building, b])]) }
         })
-      const count = d => [...d.buildings.values()].reduce((n, b) => n + b.nos.length, 0)
+      const bucketCount = b => b.nos.length + [...b.floors.values()].reduce((n, f) => n + f.nos.length, 0)
+      const count = d => [...d.buildings.values()].reduce((n, b) => n + bucketCount(b), 0)
       return { ...c, districts: districts.map(d => ({ ...d, count: count(d) })), count: districts.reduce((n, d) => n + count(d), 0) }
     })
   }, [rows])
@@ -167,7 +184,7 @@ export default function CourtsAdmin() {
             </div>
             <div className="courts-chip__actions">
               <button type="button" className="courts-btn courts-btn--gold"
-                      title="Move to another building or district of this court"
+                      title="Move to another building, floor or district of this court"
                       onClick={() => setMoving(m => m === n.id ? null : n.id)}>Move</button>
               <button type="button" className="courts-btn courts-btn--gold"
                       title={n.mahilaCourt ? 'Clear the Mahila court mark' : 'Mark as a Mahila court: orders are not declared there'}
@@ -205,7 +222,7 @@ export default function CourtsAdmin() {
             </label>
           </>
         ) : (
-          <Dropdown className="form-input" value={form.court} onChange={e => set({ court: e.target.value, district: '', building: '', newBuilding: '' })}>
+          <Dropdown className="form-input" value={form.court} onChange={e => set({ court: e.target.value, district: '', building: '', newBuilding: '', floor: '', newFloor: '' })}>
             <option value="">Select court</option>
             {(level === 'district' ? courtNames : existingCourts).map(c => <option key={c} value={c}>{c}</option>)}
           </Dropdown>
@@ -216,8 +233,8 @@ export default function CourtsAdmin() {
                  onChange={e => set({ district: e.target.value })} />
         )}
 
-        {(level === 'building' || level === 'courtNo') && form.court && !isHigh && (
-          <Dropdown className="form-input" value={form.district} onChange={e => set({ district: e.target.value, building: '', newBuilding: '' })}>
+        {(level === 'building' || level === 'floor' || level === 'courtNo') && form.court && !isHigh && (
+          <Dropdown className="form-input" value={form.district} onChange={e => set({ district: e.target.value, building: '', newBuilding: '', floor: '', newFloor: '' })}>
             <option value="">No district (assign later)</option>
             {districts.map(d => <option key={d} value={d}>{d}</option>)}
           </Dropdown>
@@ -228,9 +245,20 @@ export default function CourtsAdmin() {
                  onChange={e => set({ building: e.target.value })} />
         )}
 
+        {level === 'floor' && (
+          <>
+            <Dropdown className="form-input" value={form.building} onChange={e => set({ building: e.target.value })}>
+              <option value="">No building</option>
+              {buildings.map(b => <option key={b} value={b}>Building {b}</option>)}
+            </Dropdown>
+            <input className="form-input" placeholder="Floor" value={form.floor}
+                   onChange={e => set({ floor: e.target.value })} />
+          </>
+        )}
+
         {level === 'courtNo' && (
           <>
-            <Dropdown className="form-input" value={form.building} onChange={e => set({ building: e.target.value, newBuilding: '' })}>
+            <Dropdown className="form-input" value={form.building} onChange={e => set({ building: e.target.value, newBuilding: '', floor: '', newFloor: '' })}>
               <option value="">No building</option>
               {buildings.map(b => <option key={b} value={b}>Building {b}</option>)}
               <option value={NEW_BUILDING}>+ Add new building</option>
@@ -238,6 +266,15 @@ export default function CourtsAdmin() {
             {addingBuilding && (
               <input className="form-input" placeholder="New building" value={form.newBuilding}
                      onChange={e => set({ newBuilding: e.target.value })} />
+            )}
+            <Dropdown className="form-input" value={form.floor} onChange={e => set({ floor: e.target.value, newFloor: '' })}>
+              <option value="">No floor</option>
+              {floors.map(f => <option key={f} value={f}>Floor {f}</option>)}
+              <option value={NEW_FLOOR}>+ Add new floor</option>
+            </Dropdown>
+            {addingFloor && (
+              <input className="form-input" placeholder="New floor" value={form.newFloor}
+                     onChange={e => set({ newFloor: e.target.value })} />
             )}
             <input className="form-input" placeholder="Court no." value={form.courtNo}
                    onChange={e => set({ courtNo: e.target.value })} />
@@ -265,26 +302,48 @@ export default function CourtsAdmin() {
                   {/* Court level: ask for the district (or assign it later) and the court no. It shows only while none of
                       the districts is open (always for a high court, or a court that has no district yet). */}
                   {(c.high || c.districts.length === 0 || !c.districts.some(d => open[`${cKey}|${d.district}`])) && (
-                    <CourtNoAdder court={c.court} askDistrict={!c.high} askBuilding={c.high} />
+                    <CourtNoAdder court={c.court} askDistrict={!c.high} askBuilding />
                   )}
                   {c.districts.map(d => {
                     const dKey = `${cKey}|${d.district}`
                     const buildings = [...d.buildings.values()]
                     const bucketList = buildings.map(b => {
                       const bKey = `${dKey}|${b.building}`
+                      const floorList = [...b.floors.values()]
+                      const floorNos = floorList.flatMap(f => f.nos)
+                      const total = b.nos.length + floorNos.length
                       return (
                         <div key={bKey} className="archive__day">
                           <div className="courts-row courts-row--day">
                             <Head level="day" open={!!open[bKey]} label={b.building ? `Building ${b.building}` : 'No building'}
-                                  count={b.nos.length} onToggle={() => toggle(bKey)} />
+                                  count={total} onToggle={() => toggle(bKey)} />
                             {b.building && (
                               <RemoveBtn label="Remove building"
-                                         onClick={() => removeRows([...b.nos.map(n => n.id), ...b.rowIds], `building ${b.building} with its court numbers`)} />
+                                         onClick={() => removeRows([...b.nos.map(n => n.id), ...floorNos.map(n => n.id), ...floorList.flatMap(f => f.rowIds), ...b.rowIds], `building ${b.building} with its floors and court numbers`)} />
                             )}
                           </div>
                           {open[bKey] && (
                             <div className="archive__body">
-                              {b.nos.length ? courtNoChips(b.nos, c.high) : <p className="courts-empty">No court numbers yet.</p>}
+                              {b.nos.length > 0 && courtNoChips(b.nos, c.high)}
+                              {floorList.map(f => {
+                                const fKey = `${bKey}|${f.floor}`
+                                return (
+                                  <div key={fKey} className="archive__day">
+                                    <div className="courts-row courts-row--day">
+                                      <Head level="day" open={!!open[fKey]} label={`Floor ${f.floor}`}
+                                            count={f.nos.length} onToggle={() => toggle(fKey)} />
+                                      <RemoveBtn label="Remove floor"
+                                                 onClick={() => removeRows([...f.nos.map(n => n.id), ...f.rowIds], `floor ${f.floor} with its court numbers`)} />
+                                    </div>
+                                    {open[fKey] && (
+                                      <div className="archive__body">
+                                        {f.nos.length ? courtNoChips(f.nos, c.high) : <p className="courts-empty">No court numbers yet.</p>}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                              {total === 0 && floorList.length === 0 && <p className="courts-empty">No court numbers yet.</p>}
                             </div>
                           )}
                         </div>
@@ -308,7 +367,7 @@ export default function CourtsAdmin() {
                         {open[dKey] && (
                           <div className="archive__body">
                             {body}
-                            {/* The district is already known here, so only the building and court no. are asked */}
+                            {/* The district is already known here, so only the building, floor and court no. are asked */}
                             <CourtNoAdder court={c.court} district={d.district} askBuilding />
                           </div>
                         )}

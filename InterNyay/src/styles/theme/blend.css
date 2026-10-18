@@ -133,3 +133,13 @@
 .sidebar__user-menu-item:hover { background: rgba(201, 168, 76, 0.12); }
 .sidebar__user-menu-item.is-active:hover { background: var(--color-gold); }
 .sidebar__user-menu-sep { background: rgba(201, 168, 76, 0.22); }
+
+/* ---------- Sign Out button: same width, radius and padding as the account row above it ---------- */
+.sidebar__user .nav-item.nav-item--danger {
+  width: calc(100% + 1rem);
+  margin: 6px -0.5rem 0;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  min-height: 0;
+}

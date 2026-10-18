@@ -1,4 +1,4 @@
-import { useCourts, courtDistrictLabel } from '../../constants/courts'
+import { useCourts, courtDistrictLabel, buildingWithFloor } from '../../constants/courts'
 import { useState } from 'react'
 import HearingLink from './HearingLink'
 
@@ -63,7 +63,8 @@ export default function JudgeCard({ judge, actions, tags, note }) {
 
       <dl className="judge-card__fields">
         {judge.courtRoomNo && <Field label="Court No.">{judge.courtRoomNo}</Field>}
-        {judge.building && <Field label="Building">{judge.building}</Field>}
+        {judge.building && <Field label="Building">{buildingWithFloor(judge.building, judge.floor)}</Field>}
+        {judge.floor && <Field label="Floor">{judge.floor}</Field>}
         {judge.vcMeetingId && <Field label="VC Meeting ID">{judge.vcMeetingId}</Field>}
 
         {judge.courtEmail && (

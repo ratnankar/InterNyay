@@ -3,7 +3,7 @@ import { onLiveRefresh } from '../../utils/liveRefresh'
 import api from '../../services/api'
 import { useApp } from '../../context/AppContext'
 import CourtPeriodModal from '../admin/CourtPeriodModal'
-import { useCourts, getCourtNames, getDistricts } from '../../constants/courts'
+import { useCourts, getCourtNames, getDistricts, buildingWithFloor } from '../../constants/courts'
 import useOverlayClose from '../../hooks/useOverlayClose'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { formatIsoDate } from '../../utils/rosterUtils'
@@ -34,7 +34,7 @@ function byDistrict(court) {
   }
 }
 
-// Court -> District -> Building (when there is one) -> Court no., each court no. with all its periods
+// Court -> District -> Building (when there is one) -> Floor (when there is one) -> Court no., each court no. with all its periods
 function buildTree(entries) {
   const courts = new Map()
 
@@ -47,7 +47,10 @@ function buildTree(entries) {
     if (!districts.has(district)) districts.set(district, new Map())
     const buildings = districts.get(district)
     if (!buildings.has(building)) buildings.set(building, new Map())
-    const nos = buildings.get(building)
+    const floors = buildings.get(building)
+    const floor = e.floor || ''
+    if (!floors.has(floor)) floors.set(floor, new Map())
+    const nos = floors.get(floor)
     if (!nos.has(e.courtRoomNo)) nos.set(e.courtRoomNo, [])
     nos.get(e.courtRoomNo).push(e)
   })
@@ -57,13 +60,23 @@ function buildTree(entries) {
     const districtNodes = [...districts.keys()].sort(byDistrict(court)).map(district => {
       const buildings = districts.get(district)
       const buildingNodes = [...buildings.keys()].sort(byNumber).map(building => {
-        const nos = buildings.get(building)
-        const courtNos = [...nos.keys()].sort(byNumber).map(no => ({
-          key: `${court}|${district}|${building}|${no}`,
-          court, district, building, no,
-          rows: nos.get(no),
-        }))
-        return { key: `${court}|${district}|${building}`, building, courtNos, count: courtNos.length }
+        const floors = buildings.get(building)
+        const floorNodes = [...floors.keys()].sort(byNumber).map(floor => {
+          const nos = floors.get(floor)
+          const courtNos = [...nos.keys()].sort(byNumber).map(no => ({
+            key: `${court}|${district}|${building}|${floor}|${no}`,
+            court, district, building, floor, no,
+            rows: nos.get(no),
+          }))
+          return { key: `${court}|${district}|${building}|${floor}`, floor, courtNos, count: courtNos.length }
+        })
+        return {
+          key: `${court}|${district}|${building}`,
+          building,
+          hasFloors: floorNodes.some(f => f.floor),
+          floors: floorNodes,
+          count: floorNodes.reduce((n, f) => n + f.count, 0),
+        }
       })
       return {
         key: `${court}|${district}`,
@@ -102,7 +115,7 @@ export function Head({ level, open, label, count, onToggle }) {
 // In the admin console (onAdd, onEdit, onDelete given) every period, the current one too, can be edited or deleted, and new past ones added
 function CourtHistoryModal({ node, onClose, onAdd, onEdit, onDelete }) {
   const overlayHandlers = useOverlayClose(onClose)
-  const path = [node.court, node.district, node.building && `Building ${node.building}`].filter(Boolean).join(' › ')
+  const path = [node.court, node.district, node.building && `Building ${buildingWithFloor(node.building, node.floor)}`].filter(Boolean).join(' › ')
 
   return (
     <ModalPortal>
@@ -152,7 +165,7 @@ export default function SuccessorCourts({ admin = false }) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
-  const [pick,    setPick]    = useSessionState('qa_successor_pick', { court: '', district: '', building: '', courtNo: '' })
+  const [pick,    setPick]    = useSessionState('qa_successor_pick', { court: '', district: '', building: '', floor: '', courtNo: '' })
   const [open,    setOpen]    = useSessionState('qa_successor_open', {})
   const [picked,  setPicked]  = useSessionState('qa_successor_picked', null)
   // Period being added or edited in the admin console: { period, defaults }
@@ -180,13 +193,13 @@ export default function SuccessorCourts({ admin = false }) {
     ...picked,
     rows: entries.filter(e =>
       (e.court || 'Other') === picked.court && (e.district || 'Other') === picked.district &&
-      (e.building || '') === picked.building && e.courtRoomNo === picked.no),
+      (e.building || '') === picked.building && (e.floor || '') === (picked.floor || '') && e.courtRoomNo === picked.no),
   }, [picked, entries])
 
   // Court, district, building and court no. a new period starts from: the open court number, else the chosen filters
   const startFor = () => picked
-    ? { court: picked.court, district: picked.district, building: picked.building, courtRoomNo: picked.no }
-    : { court: pick.court, district: pick.district, building: pick.building === NONE ? '' : pick.building, courtRoomNo: pick.courtNo }
+    ? { court: picked.court, district: picked.district, building: picked.building, floor: picked.floor || '', courtRoomNo: picked.no }
+    : { court: pick.court, district: pick.district, building: pick.building === NONE ? '' : pick.building, floor: pick.floor === NONE ? '' : (pick.floor || ''), courtRoomNo: pick.courtNo }
 
   async function removePeriod(r) {
     const message = r.current
@@ -209,12 +222,15 @@ export default function SuccessorCourts({ admin = false }) {
     const inCourt = entries.filter(e => !pick.court || e.court === pick.court)
     const inDistrict = inCourt.filter(e => !pick.district || e.district === pick.district)
     const inBuilding = inDistrict.filter(e => !pick.building || (e.building || '') === (pick.building === NONE ? '' : pick.building))
+    const inFloor = inBuilding.filter(e => !pick.floor || (e.floor || '') === (pick.floor === NONE ? '' : pick.floor))
     return {
       courts:    uniq(entries.map(e => e.court).filter(Boolean)).sort(byCourt),
       districts: pick.court ? uniq(inCourt.map(e => e.district).filter(Boolean)).sort(byDistrict(pick.court)) : [],
       buildings: pick.court ? uniq(inDistrict.map(e => e.building).filter(Boolean)).sort(byNumber) : [],
       hasUnbuilt: pick.court ? inDistrict.some(e => !e.building) : false,
-      courtNos:  pick.building ? uniq(inBuilding.map(e => e.courtRoomNo).filter(Boolean)).sort(byNumber) : [],
+      floors:    pick.building ? uniq(inBuilding.map(e => e.floor).filter(Boolean)).sort(byNumber) : [],
+      hasUnfloored: pick.building ? inBuilding.some(e => !e.floor) : false,
+      courtNos:  pick.building ? uniq(inFloor.map(e => e.courtRoomNo).filter(Boolean)).sort(byNumber) : [],
     }
   }, [entries, pick])
 
@@ -223,15 +239,16 @@ export default function SuccessorCourts({ admin = false }) {
       (!pick.court    || e.court === pick.court) &&
       (!pick.district || e.district === pick.district) &&
       (!pick.building || (e.building || '') === (pick.building === NONE ? '' : pick.building)) &&
+      (!pick.floor    || (e.floor || '') === (pick.floor === NONE ? '' : pick.floor)) &&
       (!pick.courtNo  || e.courtRoomNo === pick.courtNo)
     )
     return matched
   }, [entries, pick])
 
   const tree = useMemo(() => buildTree(filtered), [filtered])
-  const searching = !!(pick.court || pick.district || pick.building || pick.courtNo)
+  const searching = !!(pick.court || pick.district || pick.building || pick.floor || pick.courtNo)
   const total = tree.reduce((n, c) => n + c.count, 0)
-  const reset = () => { setPick({ court: '', district: '', building: '', courtNo: '' }) }
+  const reset = () => { setPick({ court: '', district: '', building: '', floor: '', courtNo: '' }) }
 
   const isOpen = key => searching || !!open[key]
   const toggle = key => setOpen(o => ({ ...o, [key]: !o[key] }))
@@ -256,14 +273,14 @@ export default function SuccessorCourts({ admin = false }) {
     <div className="successor">
       <div className="qa-jur-search">
         <p className="qa-section-header">
-          <span><Icon name="search" /> Search by Court, District, Building &amp; Court no.</span>
+          <span><Icon name="search" /> Search by Court, District, Building, Floor &amp; Court no.</span>
         </p>
 
         <div className="successor__filters">
           <div className="successor__field">
             <label className="form-label">Court</label>
             <Dropdown className="form-input" value={pick.court}
-                      onChange={e => setPick({ court: e.target.value, district: '', building: '', courtNo: '' })}>
+                      onChange={e => setPick({ court: e.target.value, district: '', building: '', floor: '', courtNo: '' })}>
               <option value="">All courts</option>
               {options.courts.map(c => <option key={c} value={c}>{c}</option>)}
             </Dropdown>
@@ -272,7 +289,7 @@ export default function SuccessorCourts({ admin = false }) {
           <div className="successor__field">
             <label className="form-label">District</label>
             <Dropdown className="form-input" value={pick.district} disabled={!pick.court || options.districts.length === 0}
-                      onChange={e => choose({ district: e.target.value, building: '', courtNo: '' })}>
+                      onChange={e => choose({ district: e.target.value, building: '', floor: '', courtNo: '' })}>
               <option value="">All districts</option>
               {options.districts.map(d => <option key={d} value={d}>{d}</option>)}
             </Dropdown>
@@ -282,10 +299,21 @@ export default function SuccessorCourts({ admin = false }) {
             <label className="form-label">Building</label>
             <Dropdown className="form-input" value={pick.building}
                       disabled={!pick.court || (options.buildings.length === 0 && !options.hasUnbuilt)}
-                      onChange={e => choose({ building: e.target.value, courtNo: '' })}>
+                      onChange={e => choose({ building: e.target.value, floor: '', courtNo: '' })}>
               <option value="">All buildings</option>
               {options.buildings.map(b => <option key={b} value={b}>{b}</option>)}
               {options.hasUnbuilt && <option value={NONE}>No building</option>}
+            </Dropdown>
+          </div>
+
+          <div className="successor__field">
+            <label className="form-label">Floor</label>
+            <Dropdown className="form-input" value={pick.floor || ''}
+                      disabled={!pick.building || (options.floors.length === 0 && !options.hasUnfloored)}
+                      onChange={e => choose({ floor: e.target.value, courtNo: '' })}>
+              <option value="">All floors</option>
+              {options.floors.map(f => <option key={f} value={f}>{f}</option>)}
+              {options.hasUnfloored && options.floors.length > 0 && <option value={NONE}>No floor</option>}
             </Dropdown>
           </div>
 
@@ -353,11 +381,58 @@ export default function SuccessorCourts({ admin = false }) {
                                           onToggle={() => toggle(bKey)}
                                         />
                                       </div>
-                                      {isOpen(bKey) && <div className="archive__body">{courtNoButtons(b.courtNos)}</div>}
+                                      {isOpen(bKey) && (
+                                        <div className="archive__body">
+                                          {b.hasFloors
+                                            ? b.floors.map(f => {
+                                                const fKey = `${bKey}|${f.floor}`
+                                                return (
+                                                  <div key={fKey} className="archive__day">
+                                                    <div className="courts-row courts-row--day">
+                                                      <Head
+                                                        level="day"
+                                                        open={isOpen(fKey)}
+                                                        label={f.floor ? `Floor ${f.floor}` : 'No floor recorded'}
+                                                        count={f.count}
+                                                        onToggle={() => toggle(fKey)}
+                                                      />
+                                                    </div>
+                                                    {isOpen(fKey) && <div className="archive__body">{courtNoButtons(f.courtNos)}</div>}
+                                                  </div>
+                                                )
+                                              })
+                                            : courtNoButtons(b.floors.flatMap(f => f.courtNos))}
+                                        </div>
+                                      )}
                                     </div>
                                   )
                                 })
-                              : courtNoButtons(d.buildings.flatMap(b => b.courtNos))}
+                              : d.buildings.some(b => b.hasFloors)
+                                ? d.buildings.map(b => {
+                                    const bKey = `${d.key}|${b.building}`
+                                    return (
+                                      <div key={bKey} className="archive__day">
+                                        {b.floors.map(f => {
+                                          const fKey = `${bKey}|${f.floor}`
+                                          return (
+                                            <div key={fKey}>
+                                              <div className="courts-row courts-row--day">
+                                                <Head
+                                                  level="day"
+                                                  open={isOpen(fKey)}
+                                                  label={f.floor ? `Floor ${f.floor}` : 'No floor recorded'}
+                                                  count={f.count}
+                                                  onToggle={() => toggle(fKey)}
+                                                />
+                                              </div>
+                                              {isOpen(fKey) && <div className="archive__body">{courtNoButtons(f.courtNos)}</div>}
+                                            </div>
+                                          )
+                                        })}
+                                      </div>
+                                    )
+                                  })
+                                : courtNoButtons(d.buildings.flatMap(b => b.floors.flatMap(f => f.courtNos)))}
                           </div>
                         )}
                       </div>

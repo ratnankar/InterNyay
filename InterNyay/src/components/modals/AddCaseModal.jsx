@@ -14,7 +14,7 @@ import {
 } from '../../constants/caseCatalog'
 import { judgesForCourtNo } from '../../utils/courtMatch'
 import { hasCorporatePanelClient } from '../../utils/caseClients'
-import { useCourts, useDefaultCourt, getDistricts, getCourtNos, hasNamedDistricts, isHighCourt } from '../../constants/courts'
+import { useCourts, useDefaultCourt, getDistricts, getCourtNosByBuilding, caseRoom, buildingWithFloor, hasNamedDistricts, isHighCourt } from '../../constants/courts'
 import { CHEQUE_BOUNCE_REASONS, WITHDRAWN_STATUS } from '../../constants/data'
 import CaseFeeSection from './CaseFeeSection'
 import FileNumbersModal from './FileNumbersModal'
@@ -30,6 +30,10 @@ import Req from '../common/Req'
 
 import Icon from '../common/Icon'
 import ModalPortal from '../../components/common/ModalPortal'
+// A court no. in the dropdown is identified by building, floor and number, because the same number can be used in several buildings
+const KEY_SEP = '\u0001'
+const roomKey = (building, floor, courtNo) => [building || '', floor || '', courtNo || ''].join(KEY_SEP)
+
 // FIR number, section and police station inputs for police challan cases
 function ChallanDetails({ form, setForm }) {
 
@@ -460,13 +464,31 @@ export default function AddCaseModal() {
     return () => { alive = false }
   }, [showAddCase, formCourt, formDistrict])
 
-  // Court numbers listed in the court table for the chosen court and district. A number the case already
-  // holds stays in the list until it is changed, so an old case can still be opened
-  const caseCourtNos = useMemo(() => {
-    const list = getCourtNos(formCourt, formDistrict)
-    const current = (newCaseForm.courtNo || '').trim()
-    return current && !list.includes(current) ? [...list, current] : list
-  }, [courtRows, formCourt, formDistrict, newCaseForm.courtNo])
+  // The same court numbers grouped by building. A room the case already holds (an old case, or one the table no longer
+  // lists) stays in the list, under its own building, so the case can still be opened. An old case saved before
+  // buildings were kept gets its building from the table when the number is in only one building
+  const caseCourtNoGroups = useMemo(() => {
+    const groups = getCourtNosByBuilding(formCourt, formDistrict).map(g => ({ ...g, rooms: [...g.rooms] }))
+    const no = (newCaseForm.courtNo || '').trim()
+    if (!no) return groups
+    const room = caseRoom({ court: formCourt, district: formDistrict, courtNo: no, building: newCaseForm.building, floor: newCaseForm.floor })
+    const listed = groups.some(g => g.building === room.building && g.rooms.some(r => r.courtNo === no && r.floor === room.floor))
+    if (listed) return groups
+    let g = groups.find(x => x.building === room.building)
+    if (!g) { g = { building: room.building, rooms: [], courtNos: [] }; groups.push(g) }
+    g.rooms.push({ courtNo: no, floor: room.floor })
+    return groups
+  }, [courtRows, formCourt, formDistrict, newCaseForm.courtNo, newCaseForm.building, newCaseForm.floor])
+
+  // Old case with a court no. but no building or floor yet: fill them in once the table is known
+  useEffect(() => {
+    const no = (newCaseForm.courtNo || '').trim()
+    if (!no || !formCourt || (newCaseForm.building && newCaseForm.floor)) return
+    const room = caseRoom({ court: formCourt, district: formDistrict, courtNo: no, building: newCaseForm.building, floor: newCaseForm.floor })
+    if (room.building && (room.building !== newCaseForm.building || room.floor !== newCaseForm.floor)) {
+      setNewCaseForm(f => ({ ...f, building: room.building, floor: room.floor }))
+    }
+  }, [courtRows, formCourt, formDistrict, newCaseForm.courtNo, newCaseForm.building, newCaseForm.floor])
 
   // Judge names for the chosen court number, without duplicates
   const judges = useMemo(
@@ -539,7 +561,7 @@ export default function AddCaseModal() {
 
   // Changing the court resets the district: the preferred one for that court when the user chose one, else the first
   function changeCourt(court) {
-    setNewCaseForm(f => ({ ...f, court, district: preferred.districtOf(court) || getDistricts(court)[0] || '', courtNo: '' }))
+    setNewCaseForm(f => ({ ...f, court, district: preferred.districtOf(court) || getDistricts(court)[0] || '', courtNo: '', building: '', floor: '' }))
   }
 
   // Close and reset the form
@@ -669,7 +691,7 @@ export default function AddCaseModal() {
                 className="form-input"
                 value={newCaseForm.district}
                 disabled={!hasNamedDistricts(newCaseForm.court)}
-                onChange={e => setNewCaseForm(f => ({ ...f, district: e.target.value, courtNo: '' }))}
+                onChange={e => setNewCaseForm(f => ({ ...f, district: e.target.value, courtNo: '', building: '', floor: '' }))}
               >
                 {!hasNamedDistricts(newCaseForm.court) && (
                   <option value={newCaseForm.district || ''}>
@@ -689,12 +711,29 @@ export default function AddCaseModal() {
               {/* Court numbers come from the court table for the chosen court and district */}
               <Dropdown
                 className="form-input"
-                value={newCaseForm.courtNo}
+                value={roomKey(newCaseForm.building, newCaseForm.floor, newCaseForm.courtNo)}
                 disabled={!newCaseForm.court}
-                onChange={e => setNewCaseForm(f => ({ ...f, courtNo: e.target.value }))}
+                onChange={e => {
+                  const [building = '', floor = '', courtNo = ''] = e.target.value.split(KEY_SEP)
+                  setNewCaseForm(f => ({ ...f, courtNo, building, floor }))
+                }}
               >
-                <option value="">{newCaseForm.court ? 'Select Court No.' : 'Select a court first'}</option>
-                {caseCourtNos.map(n => <option key={n} value={n}>{n}</option>)}
+                <option value={roomKey('', '', '')}>{newCaseForm.court ? 'Select Court No.' : 'Select a court first'}</option>
+                {caseCourtNoGroups.flatMap(g => {
+                  const opt = r => (
+                    <option key={roomKey(g.building, r.floor, r.courtNo)} value={roomKey(g.building, r.floor, r.courtNo)}>
+                      {r.courtNo}
+                    </option>
+                  )
+                  // No building: plain options, no floor. With a building: one group per floor, "Building (Floor)"
+                  if (!g.building) return g.rooms.map(opt)
+                  const floors = [...new Set(g.rooms.map(r => r.floor))]
+                  return floors.map(f => (
+                    <optgroup key={`${g.building}|${f}`} label={buildingWithFloor(g.building, f)}>
+                      {g.rooms.filter(r => r.floor === f).map(opt)}
+                    </optgroup>
+                  ))
+                })}
               </Dropdown>
               {newCaseForm.courtNo.trim() && formCourt && (
                 judges.length > 0

@@ -198,3 +198,66 @@
   .admin__toolbar > label.admin__count { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .admin__toolbar > label.admin__count > .form-input { margin-left: 0; }
 }
+
+/* ==========================================================================
+   Login activity (admin list and the per-account Login log popup), phones.
+   The table is shown as one card per sign-in; the summary, the filter row,
+   the card values and the pager are lined up to the card edges.
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* The popup uses the whole width instead of leaving a gap on one side */
+  .modal.modal--loglist { width: 100%; max-width: 100%; box-sizing: border-box; padding-left: 14px; padding-right: 14px; }
+
+  /* 24-hour summary: two even cards */
+  .loginlog__summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .loginlog__summary > span {
+    display: flex; align-items: baseline; gap: 6px; padding: 10px 12px;
+    background: var(--color-surface-2); border-radius: 10px;
+  }
+
+  /* Filter row: the event filter takes the free width, Refresh sits beside it, the count is underneath */
+  .loginlog__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .loginlog__toolbar > .dropdown { flex: 1 1 0; min-width: 0; width: auto; }
+  .loginlog__toolbar > button { flex: 0 0 auto; }
+  .loginlog__toolbar > .admin__count { flex: 1 1 100%; margin: 0; }
+  .loginlog__toolbar > .search-input, .loginlog__toolbar > :is(.search, [class*="search"]):not(.dropdown) { flex: 1 1 100%; }
+
+  /* Cards: heading on the left, value on the right, long values (email, IP, browser, reason) wrap inside the card */
+  .loginlog__table td { min-width: 0 !important; }
+  .loginlog__table td::before { flex: 0 0 34%; max-width: 34%; }
+  .loginlog__table td > * { min-width: 0; }
+  .loginlog__table td { overflow-wrap: anywhere; word-break: break-word; }
+  .loginlog__table td:first-child { font-weight: 600; }
+  .loginlog__table td[colspan] { justify-content: center; text-align: center; }
+
+  .loginlog__pager { justify-content: space-between; gap: 8px; }
+  .loginlog__pager > span { flex: 1 1 auto; text-align: center; }
+  .loginlog__note { text-align: left; }
+}
+
+/* ==========================================================================
+   Admin tables on tablets and narrow windows (641px to 1100px).
+   Above 640px the tables are not stacked into cards, so they scroll sideways. Cells used to wrap word by word
+   ("18 / Oct / 2026, / 3:26 / pm", names on three lines, the last column cut off). Now every cell stays on one line,
+   the table keeps a width that fits its columns, and the wrapper scrolls sideways with a smooth touch scroll.
+   Long free text (login Details, notes, hints) may still wrap inside its own column.
+   ========================================================================== */
+@media (min-width: 641px) and (max-width: 1100px) {
+  .admin__table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .admin__table { width: 100%; min-width: max-content; }
+  .admin__table th,
+  .admin__table td { white-space: nowrap; vertical-align: middle; }
+  .admin__table td > .admin__hint,
+  .admin__table td > .u-faint-xs { white-space: normal; }
+
+  /* Login activity: the free-text Details column wraps in a fixed width; the others stay on one line */
+  .loginlog__table td:last-child,
+  .loginlog__table th:last-child { white-space: normal; min-width: 180px; max-width: 280px; }
+
+  /* Pills never break into two lines */
+  .admin__pill { white-space: nowrap; display: inline-block; }
+
+  /* Toolbar: search grows, filter and buttons keep their size, the count drops to its own line when short of space */
+  .admin__toolbar { flex-wrap: wrap; align-items: center; row-gap: 10px; }
+  .admin__toolbar > .admin__count { flex: 0 0 auto; }
+}

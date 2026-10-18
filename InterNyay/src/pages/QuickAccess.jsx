@@ -142,7 +142,7 @@ function JudgesList({ initialQuery }) {
     const pool = vacantOnly ? judges.filter(j => j.vacant) : judges
     if (!q) return pool
     return pool.filter(j =>
-      [j.vacant ? 'vacant no judge' : j.name, j.designation, j.courtRoomNo, j.building, j.jurisdiction, j.courtReaderName, j.courtEmail, j.vcMeetingId]
+      [j.vacant ? 'vacant no judge' : j.name, j.designation, j.courtRoomNo, j.building, j.floor, j.jurisdiction, j.courtReaderName, j.courtEmail, j.vcMeetingId]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
     )

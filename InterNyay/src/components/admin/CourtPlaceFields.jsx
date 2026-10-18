@@ -1,4 +1,4 @@
-import { useCourts, getBuildings, getCourtNos } from '../../constants/courts'
+import { useCourts, getBuildings, getFloors, getCourtNos } from '../../constants/courts'
 import Dropdown from '../common/Dropdown'
 
 // Adds the stored value to a list when it is no longer in the court table, so it stays visible until it is changed
@@ -8,11 +8,12 @@ const withCurrent = (list, value) => (value && !list.includes(value) ? [...list,
 // The court no. list follows the building. New buildings and court numbers are added under Admin > Courts.
 // Only the chosen district's own buildings and court numbers are listed: ones that have no district yet are not offered here;
 // they are moved into a district under Admin > Courts.
-export default function CourtPlaceFields({ court, district, building, courtNo, onChange, error }) {
+export default function CourtPlaceFields({ court, district, building, floor = '', courtNo, onChange, error }) {
   useCourts()
 
   const buildings = withCurrent(getBuildings(court, district), building)
-  const courtNos = withCurrent(getCourtNos(court, district, building || ''), courtNo)
+  const floors = withCurrent(getFloors(court, district, building || ''), floor)
+  const courtNos = withCurrent(getCourtNos(court, district, building || '', floor || ''), courtNo)
 
   return (
     <>
@@ -21,12 +22,26 @@ export default function CourtPlaceFields({ court, district, building, courtNo, o
         <Dropdown
           className="form-input"
           value={building}
-          onChange={e => onChange({ building: e.target.value, courtRoomNo: '' })}
+          onChange={e => onChange({ building: e.target.value, floor: '', courtRoomNo: '' })}
         >
           <option value="">No building</option>
           {buildings.map(b => <option key={b} value={b}>{b}</option>)}
         </Dropdown>
       </div>
+
+      {floors.length > 0 && (
+        <div className="form-group">
+          <label className="form-label">Floor</label>
+          <Dropdown
+            className="form-input"
+            value={floor}
+            onChange={e => onChange({ floor: e.target.value, courtRoomNo: '' })}
+          >
+            <option value="">No floor</option>
+            {floors.map(f => <option key={f} value={f}>{f}</option>)}
+          </Dropdown>
+        </div>
+      )}
 
       <div className="form-group">
         <label className="form-label">Court number</label>

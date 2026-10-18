@@ -8,7 +8,7 @@ import { formatDisplayDate } from '../utils/dateUtils'
 import CaseFields from '../components/common/CaseFields'
 import { caseNatureOf } from '../utils/caseClassification'
 import useHearingLeave from '../hooks/useHearingLeave'
-import { useMyCourts } from '../constants/courts'
+import { useMyCourts, roomLabel } from '../constants/courts'
 
 import Icon from '../components/common/Icon'
 import { greetingName } from '../utils/nameUtils'
@@ -228,7 +228,7 @@ export default function Dashboard() {
                     {/* Court, file and cause list details, shown only when the card is collapsed */}
                     {!expanded && (
                       <>
-                        {c.court && (
+                        {c.court && !showCourtHeadings && (
                           <p className="hearing-row__meta">
                             Court: <strong>{c.court}</strong>
                           </p>
@@ -237,6 +237,11 @@ export default function Dashboard() {
                           {c.courtNo && (
                             <span className="hearing-row__court-no" title="Court number">
                               Court No. {c.courtNo}
+                            </span>
+                          )}
+                          {roomLabel(c) && (
+                            <span className="hearing-row__file-no" title="Building and floor">
+                              {roomLabel(c)}
                             </span>
                           )}
                           {c.fileNo && (

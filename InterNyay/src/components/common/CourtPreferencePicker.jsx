@@ -12,7 +12,7 @@ export default function CourtPreferencePicker({ value = [], onChange, disabled =
     const district = new Map()
     const high = new Map()
     rows.forEach(r => {
-      if (r.building || r.courtNo) return
+      if (r.building || r.floor || r.courtNo) return
       if (r.highCourt) high.set(r.court, [...(high.get(r.court) || []), r.id])
       else if (r.district) district.set(r.court, [...(district.get(r.court) || []), r.id])
     })
