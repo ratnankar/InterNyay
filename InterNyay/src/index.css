@@ -120,3 +120,6 @@
 
 /* Responsive fixes: calendar buttons, Contact Messages sub tabs, narrower sidebar drawer */
 @import './styles/responsive/phone-fixes.css';
+
+/* Miscellaneous Application: cards, windows and pickers on phones */
+@import './styles/responsive/misc-apps.css';

@@ -1,0 +1,36 @@
+@media (max-width: 860px) {
+  .misc-list { gap: 12px; }
+}
+
+@media (max-width: 640px) {
+  .misc-card {
+    padding: 14px;
+    background: #ffffff;
+    box-shadow: none;
+    animation: none;
+    transition: none;
+  }
+  .misc-card:hover { box-shadow: none; transform: none; }
+  .misc-card:active { background: var(--color-surface-alt); }
+
+  .misc-card__top { flex-wrap: wrap; gap: 6px 10px; }
+  .misc-card__title { flex: 1 1 140px; min-width: 0; line-height: 1.3; }
+  .misc-card__top > .misc-status { flex: 0 0 auto; }
+  .misc-card__foot { gap: 6px 14px; }
+
+  .misc-empty { padding: 28px 8px; }
+  .misc-empty .btn-gold { width: 100%; }
+  .misc-more .btn-outline { width: 100%; }
+
+  .misc-casebox { padding: 10px 12px; }
+
+  .misc-pick__chosen { flex-wrap: wrap; }
+  .misc-pick__info { flex: 1 1 100%; }
+  .misc-pick__chosen > .btn-outline { flex: 1 1 100%; justify-content: center; }
+
+  .misc-docblock__head > .btn-outline { width: 100%; justify-content: center; }
+
+  .misc-file { flex-direction: column; align-items: stretch; }
+  .misc-file label.btn-outline { justify-content: center; text-align: center; }
+  .misc-file__name { margin-right: 0; }
+}

@@ -1,6 +1,6 @@
 /* Misc. Application page: list of applications, add and detail windows */
 
-.misc-page { display: flex; flex-direction: column; gap: 1rem; }
+.misc-page { display: block; }
 
 /* Status filter beside the search box */
 .misc-filters { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -67,8 +67,8 @@
   text-align: center;
 }
 .misc-empty .icon { font-size: var(--fs-icon); }
-.misc-loading { text-align: center; }
-.misc-more { display: flex; justify-content: center; }
+.misc-loading { text-align: center; margin-top: 1rem; }
+.misc-more { display: flex; justify-content: center; margin-top: 1.25rem; }
 
 /* Windows */
 .misc-modal { max-height: calc(100vh - 32px); overflow-y: auto; }
