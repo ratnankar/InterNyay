@@ -233,7 +233,7 @@ export default function Calendar() {
                   className={`holiday-swatch holiday-swatch--${holidayCourtClass(h)}`}
                   title={`${holidayCourtLabel(h)} holiday`}
                 />
-                {h.label.length > 22 ? h.label.slice(0, 22) + '…' : h.label}
+                {h.label}
               </p>
               <p className={`calendar__upcoming-date calendar__upcoming-date--holiday calendar__upcoming-date--holiday-${holidayCourtClass(h)}`}>
                 {formatShortDate(h.date)}

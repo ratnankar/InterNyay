@@ -3,12 +3,12 @@
 // Pages for advocates and associates. The name is also the first URL segment (e.g. 'cases' -> /cases)
 export const NAV_IDS = [
   'dashboard', 'cases', 'clients', 'transactions', 'expenses', 'notifications',
-  'documents', 'forms', 'todos', 'calculator', 'quickaccess', 'judgeleave', 'contact', 'profile', 'myplan',
+  'documents', 'miscapps', 'forms', 'todos', 'calculator', 'quickaccess', 'judgeleave', 'contact', 'profile', 'myplan',
 ]
 
 // Pages whose URL differs from their page name: readable kebab-case, like /forgot-password.
 // The old run-together URLs (/quickaccess ...) still work and redirect to the new ones (see router.jsx)
-export const NAV_SLUGS = { quickaccess: 'quick-access', judgeleave: 'judges-on-leave', myplan: 'my-plan' }
+export const NAV_SLUGS = { quickaccess: 'quick-access', judgeleave: 'judges-on-leave', myplan: 'my-plan', miscapps: 'misc-applications' }
 const SLUG_TO_NAV = Object.fromEntries(Object.entries(NAV_SLUGS).map(([id, slug]) => [slug, id]))
 
 export const HOME_PATH = '/dashboard'

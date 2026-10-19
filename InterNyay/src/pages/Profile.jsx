@@ -22,7 +22,7 @@ import { PASSWORD_HINT } from '../utils/passwordPolicy'
 import UserLoginLogsModal from '../components/admin/UserLoginLogsModal'
 // Editable profile fields as [label, key, input type, placeholder]
 const PROFILE_FIELDS = [
-  ['Full Name *',       'name',           'text',  'Adv. Full Name'],
+  ['Full Name *',       'name',           'text',  'Advocate Full Name'],
   ['Bar Council No.',   'barNo',          'text',  'D/XXXX/2024'],
   ['Phone',             'phone',          'tel',   '+91 XXXXX XXXXX'],
   ['Specialization',    'specialization', 'text',  'e.g. Civil & Criminal'],

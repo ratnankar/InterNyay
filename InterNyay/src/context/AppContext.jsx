@@ -3424,6 +3424,7 @@ export function AppProvider({ children }) {
         // Main data and the calendar
         clients,
         cases,
+        setCases,
         loading,
 
         calendarDate,

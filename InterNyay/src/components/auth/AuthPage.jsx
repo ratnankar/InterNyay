@@ -27,7 +27,7 @@ const LOGIN_FIELDS = [
 // Registration inputs per account type; associates need the advocate code (no specialization) and can add their own bar number
 const REGISTER_FIELDS = {
   ADVOCATE: [
-    ['FULL NAME *',     'name',           'text',     'Adv. Full Name'],
+    ['FULL NAME *',     'name',           'text',     'Advocate Full Name'],
     ['BAR COUNCIL NO.', 'barNo',          'text',     'D/XXXX/2024'],
     ['EMAIL *',         'email',          'email',    'advocate@email.com'],
     ['PHONE *',         'phone',          'tel',      '+91 XXXXX XXXXX'],

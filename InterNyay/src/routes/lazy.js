@@ -33,6 +33,7 @@ export const TransactionHistory = lazyPage(() => import('../pages/TransactionHis
 export const Expenses = lazyPage(() => import('../pages/Expenses'))
 export const NotificationsPage = lazyPage(() => import('../pages/NotificationsPage'))
 export const Documents = lazyPage(() => import('../pages/Documents'))
+export const MiscApplications = lazyPage(() => import('../pages/MiscApplications'))
 export const LegalForms = lazyPage(() => import('../pages/LegalForms'))
 export const TodoList = lazyPage(() => import('../pages/TodoList'))
 export const CourtFeeCalculator = lazyPage(() => import('../pages/CourtFeeCalculator'))

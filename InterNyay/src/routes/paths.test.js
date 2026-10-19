@@ -20,6 +20,7 @@ describe('parseNavPath', () => {
     expect(parseNavPath('/quick-access')).toEqual({ nav: 'quickaccess', detail: null })
     expect(parseNavPath('/judges-on-leave')).toEqual({ nav: 'judgeleave', detail: null })
     expect(parseNavPath('/my-plan')).toEqual({ nav: 'myplan', detail: null })
+    expect(parseNavPath('/misc-applications')).toEqual({ nav: 'miscapps', detail: null })
     // the old run-together addresses are redirected by the router, so they are no page of their own
     expect(parseNavPath('/quickaccess')).toEqual({ nav: '', detail: null })
     expect(parseNavPath('/myplan')).toEqual({ nav: '', detail: null })
@@ -40,12 +41,13 @@ describe('navToPath', () => {
     expect(navToPath('quickaccess')).toBe('/quick-access')
     expect(navToPath('judgeleave')).toBe('/judges-on-leave')
     expect(navToPath('myplan')).toBe('/my-plan')
+    expect(navToPath('miscapps')).toBe('/misc-applications')
   })
   it('round-trips every page name through its URL', () => {
-    for (const id of ['dashboard', 'cases', 'clients', 'quickaccess', 'judgeleave', 'myplan', 'contact']) {
+    for (const id of ['dashboard', 'cases', 'clients', 'quickaccess', 'judgeleave', 'myplan', 'miscapps', 'contact']) {
       expect(parseNavPath(navToPath(id)).nav).toBe(id)
     }
-    expect(Object.keys(NAV_SLUGS).sort()).toEqual(['judgeleave', 'myplan', 'quickaccess'])
+    expect(Object.keys(NAV_SLUGS).sort()).toEqual(['judgeleave', 'miscapps', 'myplan', 'quickaccess'])
   })
   it('puts the admin profile under /admin', () => {
     expect(navToPath('profile', true)).toBe('/admin/profile')

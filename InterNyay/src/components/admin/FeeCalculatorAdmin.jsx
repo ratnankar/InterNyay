@@ -389,7 +389,7 @@ export default function FeeCalculatorAdmin() {
                           <option value="adv">Ad valorem scale (civil suit)</option>
                           {filings.map(f => (
                             <option key={`${f.caseType}/${f.key}`} value={`${f.caseType}/${f.key}`}>
-                              {COURT_TYPES.find(t => t.value === f.caseType)?.label}: {f.label.length > 60 ? f.label.slice(0, 57) + '…' : f.label}
+                              {COURT_TYPES.find(t => t.value === f.caseType)?.label}: {f.label}
                             </option>
                           ))}
                         </Dropdown>

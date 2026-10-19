@@ -8,6 +8,7 @@ import ToastContainer from './components/common/ToastContainer'
 import ConfirmHost from './components/common/ConfirmHost'
 import { HomeClass, RouteTitle, ScrollToTop } from './routes/RouteEffects'
 import { useDisableAutofill } from './utils/noAutofill'
+import { useFullTextOnHover } from './utils/fullTextOnHover'
 import { useEnterToContinue } from './utils/enterKey'
 import { useModalA11y } from './utils/modalA11y'
 
@@ -20,6 +21,8 @@ function GlobalBehaviours() {
   useModalA11y()
   // Browser autofill and saved-value suggestions stay on for the landing, sign-in and register pages only: switched off once signed in
   useDisableAutofill(loggedIn)
+  // Text cut short with "…" shows its full text when pointed at
+  useFullTextOnHover()
   return null
 }
 

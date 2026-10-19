@@ -3,7 +3,7 @@
 //   /                         landing page (signed out) -> dashboard (signed in)
 //   /login /register /forgot-password   sign-in screens (signed out only)
 //   /dashboard /cases /cases/:caseId /clients /clients/:clientId /transactions /expenses /notifications
-//   /documents /forms /todos /calculator /quick-access /judges-on-leave /contact /profile /my-plan   (signed in)
+//   /documents /misc-applications /forms /todos /calculator /quick-access /judges-on-leave /contact /profile /my-plan   (signed in)
 //                             (the old /quickaccess /judgeleave /myplan addresses redirect to the new ones)
 //   /forms/fill/:formId       form-fill screen that opens in its own window (no sidebar)
 //   /admin  /admin/:tab  /admin/profile    admin sign-in and console, one URL per tab (administrators only)
@@ -18,9 +18,10 @@ import { useApp } from './context/AppContext'
 
 import LandingPage        from './pages/LandingPage'
 import {
-  AuthPage, AppLayout, Dashboard, Cases, Clients, TransactionHistory, Expenses, NotificationsPage, Documents,
+  AuthPage, AppLayout, Dashboard, Cases, Clients, TransactionHistory, Expenses, NotificationsPage, Documents, MiscApplications,
   LegalForms, TodoList, CourtFeeCalculator, QuickAccess, JudgesOnLeave, ContactUs, Profile, MyPlan, Admin, FillFormPage,
 } from './routes/lazy'
+import { MISC_APP_NAME } from './constants/data'
 import NotFound           from './pages/NotFound'
 
 // "/": the landing page for visitors, the app for signed-in users. Old form-fill links (/?fillForm=3) are forwarded
@@ -106,6 +107,7 @@ const routes = [
               { path: 'expenses',      element: page('expenses', Expenses),              handle: { title: 'Expenses' } },
               { path: 'notifications', element: page('notifications', NotificationsPage), handle: { title: 'Notifications' } },
               { path: 'documents',     element: page('documents', Documents),            handle: { title: 'Documents' } },
+              { path: 'misc-applications', element: page('miscapps', MiscApplications), handle: { title: MISC_APP_NAME.full } },
               { path: 'forms',         element: page('forms', LegalForms),               handle: { title: 'Legal Forms' } },
               { path: 'todos',         element: page('todos', TodoList),                 handle: { title: 'To-Do List' } },
               { path: 'calculator',    element: page('calculator', CourtFeeCalculator),  handle: { title: 'Fee Calculator' } },

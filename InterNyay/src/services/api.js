@@ -362,6 +362,29 @@ export const documents = {
   remove:   (id)        => del(`/documents/${id}`),
 }
 
+// Misc. applications filed in cases: list, add (in an existing case or a new one), edit, dispose off and their documents
+export const miscApplications = {
+  list:    (params)   => get('/misc-applications', { params }),
+  get:     (id)       => get(`/misc-applications/${id}`),
+  create:  (body)     => post('/misc-applications', { body }),
+  update:  (id, body) => put(`/misc-applications/${id}`, { body }),
+  remove:  (id)       => del(`/misc-applications/${id}`),
+
+  // Mark as disposed off (the date is optional, today is used) or take it back to pending
+  dispose: (id, disposedOn) => put(`/misc-applications/${id}/dispose`, { body: disposedOn ? { disposedOn } : {} }),
+  reopen:  (id)       => put(`/misc-applications/${id}/reopen`),
+
+  // role: APPLICATION (the application itself), ORDER (once disposed off) or ADDITIONAL
+  uploadDoc: (id, file, role, name) => {
+    const body = new FormData()
+    body.append('file', file)
+    body.append('role', role)
+    if (name) body.append('name', name)
+    return postForm(`/misc-applications/${id}/documents`, body)
+  },
+  removeDoc: (id, docId) => del(`/misc-applications/${id}/documents/${docId}`),
+}
+
 // Court / bar association notifications
 export const notifications = {
   list: (params) => get('/notifications', { params }),
@@ -844,5 +867,5 @@ export const chat = {
 }
 
 // Everything grouped into one object so components can call api.cases.list() etc.
-const api = { publicApi, contact, chat, courts, courtPreferences, quickAccess, police, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
+const api = { publicApi, contact, chat, courts, courtPreferences, quickAccess, police, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
 export default api

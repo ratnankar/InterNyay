@@ -6,6 +6,10 @@ const SKIP_TYPES = ['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'r
 // The browser's one-time-code helper (OTP from SMS) is not an email or saved-value suggestion, so it stays as it is
 const KEEP = ['one-time-code']
 
+// Text-like inputs that Chrome may fill from saved emails, names and phone numbers, and the value that stops it
+const NEEDS_NO_MATCH = ['text', 'search', 'email', 'tel', 'url']
+const NO_MATCH = 'nope'
+
 // Turns off the browser's autofill and "saved values" dropdown for one field (or form):
 //  - autocomplete="off" for normal fields, "new-password" for password fields (stops saved passwords being offered)
 //  - the data-* flags tell common password managers (LastPass, 1Password, Bitwarden, Dashlane) to stay out of it
@@ -27,7 +31,9 @@ function lockField(el) {
   const current = el.getAttribute('autocomplete')
   if (KEEP.includes(current)) return
 
-  const wanted = tag === 'INPUT' && type === 'password' ? 'new-password' : 'off'
+  // Chrome ignores "off" on fields it takes for an email, name or phone field (a search box that says "name, email or phone",
+  // an Email input) and still offers saved emails. A value it cannot match to any saved data shows nothing
+  const wanted = tag === 'INPUT' && type === 'password' ? 'new-password' : tag === 'INPUT' && NEEDS_NO_MATCH.includes(type) ? NO_MATCH : 'off'
   if (current !== wanted) el.setAttribute('autocomplete', wanted)
 
   if (el.getAttribute('data-lpignore') !== 'true') {

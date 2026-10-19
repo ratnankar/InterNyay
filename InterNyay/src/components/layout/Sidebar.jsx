@@ -8,6 +8,8 @@ import BrandMark from '../common/BrandMark'
 import Icon from '../common/Icon'
 import usePlanFeatures from '../../hooks/usePlanFeatures'
 import { getAccounts, accountIdOf } from '../../utils/accounts'
+import FitLabel from '../common/FitLabel'
+import { MISC_APP_NAME } from '../../constants/data'
 import { ADMIN_PATH, HOME_PATH, navToPath } from '../../routes/paths'
 import '../../styles/layout/bottom-nav.css'
 
@@ -16,6 +18,7 @@ const NAV_FEATURE = {
   transactions: 'transactions',
   expenses:     'office_expenses',
   documents:    'documents',
+  miscapps:     'documents',
   forms:        'legal_forms',
   calculator:   'court_fee_calculator',
 }
@@ -27,6 +30,7 @@ const NAV_ITEMS = [
   { id: 'transactions', icon: 'money',  label: 'Transactions' },
   { id: 'expenses',     icon: 'receipt',  label: 'Expenses' },
   { id: 'documents',    icon: 'file',  label: 'Documents' },
+  { id: 'miscapps',     icon: 'folders',  label: MISC_APP_NAME.full, shortLabel: MISC_APP_NAME.short },
   { id: 'forms',        icon: 'clipboard',  label: 'Legal Forms' },
   { id: 'todos',        icon: 'note',  label: 'To-Do List' },
   { id: 'calculator',   icon: 'calculator',  label: 'Fee Calculator' },
@@ -36,9 +40,9 @@ const NAV_ITEMS = [
 
 // Primary tabs on small screens; the More tab opens the existing drawer for all other pages.
 const BOTTOM_ITEMS = [
-  { id: 'dashboard', icon: 'bank', label: 'Home' },
+  { id: 'dashboard', icon: 'bank', label: 'Dashboard', shortLabel: 'Home' },
   { id: 'cases', icon: 'folder', label: 'Cases' },
-  { id: 'todos', icon: 'note', label: 'To-Do' },
+  { id: 'todos', icon: 'note', label: 'To-Do List', shortLabel: 'To-Do' },
   { id: 'quickaccess', icon: 'bolt', label: 'Quick Access' },
 ]
 
@@ -227,7 +231,7 @@ export default function Sidebar() {
 
         {/* Main navigation links */}
         <nav className="sidebar__nav">
-          {navItems.map(({ id, icon, label }) => (
+          {navItems.map(({ id, icon, label, shortLabel }) => (
             <Link
               key={id}
               to={pathFor(id)}
@@ -236,7 +240,7 @@ export default function Sidebar() {
               onClick={closeMenus}
             >
               <span className="nav-item__icon"><Icon name={icon} /></span>
-              {label}
+              {shortLabel ? <FitLabel full={label} short={shortLabel} /> : label}
             </Link>
           ))}
         </nav>
@@ -344,12 +348,12 @@ export default function Sidebar() {
       {!isAdmin && (
         <>
           <nav className="bottom-nav" aria-label="Primary">
-            {BOTTOM_ITEMS.map(({ id, icon, label }) => (
+            {BOTTOM_ITEMS.map(({ id, icon, label, shortLabel }) => (
               <Link key={id} to={pathFor(id)} onClick={closeMenus}
                 className="bottom-nav__item"
                 aria-current={activeNav === id ? 'page' : undefined}>
                 <span className="bottom-nav__icon"><Icon name={icon} /></span>
-                <span>{label}</span>
+                {shortLabel ? <FitLabel full={label} short={shortLabel} className="fit-label--center" /> : <span>{label}</span>}
               </Link>
             ))}
             <button type="button" className="bottom-nav__item" onClick={() => setMenuOpen(true)}

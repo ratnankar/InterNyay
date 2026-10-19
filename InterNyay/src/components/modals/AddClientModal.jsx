@@ -50,6 +50,8 @@ export default function AddClientModal() {
 
   // True when the modal was opened from inside the Add Case form
   const fromCase = showAddClient === 'fromCase'
+  // Opened from another popup (Add Case, or the Misc. Application form), so it must sit on top of it
+  const stacked = fromCase || showAddClient === 'fromMisc'
 
   // Take the chosen photo, reset the input so the same file can be picked again, and store the cropped result on the form
   function onPhotoSelected(e) {
@@ -60,7 +62,7 @@ export default function AddClientModal() {
 
   return (
     <>
-    <div className={`overlay${fromCase ? ' overlay--stacked' : ''}`} {...overlayHandlers}>
+    <div className={`overlay${stacked ? ' overlay--stacked' : ''}`} {...overlayHandlers}>
       <div className="modal modal--md" onClick={e => e.stopPropagation()}>
         {cropper}
 

@@ -6,7 +6,7 @@ import TransactionAccessGate from '../components/auth/TransactionAccessGate'
 
 // Pages that depend on a plan feature: key is the page name, value is the feature flag checked with can()
 const PAGE_FEATURE = {
-  transactions: 'transactions', expenses: 'office_expenses', documents: 'documents',
+  transactions: 'transactions', expenses: 'office_expenses', documents: 'documents', miscapps: 'documents',
   forms: 'legal_forms', calculator: 'court_fee_calculator',
 }
 

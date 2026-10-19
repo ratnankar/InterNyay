@@ -470,7 +470,7 @@ function DistrictsView({ directory }) {
         {/* Districts table */}
         <table className="admin__table">
           <thead>
-            <tr><th>District</th><th>Range</th><th>Court</th><th>DCP phone</th><th>Addl. DCPs</th><th>Sub-divisions</th><th>Stations</th><th /></tr>
+            <tr><th>District</th><th>Range</th><th>Court</th><th>DCP phone</th><th>Additional DCPs</th><th>Sub-divisions</th><th>Stations</th><th /></tr>
           </thead>
           <tbody>
             {rows.length === 0 && <tr><td colSpan={8} className="admin__empty">No districts</td></tr>}
@@ -517,19 +517,19 @@ function DistrictsView({ directory }) {
           <p className="admin__hint admin__form-group--full u-bold u-mt-8" >Additional DCPs</p>
           {editing.addlDcp.map((a, i) => (
             <div className="admin__form-group--full admin__subform" key={i}>
-              <OfficeFields title={`Addl. DCP ${i + 1}`} value={a} onChange={o => setAddl(i, o)} />
+              <OfficeFields title={`Additional DCP ${i + 1}`} value={a} onChange={o => setAddl(i, o)} />
               <div className="admin__form-group--full">
                 <button type="button" className="btn-outline btn-outline--sm btn-outline--danger"
                         onClick={() => setEditing(s => ({ ...s, addlDcp: s.addlDcp.filter((_, j) => j !== i) }))}>
-                  Remove this Addl. DCP
+                  Remove this Additional DCP
                 </button>
               </div>
             </div>
           ))}
           <div className="admin__form-group--full">
             <button type="button" className="btn-outline btn-outline--sm"
-                    onClick={() => setEditing(s => ({ ...s, addlDcp: [...s.addlDcp, { ...blankOffice(), post: `Addl. DCP-${s.addlDcp.length + 1}` }] }))}>
-              + Add another Addl. DCP
+                    onClick={() => setEditing(s => ({ ...s, addlDcp: [...s.addlDcp, { ...blankOffice(), post: `Additional DCP-${s.addlDcp.length + 1}` }] }))}>
+              + Add another additional DCP
             </button>
           </div>
         </EditModal>

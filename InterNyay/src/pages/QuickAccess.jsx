@@ -577,7 +577,7 @@ function StationCard({ entry, cawHq, expanded, onToggle }) {
           <OfficerBlock tone="navy" badge="DCP"  title={entry.dcp.post} office={entry.dcp} />
 
           {entry.addlDcp.map(a => (
-            <OfficerBlock key={a.post} tone="slate" badge="Addl. DCP" title={a.post} office={a} />
+            <OfficerBlock key={a.post} tone="slate" badge="Additional DCP" title={a.post} office={a} />
           ))}
 
           <OfficerBlock tone="gold" badge="ACP"  title={entry.acp.post} office={entry.acp} />

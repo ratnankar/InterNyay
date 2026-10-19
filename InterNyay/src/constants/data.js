@@ -67,6 +67,17 @@ export const DOCUMENT_TYPES = [
   'Misc. Application (Type Manually)',
 ]
 
+// Misc. application statuses, as the backend saves them
+export const MISC_PENDING = 'Pending'
+export const MISC_DISPOSED = 'Disposed Off'
+export const MISC_STATUS_OPTIONS = [MISC_PENDING, MISC_DISPOSED]
+
+// Name of the Misc. Application page: the full name is shown wherever it fits, the short one only where it does not
+export const MISC_APP_NAME = { full: 'Miscellaneous Application', short: 'Misc. Application' }
+
+// Option in the application list that lets the advocate type the application's name
+export const MISC_TYPE_MANUAL = 'Misc. Application (Type Manually)'
+
 // Document types for documents attached to a client
 export const CLIENT_DOCUMENT_TYPES = [
   'ID Proof',
