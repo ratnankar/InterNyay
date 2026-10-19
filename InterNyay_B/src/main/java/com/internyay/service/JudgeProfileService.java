@@ -40,8 +40,17 @@ public class JudgeProfileService {
                         Collectors.mapping(s -> JudgeService.seatLabel(s.court(), s.district(), s.building(), s.floor(), s.courtRoomNo()),
                                 Collectors.toList())));
 
+        Map<Long, List<String>> courtNames = judgeRepo.findAllSeats().stream()
+                .filter(s -> s.court() != null && !s.court().isBlank())
+                .collect(Collectors.groupingBy(JudgeSeatDto::profileId,
+                        Collectors.mapping(JudgeSeatDto::court, Collectors.collectingAndThen(Collectors.toCollection(java.util.LinkedHashSet::new), java.util.ArrayList::new))));
+
+        Map<Long, List<JudgeSeatDto>> seats = judgeRepo.findAllSeats().stream()
+                .collect(Collectors.groupingBy(JudgeSeatDto::profileId));
+
         return profileRepo.findByActiveTrueAndVacantFalseOrderByNameAsc().stream()
-                .map(p -> JudgeProfileDto.from(p, courts.getOrDefault(p.getId(), List.of())))
+                .map(p -> JudgeProfileDto.from(p, courts.getOrDefault(p.getId(), List.of()), courtNames.getOrDefault(p.getId(), List.of()),
+                        seats.getOrDefault(p.getId(), List.of())))
                 .toList();
     }
 
@@ -65,10 +74,16 @@ public class JudgeProfileService {
     }
 
     public JudgeProfileDto toDto(JudgeProfile p) {
-        List<String> courts = judgeRepo.findByProfileIdAndActiveTrue(p.getId()).stream()
+        List<Judge> held = judgeRepo.findByProfileIdAndActiveTrue(p.getId());
+        List<String> courts = held.stream()
                 .map(j -> JudgeService.seatLabel(j.getCourt(), j.getDistrict(), j.getBuilding(), j.getFloor(), j.getCourtRoomNo()))
                 .toList();
-        return JudgeProfileDto.from(p, courts);
+        List<String> courtNames = held.stream()
+                .map(j -> j.getCourt()).filter(c -> c != null && !c.isBlank()).distinct().toList();
+        List<JudgeSeatDto> seats = held.stream()
+                .map(j -> new JudgeSeatDto(j.getId(), p.getId(), p.getName(), j.getCourt(), j.getDistrict(), j.getBuilding(), j.getFloor(), j.getCourtRoomNo()))
+                .toList();
+        return JudgeProfileDto.from(p, courts, courtNames, seats);
     }
 
     // Add a judge

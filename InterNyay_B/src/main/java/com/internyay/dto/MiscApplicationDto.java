@@ -31,7 +31,6 @@ public class MiscApplicationDto {
     public String clientName;
 
     public String applicationType;
-    public String history;
 
     // Dates as yyyy-MM-dd
     public String filingDate;
@@ -41,6 +40,9 @@ public class MiscApplicationDto {
     public String status;
     public String disposedOn;
 
+    // Allowed or Disallowed once disposed off
+    public String disposalOutcome;
+
     public String createdAt;
 
     // The application file, its order (only once disposed off) and the other documents
@@ -49,8 +51,16 @@ public class MiscApplicationDto {
     @Builder.Default
     public List<DocumentDto> additionalDocuments = new ArrayList<>();
 
+    // The dates the application was listed for, newest first
+    @Builder.Default
+    public List<MiscHearingDto> hearings = new ArrayList<>();
+
     // Needs the application's case and client to be loaded already (the repository queries do that)
     public static MiscApplicationDto from(MiscApplication a, List<DocumentDto> docs) {
+        return from(a, docs, List.of());
+    }
+
+    public static MiscApplicationDto from(MiscApplication a, List<DocumentDto> docs, List<MiscHearingDto> hearings) {
         Case c = a.getLegalCase();
 
         MiscApplicationDto dto = MiscApplicationDto.builder()
@@ -64,13 +74,15 @@ public class MiscApplicationDto {
                 .clientId(c.getClient() == null ? null : c.getClient().getId())
                 .clientName(c.getClient() == null ? null : c.getClient().getName())
                 .applicationType(a.getApplicationType())
-                .history(a.getHistory())
                 .filingDate(a.getFilingDate() == null ? null : a.getFilingDate().toString())
                 .hearingDate(a.getHearingDate() == null ? null : a.getHearingDate().toString())
                 .status(a.getStatus())
                 .disposedOn(a.getDisposedOn() == null ? null : a.getDisposedOn().toString())
+                .disposalOutcome(a.getDisposalOutcome())
                 .createdAt(a.getCreatedAt() == null ? null : a.getCreatedAt().toString())
                 .build();
+
+        if (hearings != null) dto.hearings.addAll(hearings);
 
         for (DocumentDto d : docs == null ? List.<DocumentDto>of() : docs) {
             if (ROLE_APPLICATION.equals(d.miscRole)) dto.applicationDocument = d;

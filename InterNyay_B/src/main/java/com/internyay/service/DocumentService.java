@@ -7,6 +7,7 @@ import com.internyay.entity.DocumentMeta;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.ClientRepository;
 import com.internyay.repository.DocumentRepository;
+import com.internyay.repository.MiscApplicationRepository;
 import com.internyay.storage.FileStorage;
 import com.internyay.storage.StorageCleaner;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class DocumentService {
     private final StorageCleaner cleaner;
     private final CaseRepository caseRepo;
     private final ClientRepository clientRepo;
+    private final MiscApplicationRepository miscRepo;
 
     // Documents of a case, newest first. Only for the owner of the case: someone else's case answers
     // "not found" (404), the same as a case that does not exist, so ids cannot be probed one by one
@@ -39,6 +41,17 @@ public class DocumentService {
             throw new NoSuchElementException("Case not found");
         }
         return listForOwnedCase(caseId);
+    }
+
+    // Fills in the application's name on the documents of misc. applications (one query for the whole list)
+    private List<DocumentDto> withMiscNames(List<DocumentDto> docs) {
+        Set<Long> ids = docs.stream().map(d -> d.miscApplicationId).filter(Objects::nonNull).collect(Collectors.toSet());
+        if (ids.isEmpty()) return docs;
+
+        Map<Long, String> names = new HashMap<>();
+        miscRepo.findAllById(ids).forEach(a -> names.put(a.getId(), a.getApplicationType()));
+        docs.forEach(d -> { if (d.miscApplicationId != null) d.miscApplicationName = names.get(d.miscApplicationId); });
+        return docs;
     }
 
     // Documents of a client, only for the owner of the client (404 otherwise, as for cases)
@@ -54,8 +67,8 @@ public class DocumentService {
     // Documents of a case that the caller has ALREADY loaded and checked for this user (CaseService, chat tools).
     // Never call this with an id that came straight from a request: use listForCase(caseId, userId)
     public List<DocumentDto> listForOwnedCase(Long caseId) {
-        return docRepo.findByCaseIdOrderByUploadedAtDesc(caseId)
-                .stream().map(DocumentDto::from).collect(Collectors.toList());
+        return withMiscNames(docRepo.findByCaseIdOrderByUploadedAtDesc(caseId)
+                .stream().map(DocumentDto::from).collect(Collectors.toList()));
     }
 
     // Same for a client that has already been checked for this user
@@ -82,8 +95,8 @@ public class DocumentService {
 
     // Everything the user has uploaded
     public List<DocumentDto> listForUser(Long userId) {
-        return docRepo.findByUserIdOrderByUploadedAtDesc(userId)
-                .stream().map(DocumentDto::from).collect(Collectors.toList());
+        return withMiscNames(docRepo.findByUserIdOrderByUploadedAtDesc(userId)
+                .stream().map(DocumentDto::from).collect(Collectors.toList()));
     }
 
     // Only advocate level documents (no case, no client)
@@ -95,9 +108,11 @@ public class DocumentService {
     // Documents for many cases at once
     public Map<Long, List<DocumentDto>> mapByCaseIds(Collection<Long> caseIds) {
         if (caseIds == null || caseIds.isEmpty()) return Map.of();
-        return docRepo.findByCaseIdIn(caseIds).stream()
+        // The application's name is filled in too, so a case's misc. documents are grouped under it (not under "Misc. Application")
+        List<DocumentDto> all = withMiscNames(docRepo.findByCaseIdIn(caseIds).stream()
                 .map(DocumentDto::from)
-                .collect(Collectors.groupingBy(d -> d.caseId));
+                .collect(Collectors.toList()));
+        return all.stream().collect(Collectors.groupingBy(d -> d.caseId));
     }
 
     // Attach a document to a case
@@ -287,6 +302,17 @@ public class DocumentService {
     @org.springframework.transaction.annotation.Transactional
     public void deleteAllForCase(Long caseId) {
         remove(docRepo.findByCaseIdOrderByUploadedAtDesc(caseId));
+    }
+
+    // The application's own file is filed under the application's type, so renaming the type renames it there too
+    @org.springframework.transaction.annotation.Transactional
+    public void retypeMiscDocuments(Long miscApplicationId, String miscRole, String type) {
+        for (DocumentMeta d : docRepo.findByMiscApplicationIdOrderByUploadedAtAsc(miscApplicationId)) {
+            if (miscRole.equals(d.getMiscRole()) && !type.equals(d.getType())) {
+                d.setType(type);
+                docRepo.save(d);
+            }
+        }
     }
 
     // Remove all documents of a misc. application

@@ -8,6 +8,7 @@ import com.internyay.entity.User;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.HearingDayLimitRepository;
 import com.internyay.repository.HearingRepository;
+import com.internyay.repository.MiscApplicationHearingRepository;
 import com.internyay.repository.NoHearingDateRepository;
 import com.internyay.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,7 @@ class HearingDayServiceTest {
     @Mock CaseRepository caseRepo;
     @Mock HearingRepository hearingRepo;
     @Mock UserRepository userRepo;
+    @Mock MiscApplicationHearingRepository miscHearingRepo;
 
     private HearingDayService service;
     private User user;
@@ -59,12 +61,24 @@ class HearingDayServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new HearingDayService(noHearingRepo, limitRepo, caseRepo, hearingRepo, userRepo);
+        service = new HearingDayService(noHearingRepo, limitRepo, caseRepo, hearingRepo, userRepo, miscHearingRepo);
         user = User.builder().id(USER).build();
         when(userRepo.findById(USER)).thenReturn(Optional.of(user));
         when(limitRepo.findByUserIdAndLimitDate(USER, DAY)).thenReturn(Optional.empty());
         when(caseRepo.findByUser_IdAndNextHearing(USER, DAY)).thenReturn(List.of());
         when(hearingRepo.findWithCaseByUserAndDate(USER, DAY)).thenReturn(List.of());
+        when(miscHearingRepo.caseIdsOnDate(USER, DAY)).thenReturn(List.of());
+    }
+
+    @Test
+    void aMiscApplicationListedOnTheDayCountsItsCase() {
+        user.setDailyHearingLimit(2);
+        when(caseRepo.findByUser_IdAndNextHearing(USER, DAY)).thenReturn(List.of(caseWithId(1)));
+        when(miscHearingRepo.caseIdsOnDate(USER, DAY)).thenReturn(List.of(2L));
+
+        assertThatThrownBy(() -> service.assertAllowed(DAY, USER, 99L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already has 2 hearings");
     }
 
     @Test

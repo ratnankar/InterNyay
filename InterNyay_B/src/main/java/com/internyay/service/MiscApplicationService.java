@@ -4,6 +4,8 @@ import com.internyay.dto.*;
 import com.internyay.entity.Case;
 import com.internyay.entity.DocumentMeta;
 import com.internyay.entity.MiscApplication;
+import com.internyay.entity.MiscApplicationHearing;
+import com.internyay.repository.MiscApplicationHearingRepository;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.MiscApplicationRepository;
 import com.internyay.repository.UserRepository;
@@ -21,6 +23,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.NoSuchElementException;
 
 // Misc. applications filed in cases: add (in a case the advocate has or in a case created with it), edit, dispose off,
@@ -34,8 +37,8 @@ public class MiscApplicationService {
     private final UserRepository userRepo;
     private final CaseService caseService;
     private final DocumentService documentService;
-    private final HearingService hearingService;
     private final HearingDayService hearingDays;
+    private final MiscApplicationHearingRepository hearingRepo;
 
     // Document type shown in the Documents page for the order and the additional documents of an application
     static final String ORDER_TYPE = "Misc. Application Order";
@@ -43,15 +46,46 @@ public class MiscApplicationService {
 
     // Newest first, filtered by status, case and a search text
     @Transactional(readOnly = true)
-    public Page<MiscApplicationDto> list(Long userId, String status, Long caseId, String search, int page, int size) {
+    public Page<MiscApplicationDto> list(Long userId, String status, String outcome, Long caseId, String search, int page, int size) {
 
         Pageable p = PageRequest.of(page, size, Sort.by("createdAt").descending().and(Sort.by("id").descending()));
-        Page<MiscApplication> rows = repo.findByFilters(userId, blank(status), caseId, blank(search), p);
+        Page<MiscApplication> rows = repo.findByFilters(userId, blank(status), outcomeOf(outcome), caseId, blank(search), p);
 
-        Map<Long, List<DocumentDto>> docs = documentService.mapByMiscApplicationIds(
-                rows.getContent().stream().map(MiscApplication::getId).toList());
+        return rows.map(withDetails(rows.getContent()));
+    }
 
-        return rows.map(a -> MiscApplicationDto.from(a, docs.getOrDefault(a.getId(), List.of())));
+    // Applications that have a hearing on a date: the dashboard shows them as their own cards
+    @Transactional(readOnly = true)
+    public List<MiscApplicationDto> onDate(Long userId, String date) {
+        LocalDate day = parseDate("Date", date);
+        if (day == null) throw new IllegalArgumentException("Date is needed");
+
+        List<MiscApplication> rows = repo.findOnDate(userId, day);
+        return rows.stream().map(withDetails(rows)).toList();
+    }
+
+    // Number of misc. application hearing dates in each case (caseId -> count), added to the case's hearing history count
+    @Transactional(readOnly = true)
+    public Map<Long, Long> hearingCounts(Long userId) {
+        Map<Long, Long> counts = new java.util.HashMap<>();
+        for (Object[] row : hearingRepo.countByCase(userId)) counts.put((Long) row[0], ((Number) row[1]).longValue());
+        return counts;
+    }
+
+    // Turns applications into DTOs with their documents and hearing history, each loaded once for the whole list
+    private java.util.function.Function<MiscApplication, MiscApplicationDto> withDetails(List<MiscApplication> rows) {
+        List<Long> ids = rows.stream().map(MiscApplication::getId).toList();
+        Map<Long, List<DocumentDto>> docs = documentService.mapByMiscApplicationIds(ids);
+        Map<Long, List<MiscHearingDto>> hearings = hearingsOf(ids);
+        return a -> MiscApplicationDto.from(a, docs.getOrDefault(a.getId(), List.of()), hearings.getOrDefault(a.getId(), List.of()));
+    }
+
+    private Map<Long, List<MiscHearingDto>> hearingsOf(List<Long> ids) {
+        if (ids.isEmpty()) return Map.of();
+        return hearingRepo.findByMiscApplicationIdInOrderByHearingDateDesc(ids).stream()
+                .collect(Collectors.groupingBy(MiscApplicationHearing::getMiscApplicationId,
+                        Collectors.mapping(h -> MiscHearingDto.builder().id(h.getId()).date(h.getHearingDate().toString()).note(h.getNote()).build(),
+                                Collectors.toList())));
     }
 
     @Transactional(readOnly = true)
@@ -69,7 +103,7 @@ public class MiscApplicationService {
 
         LocalDate filing = parseDate("Filing date", req.getFilingDate());
         if (filing == null) filing = LocalDate.now();
-        LocalDate hearing = parseDate("Hearing date", req.getHearingDate());
+        LocalDate hearing = parseDate("Next hearing date", req.getHearingDate());
 
         Case legalCase = req.isNewCase() ? createCase(req, userId) : ownedCase(req.getCaseId(), userId);
 
@@ -80,17 +114,16 @@ public class MiscApplicationService {
                 .legalCase(legalCase)
                 .user(userRepo.getReferenceById(userId))
                 .applicationType(type)
-                .history(clean(req.getHistory()))
                 .filingDate(filing)
                 .hearingDate(hearing)
                 .status(MiscApplication.PENDING)
                 .build());
 
-        recordHearing(saved, userId);
+        recordHearing(saved);
         return toDto(saved);
     }
 
-    // Edits the type, history, filing date and hearing date. The case itself is not changed here
+    // Edits the type, filing date and next hearing date. The case itself is not changed here
     @Transactional
     public MiscApplicationDto update(Long id, MiscApplicationRequest req, Long userId) {
 
@@ -98,34 +131,104 @@ public class MiscApplicationService {
 
         String type = clean(req.getApplicationType());
         if (type == null) throw new IllegalArgumentException("Choose or type the application");
-        a.setApplicationType(type);
-        a.setHistory(clean(req.getHistory()));
+        if (!type.equals(a.getApplicationType())) {
+            a.setApplicationType(type);
+            documentService.retypeMiscDocuments(a.getId(), MiscApplicationDto.ROLE_APPLICATION, type);
+        }
 
         if (req.getFilingDate() != null) {
             LocalDate filing = parseDate("Filing date", req.getFilingDate());
             if (filing != null) a.setFilingDate(filing);
         }
 
-        // An empty hearing date clears it; a changed one must be an open day
-        LocalDate hearing = parseDate("Hearing date", req.getHearingDate());
+        // An empty next hearing date clears it; a changed one must be an open day
+        LocalDate hearing = parseDate("Next hearing date", req.getHearingDate());
+        LocalDate held = a.getHearingDate();
         boolean hearingChanged = hearing != null && !hearing.equals(a.getHearingDate());
         if (hearingChanged) hearingDays.assertAllowed(hearing, userId, a.getLegalCase().getId());
         a.setHearingDate(hearing);
 
         MiscApplication saved = repo.save(a);
-        if (hearingChanged) recordHearing(saved, userId);
+        if (hearingChanged) recordHearing(saved);
+        // The note belongs to the hearing just held: the date the application was listed for until now
+        String note = clean(req.getNote());
+        if (hearingChanged && note != null && held != null) {
+            hearingRepo.findByMiscApplicationIdAndHearingDate(saved.getId(), held).ifPresent(h -> {
+                h.setNote(note);
+                hearingRepo.save(h);
+            });
+        }
         return toDto(saved);
     }
 
-    // Marks the application as disposed off on a date (today when none is given). The order can be uploaded at any time
+    // Changes the date and note of one entry of the application's hearing history. When it was the next hearing date, that moves too
     @Transactional
-    public MiscApplicationDto dispose(Long id, String disposedOn, Long userId) {
+    public MiscApplicationDto updateHearing(Long id, Long hearingId, String date, String note, Long userId) {
+        MiscApplication a = findOwned(id, userId);
+        MiscApplicationHearing h = ownedHearing(a, hearingId);
+
+        LocalDate day = parseDate("Hearing date", date);
+        if (day == null) throw new IllegalArgumentException("A hearing entry needs a date");
+
+        if (!day.equals(h.getHearingDate())) {
+            if (hearingRepo.existsByMiscApplicationIdAndHearingDate(a.getId(), day)) {
+                throw new IllegalArgumentException("This application already has a hearing on that date");
+            }
+            hearingDays.assertAllowed(day, userId, a.getLegalCase().getId());
+
+            boolean wasNext = h.getHearingDate().equals(a.getHearingDate());
+            h.setHearingDate(day);
+            hearingRepo.save(h);
+            if (wasNext) {
+                a.setHearingDate(day);
+                repo.save(a);
+            }
+        }
+        // An empty note clears it
+        String cleaned = clean(note);
+        if (cleaned != null && cleaned.length() > 2000) throw new IllegalArgumentException("The note is too long");
+        h.setNote(cleaned);
+        hearingRepo.save(h);
+        return toDto(a);
+    }
+
+    // Removes one entry of the hearing history. When it was the next hearing date, the application has no next date again
+    @Transactional
+    public MiscApplicationDto deleteHearing(Long id, Long hearingId, Long userId) {
+        MiscApplication a = findOwned(id, userId);
+        MiscApplicationHearing h = ownedHearing(a, hearingId);
+
+        boolean wasNext = h.getHearingDate().equals(a.getHearingDate());
+        hearingRepo.delete(h);
+        if (wasNext) {
+            a.setHearingDate(null);
+            repo.save(a);
+        }
+        return toDto(a);
+    }
+
+    // The hearing entry, only when it belongs to the application
+    private MiscApplicationHearing ownedHearing(MiscApplication a, Long hearingId) {
+        MiscApplicationHearing h = hearingRepo.findById(hearingId)
+                .orElseThrow(() -> new NoSuchElementException("Hearing not found"));
+        if (!h.getMiscApplicationId().equals(a.getId())) throw new NoSuchElementException("Hearing not found");
+        return h;
+    }
+
+    // Marks the application as disposed off, as allowed or disallowed, on a date (the date is optional).
+    // The order can be uploaded at any time
+    @Transactional
+    public MiscApplicationDto dispose(Long id, String disposedOn, String outcome, Long userId) {
 
         MiscApplication a = findOwned(id, userId);
 
+        String result = outcomeOf(outcome);
+        if (result == null) throw new IllegalArgumentException("Choose whether the application was allowed or disallowed");
+
         LocalDate day = parseDate("Disposal date", disposedOn);
         a.setStatus(MiscApplication.DISPOSED_OFF);
-        a.setDisposedOn(day != null ? day : LocalDate.now());
+        a.setDisposedOn(day);
+        a.setDisposalOutcome(result);
 
         return toDto(repo.save(a));
     }
@@ -137,6 +240,7 @@ public class MiscApplicationService {
         MiscApplication a = findOwned(id, userId);
         a.setStatus(MiscApplication.PENDING);
         a.setDisposedOn(null);
+        a.setDisposalOutcome(null);
 
         return toDto(repo.save(a));
     }
@@ -222,20 +326,23 @@ public class MiscApplicationService {
         return ownedCase(created.getId(), userId);
     }
 
-    // Puts the application and its history into the hearing history of its case, on its hearing date
-    private void recordHearing(MiscApplication a, Long userId) {
+    // Adds the application's next hearing date to its own hearing history (a date already there is not added twice).
+    // The case's hearing history is not touched: the application has its own
+    private void recordHearing(MiscApplication a) {
         if (a.getHearingDate() == null) return;
+        if (hearingRepo.existsByMiscApplicationIdAndHearingDate(a.getId(), a.getHearingDate())) return;
 
-        String line = "Misc. application: " + a.getApplicationType();
-        if (a.getHistory() != null) line += " — " + a.getHistory();
-
-        hearingService.noteApplicationHearing(a.getLegalCase(), a.getHearingDate(), line, userId);
+        hearingRepo.save(MiscApplicationHearing.builder()
+                .miscApplicationId(a.getId())
+                .hearingDate(a.getHearingDate())
+                .build());
     }
 
     private MiscApplicationDto toDto(MiscApplication a) {
         // Reloaded with the case, court and client so the DTO never reads a lazy relation
         MiscApplication full = repo.findWithCaseById(a.getId()).orElse(a);
-        return MiscApplicationDto.from(full, documentService.listForOwnedMiscApplication(full.getId()));
+        return MiscApplicationDto.from(full, documentService.listForOwnedMiscApplication(full.getId()),
+                hearingsOf(List.of(full.getId())).getOrDefault(full.getId(), List.of()));
     }
 
     // Name shown for a file when none is typed
@@ -267,6 +374,15 @@ public class MiscApplicationService {
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException(label + " is not a valid date");
         }
+    }
+
+    // "allowed" / "Disallowed" in any letter case, or null when it is neither
+    private static String outcomeOf(String text) {
+        String t = clean(text);
+        if (t == null) return null;
+        if (t.equalsIgnoreCase(MiscApplication.ALLOWED)) return MiscApplication.ALLOWED;
+        if (t.equalsIgnoreCase(MiscApplication.DISALLOWED)) return MiscApplication.DISALLOWED;
+        return null;
     }
 
     private static String clean(String s) {

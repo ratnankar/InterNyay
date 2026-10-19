@@ -27,6 +27,7 @@ public interface MiscApplicationRepository extends JpaRepository<MiscApplication
         WHERE a.user.id = :userId
         AND (:status IS NULL OR a.status = :status)
         AND (:caseId IS NULL OR c.id = :caseId)
+        AND (:outcome IS NULL OR a.disposalOutcome = :outcome)
         AND (:search IS NULL
              OR LOWER(a.applicationType) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%'))
@@ -36,17 +37,31 @@ public interface MiscApplicationRepository extends JpaRepository<MiscApplication
         countQuery = """
         SELECT COUNT(a) FROM MiscApplication a
         JOIN a.legalCase c
+        JOIN c.courtPlace
         JOIN c.client cl
         WHERE a.user.id = :userId
         AND (:status IS NULL OR a.status = :status)
         AND (:caseId IS NULL OR c.id = :caseId)
+        AND (:outcome IS NULL OR a.disposalOutcome = :outcome)
         AND (:search IS NULL
              OR LOWER(a.applicationType) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(c.caseNo) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(cl.name) LIKE LOWER(CONCAT('%', :search, '%')))
         """)
-    Page<MiscApplication> findByFilters(Long userId, String status, Long caseId, String search, Pageable pageable);
+    Page<MiscApplication> findByFilters(Long userId, String status, String outcome, Long caseId, String search, Pageable pageable);
+
+    // Applications that have a hearing on a date (the next one or one of the earlier ones), with case, court and client
+    @Query("""
+        SELECT a FROM MiscApplication a
+        JOIN FETCH a.legalCase c
+        JOIN FETCH c.courtPlace
+        JOIN FETCH c.client
+        WHERE a.user.id = :userId
+        AND a.id IN (SELECT h.miscApplicationId FROM MiscApplicationHearing h WHERE h.hearingDate = :date)
+        ORDER BY a.id
+        """)
+    List<MiscApplication> findOnDate(Long userId, java.time.LocalDate date);
 
     // One application with its case, court and client loaded
     @Query("""

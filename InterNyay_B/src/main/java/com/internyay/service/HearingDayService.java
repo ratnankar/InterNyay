@@ -8,9 +8,11 @@ import com.internyay.dto.HearingLimitsDto;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.HearingDayLimitRepository;
 import com.internyay.repository.HearingRepository;
+import com.internyay.repository.MiscApplicationHearingRepository;
 import com.internyay.repository.NoHearingDateRepository;
 import com.internyay.repository.UserRepository;
 import com.internyay.util.CaseStatuses;
+import com.internyay.util.MiscHearings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +44,7 @@ public class HearingDayService {
     private final CaseRepository caseRepo;
     private final HearingRepository hearingRepo;
     private final UserRepository userRepo;
+    private final MiscApplicationHearingRepository miscHearingRepo;
 
     // Sundays are always closed
     public static boolean isSunday(LocalDate date) {
@@ -83,7 +86,7 @@ public class HearingDayService {
                 .orElseGet(() -> userRepo.findById(userId).map(u -> u.getDailyHearingLimit()).orElse(null));
     }
 
-    // Different cases with a hearing on the date (next hearing date or hearing history, withdrawn ones are ignored),
+    // Different cases with a hearing on the date (next hearing date, hearing history or a misc. application listed that day; withdrawn ones are ignored),
     // the same count the calendar shows. A given case is left out
     public int countOn(LocalDate date, Long userId, Long excludeCaseId) {
         Set<Long> caseIds = new HashSet<>();
@@ -91,8 +94,13 @@ public class HearingDayService {
         for (Case c : caseRepo.findByUser_IdAndNextHearing(userId, date)) caseIds.add(c.getId());
         for (Hearing h : hearingRepo.findWithCaseByUserAndDate(userId, date)) {
             if (CaseStatuses.WITHDRAWN_OUTCOME.equalsIgnoreCase(h.getOutcome() == null ? "" : h.getOutcome().trim())) continue;
+            // An entry kept only for a misc. application's date (older versions) is not a hearing of the case
+            if (MiscHearings.isMiscOnly(h)) continue;
             caseIds.add(h.getLegalCase().getId());
         }
+
+        // A case whose misc. application is listed that day is in court that day too
+        caseIds.addAll(miscHearingRepo.caseIdsOnDate(userId, date));
 
         if (excludeCaseId != null) caseIds.remove(excludeCaseId);
         return caseIds.size();

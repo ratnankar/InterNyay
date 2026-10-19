@@ -6,8 +6,8 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-// A miscellaneous application filed in a case (stay, exemption, bail, ...). It has its own status, hearing date,
-// history note and documents (the application, its order once disposed off, and any additional documents)
+// A miscellaneous application filed in a case (bail or any other application). It has its own status, next hearing date
+// and documents (the application, its order once disposed off, and any additional documents)
 @Entity
 @Table(name = "misc_applications", indexes = {
         @Index(name = "idx_misc_apps_user_status", columnList = "user_id, status"),
@@ -19,6 +19,10 @@ public class MiscApplication {
 
     public static final String PENDING = "Pending";
     public static final String DISPOSED_OFF = "Disposed Off";
+
+    // How a disposed off application ended
+    public static final String ALLOWED = "Allowed";
+    public static final String DISALLOWED = "Disallowed";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,13 +42,9 @@ public class MiscApplication {
     @Column(name = "application_type", nullable = false)
     private String applicationType;
 
-    // What happened so far, shown in the application and added to the case's hearing history
-    @Column(columnDefinition = "TEXT")
-    private String history;
-
     private LocalDate filingDate;
 
-    // Date the application is listed for
+    // Next date the application is listed for
     private LocalDate hearingDate;
 
     // Pending or Disposed Off
@@ -53,6 +53,10 @@ public class MiscApplication {
     private String status = PENDING;
 
     private LocalDate disposedOn;
+
+    // Allowed or Disallowed, set when the application is disposed off
+    @Column(length = 20)
+    private String disposalOutcome;
 
     @Column(updatable = false)
     @Builder.Default

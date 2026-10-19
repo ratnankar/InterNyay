@@ -31,6 +31,7 @@ public class OptionService {
             new ListInfo("CLIENT_SUBTYPE",       "Client role in a case",         false, false, true),
             new ListInfo("DOCUMENT_TYPE",        "Case document type",            false, false, true),
             new ListInfo("CLIENT_DOCUMENT_TYPE", "Client document type",          false, false, true),
+            new ListInfo("MISC_APPLICATION_TYPE", "Misc. application type",       false, false, true),
             new ListInfo("SPECIALIZATION",       "Advocate specialization",       false, false, true),
             new ListInfo("CONTACT_CATEGORY",     "Contact Us topic",              false, false, true),
             new ListInfo("CONSUMER_PECUNIARY",   "Consumer claim value range",    true,  false, false),

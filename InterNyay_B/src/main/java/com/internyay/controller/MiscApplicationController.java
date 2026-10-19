@@ -27,11 +27,24 @@ public class MiscApplicationController {
     @GetMapping
     public ResponseEntity<Page<MiscApplicationDto>> list(
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String outcome,
             @RequestParam(required = false) Long caseId,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(service.list(auth.currentUserId(), status, caseId, search, page, Math.min(size, 100)));
+        return ResponseEntity.ok(service.list(auth.currentUserId(), status, outcome, caseId, search, page, Math.min(size, 100)));
+    }
+
+    // Applications with a hearing on a date (yyyy-MM-dd), for the dashboard
+    @GetMapping("/on")
+    public ResponseEntity<java.util.List<MiscApplicationDto>> onDate(@RequestParam String date) {
+        return ResponseEntity.ok(service.onDate(auth.currentUserId(), date));
+    }
+
+    // Misc. application hearing dates per case (caseId -> count), so the case hearing history counts include them
+    @GetMapping("/hearing-counts")
+    public ResponseEntity<Map<Long, Long>> hearingCounts() {
+        return ResponseEntity.ok(service.hearingCounts(auth.currentUserId()));
     }
 
     @GetMapping("/{id}")
@@ -51,12 +64,14 @@ public class MiscApplicationController {
         return ResponseEntity.ok(service.update(id, req, auth.currentUserId()));
     }
 
-    // Mark as disposed off (body: { "disposedOn": "yyyy-MM-dd" }, the date is optional)
+    // Mark as disposed off (body: { "outcome": "Allowed" | "Disallowed", "disposedOn": "yyyy-MM-dd" }; the outcome is
+    // required, the date is optional)
     @PutMapping("/{id}/dispose")
     public ResponseEntity<MiscApplicationDto> dispose(@PathVariable Long id,
                                                       @RequestBody(required = false) Map<String, String> body) {
         String day = body == null ? null : body.get("disposedOn");
-        return ResponseEntity.ok(service.dispose(id, day, auth.currentUserId()));
+        String outcome = body == null ? null : body.get("outcome");
+        return ResponseEntity.ok(service.dispose(id, day, outcome, auth.currentUserId()));
     }
 
     // Back to pending
@@ -69,6 +84,19 @@ public class MiscApplicationController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id, auth.currentUserId());
         return ResponseEntity.noContent().build();
+    }
+
+    // Edit the date and note of one hearing history entry (body: { "date": "yyyy-MM-dd", "note": "..." })
+    @PutMapping("/{id}/hearings/{hearingId}")
+    public ResponseEntity<MiscApplicationDto> updateHearing(@PathVariable Long id, @PathVariable Long hearingId,
+                                                            @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(service.updateHearing(id, hearingId, body == null ? null : body.get("date"), body == null ? null : body.get("note"), auth.currentUserId()));
+    }
+
+    // Delete one hearing history entry
+    @DeleteMapping("/{id}/hearings/{hearingId}")
+    public ResponseEntity<MiscApplicationDto> deleteHearing(@PathVariable Long id, @PathVariable Long hearingId) {
+        return ResponseEntity.ok(service.deleteHearing(id, hearingId, auth.currentUserId()));
     }
 
     // Upload the application (role APPLICATION), its order (ORDER, once disposed off) or an additional document (ADDITIONAL)

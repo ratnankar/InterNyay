@@ -24,7 +24,13 @@ and refuses to start if they do not. It never changes the database.
 | `V17__daily_hearing_limits.sql` | `users.daily_hearing_limit` (the usual most hearings per day) and `hearing_day_limits` (a limit for one particular date, replaces the usual one) |
 | `V18__login_log_app.sql` | `login_log.app` (WEB or CALENDAR): which app each sign-in came from, shown under Login Activity; older rows count as WEB |
 | `V19__court_floors.sql` | `courts.floor` (between building and court no., part of the unique key), plus `judges.floor` and `judge_court_no_records.floor`; existing rows get an empty floor |
-| `V21__misc_applications.sql` | `misc_applications` (applications filed in a case: type, history, filing and hearing date, Pending / Disposed Off) and `documents.misc_application_id` / `misc_role` (application, order or additional document) |
+| `V21__misc_applications.sql` | `misc_applications` (applications filed in a case: type, filing and hearing date, Pending / Disposed Off) and `documents.misc_application_id` / `misc_role` (application, order or additional document) |
+| `V22__misc_application_options.sql` | Dropdown Options list `MISC_APPLICATION_TYPE` for the Misc. Application page: Bail Application, and Other (Type Manually) which the app needs and is locked |
+| `V23__misc_application_disposal_outcome.sql` | `misc_applications.disposal_outcome`: Allowed or Disallowed once an application is disposed off |
+| `V24__misc_application_hearings.sql` | `misc_application_hearings`: every date an application was listed for (its own hearing history); an existing next hearing date becomes its first entry |
+| `V25__misc_application_hearing_note.sql` | `misc_application_hearings.note`: what happened at that hearing |
+| `V26__drop_misc_application_history.sql` | Drops the unused `misc_applications.history` column from V21 |
+| `V27__remove_generic_misc_document_type.sql` | Removes the generic document type "Misc. Application (Type Manually)"; misc. applications and their files are added on the Misc. Application page |
 
 This folder keeps only the two scripts that run outside the app: `create_database.sql` and `check_links.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).
@@ -50,7 +56,7 @@ Expected: the log shows `Successfully applied 11 migrations`, and these row coun
 | `consumer_commissions` | 12 |
 | `consumer_stations` | 101 |
 | `plans` | 4 |
-| `option_items` | 210 |
+| `option_items` | 211 |
 
 `fee_calculator_config` has 1 row after the first start (`SELECT JSON_LENGTH(config, '$.filings') FROM fee_calculator_config;` gives 46).
 Use Admin -> Fee Calculator -> Reset to return to the defaults later.

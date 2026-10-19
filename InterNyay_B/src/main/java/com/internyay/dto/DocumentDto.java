@@ -17,6 +17,8 @@ public class DocumentDto {
     // Misc. application the document belongs to and its role there (APPLICATION, ORDER, ADDITIONAL), null otherwise
     public Long miscApplicationId;
     public String miscRole;
+    // Name of that application (e.g. "Bail Application"), filled in by the document lists so documents can be grouped under it
+    public String miscApplicationName;
     public String name;
     public String type;
     public String fileName;

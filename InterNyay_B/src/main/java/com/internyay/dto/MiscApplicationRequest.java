@@ -25,11 +25,11 @@ public class MiscApplicationRequest {
     // Chosen from the document types or typed by hand
     @NotBlank @Size(max = 255) public String applicationType;
 
-    // What happened so far, shown on the application and added to the case's hearing history
-    @Size(max = 5000) public String history;
-
     public String filingDate;
     public String hearingDate;
+
+    // Edit only: note for the hearing just held (the previous next hearing date)
+    @Size(max = 2000) public String note;
 
     // True for a request that creates a new case
     public boolean isNewCase() { return "NEW".equalsIgnoreCase(caseMode == null ? "" : caseMode.trim()); }
