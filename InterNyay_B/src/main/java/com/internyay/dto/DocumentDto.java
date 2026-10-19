@@ -14,6 +14,9 @@ public class DocumentDto {
     public Long caseId;
     public Long clientId;
     public Long userId;
+    // Misc. application the document belongs to and its role there (APPLICATION, ORDER, ADDITIONAL), null otherwise
+    public Long miscApplicationId;
+    public String miscRole;
     public String name;
     public String type;
     public String fileName;
@@ -36,6 +39,8 @@ public class DocumentDto {
                 .caseId(d.getCaseId())
                 .clientId(d.getClientId())
                 .userId(d.getUserId())
+                .miscApplicationId(d.getMiscApplicationId())
+                .miscRole(d.getMiscRole())
                 .name(d.getName())
                 .type(d.getType())
                 .fileName(d.getFileName())

@@ -76,6 +76,10 @@ public class Case {
     // Court room number as the advocate has it for this case (it can change from hearing to hearing)
     private String courtNo;
 
+    // Building and floor of that court room, as listed in the court table (null when the table has none)
+    private String building;
+    private String floor;
+
     private String caseNature;
 
     // Relief sought, "Police Challan" is one of the values

@@ -15,6 +15,7 @@ public class LoginLogDto {
     public String role;
     public String eventType;
     public String method;
+    public String app;
     public String failureReason;
     public String ipAddress;
     public String userAgent;
@@ -29,6 +30,7 @@ public class LoginLogDto {
                 .role(l.getRole())
                 .eventType(l.getEventType() == null ? null : l.getEventType().name())
                 .method(l.getMethod() == null ? null : l.getMethod().name())
+                .app(l.getApp() == null ? "WEB" : l.getApp().name())
                 .failureReason(l.getFailureReason())
                 .ipAddress(l.getIpAddress())
                 .userAgent(l.getUserAgent())

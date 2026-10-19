@@ -147,7 +147,7 @@ public class JudgeService {
 
         Map<Long, List<CourtNoRecordDto>> historyById = history;
         Set<String> mahilaRooms = courtRepo.findByMahilaCourtTrue().stream()
-                .map(r -> roomKey(r.getCourt(), r.getDistrict(), r.getBuilding(), r.getCourtNo()))
+                .map(r -> roomKey(r.getCourt(), r.getDistrict(), r.getBuilding(), r.getFloor(), r.getCourtNo()))
                 .collect(Collectors.toSet());
         return judges.stream().map(j -> {
             // Vacant courts share one profile, but that is not "one judge holding many courts"
@@ -155,20 +155,20 @@ public class JudgeService {
                     : seatsByJudge.getOrDefault(j.getProfile().getId(), List.of());
             List<String> others = seats.stream()
                     .filter(s -> !s.id().equals(j.getId()))
-                    .map(s -> seatLabel(s.court(), s.district(), s.building(), s.courtRoomNo()))
+                    .map(s -> seatLabel(s.court(), s.district(), s.building(), s.floor(), s.courtRoomNo()))
                     .toList();
             return JudgeDto.from(j, historyById.getOrDefault(j.getId(), List.of())).toBuilder()
                     .courtCount(others.size() + 1)
                     .otherCourts(others)
-                    .mahilaCourt(mahilaRooms.contains(roomKey(j.getCourt(), j.getDistrict(), j.getBuilding(), j.getCourtRoomNo())))
+                    .mahilaCourt(mahilaRooms.contains(roomKey(j.getCourt(), j.getDistrict(), j.getBuilding(), j.getFloor(), j.getCourtRoomNo())))
                     .build();
         }).toList();
     }
 
-    private static String roomKey(String court, String district, String building, String courtNo) {
+    private static String roomKey(String court, String district, String building, String floor, String courtNo) {
         String no = CourtMatch.courtNo(courtNo);
         if (no == null) return "";
-        return String.join("|", norm(court), norm(district), norm(building), no);
+        return String.join("|", norm(court), norm(district), norm(building), norm(floor), no);
     }
 
     private static String norm(String value) {
@@ -176,11 +176,12 @@ public class JudgeService {
     }
 
     // "Saket · Court No. 12" style text for a court seat
-    static String seatLabel(String court, String district, String building, String courtNo) {
+    static String seatLabel(String court, String district, String building, String floor, String courtNo) {
         StringBuilder sb = new StringBuilder();
         if (district != null && !district.isBlank() && !district.equalsIgnoreCase(court)) sb.append(district).append(" · ");
         sb.append(court == null ? "" : court);
         if (building != null && !building.isBlank()) sb.append(" · Building ").append(building);
+        if (floor != null && !floor.isBlank()) sb.append(" · Floor ").append(floor);
         if (courtNo != null && !courtNo.isBlank()) sb.append(" · Court No. ").append(courtNo);
         return sb.toString();
     }
@@ -206,7 +207,7 @@ public class JudgeService {
                     String who = sat != null ? sat.getName()
                             : blankToNull(r.getJudgeName()) != null ? r.getJudgeName() : j.getName();
                     return new CourtNoLogDto(r.getId(), j.getId(), who, j.getDesignation(),
-                            d.court(), d.district(), blankToNull(r.getBuilding()),
+                            d.court(), d.district(), blankToNull(r.getBuilding()), blankToNull(r.getFloor()),
                             r.getCourtRoomNo(), r.getFromDate(), r.getTillDate(), r.getTillDate() == null);
                 })
                 .filter(l -> wantedCourt == null || wantedCourt.equalsIgnoreCase(l.court()))
@@ -227,7 +228,7 @@ public class JudgeService {
     private Court placeForPeriod(Judge judge, CourtNoRecordRequest req) {
         String court = blankToNull(req.getCourt()) != null ? req.getCourt() : judge.getCourt();
         String district = blankToNull(req.getCourt()) != null ? req.getDistrict() : judge.getDistrict();
-        return courtService.requirePlace(court, district, req.getBuilding(), req.getCourtRoomNo());
+        return courtService.requirePlace(court, district, req.getBuilding(), req.getFloor(), req.getCourtRoomNo());
     }
 
     @Transactional
@@ -241,6 +242,7 @@ public class JudgeService {
                 .fromDate(req.getFromDate())
                 .tillDate(req.getTillDate())
                 .building(blankToNull(place.getBuilding()))
+                .floor(blankToNull(place.getFloor()))
                 .court(blankToNull(place.getCourt()))
                 .district(blankToNull(place.getDistrict()))
                 .judgeName(judge.getName())
@@ -263,6 +265,7 @@ public class JudgeService {
         record.setFromDate(req.getFromDate());
         record.setTillDate(req.getTillDate());
         record.setBuilding(blankToNull(place.getBuilding()));
+        record.setFloor(blankToNull(place.getFloor()));
         record.setCourt(blankToNull(place.getCourt()));
         record.setDistrict(blankToNull(place.getDistrict()));
         courtNoRepo.save(record);
@@ -278,6 +281,7 @@ public class JudgeService {
             Judge judge = get(judgeId);
             judge.setCourtRoomNo(null);
             judge.setBuilding(null);
+            judge.setFloor(null);
             judge.setUpdatedAt(LocalDateTime.now());
             judgeRepo.save(judge);
             syncDutyMagistrates(judge);
@@ -305,6 +309,7 @@ public class JudgeService {
         record.setCourtRoomNo(place.getCourtNo());
         record.setFromDate(req.getFromDate());
         record.setBuilding(blankToNull(place.getBuilding()));
+        record.setFloor(blankToNull(place.getFloor()));
         record.setCourt(blankToNull(place.getCourt()));
         record.setDistrict(blankToNull(place.getDistrict()));
         courtNoRepo.save(record);
@@ -314,6 +319,7 @@ public class JudgeService {
         judge.setCourtId(courtService.listingBaseOf(place.getCourt(), place.getDistrict()).getId());
         judge.setCourtRoomNo(blankToNull(place.getCourtNo()));
         judge.setBuilding(blankToNull(place.getBuilding()));
+        judge.setFloor(blankToNull(place.getFloor()));
         judge.setUpdatedAt(LocalDateTime.now());
         judgeRepo.save(judge);
         syncDutyMagistrates(judge);
@@ -348,7 +354,7 @@ public class JudgeService {
         }
         String district = blankToNull(req.getDistrict());
         if (district != null) district = courtService.requireDistrictOf(court, district);
-        return courtNoTransfer.resolveForListing(court, district, req.getBuilding(), req.getCourtRoomNo());
+        return courtNoTransfer.resolveForListing(court, district, req.getBuilding(), req.getFloor(), req.getCourtRoomNo());
     }
 
     private void trackCourtNo(Judge judge, LocalDate requestedFrom, boolean correction) {
@@ -364,8 +370,10 @@ public class JudgeService {
             // Same court number in the same court and district, but the building may have been corrected
             JudgeCourtNoRecord same = open.get();
             String building = blankToNull(judge.getBuilding());
+            String floor = blankToNull(judge.getFloor());
             boolean changed = false;
             if (!Objects.equals(building, same.getBuilding())) { same.setBuilding(building); changed = true; }
+            if (!Objects.equals(floor, same.getFloor())) { same.setFloor(floor); changed = true; }
             if (changed) courtNoRepo.save(same);
             return;
         }
@@ -380,6 +388,7 @@ public class JudgeService {
             }
             current.setCourtRoomNo(newNo);
             current.setBuilding(blankToNull(judge.getBuilding()));
+            current.setFloor(blankToNull(judge.getFloor()));
             current.setCourt(court);
             current.setDistrict(district);
             courtNoRepo.save(current);
@@ -410,6 +419,7 @@ public class JudgeService {
                     .courtRoomNo(newNo)
                     .fromDate(effective)
                     .building(blankToNull(judge.getBuilding()))
+                    .floor(blankToNull(judge.getFloor()))
                     .court(court)
                     .district(district)
                     .judgeName(judge.getName())
@@ -468,7 +478,8 @@ public class JudgeService {
         Long courtId = courtService.listingBaseOf(place.getCourt(), place.getDistrict()).getId();
         return !Objects.equals(judge.getCourtId(), courtId)
                 || !Objects.equals(blankToNull(judge.getCourtRoomNo()), blankToNull(place.getCourtNo()))
-                || !Objects.equals(blankToNull(judge.getBuilding()), blankToNull(place.getBuilding()));
+                || !Objects.equals(blankToNull(judge.getBuilding()), blankToNull(place.getBuilding()))
+                || !Objects.equals(blankToNull(judge.getFloor()), blankToNull(place.getFloor()));
     }
 
     // One court can have only one judge: refuses a court room that another judge row already holds
@@ -477,14 +488,16 @@ public class JudgeService {
         if (no == null) return;
         Long courtId = courtService.listingBaseOf(place.getCourt(), place.getDistrict()).getId();
         String building = blankToNull(place.getBuilding());
+        String floor = blankToNull(place.getFloor());
 
         judgeRepo.findByCourtIdAndCourtRoomNoIgnoreCaseAndActiveTrue(courtId, no).stream()
                 .filter(j -> !j.getId().equals(ignoreId))
                 .filter(j -> Objects.equals(lower(blankToNull(j.getBuilding())), lower(building)))
+                .filter(j -> Objects.equals(lower(blankToNull(j.getFloor())), lower(floor)))
                 .findFirst()
                 .ifPresent(j -> {
                     throw new IllegalArgumentException("Court No. " + no + " ("
-                            + seatLabel(place.getCourt(), place.getDistrict(), place.getBuilding(), null)
+                            + seatLabel(place.getCourt(), place.getDistrict(), place.getBuilding(), place.getFloor(), null)
                             + ") already has a judge: " + j.getName()
                             + ". A court can have only one judge. Use \"Change judge\" on that listing instead");
                 });
@@ -577,7 +590,7 @@ public class JudgeService {
             // up to the day before the change, or just that one day when the change is made on the day the period began
             current.setTillDate(effective.isAfter(current.getFromDate()) ? effective.minusDays(1) : current.getFromDate());
             courtNoRepo.save(current);
-            courtNoRepo.save(successorPeriod(listing, current.getCourtRoomNo(), current.getBuilding(),
+            courtNoRepo.save(successorPeriod(listing, current.getCourtRoomNo(), current.getBuilding(), current.getFloor(),
                     current.getCourt(), current.getDistrict(), effective, newJudge));
         } else if (blankToNull(listing.getCourtRoomNo()) != null) {
             // No period was ever recorded (the listing had no court number history): record the judge who leaves from the day
@@ -590,12 +603,13 @@ public class JudgeService {
                     .fromDate(began)
                     .tillDate(effective.isAfter(began) ? effective.minusDays(1) : began)
                     .building(blankToNull(listing.getBuilding()))
+                    .floor(blankToNull(listing.getFloor()))
                     .court(listing.getCourt())
                     .district(listing.getDistrict())
                     .judgeName(outgoing.getName())
                     .profileId(outgoing.getId())
                     .build());
-            courtNoRepo.save(successorPeriod(listing, listing.getCourtRoomNo(), listing.getBuilding(),
+            courtNoRepo.save(successorPeriod(listing, listing.getCourtRoomNo(), listing.getBuilding(), listing.getFloor(),
                     listing.getCourt(), listing.getDistrict(), effective, newJudge));
         }
         courtNoRepo.saveAll(records);
@@ -609,13 +623,14 @@ public class JudgeService {
     }
 
     // The open period of the judge who takes a court over
-    private JudgeCourtNoRecord successorPeriod(Judge listing, String courtNo, String building, String court, String district,
+    private JudgeCourtNoRecord successorPeriod(Judge listing, String courtNo, String building, String floor, String court, String district,
                                                LocalDate from, JudgeProfile judge) {
         return JudgeCourtNoRecord.builder()
                 .judgeId(listing.getId())
                 .courtRoomNo(courtNo)
                 .fromDate(from)
                 .building(building)
+                .floor(floor)
                 .court(court)
                 .district(district)
                 .judgeName(judge.getName())
@@ -679,6 +694,7 @@ public class JudgeService {
         judge.setCourtId(courtService.listingBaseOf(place.getCourt(), place.getDistrict()).getId());
         judge.setCourtRoomNo(blankToNull(place.getCourtNo()));
         judge.setBuilding(blankToNull(place.getBuilding()));
+        judge.setFloor(blankToNull(place.getFloor()));
         judge.setVcMeetingId(blankToNull(req.getVcMeetingId()));
         judge.setCourtEmail(blankToNull(req.getCourtEmail()));
         judge.setVirtualCourtLink(blankToNull(req.getVirtualCourtLink()));

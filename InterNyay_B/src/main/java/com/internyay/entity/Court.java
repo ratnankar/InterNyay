@@ -9,7 +9,7 @@ import lombok.*;
 @Entity
 @Table(name = "courts",
        uniqueConstraints = @UniqueConstraint(name = "uk_court_place",
-               columnNames = {"court", "district", "building", "court_no"}))
+               columnNames = {"court", "district", "building", "floor", "court_no"}))
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Court {
 
@@ -26,6 +26,10 @@ public class Court {
 
     @Column(name = "building", nullable = false, length = 50)
     private String building;
+
+    @Builder.Default
+    @Column(name = "floor", nullable = false, length = 50)
+    private String floor = "";
 
     @Column(name = "court_no", nullable = false, length = 50)
     private String courtNo;

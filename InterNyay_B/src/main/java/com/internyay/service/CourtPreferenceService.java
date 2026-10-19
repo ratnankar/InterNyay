@@ -26,7 +26,7 @@ public class CourtPreferenceService {
     // A court a preference can point at: a high court, or a district under a court complex.
     // Building and court no. rows are details of such a court, not courts of their own
     private static boolean isPlace(Court c) {
-        return c.getBuilding().isEmpty() && c.getCourtNo().isEmpty()
+        return c.getBuilding().isEmpty() && c.getFloor().isEmpty() && c.getCourtNo().isEmpty()
                 && (c.isHighCourt() || !c.getDistrict().isEmpty());
     }
 

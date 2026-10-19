@@ -21,6 +21,7 @@ public class JudgeDto {
     private String designation;
     private String courtRoomNo;
     private String building;
+    private String floor;
     // Photo as base64 text
     private String photo;
     private String vcMeetingId;
@@ -50,6 +51,7 @@ public class JudgeDto {
                 .designation(j.getDesignation())
                 .courtRoomNo(j.getCourtRoomNo())
                 .building(j.getBuilding())
+                .floor(j.getFloor())
                 .photo(j.getPhoto())
                 .vcMeetingId(j.getVcMeetingId())
                 .courtEmail(j.getCourtEmail())

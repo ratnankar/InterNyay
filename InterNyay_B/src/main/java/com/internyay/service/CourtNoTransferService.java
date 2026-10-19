@@ -48,6 +48,7 @@ public class CourtNoTransferService {
         boolean high = ofCourt.stream().anyMatch(Court::isHighCourt);
         String wantedDistrict = clean(req == null ? null : req.district());
         String wantedBuilding = clean(req == null ? null : req.building());
+        String wantedFloor = clean(req == null ? null : req.floor());
 
         if (high && !wantedDistrict.isEmpty()) {
             throw new IllegalArgumentException(row.getCourt() + " is a high court and has no districts");
@@ -62,18 +63,23 @@ public class CourtNoTransferService {
         String toBuilding = ofCourt.stream().filter(r -> r.getDistrict().equals(toDistrict)).map(Court::getBuilding)
                 .filter(b -> !b.isEmpty() && b.equalsIgnoreCase(wantedBuilding)).findFirst().orElse(wantedBuilding);
 
-        if (row.getDistrict().equals(toDistrict) && row.getBuilding().equalsIgnoreCase(toBuilding)) {
-            throw new IllegalArgumentException("Court no. " + row.getCourtNo() + " is already in " + placeText(row.getCourt(), toDistrict, toBuilding));
+        String toFloor = ofCourt.stream().filter(r -> r.getDistrict().equals(toDistrict) && r.getBuilding().equalsIgnoreCase(toBuilding))
+                .map(Court::getFloor).filter(x -> !x.isEmpty() && x.equalsIgnoreCase(wantedFloor)).findFirst().orElse(wantedFloor);
+
+        if (row.getDistrict().equals(toDistrict) && row.getBuilding().equalsIgnoreCase(toBuilding) && row.getFloor().equalsIgnoreCase(toFloor)) {
+            throw new IllegalArgumentException("Court no. " + row.getCourtNo() + " is already in " + placeText(row.getCourt(), toDistrict, toBuilding, toFloor));
         }
         boolean taken = ofCourt.stream().anyMatch(r -> !r.getId().equals(row.getId()) && r.getDistrict().equals(toDistrict)
-                && r.getBuilding().equalsIgnoreCase(toBuilding) && r.getCourtNo().equalsIgnoreCase(row.getCourtNo()));
+                && r.getBuilding().equalsIgnoreCase(toBuilding) && r.getFloor().equalsIgnoreCase(toFloor)
+                && r.getCourtNo().equalsIgnoreCase(row.getCourtNo()));
         if (taken) {
             throw new IllegalArgumentException("Court no. " + row.getCourtNo() + " is already listed in "
-                    + placeText(row.getCourt(), toDistrict, toBuilding) + ". Remove or move that one first");
+                    + placeText(row.getCourt(), toDistrict, toBuilding, toFloor) + ". Remove or move that one first");
         }
 
         ensureBuilding(row.getCourt(), toDistrict, toBuilding, ofCourt, high);
-        relocate(row, toDistrict, toBuilding, req != null && req.correction());
+        ensureFloor(row.getCourt(), toDistrict, toBuilding, toFloor, rowsOf(row.getCourt()), high);
+        relocate(row, toDistrict, toBuilding, toFloor, req != null && req.correction());
         return courtService.list();
     }
 
@@ -86,47 +92,61 @@ public class CourtNoTransferService {
     //   - any other court no. is refused (it is not listed there).
     // Everything is saved in the caller's transaction, so a refused listing leaves the court table untouched.
     @Transactional
-    public Court resolveForListing(String court, String district, String building, String courtNo) {
-        String d = clean(district), b = clean(building), n = clean(courtNo);
+    public Court resolveForListing(String court, String district, String building, String floor, String courtNo) {
+        String d = clean(district), b = clean(building), f = clean(floor), n = clean(courtNo);
         Court base = courtService.listingBaseOf(court, d);
-        if (b.isEmpty() && n.isEmpty()) return base;
+        if (b.isEmpty() && f.isEmpty() && n.isEmpty()) return base;
 
         List<Court> rows = rowsOf(base.getCourt());
         String where = d.isEmpty() ? base.getCourt() + " without a district" : d + " / " + base.getCourt();
 
         // A building without a court no.: it must be listed under the district, or (when a district was chosen) wait in the
         // "no district" list, in which case it is added to the district
-        if (n.isEmpty()) {
+        if (n.isEmpty() && f.isEmpty()) {
             boolean inDistrict = rows.stream().anyMatch(r -> r.getDistrict().equals(d) && r.getBuilding().equalsIgnoreCase(b));
             boolean noDistrict = !d.isEmpty() && rows.stream().anyMatch(r -> r.getDistrict().isEmpty() && r.getBuilding().equalsIgnoreCase(b));
             if (inDistrict || noDistrict) return ensureBuilding(base.getCourt(), d, b, rows, false);
             throw new IllegalArgumentException("Building \"" + b + "\" is not listed for " + where
                     + " in the court table. Add it under Admin > Courts first");
         }
+        if (n.isEmpty()) {
+            boolean inDistrict = rows.stream().anyMatch(r -> r.getDistrict().equals(d) && r.getBuilding().equalsIgnoreCase(b) && r.getFloor().equalsIgnoreCase(f));
+            boolean noDistrict = !d.isEmpty() && rows.stream().anyMatch(r -> r.getDistrict().isEmpty() && r.getBuilding().equalsIgnoreCase(b) && r.getFloor().equalsIgnoreCase(f));
+            if (inDistrict || noDistrict) {
+                ensureBuilding(base.getCourt(), d, b, rows, false);
+                return ensureFloor(base.getCourt(), d, b, f, rowsOf(base.getCourt()), false);
+            }
+            throw new IllegalArgumentException("Floor \"" + f + "\" is not listed for " + where
+                    + (b.isEmpty() ? "" : ", building " + b) + " in the court table. Add it under Admin > Courts first");
+        }
 
         // The court no. is already in the chosen district (or, without a district, already has none): keep it
         Optional<Court> exact = rows.stream()
-                .filter(r -> r.getDistrict().equals(d) && r.getBuilding().equalsIgnoreCase(b) && r.getCourtNo().equalsIgnoreCase(n))
+                .filter(r -> r.getDistrict().equals(d) && r.getBuilding().equalsIgnoreCase(b) && r.getFloor().equalsIgnoreCase(f)
+                        && r.getCourtNo().equalsIgnoreCase(n))
                 .findFirst();
         if (exact.isPresent()) return exact.get();
 
         // A court no. that has no district yet and a district was chosen: it moves into that district
         if (!d.isEmpty()) {
             Optional<Court> unassigned = rows.stream()
-                    .filter(r -> r.getDistrict().isEmpty() && r.getBuilding().equalsIgnoreCase(b) && r.getCourtNo().equalsIgnoreCase(n))
+                    .filter(r -> r.getDistrict().isEmpty() && r.getBuilding().equalsIgnoreCase(b) && r.getFloor().equalsIgnoreCase(f)
+                            && r.getCourtNo().equalsIgnoreCase(n))
                     .findFirst();
             if (unassigned.isPresent()) {
                 Court u = unassigned.get();
-                String oldBuilding = u.getBuilding();
+                String oldBuilding = u.getBuilding(), oldFloor = u.getFloor();
                 ensureBuilding(base.getCourt(), d, oldBuilding, rows, false);
-                relocate(u, d, spellingIn(rows, d, oldBuilding), false);
-                dropEmptyUnassignedBuilding(base.getCourt(), oldBuilding);
+                String toBuilding = spellingIn(rows, d, oldBuilding);
+                ensureFloor(base.getCourt(), d, toBuilding, oldFloor, rowsOf(base.getCourt()), false);
+                relocate(u, d, toBuilding, floorSpellingIn(rowsOf(base.getCourt()), d, toBuilding, oldFloor), false);
+                dropEmptyUnassigned(base.getCourt(), oldBuilding, oldFloor);
                 return u;
             }
         }
 
         throw new IllegalArgumentException("Court no. \"" + n + "\" is not listed for " + where
-                + (b.isEmpty() ? "" : ", building " + b) + " in the court table. "
+                + (b.isEmpty() ? "" : ", building " + b) + (f.isEmpty() ? "" : ", floor " + f) + " in the court table. "
                 + (d.isEmpty() ? "Choose its district, or add it under Admin > Courts first"
                                : "Add it under Admin > Courts first"));
     }
@@ -134,17 +154,19 @@ public class CourtNoTransferService {
     // ---- shared steps ----
 
     // Changes the row's district and building in place and carries the judge sitting in it along
-    private void relocate(Court row, String toDistrict, String toBuilding, boolean correction) {
-        String oldDistrict = row.getDistrict(), oldBuilding = row.getBuilding();
+    private void relocate(Court row, String toDistrict, String toBuilding, String toFloor, boolean correction) {
+        String oldDistrict = row.getDistrict(), oldBuilding = row.getBuilding(), oldFloor = row.getFloor();
 
         // Judges are found by the place the row has now, before it changes
         List<Judge> seats = judgeRepo.findByCourtAndDistrictAndCourtRoomNoIgnoreCaseAndActiveTrue(
                         row.getCourt(), oldDistrict, row.getCourtNo()).stream()
                 .filter(j -> Objects.equals(lower(blankToNull(j.getBuilding())), lower(blankToNull(oldBuilding))))
+                .filter(j -> Objects.equals(lower(blankToNull(j.getFloor())), lower(blankToNull(oldFloor))))
                 .toList();
 
         row.setDistrict(toDistrict);
         row.setBuilding(toBuilding);
+        row.setFloor(toFloor);
         courtRepo.saveAndFlush(row);
 
         if (seats.isEmpty()) return;
@@ -153,6 +175,7 @@ public class CourtNoTransferService {
         for (Judge judge : seats) {
             judge.setDistrict(toDistrict);
             judge.setBuilding(blankToNull(toBuilding));
+            judge.setFloor(blankToNull(toFloor));
             judge.setCourtId(base.getId());
             judge.setUpdatedAt(LocalDateTime.now());
             judgeRepo.save(judge);
@@ -173,6 +196,7 @@ public class CourtNoTransferService {
             current.setCourt(row.getCourt());
             current.setDistrict(blankToNull(row.getDistrict()));
             current.setBuilding(blankToNull(row.getBuilding()));
+            current.setFloor(blankToNull(row.getFloor()));
             courtNoRepo.save(current);
             return;
         }
@@ -183,6 +207,7 @@ public class CourtNoTransferService {
                 .courtRoomNo(current.getCourtRoomNo())
                 .fromDate(today)
                 .building(blankToNull(row.getBuilding()))
+                .floor(blankToNull(row.getFloor()))
                 .court(row.getCourt())
                 .district(blankToNull(row.getDistrict()))
                 .judgeName(judge.getName())
@@ -208,12 +233,33 @@ public class CourtNoTransferService {
                 .filter(r -> r.getDistrict().equals(district) && r.getBuilding().equalsIgnoreCase(spelled) && r.getCourtNo().isEmpty())
                 .findFirst()
                 .orElseGet(() -> courtRepo.save(Court.builder().court(court).district(district).building(spelled)
-                        .courtNo("").highCourt(high).build()));
+                        .floor("").courtNo("").highCourt(high).build()));
+    }
+
+    private Court ensureFloor(String court, String district, String building, String floor, List<Court> ofCourt, boolean high) {
+        if (floor.isEmpty()) return null;
+        String spelled = floorSpellingIn(ofCourt, district, building, floor);
+        return rowsOf(court).stream()
+                .filter(r -> r.getDistrict().equals(district) && r.getBuilding().equalsIgnoreCase(building)
+                        && r.getFloor().equalsIgnoreCase(spelled) && r.getCourtNo().isEmpty())
+                .findFirst()
+                .orElseGet(() -> courtRepo.save(Court.builder().court(court).district(district).building(building)
+                        .floor(spelled).courtNo("").highCourt(high).build()));
+    }
+
+    private static String floorSpellingIn(List<Court> ofCourt, String district, String building, String floor) {
+        return ofCourt.stream().filter(r -> r.getDistrict().equals(district) && r.getBuilding().equalsIgnoreCase(building))
+                .map(Court::getFloor).filter(x -> !x.isEmpty() && x.equalsIgnoreCase(floor)).findFirst().orElse(floor);
     }
 
     // After a court no. left the "no district" list, a building left there with no court numbers is dropped,
     // because the building now lives in the district the court no. went to
-    private void dropEmptyUnassignedBuilding(String court, String building) {
+    private void dropEmptyUnassigned(String court, String building, String floor) {
+        if (!floor.isEmpty()) {
+            List<Court> floorRows = rowsOf(court).stream()
+                    .filter(r -> r.getDistrict().isEmpty() && r.getBuilding().equalsIgnoreCase(building) && r.getFloor().equalsIgnoreCase(floor)).toList();
+            if (floorRows.stream().noneMatch(r -> !r.getCourtNo().isEmpty())) courtRepo.deleteAll(floorRows);
+        }
         if (building.isEmpty()) return;
         List<Court> rows = rowsOf(court).stream()
                 .filter(r -> r.getDistrict().isEmpty() && r.getBuilding().equalsIgnoreCase(building)).toList();
@@ -231,9 +277,10 @@ public class CourtNoTransferService {
         return courtRepo.findAllByOrderByIdAsc().stream().filter(r -> r.getCourt().equals(court)).toList();
     }
 
-    private static String placeText(String court, String district, String building) {
+    private static String placeText(String court, String district, String building, String floor) {
         StringBuilder sb = new StringBuilder(district.isEmpty() ? court + " (no district)" : district + " / " + court);
         sb.append(building.isEmpty() ? ", no building" : ", building " + building);
+        if (!floor.isEmpty()) sb.append(", floor ").append(floor);
         return sb.toString();
     }
 

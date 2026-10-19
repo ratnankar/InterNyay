@@ -21,6 +21,12 @@ public interface DocumentRepository extends JpaRepository<DocumentMeta, String> 
     // Documents of many cases
     List<DocumentMeta> findByCaseIdIn(Collection<Long> caseIds);
 
+    // Documents of a misc. application, oldest first
+    List<DocumentMeta> findByMiscApplicationIdOrderByUploadedAtAsc(Long miscApplicationId);
+
+    // Documents of many misc. applications
+    List<DocumentMeta> findByMiscApplicationIdIn(Collection<Long> miscApplicationIds);
+
     // Documents not linked to any case or client
     List<DocumentMeta> findByUserIdAndCaseIdIsNullAndClientIdIsNullOrderByUploadedAtDesc(Long userId);
 }

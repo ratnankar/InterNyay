@@ -28,6 +28,7 @@ public class PlanFeatureInterceptor implements HandlerInterceptor {
     static {
         RULES.put("^/api/documents(/.*)?$",              "documents");
         RULES.put("^/api/(cases|clients)/[^/]+/documents(/.*)?$", "documents");
+        RULES.put("^/api/misc-applications(/.*)?$",       "documents");
         RULES.put("^/api/office-expenses(/.*)?$",        "office_expenses");
         RULES.put("^/api/legal-forms(/.*)?$",            "legal_forms");
         RULES.put("^/api/fee-calculator(/.*)?$",         "court_fee_calculator");

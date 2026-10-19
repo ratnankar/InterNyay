@@ -13,6 +13,7 @@ public class CourtRequest {
     // Empty for the High Court and Supreme Court
     private String district;
     private String building;
+    private String floor;
     private String courtNo;
 
     // Only used when a new court is added: true for a court with no districts

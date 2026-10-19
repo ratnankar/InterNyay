@@ -15,6 +15,9 @@ public class LoginLog {
     public enum EventType { LOGIN, LOGIN_FAILED, LOGOUT }
     public enum Method    { PASSWORD, GOOGLE }
 
+    // Which app the request came from: the website or the Calendar mobile app
+    public enum App       { WEB, CALENDAR }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,6 +35,9 @@ public class LoginLog {
 
     @Enumerated(EnumType.STRING)
     private Method method;
+
+    @Enumerated(EnumType.STRING)
+    private App app = App.WEB;
 
     // Why a sign-in failed
     private String failureReason;

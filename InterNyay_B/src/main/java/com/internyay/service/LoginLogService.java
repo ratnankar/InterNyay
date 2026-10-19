@@ -3,6 +3,7 @@ package com.internyay.service;
 import com.internyay.dto.LoginLogDto;
 import com.internyay.dto.LoginLogPageDto;
 import com.internyay.entity.LoginLog;
+import com.internyay.entity.LoginLog.App;
 import com.internyay.entity.LoginLog.EventType;
 import com.internyay.entity.LoginLog.Method;
 import com.internyay.entity.User;
@@ -54,9 +55,10 @@ public class LoginLogService {
     }
 
     // One page of the log, newest first, optionally only one kind of event, an email search and/or one account (userId / exact email)
-    public LoginLogPageDto search(String type, String q, Long userId, String email, int page, int size) {
+    public LoginLogPageDto search(String type, String app, String q, Long userId, String email, int page, int size) {
 
         EventType eventType = parseType(type);
+        App appFilter = parseApp(app);
         String like = q == null || q.isBlank() ? null : "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
 
         // One account only: its own id, or exactly its email (never a partial match like the search box)
@@ -71,6 +73,7 @@ public class LoginLogService {
                 all.add(cb.or(mine.toArray(new Predicate[0])));
             }
             if (eventType != null) all.add(cb.equal(root.get("eventType"), eventType));
+            if (appFilter != null) all.add(cb.equal(root.get("app"), appFilter));
             if (like != null) {
                 all.add(cb.or(
                         cb.like(cb.lower(root.get("email")), like),
@@ -113,6 +116,23 @@ public class LoginLogService {
         }
     }
 
+    // Anything but a known app name means "all"
+    private static App parseApp(String app) {
+        if (app == null) return null;
+        try {
+            return App.valueOf(app.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // The Calendar app names itself with the header X-Client-App: calendar; every other request is the website.
+    // It is a label for the admin page only, never used to decide what someone may do.
+    private static App appOf(HttpServletRequest req) {
+        String app = req.getHeader("X-Client-App");
+        return app != null && app.trim().equalsIgnoreCase("calendar") ? App.CALENDAR : App.WEB;
+    }
+
     private void save(EventType type, Method method, Long userId, String email, String role, String reason) {
         try {
             LoginLog row = new LoginLog();
@@ -127,6 +147,7 @@ public class LoginLogService {
             // the remote address is the visitor's real address.
             if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
                 HttpServletRequest req = attrs.getRequest();
+                row.setApp(appOf(req));
                 row.setIpAddress(cut(req.getRemoteAddr(), 64));
                 row.setUserAgent(withClient(req.getHeader("User-Agent"), req.getHeader("X-Client-Platform"), req.getHeader("X-Client-Browser")));
             }

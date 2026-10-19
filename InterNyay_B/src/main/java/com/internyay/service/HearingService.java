@@ -186,6 +186,33 @@ public class HearingService {
         renumberOrders(legalCase.getId(), userId);
     }
 
+    // A misc. application listed on a date puts a line in that date's hearing history (one entry per case and date,
+    // created when missing). Saying the same thing twice adds nothing, and the closed-day and daily-limit rules apply
+    // like for any other hearing date
+    @Transactional
+    public void noteApplicationHearing(Case legalCase, LocalDate date, String note, Long userId) {
+        if (date == null) return;
+
+        Hearing h = hearingRepo.findByLegalCase_IdAndUser_IdAndDate(legalCase.getId(), userId, date).orElse(null);
+        if (h == null) {
+            hearingDays.assertAllowed(date, userId, legalCase.getId());
+            h = Hearing.builder()
+                    .date(date)
+                    .legalCase(legalCase)
+                    .user(userRepo.getReferenceById(userId))
+                    .build();
+        }
+
+        String line = blankToNull(note);
+        if (line != null) {
+            String old = h.getNotes() == null ? "" : h.getNotes();
+            if (!old.contains(line)) h.setNotes(old.isBlank() ? line : old.trim() + "\n" + line);
+        }
+
+        hearingRepo.saveAndFlush(h);
+        renumberOrders(legalCase.getId(), userId);
+    }
+
     // A case taken out of Withdrawn loses the Withdrawn mark on its hearing history, the dates stay
     @Transactional
     public void clearWithdrawn(Long caseId, Long userId) {

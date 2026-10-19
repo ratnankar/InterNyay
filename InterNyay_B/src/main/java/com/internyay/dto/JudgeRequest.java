@@ -41,6 +41,7 @@ public class JudgeRequest {
     private Boolean courtNoCorrection;
 
     private String building;
+    private String floor;
     private String vcMeetingId;
 
     // Court email, can be empty

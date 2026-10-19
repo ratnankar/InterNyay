@@ -43,6 +43,7 @@ public class CaseService {
     private final HearingService hearingService;
     private final EcourtsCaseService ecourtsCases;
     private final OldCaseImportService oldCaseImport;
+    private final MiscApplicationRepository miscApplicationRepo;
 
     // Newest first, filtered by search, status, type and client.
     // Must run in a transaction: CaseDto.from reads lazy relations (client, additional clients, fees, sub types)
@@ -117,7 +118,7 @@ public class CaseService {
                 .build();
 
         applyCourt(c, req.getCourt(), req.getDistrict());
-        c.setCourtNo(courtService.requireCourtNo(c.getCourtPlace(), req.getCourtNo()));
+        setRoom(c, req);
         c.setAdditionalClients(resolveAdditionalClients(req.getAdditionalClientIds(), client.getId(), userId));
         applyClassification(c, req);
         applyFilingAndParties(c, req);
@@ -223,6 +224,7 @@ public class CaseService {
         Case c = findOwned(id, userId);
 
         documentService.deleteAllForCase(c.getId());
+        miscApplicationRepo.deleteByLegalCase_Id(c.getId());
         hearingRepo.deleteByLegalCase_Id(c.getId());
 
         c.setStatus(CaseStatuses.DECIDED);
@@ -303,9 +305,22 @@ public class CaseService {
         boolean samePlace = previousPlace != null && c.getCourtPlace() != null
                 && previousPlace.getId().equals(c.getCourtPlace().getId());
         String current = c.getCourtNo() == null ? "" : c.getCourtNo().trim();
-        if (samePlace && req.getCourtNo().trim().equalsIgnoreCase(current)) return;
+        String curB = c.getBuilding() == null ? "" : c.getBuilding().trim();
+        String curF = c.getFloor() == null ? "" : c.getFloor().trim();
+        boolean sameRoom = req.getBuilding() == null
+                || (req.getBuilding().trim().equalsIgnoreCase(curB)
+                    && (req.getFloor() == null || req.getFloor().trim().equalsIgnoreCase(curF)));
+        if (samePlace && req.getCourtNo().trim().equalsIgnoreCase(current) && sameRoom) return;
 
-        c.setCourtNo(courtService.requireCourtNo(c.getCourtPlace(), req.getCourtNo()));
+        setRoom(c, req);
+    }
+
+    // Court no. with its building and floor, checked against the court table
+    private void setRoom(Case c, CaseRequest req) {
+        Court room = courtService.requireRoom(c.getCourtPlace(), req.getCourtNo(), req.getBuilding(), req.getFloor());
+        c.setCourtNo(room == null ? null : room.getCourtNo());
+        c.setBuilding(room == null || room.getBuilding().isEmpty() ? null : room.getBuilding());
+        c.setFloor(room == null || room.getFloor().isEmpty() ? null : room.getFloor());
     }
 
     // The station row for the typed name: the one in the case's court when several stations share the name,

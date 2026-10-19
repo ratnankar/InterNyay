@@ -48,7 +48,7 @@ public interface JudgeRepository extends JpaRepository<Judge, Long> {
 
     // Every live listing without the photo, used to find the courts each judge holds
     @Query("""
-        SELECT new com.internyay.dto.JudgeSeatDto(j.id, j.profile.id, j.profile.name, j.court, j.district, j.building, j.courtRoomNo)
+        SELECT new com.internyay.dto.JudgeSeatDto(j.id, j.profile.id, j.profile.name, j.court, j.district, j.building, j.floor, j.courtRoomNo)
         FROM Judge j
         WHERE j.active = true
         """)

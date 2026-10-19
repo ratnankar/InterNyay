@@ -18,6 +18,8 @@ public class CaseRequest {
     public String district;
 
     @Size(max = 30) public String courtNo;
+    @Size(max = 255) public String building;
+    @Size(max = 50) public String floor;
 
     // File number of the advocate
     public String fileNo;

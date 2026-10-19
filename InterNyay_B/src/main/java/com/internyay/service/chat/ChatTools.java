@@ -731,6 +731,7 @@ public class ChatTools {
                         .put("district", j.getDistrict())
                         .put("courtRoomNo", j.getCourtRoomNo())
                         .put("building", j.getBuilding())
+                        .put("floor", j.getFloor())
                         .put("vcMeetingId", j.getVcMeetingId())
                         .put("courtEmail", j.getCourtEmail())
                         .put("virtualCourtLink", j.getVirtualCourtLink())

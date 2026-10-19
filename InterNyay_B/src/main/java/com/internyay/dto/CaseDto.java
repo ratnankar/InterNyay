@@ -34,6 +34,8 @@ public class CaseDto {
     public String court;
     public String district;
     public String courtNo;
+    public String building;
+    public String floor;
 
     // Judge of the court room, filled in by the service
     public String judgeName;
@@ -147,6 +149,8 @@ public class CaseDto {
                 .court(c.getCourt())
                 .district(c.getDistrict())
                 .courtNo(c.getCourtNo())
+                .building(c.getBuilding())
+                .floor(c.getFloor())
                 .caseNature(c.getCaseNature())
                 .reliefSought(c.getReliefSought())
                 .caseType(c.getCaseType())

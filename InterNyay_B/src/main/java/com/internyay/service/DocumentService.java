@@ -64,6 +64,22 @@ public class DocumentService {
                 .stream().map(DocumentDto::from).collect(Collectors.toList());
     }
 
+    // Documents of one misc. application that the caller has ALREADY checked for this user, oldest first
+    public List<DocumentDto> listForOwnedMiscApplication(Long miscApplicationId) {
+        return docRepo.findByMiscApplicationIdOrderByUploadedAtAsc(miscApplicationId)
+                .stream().map(DocumentDto::from).collect(Collectors.toList());
+    }
+
+    // Documents for many misc. applications at once (already checked for this user)
+    public Map<Long, List<DocumentDto>> mapByMiscApplicationIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) return Map.of();
+        return docRepo.findByMiscApplicationIdIn(ids).stream()
+                .sorted(Comparator.comparing(DocumentMeta::getUploadedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(DocumentDto::from)
+                .collect(Collectors.groupingBy(d -> d.miscApplicationId, LinkedHashMap::new, Collectors.toList()));
+    }
+
     // Everything the user has uploaded
     public List<DocumentDto> listForUser(Long userId) {
         return docRepo.findByUserIdOrderByUploadedAtDesc(userId)
@@ -126,6 +142,20 @@ public class DocumentService {
     // Writes the file to file storage and saves its details in MySQL
     public DocumentDto store(MultipartFile file, String name, String type,
                              Long caseId, Long clientId, Long userId) throws IOException {
+        return store(file, name, type, caseId, clientId, null, null, userId);
+    }
+
+    // Same, for a document of a misc. application (it also belongs to the application's case)
+    public DocumentDto storeForMiscApplication(MultipartFile file, String name, String type,
+                                               Long caseId, Long miscApplicationId, String miscRole,
+                                               Long userId) throws IOException {
+        return store(file, name, type, caseId, null, miscApplicationId, miscRole, userId);
+    }
+
+    // Writes the file to file storage and saves its details in MySQL
+    private DocumentDto store(MultipartFile file, String name, String type,
+                              Long caseId, Long clientId,
+                              Long miscApplicationId, String miscRole, Long userId) throws IOException {
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
@@ -153,6 +183,8 @@ public class DocumentService {
                 .storageKey(key)
                 .caseId(caseId)
                 .clientId(clientId)
+                .miscApplicationId(miscApplicationId)
+                .miscRole(miscRole)
                 .userId(userId)
                 .uploadedAt(LocalDateTime.now())
                 .build();
@@ -255,6 +287,12 @@ public class DocumentService {
     @org.springframework.transaction.annotation.Transactional
     public void deleteAllForCase(Long caseId) {
         remove(docRepo.findByCaseIdOrderByUploadedAtDesc(caseId));
+    }
+
+    // Remove all documents of a misc. application
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteAllForMiscApplication(Long miscApplicationId) {
+        remove(docRepo.findByMiscApplicationIdOrderByUploadedAtAsc(miscApplicationId));
     }
 
     // Remove all documents of a client

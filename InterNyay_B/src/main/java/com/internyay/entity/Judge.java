@@ -36,6 +36,7 @@ public class Judge {
     // Court room and building
     private String courtRoomNo;
     private String building;
+    private String floor;
 
     // Video conferencing details
     private String vcMeetingId;

@@ -37,7 +37,7 @@ public class JudgeProfileService {
     public List<JudgeProfileDto> list() {
         Map<Long, List<String>> courts = judgeRepo.findAllSeats().stream()
                 .collect(Collectors.groupingBy(JudgeSeatDto::profileId,
-                        Collectors.mapping(s -> JudgeService.seatLabel(s.court(), s.district(), s.building(), s.courtRoomNo()),
+                        Collectors.mapping(s -> JudgeService.seatLabel(s.court(), s.district(), s.building(), s.floor(), s.courtRoomNo()),
                                 Collectors.toList())));
 
         return profileRepo.findByActiveTrueAndVacantFalseOrderByNameAsc().stream()
@@ -66,7 +66,7 @@ public class JudgeProfileService {
 
     public JudgeProfileDto toDto(JudgeProfile p) {
         List<String> courts = judgeRepo.findByProfileIdAndActiveTrue(p.getId()).stream()
-                .map(j -> JudgeService.seatLabel(j.getCourt(), j.getDistrict(), j.getBuilding(), j.getCourtRoomNo()))
+                .map(j -> JudgeService.seatLabel(j.getCourt(), j.getDistrict(), j.getBuilding(), j.getFloor(), j.getCourtRoomNo()))
                 .toList();
         return JudgeProfileDto.from(p, courts);
     }

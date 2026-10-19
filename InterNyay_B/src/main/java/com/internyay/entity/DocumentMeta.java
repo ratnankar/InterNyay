@@ -52,6 +52,14 @@ public class DocumentMeta {
     @Column(name = "client_id")
     private Long clientId;
 
+    // Misc. application the document belongs to (also has the case id), and what it is for it:
+    // APPLICATION, ORDER or ADDITIONAL. Both empty for every other document
+    @Column(name = "misc_application_id")
+    private Long miscApplicationId;
+
+    @Column(name = "misc_role", length = 20)
+    private String miscRole;
+
     // Serial number of an order document inside a case
     @Column(name = "order_seq")
     private Integer orderSeq;

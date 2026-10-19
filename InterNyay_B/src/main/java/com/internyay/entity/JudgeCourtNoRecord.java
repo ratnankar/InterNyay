@@ -29,6 +29,8 @@ public class JudgeCourtNoRecord {
     // Building the court was in during this period, if it has one
     private String building;
 
+    private String floor;
+
     // Court complex and district this court number belonged to during the period
     private String court;
 

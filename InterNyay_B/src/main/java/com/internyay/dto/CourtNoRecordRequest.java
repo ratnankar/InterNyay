@@ -21,6 +21,8 @@ public class CourtNoRecordRequest {
     // Optional building of the court during this period
     private String building;
 
+    private String floor;
+
     // Court and district of this period; the judge's own court and district are used when left out
     private String court;
 

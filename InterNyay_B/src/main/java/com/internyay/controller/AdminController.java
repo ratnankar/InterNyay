@@ -28,15 +28,16 @@ public class AdminController {
         return ResponseEntity.ok(admin.stats());
     }
 
-    // Sign-in history: type is LOGIN, LOGIN_FAILED or LOGOUT (empty for all), q searches email and IP address, userId / email show one account only
+    // Sign-in history: type is LOGIN, LOGIN_FAILED or LOGOUT (empty for all), app is WEB or CALENDAR (empty for both), q searches email and IP address, userId / email show one account only
     @GetMapping("/login-logs")
     public ResponseEntity<LoginLogPageDto> loginLogs(@RequestParam(required = false) String type,
+                                                     @RequestParam(required = false) String app,
                                                      @RequestParam(required = false) String q,
                                                      @RequestParam(required = false) Long userId,
                                                      @RequestParam(required = false) String email,
                                                      @RequestParam(defaultValue = "0") int page,
                                                      @RequestParam(defaultValue = "25") int size) {
-        return ResponseEntity.ok(loginLogService.search(type, q, userId, email, page, size));
+        return ResponseEntity.ok(loginLogService.search(type, app, q, userId, email, page, size));
     }
 
     // All advocate and associate accounts

@@ -22,6 +22,9 @@ and refuses to start if they do not. It never changes the database.
 | `V15__chat_history.sql` | `chat_messages`: the saved conversation of each account with the AI assistant (deleted together with the account) |
 | `V16__chat_conversations.sql` | `chat_conversations`: several saved chats per account; each existing conversation becomes one chat, titled with its first question |
 | `V17__daily_hearing_limits.sql` | `users.daily_hearing_limit` (the usual most hearings per day) and `hearing_day_limits` (a limit for one particular date, replaces the usual one) |
+| `V18__login_log_app.sql` | `login_log.app` (WEB or CALENDAR): which app each sign-in came from, shown under Login Activity; older rows count as WEB |
+| `V19__court_floors.sql` | `courts.floor` (between building and court no., part of the unique key), plus `judges.floor` and `judge_court_no_records.floor`; existing rows get an empty floor |
+| `V21__misc_applications.sql` | `misc_applications` (applications filed in a case: type, history, filing and hearing date, Pending / Disposed Off) and `documents.misc_application_id` / `misc_role` (application, order or additional document) |
 
 This folder keeps only the two scripts that run outside the app: `create_database.sql` and `check_links.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).
