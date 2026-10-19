@@ -317,3 +317,16 @@
   --fill-h: calc(100vh - 12px);
   max-width: none;
 }
+
+/* Date field with a clear (×) button, used wherever a date is filled in */
+.date-clear { position: relative; display: block; flex: 1 1 auto; width: 100%; min-width: 0; }
+.date-clear > input { width: 100%; box-sizing: border-box; }
+.date-clear__input { padding-right: 46px; }
+.date-clear__btn {
+  position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; padding: 0; border: none; border-radius: 50%;
+  background: transparent; color: var(--color-text-muted); cursor: pointer;
+}
+.date-clear__btn:hover { background: var(--color-bg); color: var(--color-navy); }
+.date-clear__btn svg { width: 14px; height: 14px; }

@@ -7,6 +7,7 @@ import ImageViewer from '../components/common/ImageViewer'
 
 import Icon from '../components/common/Icon'
 import useSeeMore from '../hooks/useSeeMore'
+import useGridColumns from '../hooks/useGridColumns'
 import usePersistedState from '../hooks/usePersistedState'
 import SeeMore from '../components/common/SeeMore'
 // Sort choices for the clients list as [value, label] pairs
@@ -71,11 +72,13 @@ export default function Clients() {
 
   // Show the clients a page at a time; starts again when the search or sort changes
   const clientsStep = 18
+  const [clientColumns, clientsGridRef] = useGridColumns()
   const {
     visible: visibleClients,
     remaining: clientsRemaining,
     showMore: showMoreClients,
-  } = useSeeMore(displayedClients, `${search}|${sortBy}`, clientsStep)
+    step: clientsRowStep,
+  } = useSeeMore(displayedClients, `${search}|${sortBy}`, clientsStep, 0, { columns: clientColumns })
 
   return (
     <div className="clients-page">
@@ -130,7 +133,7 @@ export default function Clients() {
       </div>
 
       {/* Grid with one card per client */}
-      <div className="clients-grid">
+      <div className="clients-grid" ref={clientsGridRef}>
         {visibleClients.map(cl => {
           // Linked cases and best available phone number for this card
           const clCases  = cases.filter(c => caseHasClient(c, cl.id))
@@ -189,7 +192,7 @@ export default function Clients() {
         })}
 
         {/* See more when the list is long */}
-        <SeeMore remaining={clientsRemaining} onClick={showMoreClients} step={clientsStep} />
+        <SeeMore remaining={clientsRemaining} onClick={showMoreClients} step={clientsRowStep} />
 
         {/* Empty state when there are no clients or nothing matches the search */}
         {displayedClients.length === 0 && (

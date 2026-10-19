@@ -6,6 +6,7 @@ import { formatDisplayDate } from '../../utils/dateUtils'
 import api from '../../services/api'
 
 import Icon from '../common/Icon'
+import ClearableDateInput from '../common/ClearableDateInput'
 // Small note showing the date a fee amount was set, hidden when there is no date
 function FeeAmountDateNote({ date }) {
   if (!date) return null
@@ -128,9 +129,9 @@ function AdHocHearingFeeList({ hearingFees, addRow, updateRow, removeRow, showDa
           className={`fee-hearing-row${showDate ? ' fee-hearing-row--adhoc' : ' fee-hearing-row--single'}`}
         >
           {showDate && (
-            <input
+            <ClearableDateInput
               className="form-input"
-              type="date"
+              
               aria-label="Hearing date"
               value={row.date}
               onChange={e => updateRow(row.id, 'date', e.target.value)}
@@ -606,9 +607,9 @@ export default function CaseFeeSection({
 
                 {hearingFees.map(row => (
                   <div key={row.id} className="fee-hearing-row fee-hearing-row--single">
-                    <input
+                    <ClearableDateInput
                       className="form-input"
-                      type="date"
+                      
                       value={row.date}
                       onChange={e => updateHearingRow(row.id, 'date', e.target.value)}
                     />

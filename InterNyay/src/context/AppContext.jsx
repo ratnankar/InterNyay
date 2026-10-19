@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
+import { isMiscOnlyHearing } from '../components/misc/miscUtils'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AUTH_PATHS, authTabFromPath, isAdminPath, navToPath, parseNavPath } from '../routes/paths'
 import { caseCreatedDate, formatDate, hearingDateProblem } from '../utils/dateUtils'
@@ -31,7 +32,8 @@ import {
   documents as documentsApi,
   holidays as holidaysApi,
   noHearingDates as noHearingDatesApi,
-  hearingLimits as hearingLimitsApi
+  hearingLimits as hearingLimitsApi,
+  miscApplications as miscApplicationsApi
 } from '../services/api'
 import { getErrorMessage } from '../utils/errorMessages'
 import { onLiveRefresh } from '../utils/liveRefresh'
@@ -347,6 +349,14 @@ export function AppProvider({ children }) {
     } catch (e) {
       setHearingRecords([])
     }
+
+    // The misc. application hearings of each case, so the history counts include them
+    try {
+      const counts = await miscApplicationsApi.hearingCounts()
+      setMiscHearingCounts(new Map(Object.entries(counts || {}).map(([id, n]) => [Number(id), Number(n) || 0])))
+    } catch (e) {
+      setMiscHearingCounts(new Map())
+    }
   }
 
   // Load court holidays
@@ -418,6 +428,9 @@ export function AppProvider({ children }) {
 
   // All hearing records
   const [hearingRecords, setHearingRecords] = useState([])
+
+  // Hearing dates of the misc. applications in each case (caseId -> count), added to the case's hearing history count
+  const [miscHearingCounts, setMiscHearingCounts] = useState(() => new Map())
 
   // Case whose transaction drawer is open
   const [transactionCaseId, setTransactionCaseId] = useState(null)
@@ -614,7 +627,6 @@ export function AppProvider({ children }) {
   // Upload form state for case documents
   const [docName, setDocName] = useState('')
   const [docType, setDocType] = useState('')
-  const [docTypeCustom, setDocTypeCustom] = useState('')
   const fileRef = useRef()
 
   // Upload form state for client documents
@@ -1339,6 +1351,7 @@ export function AppProvider({ children }) {
     setNextHearingCaseId(null)
     setExpandedHearingCaseId(null)
     setHearingRecords([])
+    setMiscHearingCounts(new Map())
     setTransactionCaseId(null)
     setTransactionsUnlocked(false)
   }
@@ -2638,11 +2651,7 @@ export function AppProvider({ children }) {
       return
     }
 
-    // "Misc. Application" lets the user type their own document type
-    const resolvedType =
-      docType === 'Misc. Application (Type Manually)'
-        ? (docTypeCustom || 'Misc. Application')
-        : docType
+    const resolvedType = docType
 
     try {
 
@@ -2692,7 +2701,6 @@ export function AppProvider({ children }) {
       setUploadDocCaseId(null)
       setDocName('')
       setDocType('')
-      setDocTypeCustom('')
 
       addToast(
         'Document uploaded'
@@ -3217,7 +3225,7 @@ export function AppProvider({ children }) {
   const calendarDateKey = formatDate(calendarDate)
 
   // Hearing records that count on the calendar (withdrawn ones are ignored)
-  const calendarHearingRecords = hearingRecords.filter(h => h.outcome !== WITHDRAWN_OUTCOME)
+  const calendarHearingRecords = hearingRecords.filter(h => h.outcome !== WITHDRAWN_OUTCOME && !isMiscOnlyHearing(h))
 
   // The different cases that have a hearing on each date (upcoming + past)
   const hearingCaseIdsByDate = (() => {
@@ -3260,13 +3268,15 @@ export function AppProvider({ children }) {
     return `This date already has ${limit} hearing${limit === 1 ? '' : 's'}, the daily limit`
   }
 
-  // Number of hearing records per case
+  // Number of hearings in each case's history: the case's own hearing dates plus those of its misc. applications
   const hearingCountsByCase = (() => {
     const counts = new Map()
     hearingRecords.forEach(h => {
-      if (h.caseId == null) return
+      // Entries that only mirror an application's date are counted with the application's own hearings below
+      if (h.caseId == null || isMiscOnlyHearing(h)) return
       counts.set(h.caseId, (counts.get(h.caseId) || 0) + 1)
     })
+    miscHearingCounts.forEach((n, caseId) => counts.set(caseId, (counts.get(caseId) || 0) + n))
     return counts
   })()
 
@@ -3471,6 +3481,7 @@ export function AppProvider({ children }) {
 
         hearingCountsByDate,
         hearingCountsByCase,
+        miscHearingCounts,
 
         // Daily hearing limit
         hearingLimits,
@@ -3556,8 +3567,6 @@ export function AppProvider({ children }) {
         docType,
         setDocType,
 
-        docTypeCustom,
-        setDocTypeCustom,
 
         fileRef,
 

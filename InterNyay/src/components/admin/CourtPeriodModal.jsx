@@ -8,6 +8,7 @@ import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
 import JudgeSearchSelect from './JudgeSearchSelect'
 import ModalPortal from '../../components/common/ModalPortal'
+import ClearableDateInput from '../common/ClearableDateInput'
 
 // Keeps a stored value that is no longer in the court table visible until it is changed
 const withCurrent = (list, value) => (value && !list.includes(value) ? [...list, value] : list)
@@ -157,14 +158,14 @@ export default function CourtPeriodModal({ period, defaults = {}, onSaved, onClo
 
             <div className="court-history-editor__field">
               <label className="form-label">From</label>
-              <input className="form-input" type="date" aria-label="From date" value={draft.fromDate}
+              <ClearableDateInput className="form-input"  aria-label="From date" value={draft.fromDate}
                      onChange={e => patch({ fromDate: e.target.value })} />
             </div>
 
             {!isCurrent && (
               <div className="court-history-editor__field">
                 <label className="form-label">Till</label>
-                <input className="form-input" type="date" aria-label="Till date" min={draft.fromDate || undefined} value={draft.tillDate}
+                <ClearableDateInput className="form-input"  aria-label="Till date" min={draft.fromDate || undefined} value={draft.tillDate}
                        onChange={e => patch({ tillDate: e.target.value })} />
               </div>
             )}

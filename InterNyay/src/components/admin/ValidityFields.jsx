@@ -1,12 +1,13 @@
+import ClearableDateInput from '../common/ClearableDateInput'
 // From and till date inputs with a 'further order' checkbox for entries with no end date
 export default function ValidityFields({ form, onChange, error }) {
   return (
     <div className="validity-fields">
       <div className="form-group u-mb-0">
         <label className="form-label">From date</label>
-        <input
+        <ClearableDateInput
           className="form-input"
-          type="date"
+          
           value={form.fromDate}
           onChange={e => onChange({ fromDate: e.target.value })}
         />
@@ -15,9 +16,9 @@ export default function ValidityFields({ form, onChange, error }) {
       <div className="form-group u-mb-0">
         {/* Till date is cleared and disabled when 'further order' is ticked */}
         <label className="form-label">Till date</label>
-        <input
+        <ClearableDateInput
           className={`form-input${error ? ' form-input--error' : ''}`}
-          type="date"
+          
           value={form.furtherOrder ? '' : form.tillDate}
           min={form.fromDate || undefined}
           disabled={form.furtherOrder}

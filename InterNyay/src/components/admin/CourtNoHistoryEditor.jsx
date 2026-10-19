@@ -6,6 +6,7 @@ import { getErrorMessage } from '../../utils/errorMessages'
 import { useCourts, getCourtNames, getDistricts, hasNamedDistricts, getBuildings, getFloors, getCourtNos } from '../../constants/courts'
 import Dropdown from '../common/Dropdown'
 import { confirmDialog } from '../../utils/confirmDialog'
+import ClearableDateInput from '../common/ClearableDateInput'
 
 // Keeps a stored value that is no longer in the court table visible until it is changed
 const withCurrent = (list, value) => (value && !list.includes(value) ? [...list, value] : list)
@@ -208,9 +209,9 @@ export default function CourtNoHistoryEditor({ judgeId, court, district, records
 
               <div className="court-history-editor__field">
                 <label className="form-label">From</label>
-                <input
+                <ClearableDateInput
                   className="form-input"
-                  type="date"
+                  
                   aria-label="From date"
                   value={draft.fromDate}
                   onChange={e => patch({ fromDate: e.target.value })}
@@ -219,9 +220,9 @@ export default function CourtNoHistoryEditor({ judgeId, court, district, records
 
               <div className="court-history-editor__field">
                 <label className="form-label">Till</label>
-                <input
+                <ClearableDateInput
                   className="form-input"
-                  type="date"
+                  
                   aria-label="Till date"
                   min={draft.fromDate || undefined}
                   value={draft.tillDate}

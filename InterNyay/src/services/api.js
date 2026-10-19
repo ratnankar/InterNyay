@@ -366,13 +366,21 @@ export const documents = {
 export const miscApplications = {
   list:    (params)   => get('/misc-applications', { params }),
   get:     (id)       => get(`/misc-applications/${id}`),
+  // Applications that have a hearing on a date (yyyy-MM-dd), for the dashboard
+  onDate:  (date)     => get('/misc-applications/on', { params: { date } }),
+  // How many hearing dates the applications of each case have (caseId -> count)
+  hearingCounts: ()   => get('/misc-applications/hearing-counts'),
   create:  (body)     => post('/misc-applications', { body }),
   update:  (id, body) => put(`/misc-applications/${id}`, { body }),
   remove:  (id)       => del(`/misc-applications/${id}`),
 
-  // Mark as disposed off (the date is optional, today is used) or take it back to pending
-  dispose: (id, disposedOn) => put(`/misc-applications/${id}/dispose`, { body: disposedOn ? { disposedOn } : {} }),
+  // Mark as disposed off as Allowed or Disallowed (the date is optional, today is used) or take it back to pending
+  dispose: (id, disposedOn, outcome) => put(`/misc-applications/${id}/dispose`, { body: { outcome, ...(disposedOn ? { disposedOn } : {}) } }),
   reopen:  (id)       => put(`/misc-applications/${id}/reopen`),
+
+  // Edit the date of one hearing history entry, or delete it (both return the updated application)
+  updateHearing: (id, hearingId, date, note) => put(`/misc-applications/${id}/hearings/${hearingId}`, { body: { date, note: note || '' } }),
+  removeHearing: (id, hearingId)       => del(`/misc-applications/${id}/hearings/${hearingId}`),
 
   // role: APPLICATION (the application itself), ORDER (once disposed off) or ADDITIONAL
   uploadDoc: (id, file, role, name) => {

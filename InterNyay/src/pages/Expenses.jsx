@@ -14,6 +14,7 @@ import SeeMore from '../components/common/SeeMore'
 import Icon from '../components/common/Icon'
 import { getErrorMessage } from '../utils/errorMessages'
 import ModalPortal from '../components/common/ModalPortal'
+import ClearableDateInput from '../components/common/ClearableDateInput'
 // Payment status filters
 const STATUS_FILTERS = ['All', 'Paid', 'Due']
 // Blank values for the Add Expense form
@@ -580,9 +581,9 @@ export default function Expenses({ embedded = false }) {
           <div className="txn-timeline-filter">
             <div className="txn-timeline-filter__field">
               <label className="form-label">From</label>
-              <input
+              <ClearableDateInput
                 className="form-input"
-                type="date"
+                
                 value={fromDate}
                 max={toDate || undefined}
                 onChange={e => setFromDate(e.target.value)}
@@ -590,9 +591,9 @@ export default function Expenses({ embedded = false }) {
             </div>
             <div className="txn-timeline-filter__field">
               <label className="form-label">To</label>
-              <input
+              <ClearableDateInput
                 className="form-input"
-                type="date"
+                
                 value={toDate}
                 min={fromDate || undefined}
                 onChange={e => setToDate(e.target.value)}

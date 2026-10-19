@@ -4,7 +4,7 @@
 // are only the built-in fallback, used when the server cannot be reached.
 import { useSyncExternalStore } from 'react'
 import { publicApi } from '../services/api'
-import { CLIENT_TYPES, CLIENT_LABELS, DOCUMENT_TYPES, CLIENT_DOCUMENT_TYPES } from './data'
+import { CLIENT_TYPES, CLIENT_LABELS, DOCUMENT_TYPES, CLIENT_DOCUMENT_TYPES, MISC_APPLICATION_CHOICES } from './data'
 import { SPECIALIZATIONS } from './specializations'
 import { CONTACT_CATEGORIES } from './contact'
 import { CONSUMER_PECUNIARY_OPTIONS, DRT_AMOUNT_OPTIONS } from './jurisdiction'
@@ -35,6 +35,7 @@ export function applyOptions(data) {
   if (has('CLIENT_LABEL'))          fill(CLIENT_LABELS, values('CLIENT_LABEL'))
   if (has('DOCUMENT_TYPE'))         fill(DOCUMENT_TYPES, values('DOCUMENT_TYPE'))
   if (has('CLIENT_DOCUMENT_TYPE'))  fill(CLIENT_DOCUMENT_TYPES, values('CLIENT_DOCUMENT_TYPE'))
+  if (has('MISC_APPLICATION_TYPE')) fill(MISC_APPLICATION_CHOICES, values('MISC_APPLICATION_TYPE'))
   if (has('SPECIALIZATION'))        fill(SPECIALIZATIONS, values('SPECIALIZATION'))
   if (has('CONTACT_CATEGORY'))      fill(CONTACT_CATEGORIES, values('CONTACT_CATEGORY'))
   if (has('CONSUMER_PECUNIARY'))    fill(CONSUMER_PECUNIARY_OPTIONS, data.CONSUMER_PECUNIARY.map(o => ({ id: o.value, label: o.label })))

@@ -36,6 +36,7 @@ export function documentTitle(doc) {
 // orders and evidence, which say it already
 export function documentTypeLabel(doc) {
   if (!doc || isOrderDocument(doc) || isEvidenceDocument(doc)) return ''
+  if (isMiscDocument(doc)) return MISC_ROLE_LABEL[doc.miscRole] || 'Misc. Application'
   const type = String(doc.type || doc.docType || '').trim()
   return type && type.toLowerCase() !== 'other' ? type : ''
 }
@@ -69,4 +70,30 @@ export function evidenceOwnerOf(doc) {
 export function evidenceTitle(doc) {
   if (!doc) return 'Evidence'
   return doc.name && String(doc.name).trim() ? doc.name : 'Evidence'
+}
+
+// ---------- Misc. application documents ----------
+
+// A document filed under a misc. application (its application, order or an additional document) of a case
+export function isMiscDocument(doc) {
+  return doc?.miscApplicationId != null
+}
+
+const MISC_ROLE_LABEL = { APPLICATION: 'Application', ORDER: 'Order', ADDITIONAL: 'Additional document' }
+const MISC_ROLE_RANK = { APPLICATION: 0, ORDER: 1, ADDITIONAL: 2 }
+
+// The misc. application documents grouped by application: [{ id, name, docs }], the application file first, then its
+// order, then the additional documents
+export function groupMiscDocuments(docs) {
+  const groups = new Map()
+  ;(docs || []).filter(isMiscDocument).forEach(d => {
+    if (!groups.has(d.miscApplicationId)) {
+      groups.set(d.miscApplicationId, { id: d.miscApplicationId, name: d.miscApplicationName || 'Misc. Application', docs: [] })
+    }
+    groups.get(d.miscApplicationId).docs.push(d)
+  })
+  return [...groups.values()].map(g => ({
+    ...g,
+    docs: [...g.docs].sort((a, b) => (MISC_ROLE_RANK[a.miscRole] ?? 3) - (MISC_ROLE_RANK[b.miscRole] ?? 3)),
+  }))
 }

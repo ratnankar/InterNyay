@@ -17,6 +17,7 @@ import { getErrorMessage } from '../../utils/errorMessages'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import SearchInput from '../common/SearchInput'
+import ClearableDateInput from '../common/ClearableDateInput'
 
 const issuedDate = row => row.issuedOn
 
@@ -344,9 +345,9 @@ export default function BailRosterAdmin() {
 
                 <div className="form-group">
                   <label className="form-label">Date this roster came *</label>
-                  <input
+                  <ClearableDateInput
                     className={`form-input${errors.issuedOn ? ' form-input--error' : ''}`}
-                    type="date"
+                    
                     value={form.issuedOn}
                     onChange={e => patchForm({ issuedOn: e.target.value })}
                   />

@@ -8,6 +8,7 @@ import SeeMore from '../components/common/SeeMore'
 import Icon from '../components/common/Icon'
 import { confirmDialog } from '../utils/confirmDialog'
 import useSessionState from '../hooks/useSessionState'
+import ClearableDateInput from '../components/common/ClearableDateInput'
 // Task statuses available in the status filter
 const STATUSES = ['Pending', 'Completed']
 
@@ -245,7 +246,7 @@ export default function TodoList() {
 
             <div className="form-field-group">
               <label className="form-label">Due Date</label>
-              <input className="form-input" type="date"
+              <ClearableDateInput className="form-input" 
                 value={newTodo.dueDate}
                 onChange={e => setNewTodo({ ...newTodo, dueDate: e.target.value })} />
             </div>

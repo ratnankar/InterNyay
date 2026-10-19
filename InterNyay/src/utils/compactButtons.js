@@ -1,5 +1,6 @@
 // When a row of buttons runs out of room (it would wrap or spill over), the buttons that have an icon drop their words and
 // show the icon only. The words stay available to screen readers (aria-label) and as a hover tooltip.
+// A group can opt out with a data-no-compact attribute (its buttons then wrap onto their own rows and keep their words).
 // Nothing is moved in the page: the group just gets a data-compact attribute that the CSS in styles/theme/unified.css reacts to.
 const BUTTONS = '.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary'
 
@@ -32,7 +33,7 @@ function overflows(box) {
 function evaluate() {
   const groups = new Set()
   document.querySelectorAll(BUTTONS).forEach(b => {
-    if (!isIconButton(b)) return
+    if (!isIconButton(b) || b.parentElement?.hasAttribute('data-no-compact')) return
     if (!b.hasAttribute('aria-label') || b.dataset.autoLabel) { b.setAttribute('aria-label', words(b)); b.dataset.autoLabel = '1' }
     if (b.parentElement) groups.add(b.parentElement)
   })

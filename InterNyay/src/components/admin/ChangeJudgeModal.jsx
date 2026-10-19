@@ -10,6 +10,7 @@ import useUnsavedGuard from '../../hooks/useUnsavedGuard'
 import JudgeProfilePicker, { Thumb } from './JudgeProfilePicker'
 import { courtDistrictLabel, buildingWithFloor } from '../../constants/courts'
 import { getErrorMessage } from '../../utils/errorMessages'
+import ClearableDateInput from '../common/ClearableDateInput'
 
 // "Saket Court · Building A · Court No. 12" for a listing
 const seatText = (l) => [courtDistrictLabel(l.court, l.district), l.building ? `Building ${buildingWithFloor(l.building, l.floor)}` : '', l.courtRoomNo ? `Court No. ${l.courtRoomNo}` : '']
@@ -152,7 +153,7 @@ export default function ChangeJudgeModal({ listing, judges, listings, onClose, o
 
           <div className="form-group u-mt-12">
             <label className="form-label">{mode === 'vacant' ? 'Court is vacant from' : 'Starts in this court on'}</label>
-            <input className="form-input" type="date" value={from} onChange={e => setFrom(e.target.value)} />
+            <ClearableDateInput className="form-input"  value={from} onChange={e => setFrom(e.target.value)} />
             <p className="admin__hint">
               {wasVacant
                 ? 'Leave empty to start today. The court stays marked vacant in its history up to the day before.'

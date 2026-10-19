@@ -4,7 +4,7 @@ import { STATUS_COLORS, isClosedCase } from '../constants/data'
 import { statusChangeQuestion } from '../utils/caseStatus'
 import { useCourts, caseCourtLabel } from '../constants/courts'
 import { caseClientNames } from '../utils/caseClients'
-import { formatDisplayDate, formatShortDate, parseIsoDate } from '../utils/dateUtils'
+import { formatDisplayDate, formatShortDate, hearingCountdown } from '../utils/dateUtils'
 import { caseNatureOf } from '../utils/caseClassification'
 import { CASE_NATURES, reliefOptions } from '../constants/caseCatalog'
 import useSeeMore from '../hooks/useSeeMore'
@@ -13,7 +13,8 @@ import SeeMore from '../components/common/SeeMore'
 import CaseHearings from '../components/common/CaseHearings'
 import CaseFields from '../components/common/CaseFields'
 import CaseSummaryFields from '../components/common/CaseSummaryFields'
-import { documentTitle, documentTypeLabel, isOrderDocument, isEvidenceDocument, evidenceTitle } from '../utils/documentUtils'
+import { documentTitle, documentTypeLabel, isOrderDocument, isEvidenceDocument, isMiscDocument, evidenceTitle } from '../utils/documentUtils'
+import MiscDocsSection from '../components/misc/MiscDocsSection'
 import CaseStatusSelect from '../components/common/CaseStatusSelect'
 import Dropdown from '../components/common/Dropdown'
 
@@ -22,6 +23,7 @@ import DocInfoButton from '../components/common/DocInfoButton'
 import ToggleSwitch from '../components/common/ToggleSwitch'
 import { confirmDialog } from '../utils/confirmDialog'
 import useSessionState from '../hooks/useSessionState'
+import ClearableDateInput from '../components/common/ClearableDateInput'
 // Status filter buttons
 const STATUSES = ['All', 'Pending', 'On Hold', 'Decided', 'Withdrawn']
 
@@ -118,18 +120,6 @@ function compareHearing(a, b) {
   if (!a.nextHearing) return 1
   if (!b.nextHearing) return -1
   return String(a.nextHearing).localeCompare(String(b.nextHearing))
-}
-
-// Short hint for how far away a hearing is: "Today", "Tomorrow", "In 5 days", or "Date passed"
-function hearingCountdown(dateStr) {
-  const target = parseIsoDate(dateStr)
-  if (Number.isNaN(target.getTime())) return null
-  const now = new Date()
-  const days = Math.round((target - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
-  if (days < 0)  return { text: 'Date passed', tone: 'past' }
-  if (days === 0) return { text: 'Today', tone: 'soon' }
-  if (days === 1) return { text: 'Tomorrow', tone: 'soon' }
-  return { text: `In ${days} days`, tone: days <= 7 ? 'soon' : 'later' }
 }
 
 // Cases page: search, filter and sort cases; expand a card to manage its documents, evidence, reminders and fees
@@ -333,7 +323,7 @@ export default function Cases() {
   }, [filteredCases, search, sortBy, filterCourt, filterNature, filterRelief, filterCaseType, filterDateFrom, filterDateTo, clients])
 
   // Show the cases a page at a time; starts again when the status tab, search, filters or sort change
-  const casesStep = 15
+  const casesStep = 16
   const openCaseIndex = selectedCase ? searchedCases.findIndex(c => c.id === selectedCase.id) : -1
   const {
     visible: visibleCases,
@@ -521,7 +511,67 @@ export default function Cases() {
   // Expanded view of one case
   function renderCaseDetail(c) {
     // Case documents (without orders and evidence) and the evidence items
-    const documents = (c.documents || []).filter(d => !isOrderDocument(d) && !isEvidenceDocument(d))
+    // Misc. application documents have their own section, so they are kept out of the case's documents
+    const documents = (c.documents || []).filter(d => !isOrderDocument(d) && !isEvidenceDocument(d) && !isMiscDocument(d))
+    const miscDocuments = (c.documents || []).filter(isMiscDocument)
+
+    // One document row, the same for the case's documents and its misc. application documents
+    const renderDocRow = document => (
+      <div
+        key={document.id}
+        className="case-detail__doc-row case-detail__doc-row--clickable"
+        title="Open document"
+        onClick={e => {
+          e.stopPropagation()
+          handleViewDocument(document)
+        }}
+      >
+        <span className="case-detail__doc-icon">
+          <Icon name="file" />
+        </span>
+
+        <div className="case-detail__doc-body">
+          <p className="case-detail__doc-name">
+            {documentTitle(document)}
+            <DocInfoButton doc={document} />
+          </p>
+
+          <p className="case-detail__doc-meta">
+            {documentTypeLabel(document) && `${documentTypeLabel(document)} • `}
+            {document.size || 'Unknown size'}
+            {' • '}
+            {document.date || ''}
+          </p>
+        </div>
+
+        {/* Buttons to open, download or delete this document */}
+        <div className="case-detail__doc-actions">
+          <button type="button"
+            className="btn-outline btn-outline--sm"
+            title="Open in this tab"
+            onClick={e => {
+              e.stopPropagation()
+              handleViewDocument(document)
+            }}
+          >
+            <Icon name="eye" /> Open
+          </button>
+
+          <button type="button"
+            className="btn-icon btn-icon--danger"
+            title="Delete document"
+            onClick={async e => {
+              e.stopPropagation()
+              if (await confirmDialog(`Delete document "${documentTitle(document)}"?`)) {
+                handleDeleteDocument(c.id, document.id)
+              }
+            }}
+          >
+            <Icon name="trash" />
+          </button>
+        </div>
+      </div>
+    )
     const evidence = (c.documents || []).filter(isEvidenceDocument)
 
     return (
@@ -587,7 +637,7 @@ export default function Cases() {
             <div className="exp-card__titles">
               <p className="exp-card__primary">Documents</p>
               <p className="exp-card__secondary">
-                {documents.length} file{documents.length !== 1 ? 's' : ''}
+                {documents.length + miscDocuments.length} file{documents.length + miscDocuments.length !== 1 ? 's' : ''}
               </p>
             </div>
             <span className="exp-card__arrow">{openSections.documents ? '▲' : '▼'}</span>
@@ -597,68 +647,22 @@ export default function Cases() {
           {openSections.documents && (
             <div className="exp-card__body">
               {/* Empty state, otherwise one row per document */}
-              {documents.length === 0 ? (
+              {documents.length === 0 && miscDocuments.length === 0 ? (
                 <p className="case-card__info">
                   No documents attached
                 </p>
               ) : (
-                documents.map(document => (
-                  <div
-                    key={document.id}
-                    className="case-detail__doc-row case-detail__doc-row--clickable"
-                    title="Open document"
-                    onClick={e => {
-                      e.stopPropagation()
-                      handleViewDocument(document)
-                    }}
-                  >
-                    <span className="case-detail__doc-icon">
-                      <Icon name="file" />
-                    </span>
-
-                    <div className="case-detail__doc-body">
-                      <p className="case-detail__doc-name">
-                        {documentTitle(document)}
-                        <DocInfoButton doc={document} />
-                      </p>
-
-                      <p className="case-detail__doc-meta">
-                        {documentTypeLabel(document) && `${documentTypeLabel(document)} • `}
-                        {document.size || 'Unknown size'}
-                        {' • '}
-                        {document.date || ''}
-                      </p>
-                    </div>
-
-                    {/* Buttons to open, download or delete this document */}
-                    <div className="case-detail__doc-actions">
-                      <button type="button"
-                        className="btn-outline btn-outline--sm"
-                        title="Open in this tab"
-                        onClick={e => {
-                          e.stopPropagation()
-                          handleViewDocument(document)
-                        }}
-                      >
-                        <Icon name="eye" /> Open
-                      </button>
-
-                      <button type="button"
-                        className="btn-icon btn-icon--danger"
-                        title="Delete document"
-                        onClick={async e => {
-                          e.stopPropagation()
-                          if (await confirmDialog(`Delete document "${documentTitle(document)}"?`)) {
-                            handleDeleteDocument(c.id, document.id)
-                          }
-                        }}
-                      >
-                        <Icon name="trash" />
-                      </button>
-                    </div>
-                  </div>
-                ))
+                documents.map(renderDocRow)
               )}
+
+              {/* Documents filed with the case's misc. applications: their own expandable inside Documents */}
+              <MiscDocsSection
+                docs={miscDocuments}
+                renderRow={renderDocRow}
+                nested
+                open={!!openSections.misc}
+                onToggle={e => toggleSection(e, 'misc')}
+              />
 
               {/* Upload Document button */}
               <div className="case-detail__actions">
@@ -1061,8 +1065,8 @@ export default function Cases() {
                               </div>
                               <label className="case-filter-menu__date-row">
                                 <span className="case-filter-menu__date-label">From</span>
-                                <input
-                                  type="date"
+                                <ClearableDateInput
+                                  
                                   className="form-input"
                                   value={filterDateFrom}
                                   onChange={e => { setFilterDateFrom(e.target.value); setFilterDatePreset('') }}
@@ -1070,8 +1074,8 @@ export default function Cases() {
                               </label>
                               <label className="case-filter-menu__date-row">
                                 <span className="case-filter-menu__date-label">To</span>
-                                <input
-                                  type="date"
+                                <ClearableDateInput
+                                  
                                   className="form-input"
                                   value={filterDateTo}
                                   onChange={e => { setFilterDateTo(e.target.value); setFilterDatePreset('') }}

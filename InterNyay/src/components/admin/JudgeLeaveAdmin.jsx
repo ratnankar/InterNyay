@@ -13,6 +13,7 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
+import ClearableDateInput from '../common/ClearableDateInput'
 
 const leaveStartDate = r => r.leaveFrom
 
@@ -356,14 +357,14 @@ export default function JudgeLeaveAdmin() {
 
                 <div className="form-group">
                   <label className="form-label">On leave from *</label>
-                  <input type="date" className={`form-input${errors.leaveFrom ? ' form-input--error' : ''}`}
+                  <ClearableDateInput  className={`form-input${errors.leaveFrom ? ' form-input--error' : ''}`}
                          value={editing.form.leaveFrom} onChange={e => setField('leaveFrom', e.target.value)} />
                   {errors.leaveFrom && <p className="admin__hint admin__hint--error">{errors.leaveFrom}</p>}
                 </div>
 
                 <div className="form-group">
                   <label className="form-label">On leave till *</label>
-                  <input type="date" className={`form-input${errors.leaveTo ? ' form-input--error' : ''}`}
+                  <ClearableDateInput  className={`form-input${errors.leaveTo ? ' form-input--error' : ''}`}
                          value={editing.form.leaveTo} onChange={e => setField('leaveTo', e.target.value)} />
                   {errors.leaveTo && <p className="admin__hint admin__hint--error">{errors.leaveTo}</p>}
                 </div>

@@ -1,23 +1,4 @@
-@media (max-width: 860px) {
-  .misc-list { gap: 12px; }
-}
-
 @media (max-width: 640px) {
-  .misc-card {
-    padding: 14px;
-    background: #ffffff;
-    box-shadow: none;
-    animation: none;
-    transition: none;
-  }
-  .misc-card:hover { box-shadow: none; transform: none; }
-  .misc-card:active { background: var(--color-surface-alt); }
-
-  .misc-card__top { flex-wrap: wrap; gap: 6px 10px; }
-  .misc-card__title { flex: 1 1 140px; min-width: 0; line-height: 1.3; }
-  .misc-card__top > .misc-status { flex: 0 0 auto; }
-  .misc-card__foot { gap: 6px 14px; }
-
   .misc-empty { padding: 28px 8px; }
   .misc-empty .btn-gold { width: 100%; }
   .misc-more .btn-outline { width: 100%; }
@@ -33,4 +14,251 @@
   .misc-file { flex-direction: column; align-items: stretch; }
   .misc-file label.btn-outline { justify-content: center; text-align: center; }
   .misc-file__name { margin-right: 0; }
+}
+
+@media (max-width: 860px) {
+  .app-main .misc-page > .case-filters:has(+ .misc-subfilters) {
+    padding-bottom: 0;
+  }
+
+  .app-main .misc-page > .case-filters.misc-subfilters {
+    position: relative;
+    flex-wrap: wrap;
+    overflow: visible;
+    margin-top: 12px;
+    padding-left: calc(var(--page-gutter) + 16px);
+    padding-bottom: 0;
+  }
+
+  .app-main .misc-page > .case-filters.misc-subfilters::before,
+  .app-main .misc-page > .case-filters.misc-subfilters::after {
+    content: "";
+    position: absolute;
+    box-sizing: border-box;
+    pointer-events: none;
+    border: 0 solid var(--ctl-line, #c9cfda);
+  }
+
+  .app-main .misc-page > .case-filters.misc-subfilters::before {
+    left: var(--child-x, 0px);
+    top: -6px;
+    width: max(0px, calc(var(--elbow-x, 0px) - var(--child-x, 0px)));
+    height: 6px;
+    border-top-width: 1.5px;
+    border-left-width: 1.5px;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 0;
+  }
+
+  .app-main .misc-page > .case-filters.misc-subfilters::after {
+    left: var(--elbow-x, 0px);
+    top: -12px;
+    height: 6px;
+    border-left-width: 1.5px;
+  }
+}
+
+/* ==========================================================================
+   Miscellaneous Application: responsive and alignment pass
+   Covers the list page, Add window, detail window, Update Next Hearing window,
+   the case page section and the dashboard / Documents entries.
+   Loaded last, so it settles clashes with the older phone files.
+   ========================================================================== */
+
+/* ---------- All sizes: nothing may push a window or card wider than the screen ---------- */
+.misc-page, .misc-modal { min-width: 0; max-width: 100%; }
+/* Text containers may shrink below their content so long names wrap; buttons and icons keep their size */
+.misc-pick__info, .misc-casebox > *, .misc-details > *, .misc-grid > *, .misc-docblock__head > *, .misc-hearings__app > *,
+.misc-history__row > *, .case-summary-fields__row, .case-card__left { min-width: 0; }
+
+/* Windows: wide detail window gets a real width on tablets and desktops, height follows the visible screen (dvh, not 100vh,
+   so the browser's address bar never hides the footer buttons) */
+.misc-modal { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+.misc-modal--wide { width: 100%; max-width: 760px; }
+
+/* Native date and file fields never grow past their grid cell (iOS Safari draws date inputs wider than their box) */
+.misc-modal input.form-input[type="date"],
+.misc-modal .misc-clearable,
+.misc-modal .hdi,
+.misc-modal .hdi__field,
+.misc-modal .form-input { width: 100%; max-width: 100%; box-sizing: border-box; }
+.misc-modal input[type="date"] { -webkit-appearance: none; appearance: none; min-width: 0; }
+
+/* Status chips in the case box: one wrapping row with even gaps (they were inline with hand-set margins) */
+.misc-casebox { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.misc-casebox > .misc-casebox__title,
+.misc-casebox > .misc-casebox__meta { flex: 1 1 100%; margin-left: 0; margin-right: 0; }
+.misc-casebox > .misc-casebox__meta { margin-top: 0; margin-bottom: 2px; }
+.misc-casebox .misc-status + .misc-status,
+.misc-casebox__date { margin-left: 0; }
+
+/* Next hearing + Update, Hearing History header and section headers wrap instead of squeezing the button */
+.hearing-history__header { flex-wrap: wrap; gap: 8px 12px; }
+.hearing-history__header > * { min-width: 0; }
+.hearing-history__next { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.hearing-history__next .btn-outline { flex: 0 0 auto; white-space: nowrap; }
+.misc-hearings__head, .misc-hist__head, .misc-hearing__row { row-gap: 6px; }
+
+/* Dashboard card heading: application name, status, outcome and "Misc. Application" tag wrap neatly */
+.hearing-card--misc .hearing-row__heading { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.hearing-card--misc .hearing-row__title { flex: 1 1 100%; overflow-wrap: anywhere; }
+.hearing-card--misc .hearing-row__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hearing-card--misc .case-fields__value,
+.hearing-card--misc .case-fields__label { overflow-wrap: anywhere; word-break: break-word; }
+
+/* Documents page: misc. group header lines up with the rows under it and wraps */
+.misc-docs-group__head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.misc-docs-group__name { overflow-wrap: anywhere; }
+
+/* Dispose and edit forms: their own Cancel / Save row. The sticky bottom bar of the window must not be applied to a row that sits
+   in the middle of the window (it had negative side margins that pushed it past the window edge) */
+.misc-dispose .form-actions,
+.misc-details--edit .form-actions {
+  position: static; margin: 4px 0 0; padding: 0; background: none; border-top: 0;
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end;
+}
+.misc-details--edit .form-actions { grid-column: 1 / -1; }
+
+/* ---------- Tablets and large phones (up to 860px) ---------- */
+@media (max-width: 860px) {
+  /* Header: title and Add button wrap rather than clip */
+  .misc-page > .page-header { flex-wrap: wrap; align-items: center; row-gap: 12px; }
+  .misc-page > .page-header > div:first-child { flex: 1 1 260px; min-width: 0; }
+  .misc-page > .page-header .page-title { overflow: hidden; }
+  .misc-page > .page-header .page-subtitle { overflow-wrap: anywhere; }
+
+  /* Search box takes the full row, like the other list pages */
+  .misc-page .list-toolbar { display: flex; flex-wrap: wrap; }
+  .misc-page .list-toolbar .doc-search-wrap { flex: 1 1 100%; max-width: none; width: 100%; }
+
+  /* Cards use the full width and never overflow */
+  .misc-page .case-list { display: flex; flex-direction: column; gap: 12px; }
+  .misc-page .case-card { width: 100%; box-sizing: border-box; }
+  .misc-page .case-card__left { min-width: 0; }
+}
+
+/* ---------- Phones (up to 640px) ---------- */
+@media (max-width: 640px) {
+  /* Header: subtitle under the title, "+ Add Application" full width under both, same as the hero headers on other pages */
+  .misc-page > .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
+  .misc-page > .page-header > div:first-child { flex: 0 0 auto; width: 100%; }
+  .misc-page > .page-header > .btn-gold { width: 100%; justify-content: center; min-height: 44px; flex: 0 0 auto; }
+
+  /* Filter chips: one scrolling row, first chip lines up with the cards, last chip can scroll fully into view */
+  .misc-page > .case-filters { scroll-padding-inline: var(--page-gutter, 10px); -webkit-overflow-scrolling: touch; }
+  .misc-page > .case-filters .case-filter-btn { flex: 0 0 auto; }
+
+  /* Windows: bottom sheets that fill the width, scroll inside, and keep the action bar visible */
+  .misc-modal, .misc-modal--wide { width: 100%; max-width: 100%; max-height: 92dvh; border-radius: 18px 18px 0 0; }
+  .misc-modal .modal__header { align-items: flex-start; }
+  .misc-modal .modal__title { flex: 1 1 auto; overflow-wrap: anywhere; }
+
+  /* Two-column areas become one column */
+  .misc-grid, .misc-details, .misc-details--edit { grid-template-columns: minmax(0, 1fr); }
+  .misc-details__action { justify-content: stretch; }
+  .misc-details__action .btn-outline { width: 100%; justify-content: center; }
+  .misc-grid > *, .misc-details > * { grid-column: 1 / -1; }
+
+  /* Existing case / New case buttons: equal halves */
+  .misc-modes { gap: 8px; }
+  .misc-modes > button { flex: 1 1 0; justify-content: center; padding-left: 8px; padding-right: 8px; white-space: normal; line-height: 1.2; }
+
+  /* Client / case results: details on top, Select button full width underneath */
+  .misc-modal .client-result { flex-direction: column; align-items: stretch; gap: 8px; }
+  .misc-modal .client-result__select { width: 100%; justify-content: center; }
+  .misc-modal .client-search-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .misc-modal .client-search-row > * { width: 100%; max-width: none; }
+
+  /* Outcome buttons (Allowed / Disallowed) side by side as equal halves */
+  .misc-outcome { flex-wrap: nowrap; }
+  .misc-outcome .btn-gold, .misc-outcome .btn-outline { flex: 1 1 0; }
+
+  /* Dispose and edit forms: Cancel and Save as equal halves, full width */
+  .misc-dispose .form-actions, .misc-details--edit .form-actions { justify-content: stretch; flex-wrap: nowrap; }
+  .misc-dispose .form-actions > button, .misc-details--edit .form-actions > button { flex: 1 1 0; justify-content: center; }
+
+  /* Document blocks: title and hint on top, upload button full width underneath */
+  .misc-docblock__head { flex-direction: column; align-items: stretch; gap: 8px; }
+  .misc-docblock__head > .btn-outline { width: 100%; justify-content: center; }
+  .misc-docblock__head > .hearing-history__toggle { width: 100%; justify-content: flex-start; }
+
+  /* Hearing history: header stacks, Update button sits beside the date; rows stack and the actions line up on the right */
+  .hearing-history__header { flex-direction: column; align-items: stretch; }
+  .hearing-history__next { justify-content: space-between; width: 100%; }
+  .misc-hist__head { flex-direction: column; align-items: stretch; }
+  .misc-history__row { flex-wrap: wrap; align-items: flex-start; }
+  .misc-history__note { flex: 1 1 100%; }
+  .misc-hearing__edit { flex-direction: column; align-items: stretch; }
+  .misc-hearing__edit .form-input, .misc-hearing__edit .hdi { max-width: none; width: 100%; flex: 1 1 auto; }
+  .misc-hearing__btn { width: 100%; justify-content: center; }
+
+  /* Footer of the detail window: Close on top of Delete would hide Delete under a thumb, so they sit as equal halves */
+  .misc-footer { flex-direction: row-reverse; flex-wrap: nowrap; align-items: stretch; gap: 10px; }
+  .misc-footer > button { flex: 1 1 0; justify-content: center; }
+
+  /* Update Next Hearing window: name line under the title wraps */
+  .misc-modal .u-note-sm { overflow-wrap: anywhere; }
+
+  /* Dashboard / Documents entries */
+  .hearing-card--misc .hearing-row__body { min-width: 0; }
+  .hearing-card--misc .hearing-card__footer .hearing-card__open { width: 100%; justify-content: center; }
+  .misc-docs-group__head { padding-left: 1rem; padding-right: 1rem; }
+  .doc-group .exp-card.exp-card--nested.exp-card--flush { margin: 10px 8px 12px; }
+}
+
+/* ---------- Very small phones (up to 380px) ---------- */
+@media (max-width: 380px) {
+  .misc-modal { padding-left: 12px; padding-right: 12px; }
+  .misc-modes > button { font-size: 0.8125rem; }
+  .misc-outcome { flex-wrap: wrap; }
+  .misc-outcome .btn-gold, .misc-outcome .btn-outline { flex: 1 1 100%; }
+  .misc-footer { flex-wrap: wrap; }
+  .misc-footer > button { flex: 1 1 100%; }
+}
+
+/* ---------- Phones turned sideways: short screens, so the window uses the height and the page keeps its side space ---------- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .misc-modal, .misc-modal--wide { max-height: 100dvh; border-radius: 0; }
+  .overlay:has(> .misc-modal) { align-items: stretch; }
+  .misc-modal .form-actions { position: static; margin: 12px 0 0; padding: 0; border-top: 0; background: none; }
+}
+
+/* ---------- Wide desktops: keep the cards readable ---------- */
+@media (min-width: 1280px) {
+  .misc-page .case-list { max-width: 1100px; }
+}
+
+/* ==========================================================================
+   Fixes from the phone screenshot: date clear (×) over the calendar icon, Application block, Mark as Disposed Off
+   ========================================================================== */
+
+/* The × of a date field sits to the LEFT of the browser's calendar icon, not on top of it.
+   The calendar icon takes the last ~36px of the field, so the × is placed just before it and the text keeps clear of both */
+.misc-modal .date-clear > input.form-input { padding-right: 76px; }
+.misc-modal .date-clear__btn { right: 40px; }
+.misc-modal .misc-clearable .form-input { padding-right: 76px; }
+.misc-modal .misc-clearable__btn { right: 40px; }
+/* Desktop browsers draw the calendar icon too: same spacing */
+.misc-modal input[type="date"]::-webkit-calendar-picker-indicator { margin: 0; padding: 4px; cursor: pointer; }
+
+/* Document blocks (Application, Order, Additional documents): one left edge for title, hint, button and file row */
+.misc-docblock .doc-row { padding: 10px 0; border-bottom: 0; background: transparent; }
+.misc-docblock .doc-row__icon { flex: 0 0 auto; }
+.misc-docblock .doc-row__body { flex: 1 1 0; min-width: 0; }
+.misc-docblock .doc-row__name { overflow-wrap: anywhere; }
+.misc-docblock .doc-row__actions { display: flex; gap: 8px; }
+
+@media (max-width: 640px) {
+  /* File row: icon and name side by side, the three buttons below in equal parts across the full width, same width as the Replace file button */
+  .misc-docblock .doc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 10px 0 0; }
+  .misc-docblock .doc-row__actions { flex: 1 1 100%; width: 100%; margin: 0; }
+  .misc-docblock .doc-row__actions > button { flex: 1 1 0 !important; min-width: 0 !important; width: auto !important; justify-content: center; }
+
+  /* Upload / replace button and the title above it: same width, nothing indented */
+  .misc-docblock__head { margin-bottom: 8px; }
+  .misc-docblock .doc-group__evidence-empty { padding-left: 0; }
+
+  /* Mark as Disposed Off and Reopen: full width like the other buttons of the window */
+  .misc-section > .btn-gold,
+  .misc-section > .btn-outline { width: 100%; justify-content: center; }
 }

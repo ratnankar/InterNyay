@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { caseTypeLabel } from '../utils/caseClassification'
-import { documentTitle, documentTypeLabel, isEvidenceDocument, evidenceOwnerOf, evidenceTitle } from '../utils/documentUtils'
+import { documentTitle, documentTypeLabel, isEvidenceDocument, isMiscDocument, evidenceOwnerOf, evidenceTitle } from '../utils/documentUtils'
+import MiscDocsSection from '../components/misc/MiscDocsSection'
 import Dropdown from '../components/common/Dropdown'
 
 import Icon from '../components/common/Icon'
@@ -178,8 +179,6 @@ function ClientDocGroup({
           <p className="doc-group__case-name">{clientName}</p>
           <p className="doc-group__meta">
             General-purpose client documents
-            {evidenceItems.length > 0 &&
-              ` · ${evidenceItems.length} evidence item${evidenceItems.length !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -315,6 +314,24 @@ function CaseDocGroup({
   handleDeleteDocument,
   handleDeleteEvidence,
 }) {
+  // The case's own documents and its misc. application documents are listed apart
+  const caseDocs = group.docs.filter(d => !isMiscDocument(d))
+  const miscDocs = group.docs.filter(isMiscDocument)
+
+  const renderRow = doc => (
+    <DocRow
+      key={doc.id}
+      doc={doc}
+      onView={() => handleViewDocument(doc)}
+      onDownload={() => handleDownloadDocument(doc)}
+      onDelete={async () => {
+        if (await confirmDialog(`Delete document "${doc.name}"?`)) {
+          handleDeleteDocument(doc.caseId, doc.id)
+        }
+      }}
+    />
+  )
+
   return (
     <div className="card doc-group">
       <div
@@ -338,8 +355,6 @@ function CaseDocGroup({
 
             <span className="doc-group__tag">{group.caseType}</span>
 
-            {evidenceItems.length > 0 &&
-              ` · ${evidenceItems.length} evidence item${evidenceItems.length !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -370,19 +385,7 @@ function CaseDocGroup({
       {isOpen && (
         <>
           {/* One row per case document, delete asks for confirmation first */}
-          {group.docs.map(doc => (
-            <DocRow
-              key={doc.id}
-              doc={doc}
-              onView={() => handleViewDocument(doc)}
-              onDownload={() => handleDownloadDocument(doc)}
-              onDelete={async () => {
-                if (await confirmDialog(`Delete document "${doc.name}"?`)) {
-                  handleDeleteDocument(doc.caseId, doc.id)
-                }
-              }}
-            />
-          ))}
+          {caseDocs.map(renderRow)}
 
           {/* Message when this case has no documents yet */}
           {group.docs.length === 0 && (
@@ -390,6 +393,9 @@ function CaseDocGroup({
               <Icon name="inbox" /> No documents uploaded yet. Click "+ Upload" above to add one.
             </p>
           )}
+
+          {/* Documents of the case's misc. applications, grouped by application */}
+          <MiscDocsSection docs={miscDocs} renderRow={renderRow} nested flush />
 
           {/* Evidence files uploaded for this case */}
           <EvidenceSection

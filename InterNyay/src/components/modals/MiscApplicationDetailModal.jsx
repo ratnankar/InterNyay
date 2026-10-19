@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
-import { MISC_TYPE_MANUAL } from '../../constants/data'
+import { MISC_OUTCOMES, MISC_TYPE_MANUAL } from '../../constants/data'
 import { confirmDialog } from '../../utils/confirmDialog'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { formatDate, formatDisplayDate } from '../../utils/dateUtils'
@@ -10,9 +10,11 @@ import {
 } from '../misc/miscUtils'
 import useOverlayClose from '../../hooks/useOverlayClose'
 import Dropdown from '../common/Dropdown'
-import HearingDateInput from '../common/HearingDateInput'
 import Icon from '../common/Icon'
+import Req from '../common/Req'
 import ModalPortal from '../common/ModalPortal'
+import MiscHearingPanel from '../misc/MiscHearingPanel'
+import ClearableDateInput from '../common/ClearableDateInput'
 
 // One document of the application with its Open, Download and Delete buttons
 function DocRow({ doc, onView, onDownload, onDelete }) {
@@ -37,33 +39,42 @@ function DocRow({ doc, onView, onDownload, onDelete }) {
 }
 
 // A titled block of documents with an upload button; `children` are the rows
-function DocBlock({ title, hint, empty, uploadLabel, onPick, multiple = false, disabled = false, busy, children, hasRows }) {
+// collapsible: the block starts closed and its title opens it (the upload button stays in view); count is shown in the title
+function DocBlock({ title, hint, empty, uploadLabel, onPick, multiple = false, disabled = false, busy, children, hasRows, collapsible = false, count = 0 }) {
   const input = useRef(null)
+  const [open, setOpen] = useState(!collapsible)
   return (
     <div className="misc-docblock">
       <div className="misc-docblock__head">
-        <div>
-          <p className="misc-docblock__title">{title}</p>
-          {hint && <p className="doc-group__meta">{hint}</p>}
-        </div>
+        {collapsible ? (
+          <button type="button" className="hearing-history__toggle" aria-expanded={open} onClick={() => setOpen(v => !v)}>
+            <span className={`hearing-history__caret${open ? ' hearing-history__caret--open' : ''}`}>▸</span>
+            {title}{count > 0 ? ` (${count})` : ''}
+          </button>
+        ) : (
+          <div>
+            <p className="misc-docblock__title">{title}</p>
+            {hint && <p className="doc-group__meta">{hint}</p>}
+          </div>
+        )}
         {!disabled && (
           <>
             <input ref={input} type="file" className="u-hidden" multiple={multiple}
               onChange={e => { const files = Array.from(e.target.files || []); e.target.value = ''; if (files.length) onPick(files) }} />
-            <button type="button" className="btn-outline" disabled={busy} onClick={() => input.current?.click()}>
+            <button type="button" className="btn-outline btn-outline--sm" disabled={busy} onClick={() => input.current?.click()}>
               <Icon name="folder" /> {busy ? 'Uploading…' : uploadLabel}
             </button>
           </>
         )}
       </div>
-      {hasRows ? children : <p className="doc-group__evidence-empty"><Icon name="inbox" /> {empty}</p>}
+      {open && (hasRows ? children : <p className="doc-group__evidence-empty"><Icon name="inbox" /> {empty}</p>)}
     </div>
   )
 }
 
-// Window for one application: its case, details, status, order and documents
+// Window for one application: its case, details, status, order (only while disposing off and once disposed off) and documents
 export default function MiscApplicationDetailModal({ app, onChange, onDeleted, onClose }) {
-  const { addToast, handleViewDocument, handleDownloadDocument, bumpHearings } = useApp()
+  const { addToast, handleViewDocument, handleDownloadDocument } = useApp()
   const overlayHandlers = useOverlayClose(onClose)
 
   const [editing, setEditing] = useState(false)
@@ -71,6 +82,8 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
   const [busy, setBusy] = useState('')
   const [disposing, setDisposing] = useState(false)
   const [disposedOn, setDisposedOn] = useState(formatDate(new Date()))
+  // Allowed or Disallowed, chosen when the application is disposed off
+  const [outcome, setOutcome] = useState('')
   const [orderFile, setOrderFile] = useState(null)
 
   const disposed = isDisposed(app)
@@ -95,9 +108,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
     setDraft({
       applicationChoice: choice,
       applicationCustom: custom,
-      history: app.history || '',
       filingDate: app.filingDate || '',
-      hearingDate: app.hearingDate || '',
     })
     setEditing(true)
   }
@@ -108,30 +119,32 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
 
     const updated = await run('save', () => api.miscApplications.update(app.id, {
       applicationType,
-      history: draft.history.trim(),
       filingDate: draft.filingDate || null,
-      hearingDate: draft.hearingDate || null,
+      // The hearing date has its own Update button, so it is sent back as it is
+      hearingDate: app.hearingDate || null,
     }), 'Could not save the changes')
 
     if (updated) {
       setEditing(false)
-      if (draft.hearingDate && draft.hearingDate !== app.hearingDate) bumpHearings(app.caseId)
       addToast('Application updated')
     }
   }
 
   // Disposes the application off, then stores the order when one was chosen (the order is optional and can come later)
   async function confirmDispose() {
-    const updated = await run('dispose', () => api.miscApplications.dispose(app.id, disposedOn), 'Could not mark the application as disposed off')
+    if (!outcome) { addToast('Choose whether the application was allowed or disallowed', 'error'); return }
+
+    const updated = await run('dispose', () => api.miscApplications.dispose(app.id, disposedOn, outcome), 'Could not mark the application as disposed off')
     if (!updated) return
 
     setDisposing(false)
+    setOutcome('')
     if (orderFile) {
       const withOrder = await run('order', () => api.miscApplications.uploadDoc(app.id, orderFile, 'ORDER'),
         'Marked as disposed off, but the order could not be uploaded. Add it again from here.')
-      if (withOrder) addToast('Application disposed off and order saved')
+      if (withOrder) addToast(`Application ${outcome.toLowerCase()} and order saved`)
     } else {
-      addToast('Application disposed off')
+      addToast(`Application ${outcome.toLowerCase()}`)
     }
     setOrderFile(null)
   }
@@ -177,10 +190,24 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
     onDelete: () => removeDoc(doc),
   })
 
+  const orderBlock = (
+    <DocBlock
+      title="Order"
+      hint="The court order passed on the application."
+      empty="No order uploaded yet."
+      uploadLabel={app.orderDocument ? 'Replace order' : 'Upload order'}
+      busy={busy === 'upload-ORDER'}
+      hasRows={!!app.orderDocument}
+      onPick={files => upload(files.slice(0, 1), 'ORDER', 'Order uploaded')}
+    >
+      {app.orderDocument && <DocRow {...rowProps(app.orderDocument)} />}
+    </DocBlock>
+  )
+
   return (
     <ModalPortal>
       <div className="overlay" {...overlayHandlers}>
-        <div className="modal modal--md misc-modal" onClick={e => e.stopPropagation()}>
+        <div className="modal misc-modal misc-modal--wide" onClick={e => e.stopPropagation()}>
 
           <div className="modal__header">
             <h2 className="modal__title">{app.applicationType}</h2>
@@ -194,20 +221,18 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
               {[app.caseNo, app.clientName, [app.court, app.district].filter(Boolean).join(', ')].filter(Boolean).join(' • ')}
             </p>
             <span className={`misc-status misc-status--${statusSlug(app.status)}`}>{app.status}</span>
-            {disposed && app.disposedOn && <span className="doc-group__meta"> Disposed off on {formatDisplayDate(app.disposedOn)}</span>}
+            {disposed && app.disposalOutcome && (
+              <span className={`misc-status misc-status--${statusSlug(app.disposalOutcome)}`}> {app.disposalOutcome}</span>
+            )}
+            {disposed && app.disposedOn && <span className="doc-group__meta misc-casebox__date">Disposed off on {formatDisplayDate(app.disposedOn)}</span>}
           </div>
 
           {/* Details: read-only until Edit is pressed */}
           {!editing && (
             <div className="misc-details">
               <div><p className="misc-details__label">Filing date</p><p>{app.filingDate ? formatDisplayDate(app.filingDate) : '—'}</p></div>
-              <div><p className="misc-details__label">Hearing date</p><p>{app.hearingDate ? formatDisplayDate(app.hearingDate) : '—'}</p></div>
-              <div className="misc-grid__wide">
-                <p className="misc-details__label">History</p>
-                <p className="misc-details__history">{app.history || 'No history added.'}</p>
-              </div>
-              <div className="misc-grid__wide">
-                <button type="button" className="btn-outline" onClick={startEdit}><Icon name="edit" /> Edit details</button>
+              <div className="misc-details__action">
+                <button type="button" className="btn-outline btn-outline--sm" onClick={startEdit}><Icon name="edit" /> Edit details</button>
               </div>
             </div>
           )}
@@ -230,18 +255,8 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
               )}
               <div>
                 <label className="form-label">Filing date</label>
-                <input className="form-input" type="date" value={draft.filingDate}
+                <ClearableDateInput className="form-input"  value={draft.filingDate}
                   onChange={e => setDraft(d => ({ ...d, filingDate: e.target.value }))} />
-              </div>
-              <div>
-                <label className="form-label">Hearing date</label>
-                <HearingDateInput value={draft.hearingDate} caseId={app.caseId}
-                  onChange={v => setDraft(d => ({ ...d, hearingDate: v }))} placeholder="Select hearing date" />
-              </div>
-              <div className="misc-grid__wide">
-                <label className="form-label">History</label>
-                <textarea className="form-input misc-history" rows={3} maxLength={5000} value={draft.history}
-                  onChange={e => setDraft(d => ({ ...d, history: e.target.value }))} />
               </div>
               <div className="misc-grid__wide form-actions">
                 <button type="button" className="btn-outline" onClick={() => setEditing(false)} disabled={busy === 'save'}>Cancel</button>
@@ -259,10 +274,27 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
             {!disposed && disposing && (
               <div className="misc-dispose">
                 <p className="misc-docblock__title">Dispose off this application</p>
+                <div>
+                  <label className="form-label">Was the application allowed or disallowed?<Req /></label>
+                  <div className="misc-outcome" role="radiogroup" aria-label="Outcome">
+                    {MISC_OUTCOMES.map(o => (
+                      <button key={o} type="button" role="radio" aria-checked={outcome === o}
+                        className={outcome === o ? 'btn-gold' : 'btn-outline'} onClick={() => setOutcome(o)}>
+                        {o}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="misc-grid">
                   <div>
                     <label className="form-label">Disposed off on</label>
-                    <input className="form-input" type="date" value={disposedOn} onChange={e => setDisposedOn(e.target.value)} />
+                    <div className="misc-clearable">
+                      <input className="form-input" type="date" value={disposedOn} onChange={e => setDisposedOn(e.target.value)} />
+                      {disposedOn && (
+                        <button type="button" className="misc-clearable__btn" aria-label="Clear the date" title="Clear the date"
+                          onClick={() => setDisposedOn('')}><Icon name="close" /></button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <label className="form-label">Order (optional)</label>
@@ -274,19 +306,27 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                     {orderFile && <span className="misc-file__name">{orderFile.name}</span>}
                   </div>
                 </div>
-                <p className="admin__hint">The order can also be uploaded later from this window.</p>
+                <p className="misc-dispose__hint">The order can also be uploaded later from this window.</p>
                 <div className="form-actions">
-                  <button type="button" className="btn-outline" onClick={() => { setDisposing(false); setOrderFile(null) }} disabled={!!busy}>Cancel</button>
-                  <button type="button" className="btn-gold" onClick={confirmDispose} disabled={!!busy || !disposedOn}>
+                  <button type="button" className="btn-outline" onClick={() => { setDisposing(false); setOrderFile(null); setOutcome('') }} disabled={!!busy}>Cancel</button>
+                  <button type="button" className="btn-gold" onClick={confirmDispose} disabled={!!busy || !outcome}>
                     {busy === 'dispose' || busy === 'order' ? 'Saving…' : 'Dispose Off'}
                   </button>
                 </div>
               </div>
             )}
 
+            {/* Once disposed off, the order sits right under the status */}
+            {disposed && orderBlock}
+
             {disposed && (
               <button type="button" className="btn-outline" onClick={reopen} disabled={!!busy}>Reopen (back to pending)</button>
             )}
+          </div>
+
+          {/* Hearing history of this application, apart from the case's own: next hearing date, edit and delete live here */}
+          <div className="misc-docblock">
+            <MiscHearingPanel app={app} onChange={onChange} />
           </div>
 
           {/* Documents */}
@@ -303,19 +343,9 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
           </DocBlock>
 
           <DocBlock
-            title="Order"
-            hint="The court order passed on the application."
-            empty="No order uploaded yet."
-            uploadLabel={app.orderDocument ? 'Replace order' : 'Upload order'}
-            busy={busy === 'upload-ORDER'}
-            hasRows={!!app.orderDocument}
-            onPick={files => upload(files.slice(0, 1), 'ORDER', 'Order uploaded')}
-          >
-            {app.orderDocument && <DocRow {...rowProps(app.orderDocument)} />}
-          </DocBlock>
-
-          <DocBlock
             title="Additional documents"
+            collapsible
+            count={app.additionalDocuments?.length || 0}
             empty="No additional documents."
             uploadLabel="Add documents"
             multiple

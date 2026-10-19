@@ -14,6 +14,7 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import { getErrorMessage } from '../../utils/errorMessages'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
+import PlaceGroupedGrid, { sortByPlace, buildingKey } from './PlaceGroupedGrid'
 
 // Admin screen for the judges themselves: name and photo only.
 // Where a judge sits (court, building, court no., contacts ...) is managed in the Listing section
@@ -25,6 +26,8 @@ export default function JudgeProfilesAdmin() {
   const [search,  setSearch]  = useState('')
   // all / free (not holding a court) / multi (more than one court)
   const [view,    setView]    = useSessionState('admin_judge_profiles_view', 'all')
+  // Only the judges who hold a seat in this court ('' = all courts)
+  const [courtFilter, setCourtFilter] = useState('')
   // Judge being added or edited (null when closed)
   const [editing, setEditing] = useState(null)
   const [error,   setError]   = useState('')
@@ -52,13 +55,34 @@ export default function JudgeProfilesAdmin() {
     return judges.filter(j => {
       if (view === 'free' && j.courtCount !== 0) return false
       if (view === 'multi' && j.courtCount < 2) return false
+      if (courtFilter && !(j.courtNames || []).includes(courtFilter)) return false
       if (!q) return true
       return [j.name, ...j.courts].some(v => v.toLowerCase().includes(q))
     })
-  }, [judges, search, view])
+  }, [judges, search, view, courtFilter])
+
+  // The courts that have a judge, for the court filter
+  const courtOptions = useMemo(
+    () => [...new Set(judges.flatMap(j => j.courtNames || []))].sort((a, b) => a.localeCompare(b)),
+    [judges],
+  )
+
+  // One entry per court a judge holds (a judge in two courts shows under both), sorted court, building, court no.
+  // A judge with no court goes last. With a court picked only the seats in that court are shown
+  const entries = useMemo(() => {
+    const list = []
+    visible.forEach(j => {
+      const seats = (j.seats || []).filter(s => !courtFilter || s.court === courtFilter)
+      if (seats.length === 0) list.push({ judge: j, key: `${j.id}-none`, court: '', district: '', building: '', floor: '', courtRoomNo: '' })
+      else seats.forEach(s => list.push({ judge: j, key: `${j.id}-${s.id}`, court: s.court || '', district: s.district || '', building: s.building || '', floor: s.floor || '', courtRoomNo: s.courtRoomNo || '' }))
+    })
+    const placed = sortByPlace(list.filter(e => e.court))
+    const free = list.filter(e => !e.court).sort((a, b) => a.judge.name.localeCompare(b.judge.name))
+    return [...placed, ...free]
+  }, [visible, courtFilter])
 
   const rowsStep = 18
-  const { visible: visibleRows, remaining, showMore } = useSeeMore(visible, `${search}|${view}`, rowsStep)
+  const { visible: visibleRows, remaining, showMore, step: rowsRowStep } = useSeeMore(entries, `${search}|${view}|${courtFilter}`, rowsStep, 0, { groupOf: buildingKey })
 
   const { pick: pickJudgePhoto, cropper } = useImageCrop({
     shape: 'portrait',
@@ -128,6 +152,10 @@ export default function JudgeProfilesAdmin() {
 
       <div className="admin__toolbar">
         <SearchInput placeholder="Search judges…" value={search} onChange={setSearch} />
+        <Dropdown className="form-input" wrapperClassName="u-maxw-200" value={courtFilter} onChange={e => setCourtFilter(e.target.value)}>
+          <option value="">All courts</option>
+          {courtOptions.map(c => <option key={c} value={c}>{c}</option>)}
+        </Dropdown>
         <Dropdown className="form-input" wrapperClassName="u-maxw-240" value={view} onChange={e => setView(e.target.value)}>
           <option value="all">All judges</option>
           <option value="free">Not holding a court</option>
@@ -140,25 +168,33 @@ export default function JudgeProfilesAdmin() {
       {visible.length === 0 && !loading
         ? <p className="admin__empty">{view === 'all' ? 'No judges added yet' : 'No judge matches this view'}</p>
         : (
-          <div className="judge-grid admin-judge-grid">
-            {visibleRows.map(j => (
-              <JudgeCard
-                key={j.id}
-                judge={{ name: j.name, photo: j.photo }}
-                tags={j.courtCount === 0
-                  ? <span className="qa-tag qa-tag--released">Not holding a court</span>
-                  : j.courtCount > 1 && <span className="qa-tag qa-tag--multi">Holds {j.courtCount} courts</span>}
-                note={j.courtCount > 0 && <>Sits in: {j.courts.join('; ')}</>}
-                actions={
-                  <>
-                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => startEdit(j)}>Edit</button>
-                    <button type="button" className="btn-outline btn-outline--sm btn-outline--danger" onClick={() => remove(j)}>Remove</button>
-                  </>
-                }
-              />
-            ))}
-            <SeeMore remaining={remaining} onClick={showMore} step={rowsStep} />
-          </div>
+          <PlaceGroupedGrid
+            byCourt={!courtFilter}
+            storageKey="judges"
+            emptyLabel="Not holding a court"
+            entries={visibleRows.map(e => {
+              const j = e.judge
+              return {
+                ...e,
+                node: (
+                  <JudgeCard
+                    judge={{ name: j.name, photo: j.photo, courtRoomNo: e.courtRoomNo }}
+                    tags={j.courtCount === 0
+                      ? <span className="qa-tag qa-tag--released">Not holding a court</span>
+                      : j.courtCount > 1 && <span className="qa-tag qa-tag--multi">Holds {j.courtCount} courts</span>}
+                    note={j.courtCount > 1 && <>Sits in: {j.courts.join('; ')}</>}
+                    actions={
+                      <>
+                        <button type="button" className="btn-outline btn-outline--sm" onClick={() => startEdit(j)}>Edit</button>
+                        <button type="button" className="btn-outline btn-outline--sm btn-outline--danger" onClick={() => remove(j)}>Remove</button>
+                      </>
+                    }
+                  />
+                ),
+              }
+            })}
+            footer={<SeeMore remaining={remaining} onClick={showMore} step={rowsRowStep} />}
+          />
         )}
 
       {editing && (

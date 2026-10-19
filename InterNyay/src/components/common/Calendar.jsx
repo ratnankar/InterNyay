@@ -168,7 +168,7 @@ export default function Calendar() {
         </span>
       </div>
 
-      <div className="calendar__cross-box">
+      <div className="calendar__cross-box" data-no-compact>
         {selectedIsSunday ? (
           <p className="calendar__cross-note">Sunday — no hearings can be set on this day.</p>
         ) : (

@@ -12,6 +12,7 @@ import HearingDateInput from '../common/HearingDateInput'
 import Icon from '../common/Icon'
 import ModalPortal from '../common/ModalPortal'
 import Req from '../common/Req'
+import ClearableDateInput from '../common/ClearableDateInput'
 
 // How many matches are listed under a search box
 const LIST_LIMIT = 6
@@ -28,7 +29,6 @@ const emptyForm = () => ({
   district: '',
   applicationChoice: '',
   applicationCustom: '',
-  history: '',
   filingDate: formatDate(new Date()),
   hearingDate: '',
 })
@@ -116,7 +116,6 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
 
   const [form, setForm] = useState(emptyForm)
   const [applicationFile, setApplicationFile] = useState(null)
-  const [extraFiles, setExtraFiles] = useState([])
   const [saving, setSaving] = useState(false)
 
   const startSignature = useRef(JSON.stringify(emptyForm()))
@@ -158,7 +157,7 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
   const chosenType = resolveApplicationType(form.applicationChoice, form.applicationCustom)
   const isNew = form.mode === 'NEW'
 
-  const dirty = JSON.stringify(form) !== startSignature.current || !!applicationFile || extraFiles.length > 0
+  const dirty = JSON.stringify(form) !== startSignature.current || !!applicationFile
 
   // First thing that is missing or wrong, in the order the form is read
   function problem() {
@@ -166,12 +165,12 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
     if (isNew) {
       if (!form.clientId) return 'Choose the client or add a new one'
       if (!form.caseTitle.trim()) return 'Enter the case title'
-      if (!form.caseNo.trim()) return 'Enter the case number'
-      if (!isValidCnr(form.cnrNo)) return 'Enter the 16-character CNR number'
+      // Case number and CNR are optional; a CNR that is typed must be the full 16 characters
+      if (form.cnrNo.trim() && !isValidCnr(form.cnrNo)) return 'The CNR number must be 16 characters'
       if (!form.court) return 'Choose the court'
       if (hasNamedDistricts(form.court) && !form.district) return 'Choose the district'
     }
-    if (!form.applicationChoice) return 'Choose the application, or pick "Type manually" and write its name'
+    if (!form.applicationChoice) return 'Choose the application, or pick "Other" and write its name'
     if (!chosenType) return 'Type the name of the application'
     return ''
   }
@@ -188,12 +187,11 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
         caseId: isNew ? null : form.caseId,
         clientId: isNew ? form.clientId : null,
         caseTitle: isNew ? form.caseTitle.trim() : null,
-        caseNo: isNew ? form.caseNo.trim() : null,
-        cnrNo: isNew ? form.cnrNo.trim() : null,
+        caseNo: isNew ? (form.caseNo.trim() || null) : null,
+        cnrNo: isNew ? (form.cnrNo.trim() || null) : null,
         court: isNew ? form.court : null,
         district: isNew ? form.district : null,
         applicationType: chosenType,
-        history: form.history.trim(),
         filingDate: form.filingDate || null,
         hearingDate: form.hearingDate || null,
       })
@@ -205,13 +203,9 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
 
     // The application is saved; the files are sent one by one, and a file that fails does not undo it
     let failed = 0
-    const uploads = [
-      ...(applicationFile ? [{ file: applicationFile, role: 'APPLICATION' }] : []),
-      ...extraFiles.map(file => ({ file, role: 'ADDITIONAL' })),
-    ]
-    for (const { file, role } of uploads) {
+    if (applicationFile) {
       try {
-        app = await api.miscApplications.uploadDoc(app.id, file, role)
+        app = await api.miscApplications.uploadDoc(app.id, applicationFile, 'APPLICATION')
       } catch {
         failed += 1
       }
@@ -224,14 +218,14 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
     setSaving(false)
     onCreated(app)
     addToast(failed
-      ? `Application added, but ${failed} file${failed === 1 ? '' : 's'} could not be uploaded. Open it to add them again.`
+      ? 'Application added, but the file could not be uploaded. Open it to add it again.'
       : 'Application added', failed ? 'error' : undefined)
   }
 
   // Loads the case that was just created, with the same fee rules as every other case screen
   async function addNewCaseToList(app) {
     try {
-      const res = await api.cases.list({ search: form.caseNo.trim(), size: 10 })
+      const res = await api.cases.list({ search: form.caseNo.trim() || form.caseTitle.trim(), size: 10 })
       const found = (Array.isArray(res) ? res : res?.content || []).find(c => Number(c.id) === Number(app.caseId))
       if (found) {
         setCases(prev => (prev.some(c => Number(c.id) === Number(found.id)) ? prev : [...prev, { ...found, documents: found.documents || [] }]))
@@ -315,13 +309,13 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
                   </div>
 
                   <div>
-                    <label className="form-label">Case number<Req /></label>
+                    <label className="form-label">Case number</label>
                     <input className="form-input" maxLength={255} placeholder="e.g. CC 1234/2026"
                       value={form.caseNo} onChange={e => set({ caseNo: e.target.value })} />
                   </div>
 
                   <div>
-                    <label className="form-label">CNR number<Req /></label>
+                    <label className="form-label">CNR number</label>
                     <input className="form-input" maxLength={24} placeholder="16-character CNR"
                       value={form.cnrNo} onChange={e => set({ cnrNo: e.target.value })} />
                   </div>
@@ -383,31 +377,22 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
                 </div>
               )}
 
-              <div className="u-mt-12">
-                <label className="form-label">History</label>
-                <textarea className="form-input misc-history" rows={3} maxLength={5000}
-                  placeholder="What has happened so far in this application…"
-                  value={form.history} onChange={e => set({ history: e.target.value })} />
-                <p className="admin__hint">Shown on the application and added to the case's hearing history on the hearing date.</p>
-              </div>
-
               <div className="misc-grid u-mt-12">
                 <div>
                   <label className="form-label">Filing date</label>
-                  <input className="form-input" type="date" value={form.filingDate}
+                  <ClearableDateInput className="form-input"  value={form.filingDate}
                     onChange={e => set({ filingDate: e.target.value })} />
                 </div>
                 <div>
-                  <label className="form-label">Hearing date</label>
+                  <label className="form-label">Next hearing date</label>
                   <HearingDateInput value={form.hearingDate} onChange={v => set({ hearingDate: v })}
-                    placeholder="Select hearing date" caseId={isNew ? null : form.caseId} />
+                    placeholder="Select date" caseId={isNew ? null : form.caseId} />
                 </div>
               </div>
             </div>
 
-            {/* Files: all optional, they can be added later from the application */}
             <div className="misc-section">
-              <label className="form-label">Application file (optional)</label>
+              <label className="form-label">Application file</label>
               <div className="misc-file">
                 <input type="file" id="misc-app-file" className="u-hidden"
                   onChange={e => { setApplicationFile(e.target.files?.[0] || null); e.target.value = '' }} />
@@ -418,19 +403,6 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
                     </span>
                   : <span className="doc-group__meta">You can upload it later.</span>}
               </div>
-
-              <label className="form-label u-mt-12">Additional documents (optional)</label>
-              <div className="misc-file">
-                <input type="file" id="misc-extra-files" className="u-hidden" multiple
-                  onChange={e => { setExtraFiles(prev => [...prev, ...Array.from(e.target.files || [])]); e.target.value = '' }} />
-                <label htmlFor="misc-extra-files" className="btn-outline"><Icon name="folder" /> Add files</label>
-              </div>
-              {extraFiles.map((f, i) => (
-                <span key={`${f.name}-${i}`} className="misc-file__name">{f.name}
-                  <button type="button" className="misc-file__remove" aria-label={`Remove ${f.name}`}
-                    onClick={() => setExtraFiles(prev => prev.filter((_, j) => j !== i))}><Icon name="close" /></button>
-                </span>
-              ))}
             </div>
 
             <div className="form-actions">

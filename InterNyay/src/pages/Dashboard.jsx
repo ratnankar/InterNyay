@@ -8,6 +8,8 @@ import { formatDisplayDate } from '../utils/dateUtils'
 import CaseFields from '../components/common/CaseFields'
 import { caseNatureOf } from '../utils/caseClassification'
 import useHearingLeave from '../hooks/useHearingLeave'
+import useMiscHearingsOn from '../hooks/useMiscHearingsOn'
+import DashboardMiscHearing from '../components/misc/DashboardMiscHearing'
 import { useMyCourts, roomLabel } from '../constants/courts'
 
 import Icon from '../components/common/Icon'
@@ -32,7 +34,7 @@ function dayWord(date) {
 // Dashboard: hearings for the selected calendar date, with the calendar and notifications beside them
 export default function Dashboard() {
   const {
-    clients, calendarDate, calendarDateKey, todayCases,
+    cases, clients, calendarDate, calendarDateKey, todayCases,
     openCase, setShowAddCase,
     expandedHearingCaseId, setExpandedHearingCaseId,
     whatsappBusy, sendHearingReminder, toggleCaseReminders,
@@ -41,18 +43,25 @@ export default function Dashboard() {
 
   // The user's courts, most cases first. Hearings at these courts come first, grouped under a court heading
   const myPlaces = useMyCourts()
-  const sortedCases = useMemo(() => {
+  // Misc. applications listed on the selected date: their own cards, with the application's details
+  const miscToday = useMiscHearingsOn(calendarDateKey)
+  // Cases and misc. applications of the day in one list: grouped by court, each court's cases first, then its applications
+  const sortedRows = useMemo(() => {
     const rank = new Map()
     myPlaces.forEach(p => { if (!rank.has(p.court)) rank.set(p.court, rank.size) })
-    const rankOf = c => (rank.has(c.court) ? rank.get(c.court) : rank.size)
+    const rankOf = row => (rank.has(row.court) ? rank.get(row.court) : rank.size)
+    const rows = [
+      ...todayCases.map(c => ({ court: c.court || '', caseItem: c })),
+      ...miscToday.map(a => ({ court: a.court || '', miscApp: a })),
+    ]
     // Stable sort: the original order is kept inside each court
-    return [...todayCases].sort((a, b) => {
+    return rows.sort((a, b) => {
       const byCourt = rankOf(a) - rankOf(b)
-      return byCourt || String(a.court || '').localeCompare(String(b.court || ''))
+      return byCourt || a.court.localeCompare(b.court) || (a.caseItem ? 0 : 1) - (b.caseItem ? 0 : 1)
     })
-  }, [todayCases, myPlaces])
+  }, [todayCases, miscToday, myPlaces])
   // Court headings only help when the day has hearings at more than one court
-  const showCourtHeadings = new Set(sortedCases.map(c => c.court || '')).size > 1
+  const showCourtHeadings = new Set(sortedRows.map(r => r.court)).size > 1
 
   // Greeting name: first name (with title). When even that does not fit on one line, "Counsel" is shown instead
   const titleRef = useRef(null)
@@ -71,6 +80,8 @@ export default function Dashboard() {
     const el = titleRef.current
     if (el && !tooLong && el.scrollWidth > el.clientWidth + 1) setTooLong(true)
   })
+
+  const hearingTotal = todayCases.length + miscToday.length
 
   // Judge, cause list number and leave details for each hearing on the selected date
   const hearingInfo = useHearingLeave(calendarDate, todayCases)
@@ -118,17 +129,36 @@ export default function Dashboard() {
               Hearings — {dayWord(calendarDate) && `${dayWord(calendarDate)}, `}{calendarDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
             </h2>
             <span className="hearings-panel__count">
-              {todayCases.length} hearing{todayCases.length !== 1 ? 's' : ''}
+              {hearingTotal} hearing{hearingTotal !== 1 ? 's' : ''}
             </span>
           </div>
 
           {/* Empty state, otherwise one card per hearing */}
-          {todayCases.length === 0 ? (
+          {hearingTotal === 0 ? (
             <div className="empty-state">
               <div className="empty-state__icon"><Icon name="scale" duotone /></div>
               <p className="empty-state__desc">No hearings scheduled for {dayWord(calendarDate).toLowerCase() || 'this date'}</p>
             </div>
-          ) : sortedCases.map((c, index) => {
+          ) : null}
+
+          {sortedRows.map((row, index) => {
+            // Court heading before the first hearing of each court (cases and applications share them)
+            const heading = showCourtHeadings && (index === 0 || sortedRows[index - 1].court !== row.court)
+              ? <p className="hearings-court">{row.court || 'No court'}</p>
+              : null
+
+            // A misc. application sits in its own court, after that court's cases
+            if (row.miscApp) {
+              return (
+                <Fragment key={`misc-${row.miscApp.id}`}>
+                  {heading}
+                  <DashboardMiscHearing app={row.miscApp} dateKey={calendarDateKey}
+                    caseItem={cases.find(x => String(x.id) === String(row.miscApp.caseId))} />
+                </Fragment>
+              )
+            }
+
+            const c = row.caseItem
             // Judge and cause list details for this case, and whether its card is expanded
             const info = hearingInfo[c.id]
             const causeListNo = info?.causeListNo
@@ -183,10 +213,7 @@ export default function Dashboard() {
               </>
             )
 
-            // Court heading before the first hearing of each court
-            const courtHeading = showCourtHeadings && (index === 0 || (sortedCases[index - 1].court || '') !== (c.court || ''))
-              ? <p className="hearings-court">{c.court || 'No court'}</p>
-              : null
+            const courtHeading = heading
 
             return (
               <Fragment key={c.id}>

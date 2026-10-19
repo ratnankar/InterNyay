@@ -30,6 +30,7 @@ import Req from '../common/Req'
 
 import Icon from '../common/Icon'
 import ModalPortal from '../../components/common/ModalPortal'
+import ClearableDateInput from '../common/ClearableDateInput'
 // A court no. in the dropdown is identified by building, floor and number, because the same number can be used in several buildings
 const KEY_SEP = '\u0001'
 const roomKey = (building, floor, courtNo) => [building || '', floor || '', courtNo || ''].join(KEY_SEP)
@@ -98,12 +99,12 @@ function ChequeDetails({ form, setForm }) {
 
       <div>
         <label className="form-label">Cheque Date</label>
-        <input className="form-input" type="date" value={form.chequeDate} onChange={set('chequeDate')} />
+        <ClearableDateInput className="form-input"  value={form.chequeDate} onChange={set('chequeDate')} />
       </div>
 
       <div>
         <label className="form-label">Memo Date</label>
-        <input className="form-input" type="date" value={form.memoDate} onChange={set('memoDate')} />
+        <ClearableDateInput className="form-input"  value={form.memoDate} onChange={set('memoDate')} />
       </div>
 
       <div>
@@ -135,7 +136,7 @@ function ChequeDetails({ form, setForm }) {
 
       <div>
         <label className="form-label">Notice Date</label>
-        <input className="form-input" type="date" value={form.noticeDate} onChange={set('noticeDate')} />
+        <ClearableDateInput className="form-input"  value={form.noticeDate} onChange={set('noticeDate')} />
       </div>
     </div>
   )
@@ -753,7 +754,7 @@ export default function AddCaseModal() {
             </div>
             <div>
               <label className="form-label">Filing Date</label>
-              <input className="form-input" type="date"
+              <ClearableDateInput className="form-input" 
                 value={newCaseForm.filingDate} onChange={e => setNewCaseForm(f => ({ ...f, filingDate: e.target.value }))} />
             </div>
 

@@ -36,6 +36,18 @@ export function parseIsoDate(dateStr) {
   return new Date(y, m - 1, d)
 }
 
+// Short hint for how far away a hearing is: "Today", "Tomorrow", "In 5 days", or "Date passed"
+export function hearingCountdown(dateStr) {
+  const target = parseIsoDate(dateStr)
+  if (Number.isNaN(target.getTime())) return null
+  const now = new Date()
+  const days = Math.round((target - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
+  if (days < 0)  return { text: 'Date passed', tone: 'past' }
+  if (days === 0) return { text: 'Today', tone: 'soon' }
+  if (days === 1) return { text: 'Tomorrow', tone: 'soon' }
+  return { text: `In ${days} days`, tone: days <= 7 ? 'soon' : 'later' }
+}
+
 // True if the date falls on a Sunday
 export function isSunday(dateStr) {
   return !!dateStr && parseIsoDate(dateStr).getDay() === 0

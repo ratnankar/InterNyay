@@ -17,6 +17,7 @@ import SeeMore from '../components/common/SeeMore'
 
 import Icon from '../components/common/Icon'
 import useSessionState from '../hooks/useSessionState'
+import ClearableDateInput from '../components/common/ClearableDateInput'
 // Payment status filters
 const STATUS_FILTERS = ['All', 'Paid', 'Due']
 // Tabs at the top of the page (transactions and expenses)
@@ -254,9 +255,9 @@ export default function TransactionHistory({ embedded = false }) {
           <div className="txn-timeline-filter">
             <div className="txn-timeline-filter__field">
               <label className="form-label">From</label>
-              <input
+              <ClearableDateInput
                 className="form-input"
-                type="date"
+                
                 value={fromDate}
                 max={toDate || undefined}
                 onChange={e => setFromDate(e.target.value)}
@@ -264,9 +265,9 @@ export default function TransactionHistory({ embedded = false }) {
             </div>
             <div className="txn-timeline-filter__field">
               <label className="form-label">To</label>
-              <input
+              <ClearableDateInput
                 className="form-input"
-                type="date"
+                
                 value={toDate}
                 min={fromDate || undefined}
                 onChange={e => setToDate(e.target.value)}

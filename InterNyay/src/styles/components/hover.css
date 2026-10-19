@@ -52,6 +52,7 @@
   box-shadow: var(--sk-card-shadow);
 }
 
+
 .exp-card__body .hearing-entry,
 .exp-card__body .case-detail__doc-row {
   transition: background 0.15s ease, box-shadow 0.15s ease;

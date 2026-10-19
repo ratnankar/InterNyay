@@ -1,4 +1,3 @@
-
 /* Documents page header */
 .documents__header {
   display: flex;
@@ -255,7 +254,7 @@
   font-size: var(--fs-sm);
 }
 
-.doc-row--evidence { background: #fffdf8; padding-left: 12px; padding-right: 12px; }
+.doc-row--evidence { background: transparent; padding-left: 12px; padding-right: 12px; }
 
 .doc-row {
   display: flex;
@@ -337,3 +336,22 @@
   color: var(--color-gold);
   outline: none;
 }
+
+/* Evidence inside a case's group: room all round, like the Misc. application documents card above it */
+.doc-group .exp-card--evidence,
+.doc-group > .exp-card.exp-card--evidence:last-child { margin: 12px 14px 14px; }
+.doc-group .exp-card--nested.exp-card--flush + .exp-card.exp-card--evidence { margin-top: 0; }
+
+/* Inside a case's or client's Documents, the opened Misc. application documents and Evidence cards show their items
+   on white, laid out exactly like the document rows above them */
+.doc-group .exp-card--nested > .exp-card__body,
+.doc-group .exp-card--evidence > .exp-card__body {
+  background: var(--color-surface);
+  padding: 0;
+  gap: 0;
+}
+.doc-group .exp-card--evidence .doc-row--evidence {
+  background: transparent;
+  padding: 12px 1.25rem;
+}
+.doc-group .exp-card--evidence .doc-group__evidence-empty { padding: 14px 1.25rem; }

@@ -180,8 +180,8 @@ function JudgesList({ initialQuery }) {
           ? <p className="qa-empty">No judges found.</p>
           : (
             <SeeMoreList items={visible} step={24} resetKey={`${court}|${district}|${query}|${vacantOnly}`}>
-              {shown => (
-                <div className="judge-grid">
+              {(shown, gridRef) => (
+                <div className="judge-grid" ref={gridRef}>
                   {shown.map(j => <JudgeCard key={j.id} judge={j} />)}
                 </div>
               )}

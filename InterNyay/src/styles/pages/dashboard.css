@@ -207,6 +207,7 @@
 .hearing-card__detail .hearing-entry__date-text    { font-size: var(--fs-base); }
 .hearing-card__detail .hearing-entry__outcome      { font-size: var(--fs-xs); padding: 3px 10px; }
 .hearing-card__detail .hearing-entry__note         { font-size: var(--fs-base); line-height: var(--lh-base); }
+.hearing-card__detail .hearing-entry__misc         { font-size: var(--fs-base); line-height: var(--lh-base); }
 .hearing-card__detail .hearing-entry__order-icon   { font-size: var(--fs-md); }
 .hearing-card__detail .hearing-entry__order-name   { font-size: var(--fs-base); }
 .hearing-card__detail .hearing-entry__edit-row .form-label { font-size: var(--fs-sm); }
@@ -229,6 +230,8 @@
 /* Court headings between hearings when the day has hearings at more than one court */
 .hearings-court { margin: 14px 0 6px; font-size: var(--fs-sm); font-weight: 700; color: var(--color-navy); }
 .hearings-court:first-of-type { margin-top: 0; }
+/* "Miscellaneous Applications" label: clear of the case card above it, same left edge as the cards */
+.hearings-subhead { margin: 16px 0 6px; font-size: var(--fs-sm); font-weight: 700; color: var(--color-text-muted); }
 
 /* ---------- Alignment pass ---------- */
 

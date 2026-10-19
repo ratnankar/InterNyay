@@ -25,6 +25,8 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
+import ClearableDateInput from '../common/ClearableDateInput'
+import PlaceGroupedGrid, { sortByPlace, buildingKey } from './PlaceGroupedGrid'
 // Patterns used to check the court email and the virtual court link
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const LINK_PATTERN = /^https?:\/\/\S+$/
@@ -80,14 +82,14 @@ function validate(form) {
 // Admin screen for the listings of the Judges List: a listing is a court seat (court, building, court no., contacts,
 // jurisdiction) that always has a judge. Add or edit listings, change the judge of a listing, remove a listing (history is kept)
 export default function ListingAdmin() {
-  const { districtNames } = useCourts()
+  useCourts()
   const { addToast } = useApp()
 
-  // Judges, loading flag, search text and district filter
+  // Judges, loading flag, search text and court filter
   const [judges,   setJudges]   = useState([])
   const [loading,  setLoading]  = useState(false)
   const [search,   setSearch]   = useState('')
-  const [districtFilter, setDistrictFilter] = useState('')
+  const [courtFilter, setCourtFilter] = useState('')
   // Judges (name and photo), which listings to show (all / judge holds more than one court) and the listing whose judge is being changed
   const [profiles, setProfiles] = useState([])
   const [view, setView] = useSessionState('admin_listing_view', 'all')
@@ -120,20 +122,26 @@ export default function ListingAdmin() {
 
   useEffect(() => { load() }, [load])
 
-  // Judges matching the district filter and the search text
+  // Judges matching the court filter and the search text
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
 
-    return judges.filter(j => {
-      if (districtFilter && j.district !== districtFilter) return false
+    return sortByPlace(judges.filter(j => {
+      if (courtFilter && j.court !== courtFilter) return false
       if (view === 'multi' && !(j.courtCount > 1)) return false
       if (view === 'vacant' && !j.vacant) return false
       if (!q) return true
       return [j.name, j.designation, j.courtRoomNo, ...(j.courtNoHistory || []).map(r => r.courtRoomNo), j.building, j.floor, j.court, j.district, j.jurisdiction, j.courtReaderName]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
-    })
-  }, [judges, search, districtFilter, view])
+    }))
+  }, [judges, search, courtFilter, view])
+
+  // The courts that have a listing, for the court filter
+  const courtOptions = useMemo(
+    () => [...new Set(judges.map(j => j.court).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [judges],
+  )
 
   // Show the rows a page at a time; starts again when the search or filter changes
   const rowsStep = 18
@@ -141,7 +149,8 @@ export default function ListingAdmin() {
     visible: visibleRows,
     remaining: rowsRemaining,
     showMore: showMoreRows,
-  } = useSeeMore(visible, `${search}|${districtFilter}`, rowsStep)
+    step: rowsRowStep,
+  } = useSeeMore(visible, `${search}|${courtFilter}|${view}`, rowsStep, 0, { groupOf: buildingKey })
   // Opens the editor with a blank form or the selected judge's values
   function startEdit(row) {
     const form = emptyForm()
@@ -313,12 +322,12 @@ export default function ListingAdmin() {
       {/* Upload area for the district Judges List PDFs */}
       <DistrictPdfManager section="JUDGES_LIST" />
 
-      {/* Search box, district filter, add button and judge count */}
+      {/* Search box, court filter, add button and judge count */}
       <div className="admin__toolbar">
         <SearchInput placeholder="Search…" value={search} onChange={setSearch} />
-        <Dropdown className="form-input" wrapperClassName="u-maxw-200" value={districtFilter} onChange={e => setDistrictFilter(e.target.value)}>
-          <option value="">All districts</option>
-          {districtNames.map(c => <option key={c} value={c}>{c}</option>)}
+        <Dropdown className="form-input" wrapperClassName="u-maxw-200" value={courtFilter} onChange={e => setCourtFilter(e.target.value)}>
+          <option value="">All courts</option>
+          {courtOptions.map(c => <option key={c} value={c}>{c}</option>)}
         </Dropdown>
         <Dropdown className="form-input" wrapperClassName="u-maxw-240" value={view} onChange={e => setView(e.target.value)}>
           <option value="all">All listings</option>
@@ -334,24 +343,33 @@ export default function ListingAdmin() {
       {visible.length === 0 && !loading
         ? <p className="admin__empty">{view === 'multi' ? 'No judge holds more than one court' : view === 'vacant' ? 'No court is vacant' : 'No listings added yet'}</p>
         : (
-          <div className="judge-grid admin-judge-grid">
-            {visibleRows.map(j => (
-              <JudgeCard
-                key={j.id}
-                judge={j}
-                tags={j.courtCount > 1 && <span className="qa-tag qa-tag--multi" title={j.otherCourts.join('\n')}>Holds {j.courtCount} courts</span>}
-                note={j.courtCount > 1 && <>Also sits in: {j.otherCourts.join('; ')}</>}
-                actions={
-                  <>
-                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => startEdit(j)}>Edit</button>
-                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => setChanging(j)}>{j.vacant ? 'Assign judge' : 'Change judge'}</button>
-                    <button type="button" className="btn-outline btn-outline--sm btn-outline--danger" onClick={() => remove(j)}>Remove</button>
-                  </>
-                }
-              />
-            ))}
-            <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={rowsStep} />
-          </div>
+          <PlaceGroupedGrid
+            byCourt={!courtFilter}
+            storageKey="listing"
+            entries={visibleRows.map(j => ({
+              key: j.id,
+              court: j.court,
+              district: j.district,
+              building: j.building,
+              floor: j.floor,
+              courtRoomNo: j.courtRoomNo,
+              node: (
+                <JudgeCard
+                  judge={j}
+                  tags={j.courtCount > 1 && <span className="qa-tag qa-tag--multi" title={j.otherCourts.join('\n')}>Holds {j.courtCount} courts</span>}
+                  note={j.courtCount > 1 && <>Also sits in: {j.otherCourts.join('; ')}</>}
+                  actions={
+                    <>
+                      <button type="button" className="btn-outline btn-outline--sm" onClick={() => startEdit(j)}>Edit</button>
+                      <button type="button" className="btn-outline btn-outline--sm" onClick={() => setChanging(j)}>{j.vacant ? 'Assign judge' : 'Change judge'}</button>
+                      <button type="button" className="btn-outline btn-outline--sm btn-outline--danger" onClick={() => remove(j)}>Remove</button>
+                    </>
+                  }
+                />
+              ),
+            }))}
+            footer={<SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={rowsRowStep} />}
+          />
         )}
 
       {/* Change the judge of a listing */}
@@ -453,9 +471,9 @@ export default function ListingAdmin() {
                     {!editing.correction && (
                       <>
                         <label className="form-label admin__subfield-label">Court number effective from</label>
-                        <input
+                        <ClearableDateInput
                           className="form-input"
-                          type="date"
+                          
                           value={editing.form.courtNoFrom}
                           onChange={e => setField('courtNoFrom', e.target.value)}
                         />

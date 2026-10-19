@@ -114,6 +114,33 @@
   font-style: italic;
 }
 
+.hearing-entry__misc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 8px;
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+  word-break: break-word;
+}
+.hearing-entry__note + .hearing-entry__misc,
+.hearing-entry__misc + .hearing-entry__misc {
+  margin-top: 6px;
+}
+.hearing-entry__misc-tag {
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(21, 101, 192, 0.1);
+  border: 1px solid rgba(21, 101, 192, 0.28);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: #0D47A1;
+  white-space: nowrap;
+}
+.hearing-entry__misc-name {
+  min-width: 0;
+}
+
 .hearing-entry__edit-row {
   display: flex;
   align-items: center;

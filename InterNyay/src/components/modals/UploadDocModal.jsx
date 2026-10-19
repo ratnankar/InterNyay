@@ -7,9 +7,6 @@ import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
 import ModalPortal from '../../components/common/ModalPortal'
 import UploadNameField from '../common/UploadNameField'
-// Option that lets the user type their own application type
-const MISC_TYPE = 'Misc. Application (Type Manually)'
-
 // Popup to upload a document to a case
 export default function UploadDocModal() {
   // Upload state and handler come from AppContext
@@ -17,7 +14,6 @@ export default function UploadDocModal() {
     uploadDocCaseId, setUploadDocCaseId,
     docName, setDocName,
     docType, setDocType,
-    docTypeCustom, setDocTypeCustom,
     fileRef, handleUploadDoc,
   } = useApp()
 
@@ -36,15 +32,13 @@ export default function UploadDocModal() {
     setUploadDocCaseId(null)
     setDocName('')
     setDocType('')
-    setDocTypeCustom('')
   }
 
-  // Needs a name and type, and a typed type when the misc option is chosen
+  // Needs a file, a name and a type
   const canUpload =
     !!pickedFile &&
     !!docName.trim() &&
-    !!docType &&
-    (docType !== MISC_TYPE || !!docTypeCustom.trim())
+    !!docType
 
   return (
     <ModalPortal>
@@ -67,18 +61,6 @@ export default function UploadDocModal() {
               {DOCUMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </Dropdown>
           </div>
-
-          {docType === MISC_TYPE && (
-            <div className="u-mt-12">
-              <label className="form-label">Specify Type *</label>
-              <input
-                className="form-input"
-                placeholder="Type the application name…"
-                value={docTypeCustom}
-                onChange={e => setDocTypeCustom(e.target.value)}
-              />
-            </div>
-          )}
 
           <div
             className="upload-dropzone u-mt-16"

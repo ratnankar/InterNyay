@@ -4,6 +4,8 @@ import api from '../../services/api'
 import { formatDisplayDate } from '../../utils/dateUtils'
 import HearingDateInput from './HearingDateInput'
 import SeeMoreList from './SeeMoreList'
+import { isMiscOnlyHearing, joinHearingNotes, splitHearingNotes } from '../misc/miscUtils'
+import MiscHearingsSection from '../misc/MiscHearingsSection'
 
 import Icon from './Icon'
 import { getErrorMessage } from '../../utils/errorMessages'
@@ -19,6 +21,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     syncCaseNextHearing,
     handleViewDocument,
     openNextHearing,
+    miscHearingCounts,
   } = useApp()
 
   // Hearing history for this case, loaded from the API
@@ -26,6 +29,9 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
   // Loading and error state for the history fetch
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Misc. applications filed in this case, each with its own hearing dates (the case page only)
+  const [miscApps, setMiscApps] = useState([])
 
   // On the dashboard the list starts collapsed; on the case page it starts open
   const [expanded, setExpanded] = useSessionState(`hearings_open_${dashboard ? 'dash' : 'case'}_${caseItem?.id}`, !dashboard)
@@ -42,6 +48,9 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
   // Remembers which hearing the chosen order file belongs to
   const uploadForRef = useRef(null)
 
+  // The case's own hearings plus the hearing dates of its misc. applications
+  const historyCount = hearings.length + (miscHearingCounts.get(caseItem?.id) || 0)
+
   // A decided or withdrawn case has no next hearing, so it cannot be moved to one
   const closed = isClosedCase(caseItem)
   // Orders are fetched, uploaded or shown only on the case page, never on the dashboard
@@ -57,7 +66,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     setLoading(true)
     api.cases.hearings(caseId)
       .then(rows => {
-        setHearings(Array.isArray(rows) ? rows : [])
+        setHearings(Array.isArray(rows) ? rows.filter(h => !isMiscOnlyHearing(h)) : [])
         setError('')
       })
       .catch(e => setError(getErrorMessage(e, 'Could not load the hearing history')))
@@ -66,6 +75,19 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
 
   // Reload whenever the case changes or a hearing is added or edited elsewhere (hearingsVersion bumps)
   useEffect(() => { load() }, [load, hearingsVersion])
+
+  // The case's pending applications, so their hearing dates can be updated here, apart from the case's own next hearing
+  useEffect(() => {
+    if (!caseId || dashboard) return undefined
+    let cancelled = false
+    api.miscApplications.list({ caseId, page: 0, size: 100 })
+      .then(res => { if (!cancelled) setMiscApps(res?.content || []) })
+      .catch(() => { if (!cancelled) setMiscApps([]) })
+    return () => { cancelled = true }
+  }, [caseId, dashboard, hearingsVersion])
+
+  // An application changed from here: keep its row current
+  const replaceMiscApp = updated => setMiscApps(prev => prev.map(a => (a.id === updated.id ? updated : a)))
 
   // Save the edited date and note; a date is required
   async function saveEntry(h) {
@@ -78,7 +100,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     try {
       await api.hearings.update(h.id, {
         date: draftDate,
-        notes: draftNote,
+        notes: joinHearingNotes(draftNote, splitHearingNotes(h.notes).applications),
       })
       setEditingId(null)
       bumpHearings()
@@ -94,7 +116,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
   function startEdit(h) {
     setEditingId(h.id)
     setDraftDate(h.date || '')
-    setDraftNote(h.notes || '')
+    setDraftNote(splitHearingNotes(h.notes).note)
   }
 
   // Remember which hearing is being uploaded for, then open the file picker
@@ -180,6 +202,9 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
   return (
     <div className="hearing-history" onClick={e => e.stopPropagation()}>
 
+      {/* The applications filed in this case, each with its own hearings, apart from the case's own */}
+      {!dashboard && <MiscHearingsSection caseId={caseId} apps={miscApps} onChange={replaceMiscApp} />}
+
       <div className="hearing-history__header">
         {dashboard ? (
           <button
@@ -189,7 +214,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
             aria-expanded={expanded}
           >
             <span className={`hearing-history__caret${expanded ? ' hearing-history__caret--open' : ''}`}>▸</span>
-            Hearing History{!loading && hearings.length > 0 ? ` (${hearings.length})` : ''}
+            Hearing History{!loading && historyCount > 0 ? ` (${historyCount})` : ''}
           </button>
         ) : (
           <p className="case-detail__docs-label">Hearing History</p>
@@ -235,6 +260,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
           const editing = editingId === h.id
           const busy = busyId === h.id
           const orderDue = !!h.orderDue
+          const { note } = splitHearingNotes(h.notes)
 
           return (
             <div key={h.id} className="hearing-entry">
@@ -285,8 +311,8 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
                   </>
                 ) : (
                   <>
-                    <p className={`hearing-entry__note${h.notes ? '' : ' hearing-entry__note--empty'}`}>
-                      {h.notes || 'No note for this date'}
+                    <p className={`hearing-entry__note${note ? '' : ' hearing-entry__note--empty'}`}>
+                      {note || 'No note for this date'}
                     </p>
                   </>
                 )}

@@ -1022,3 +1022,47 @@ td.admin__actions > * + * { margin-left: 6px; }
 .admin__row--open:hover .admin__open-icon, .admin__row--open:focus-visible .admin__open-icon {
   background: var(--grad-gold); color: var(--color-navy); border-color: var(--color-gold); transform: translateX(2px);
 }
+/* Listing and Judges: cards grouped court, district, building and court no. wise */
+.place-group { margin-top: var(--space-xl); }
+.place-group:first-child { margin-top: var(--space-lg); }
+.place-group__court {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--fs-lg);
+  padding-bottom: var(--space-xs, 4px);
+  border-bottom: 1px solid var(--color-gold-border);
+}
+.place-group__district {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--fs-base);
+  padding-left: var(--space-md);
+  border-left: 2px solid var(--color-gold-border);
+}
+.place-group__building {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--fs-base);
+  color: var(--color-text-muted);
+}
+.place-group__building--nested { padding-left: var(--space-lg); font-size: var(--fs-sm, 0.9em); }
+.place-groups__bar { display: flex; justify-content: flex-end; }
+.place-group__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.place-group__toggle:hover { color: var(--color-gold); }
+.place-group__arrow { font-size: 0.7em; color: var(--color-gold); }
+.place-group__count {
+  font-size: var(--fs-sm, 0.8em);
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-gold-border);
+}
+.place-group .place-group__grid { margin-top: var(--space-sm); }

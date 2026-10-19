@@ -5,45 +5,6 @@
 /* Status filter beside the search box */
 .misc-filters { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* One card per application */
-.misc-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 14px;
-}
-
-.misc-card {
-  background: var(--color-surface);
-  border: var(--border-default);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 14px 16px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: box-shadow 0.15s, transform 0.15s;
-}
-.misc-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-.misc-card:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
-
-.misc-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.misc-card__title { font-weight: 700; color: var(--color-navy); font-size: var(--fs-md); overflow-wrap: anywhere; }
-.misc-card__case { font-weight: 600; color: var(--color-text); font-size: var(--fs-base); overflow-wrap: anywhere; }
-.misc-card__meta { color: var(--color-text-muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
-
-.misc-card__foot {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--color-bg);
-  color: var(--color-text-muted);
-  font-size: var(--fs-sm);
-}
-.misc-card__foot span { display: inline-flex; align-items: center; gap: 5px; }
-
 /* Pending / Disposed Off chip */
 .misc-status {
   display: inline-block;
@@ -80,7 +41,6 @@
 .misc-grid__wide { grid-column: 1 / -1; }
 
 .misc-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--color-bg); }
-.misc-history { resize: vertical; min-height: 72px; font-family: inherit; }
 
 /* Chosen case or client */
 .misc-pick__chosen {
@@ -129,7 +89,6 @@
 
 .misc-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .misc-details__label { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); margin-bottom: 2px; }
-.misc-details__history { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .misc-dispose { display: flex; flex-direction: column; gap: 10px; }
 
@@ -140,7 +99,6 @@
 .misc-footer { justify-content: space-between; margin-top: 18px; }
 
 @media (max-width: 640px) {
-  .misc-list { grid-template-columns: minmax(0, 1fr); }
   .misc-grid, .misc-details { grid-template-columns: minmax(0, 1fr); }
   .misc-docblock__head { flex-direction: column; }
   .misc-footer { flex-direction: column-reverse; align-items: stretch; }
@@ -152,3 +110,199 @@
 .page-title .fit-label { display: block; max-width: 100%; }
 .fit-label--center { text-align: center; }
 .fit-label--center .fit-label__ruler { left: 50%; transform: translateX(-50%); }
+
+/* Allowed / Disallowed on a disposed off application */
+.misc-status--allowed { --status-color: #1B7F3B; --status-bg: rgba(27, 127, 59, 0.13); }
+.misc-status--disallowed { --status-color: #C62828; --status-bg: rgba(198, 40, 40, 0.12); }
+
+.misc-outcome { display: flex; gap: 8px; flex-wrap: wrap; }
+.misc-outcome .btn-gold, .misc-outcome .btn-outline { flex: 1 1 120px; justify-content: center; }
+
+/* Next hearing date of one application with its own Update button (case page and application window) */
+.misc-hearing { display: flex; flex-direction: column; gap: 6px; }
+.misc-hearing__row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.misc-hearing__name { font-size: var(--fs-sm); font-weight: 600; color: var(--color-navy); overflow-wrap: anywhere; min-width: 0; }
+.misc-hearing__label { font-size: var(--fs-sm); color: var(--color-text-faint); }
+.misc-hearing__date { font-size: var(--fs-sm); font-weight: 600; color: var(--color-navy); }
+.misc-hearing__edit { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.misc-hearing__edit .form-input { max-width: 220px; }
+
+/* ---------- Hearing dates of applications ---------- */
+
+/* Expandable "Misc. Application Hearings" label above a case's hearing history */
+.misc-hearings { margin-bottom: 0.75rem; }
+.misc-hearings__list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.misc-hearings__app {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface-alt);
+  border: var(--border-default);
+}
+.misc-hearings__head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.misc-hearings__name { font-weight: 700; color: var(--color-navy); font-size: var(--fs-sm); overflow-wrap: anywhere; min-width: 0; }
+
+/* Next hearing date with its Update button: one line, button never squeezed to an icon */
+.misc-hearing__btn { flex: 0 0 auto; white-space: nowrap; }
+.misc-hearing__row, .misc-hearing__edit { min-height: 36px; }
+.misc-hearing__edit .hdi { flex: 1 1 200px; min-width: 0; }
+
+/* Dates of one application, newest first */
+.misc-history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.misc-history__row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: var(--border-default); font-size: var(--fs-sm); }
+.misc-history__row:first-child { border-top: none; }
+.misc-history__date { font-weight: 600; color: var(--color-navy); min-width: 112px; }
+.misc-history__tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: #0B7A75;
+  background: rgba(11, 122, 117, 0.13);
+}
+
+/* Disposed Off sub-filters sit under the main chips: the same chip size and spacing, so both rows line up */
+
+/* Connector: down from the bottom edge of the Disposed Off chip, then right into the first sub-chip.
+   The sub-row sits 12px below the main row; the line starts exactly at the chip's bottom edge, so it never overlaps the chip */
+.case-filters.misc-subfilters {
+  position: relative; margin-top: 12px;
+  padding-left: calc(var(--elbow-x, 0px) + 22px);
+}
+.case-filters.misc-subfilters::before {
+  content: ""; position: absolute; pointer-events: none;
+  left: var(--elbow-x, 0px); top: -12px; width: 16px; height: calc(var(--misc-sub-h, 34px) / 2 + 12px);
+  border-left: 1.5px solid var(--ctl-line, #c9cfda); border-bottom: 1.5px solid var(--ctl-line, #c9cfda);
+  border-bottom-left-radius: 10px;
+}
+
+/* Clearable date field */
+.misc-clearable { position: relative; }
+.misc-clearable .form-input { padding-right: 46px; }
+.misc-clearable__btn {
+  position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0; border: none; border-radius: 50%;
+  background: transparent; color: var(--color-text-muted); cursor: pointer;
+}
+.misc-clearable__btn:hover { background: var(--color-bg); color: var(--color-navy); }
+
+/* Alignment: both date fields in a row are the same height whatever their placeholder */
+.misc-grid { align-items: start; }
+.misc-grid .hdi__field > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* Details of an application window: filing date and Edit side by side, the hearing date on its own full row */
+.misc-details { align-items: start; }
+.misc-details__action { display: flex; justify-content: flex-end; align-items: flex-start; }
+.misc-casebox__date { margin-left: 8px; }
+.misc-casebox .misc-status + .misc-status { margin-left: 6px; }
+
+/* Misc. application on the dashboard */
+.hearing-row__bar--misc { background: #1565C0; }
+.misc-details--dash { margin-bottom: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.misc-dash__title { margin: 4px 0 4px; }
+
+@media (max-width: 640px) {
+  .misc-details__action { justify-content: stretch; }
+  .misc-details__action .btn-outline { width: 100%; justify-content: center; }
+}
+
+/* ---------- Alignment and size fixes ---------- */
+
+/* Disposing: every field full width and the same height; the hint wraps instead of running off the window */
+.misc-dispose .misc-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.misc-dispose .misc-clearable .form-input,
+.misc-dispose .misc-file .btn-outline { width: 100%; min-height: 44px; box-sizing: border-box; }
+.misc-dispose .misc-file { display: block; }
+.misc-dispose .misc-file .btn-outline { justify-content: center; }
+.misc-dispose__hint { margin: 0; font-size: var(--fs-xs); color: var(--color-text-muted); overflow-wrap: anywhere; white-space: normal; }
+
+/* Details: filing date and Edit details centred on one line, labels and values left aligned */
+.misc-details { align-items: center; }
+.misc-details > div { min-width: 0; }
+.misc-details__action { align-self: center; }
+.misc-details .misc-hearing__row { min-height: 0; }
+
+/* Hearing history: the date and its "Next" tag sit side by side */
+.misc-history__date { min-width: 0; }
+.misc-history__row { justify-content: flex-start; }
+
+/* The main chips sit closer to the Allowed / Disallowed chips that belong to them */
+.case-filters:has(+ .misc-subfilters) { margin-bottom: 0; }
+
+/* Misc. section sits above the case's Hearing History: a little room below it, rows aligned to one left edge */
+.misc-hearings { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: var(--border-default); }
+.misc-hearings__app > * { margin: 0; }
+.misc-hearings__app .hearing-history__empty { padding: 0; }
+.misc-history__row { padding: 6px 0; }
+
+/* The hearing date field looks like every other field of the form: same height, corners, text size and padding */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .misc-modal .hdi__field {
+    box-sizing: border-box;
+    height: var(--d-ctl);
+    min-height: var(--d-ctl);
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: var(--d-ctl-fs);
+    line-height: 1.25;
+    border-radius: var(--d-radius);
+  }
+}
+@media (max-width: 768px), (hover: none), (pointer: coarse) {
+  .misc-modal input.form-input[type="date"], .misc-modal .hdi__field { box-sizing: border-box; min-height: 44px; }
+}
+.misc-modal .hdi__field > span:first-child { font-size: inherit; }
+
+/* Dispose form: Allowed / Disallowed, the date and "Choose order" are all the same height (they were 34, 34 and 44px).
+   .misc-modal in front so these beat the generic phone button and field heights, which are just as specific */
+.misc-modal .misc-dispose .misc-outcome > button.btn-outline,
+.misc-modal .misc-dispose .misc-outcome > button.btn-gold,
+.misc-modal .misc-dispose .misc-clearable input.form-input,
+.misc-modal .misc-dispose .misc-file label.btn-outline {
+  box-sizing: border-box; height: 44px; min-height: 44px; padding-top: 0; padding-bottom: 0; line-height: 1.2;
+}
+/* On a computer they take the size of the window's other fields (36px), not the 44px touch size */
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .misc-modal .misc-dispose .misc-outcome > button.btn-outline,
+  .misc-modal .misc-dispose .misc-outcome > button.btn-gold,
+  .misc-modal .misc-dispose .misc-clearable input.form-input,
+  .misc-modal .misc-dispose .misc-file label.btn-outline {
+    height: var(--d-ctl); min-height: var(--d-ctl); font-size: var(--d-ctl-fs); border-radius: var(--d-radius);
+  }
+  .misc-dispose .misc-clearable .form-input, .misc-dispose .misc-file .btn-outline { min-height: var(--d-ctl); }
+}
+
+/* ---------- Detail window: one left edge, even spacing, same button size ---------- */
+
+/* Hearing history: the heading on the left, next hearing date and Update on the right (wraps under it when narrow) */
+.misc-hist__head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+
+/* Document blocks: the title lines up with its Upload button (both on the first row), the hint sits under the title */
+.misc-docblock__head { align-items: flex-start; gap: 10px 14px; margin-bottom: 4px; }
+.misc-docblock__title { display: flex; align-items: center; min-height: 28px; margin: 0; }
+.misc-docblock__head > .btn-outline { flex: 0 0 auto; }
+
+/* "No file uploaded yet" starts at the same left edge as the title above it (it had 12px of side padding) */
+.misc-docblock .doc-group__evidence-empty { display: flex; align-items: center; gap: 6px; padding: 6px 0 0; }
+
+/* The hint under the dispose form belongs to the Order field above it, not to the buttons below */
+.misc-dispose__hint { margin-top: -6px; }
+
+/* Misc. application documents sit inside a case's Documents as their own expandable, a little set in */
+.exp-card--nested { margin-left: 0; }
+.exp-card--nested > .exp-card__body { padding-top: 4px; }
+.misc-docs-group__name { font-weight: 700; font-size: var(--fs-sm); margin: 6px 0; }
+
+/* Documents page: the misc. rows start at the same edge as the case's own document rows */
+.exp-card--flush > .exp-card__body { padding: 0; gap: 0; }
+.exp-card--flush .misc-docs-group__head { padding: 12px 1.25rem 4px; }
+.exp-card--flush .misc-docs-group + .misc-docs-group { border-top: 1px solid var(--color-surface-2); }
+
+/* A nested expandable sits inside its parent with room all round, so both borders show and neither touches the other */
+.doc-group .exp-card.exp-card--nested.exp-card--flush { margin: 12px 14px 14px; }
+
+/* Note saved with a hearing: fills the space between the date and the Edit / Delete buttons */
+.misc-history__note { flex: 1 1 0; min-width: 0; color: var(--color-text-muted); white-space: pre-wrap; overflow-wrap: anywhere; }

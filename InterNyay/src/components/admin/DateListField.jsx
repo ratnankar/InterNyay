@@ -1,4 +1,5 @@
 import Icon from '../common/Icon'
+import ClearableDateInput from '../common/ClearableDateInput'
 // Editable list of dates with add and remove buttons
 export default function DateListField({
   label,
@@ -26,9 +27,9 @@ export default function DateListField({
 
         {dates.map((d, i) => (
           <div className="date-list__row" key={i}>
-            <input
+            <ClearableDateInput
               className="form-input"
-              type="date"
+              
               value={d}
               onChange={e => setAt(i, e.target.value)}
               aria-label={`${label} ${i + 1}`}

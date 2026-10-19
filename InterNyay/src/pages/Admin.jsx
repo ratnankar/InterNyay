@@ -44,6 +44,7 @@ import ModalPortal from '../components/common/ModalPortal'
 import useUnsavedGuard from '../hooks/useUnsavedGuard'
 import AdminPasswordModal from '../components/modals/AdminPasswordModal'
 import SearchInput from '../components/common/SearchInput'
+import ClearableDateInput from '../components/common/ClearableDateInput'
 
 // Admin sidebar: groups of tabs, each group with an icon and its tabs
 const TAB_GROUPS = [
@@ -1950,9 +1951,9 @@ export default function Admin() {
 
                 <div className="form-group">
                   <label className="form-label">Date</label>
-                  <input
+                  <ClearableDateInput
                     className="form-input"
-                    type="date"
+                    
                     value={notifForm.date}
                     onChange={e => setNotifForm(s => ({ ...s, date: e.target.value }))}
                   />
@@ -2039,9 +2040,9 @@ export default function Admin() {
               <div className="admin__form admin__form--single">
                 <div className="form-group">
                   <label className="form-label">Date</label>
-                  <input
+                  <ClearableDateInput
                     className="form-input"
-                    type="date"
+                    
                     value={holidayEditing.form.date}
                     onChange={e => setHolidayEditing(s => ({ ...s, form: { ...s.form, date: e.target.value } }))}
                   />
