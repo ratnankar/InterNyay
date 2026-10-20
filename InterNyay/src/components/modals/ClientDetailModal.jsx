@@ -169,7 +169,7 @@ export default function ClientDetailModal() {
     <>
     <ModalPortal>
       <div className="overlay" {...overlayHandlers}>
-        <div className="modal modal--lg modal--client" onClick={e => e.stopPropagation()}>
+        <div className={`modal ${isEditing ? 'modal--md' : 'modal--lg modal--client'}`} onClick={e => e.stopPropagation()}>
           {cropper}
           {/* Full-size view of the client's photo */}
           {viewPhoto && cl.profilePicture && (

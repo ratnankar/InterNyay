@@ -192,7 +192,7 @@ function ClientPicker() {
         <>
           <button
             type="button"
-            className="form-input opposing-field"
+            className="form-input opposing-field client-search-field"
             onClick={() => setSearchOpen(true)}
           >
             <span className="opposing-field__placeholder">
@@ -438,10 +438,13 @@ export default function AddCaseModal() {
   const preferred = useDefaultCourt()
   // A new case starts on the preferred court, unless a court is already filled in (or an existing case is being edited)
   const prefilled = useRef(false)
+  const autoFilled = useRef(false)
   useEffect(() => {
     if (!showAddCase) { prefilled.current = false; return }
     if (prefilled.current || editingCaseId || !preferred.ready || !preferred.court) return
     prefilled.current = true
+    if (newCaseForm.court) return
+    autoFilled.current = true
     setNewCaseForm(f => (f.court ? f : { ...f, court: preferred.court, district: preferred.district }))
   }, [showAddCase, editingCaseId, preferred.ready, preferred.court, preferred.district, setNewCaseForm])
 
@@ -487,6 +490,7 @@ export default function AddCaseModal() {
     if (!no || !formCourt || (newCaseForm.building && newCaseForm.floor)) return
     const room = caseRoom({ court: formCourt, district: formDistrict, courtNo: no, building: newCaseForm.building, floor: newCaseForm.floor })
     if (room.building && (room.building !== newCaseForm.building || room.floor !== newCaseForm.floor)) {
+      autoFilled.current = true
       setNewCaseForm(f => ({ ...f, building: room.building, floor: room.floor }))
     }
   }, [courtRows, formCourt, formDistrict, newCaseForm.courtNo, newCaseForm.building, newCaseForm.floor])
@@ -504,11 +508,17 @@ export default function AddCaseModal() {
   useEffect(() => { if (!showAddCase) setStage(0) }, [showAddCase])
 
   // How the form looked when it was opened, to know whether anything was typed since
+  const { fileSeq: _fileSeq, ...formWithoutAutoNumber } = newCaseForm
   const caseSignature = JSON.stringify({
-    form: newCaseForm, clients: caseClients.map(c => c.id), subTypes: caseClientSubTypes,
+    form: formWithoutAutoNumber, clients: caseClients.map(c => c.id), subTypes: caseClientSubTypes,
   })
   const caseBaseline = useRef(null)
   useEffect(() => { caseBaseline.current = showAddCase ? caseSignature : null }, [showAddCase, editingCaseId, stage]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!autoFilled.current) return
+    autoFilled.current = false
+    if (showAddCase) caseBaseline.current = caseSignature
+  }, [caseSignature]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clicking outside never closes the form; the cross asks to save or discard unsaved details
   const { requestClose, dialog, overlayHandlers } = useUnsavedGuard({

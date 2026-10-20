@@ -325,19 +325,20 @@ export default function SuccessorCourts({ admin = false }) {
               {options.courtNos.map(n => <option key={n} value={n}>{n}</option>)}
             </Dropdown>
           </div>
-
-          <button type="button" className="btn-outline successor__reset" disabled={!searching} onClick={reset}>Start Over</button>
         </div>
 
         <div className="successor__footer">
           <p className="successor__summary">
             {!loading && !error && searching && `${total} court ${total === 1 ? 'number' : 'numbers'} found`}
           </p>
-          {admin && (
-            <button type="button" className="btn-gold btn-outline--sm successor__add" onClick={() => setEditor({ period: null, defaults: startFor() })}>
-              + Add court number period
-            </button>
-          )}
+          <div className="successor__actions">
+            <button type="button" className="btn-outline successor__reset" disabled={!searching} onClick={reset}>Start Over</button>
+            {admin && (
+              <button type="button" className="btn-gold btn-outline--sm successor__add" onClick={() => setEditor({ period: null, defaults: startFor() })}>
+                + Add court number period
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

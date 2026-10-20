@@ -830,7 +830,7 @@ export function AppProvider({ children }) {
           }))
         )
 
-        // Documents with no case and no client belong to the advocate themself
+        // Documents with no case and no client belong to the advocate themselves
         setAdvocateDocs(
           (Array.isArray(allDocs) ? allDocs : [])
             .filter(d => !d.caseId && !d.clientId)

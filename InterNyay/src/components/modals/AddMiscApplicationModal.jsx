@@ -126,7 +126,10 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
   useEffect(() => {
     if (prefilled.current || !preferred.ready || !preferred.court) return
     prefilled.current = true
-    setForm(f => (f.court ? f : { ...f, court: preferred.court, district: preferred.district }))
+    if (form.court) return
+    const filled = { ...form, court: preferred.court, district: preferred.district }
+    startSignature.current = JSON.stringify(filled)
+    setForm(filled)
   }, [preferred.ready, preferred.court, preferred.district])
 
   // A client added from here (the Add Client window sits on top) is picked automatically

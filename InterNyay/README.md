@@ -1,102 +1,94 @@
-# InterNyay — Frontend
+# InterNyay Web (frontend)
 
-React + Vite frontend for InterNyay, a legal practice manager for Indian advocates
-(cases, clients, hearings, documents, fees, WhatsApp reminders, quick-access court data).
-It talks to the Spring Boot backend in `InterNyay_B`.
+The website for **InterNyay**, a practice manager for Indian advocates: cases, clients, hearings, documents, fees and
+expenses, legal forms, WhatsApp reminders, a court fee calculator and quick-access court data (judges on leave, police,
+DRT and consumer jurisdiction). It is a React single-page app that talks to the Spring Boot API in `InterNyay_B`.
 
-## Run
+## Requirements
+
+- Node.js 18 or newer and npm
+- The backend (`InterNyay_B`) running, by default at `http://localhost:8080`
+
+## Quick start
 
 ```bash
-cp .env.example .env      # set VITE_API_BASE_URL (default http://localhost:8080/api) and, for a production build, VITE_SITE_URL (https://your-domain)
+cp .env.example .env     # then edit the values below
 npm install
-npm run dev               # development server
-npm run build             # production build
-npm test                  # unit tests (Vitest)
+npm run dev              # http://localhost:5173
 ```
 
-## Structure
+| Variable | Purpose |
+| --- | --- |
+| `VITE_API_BASE_URL` | Backend API address, e.g. `http://localhost:8080/api`. Only the dev server falls back to this value; a production build without it stops with an error. |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client id for "Continue with Google". Leave empty if Google sign-in is not used. |
+| `VITE_SITE_URL` | Public address of the site (`https://your-domain`), used for the prerendered landing page, canonical links and the sitemap. |
+
+The backend must list the site's address in its `CORS_ALLOWED_ORIGINS`.
+
+## Scripts
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Development server with hot reload |
+| `npm run build` | Production build into `dist/`, then prerenders the landing page (`scripts/prerender.mjs`) |
+| `npm run build:plain` | Production build without the prerender step |
+| `npm run preview` | Serves the built `dist/` locally |
+| `npm test` | Unit tests once (Vitest) |
+| `npm run test:watch` | Unit tests in watch mode |
+
+## Project layout
 
 ```
 src/
-├── main.jsx                  entry point: mounts the router
-├── router.jsx                route table: every URL in one place
-├── entry-server.jsx          server render of the landing page, used by scripts/prerender.mjs at build time
-├── App.jsx                   root route: AppProvider, toasts, confirm dialogs, tab title, scroll reset
-├── routes/                   paths.js (URL helpers), guards.jsx (sign-in / role rules), AppLayout, PageGate
-├── context/AppContext.jsx    global state and actions
-├── services/api.js           every backend call
-├── pages/                    Dashboard, Cases, Clients, Transactions, Documents, Legal Forms,
-│                             To-do, Court Fee Calculator, Quick Access, Notifications, Profile, Admin
-├── components/
-│   ├── auth/                 sign-in / register
-│   ├── layout/               sidebar
-│   ├── modals/               add case/client, fees, invoices, uploads, next hearing …
-│   ├── admin/                admin-console editors (judges, leave, rosters, police, PDFs)
-│   └── common/               calendar, hearings list, image cropper, shared widgets
-├── assets/                   background photo (photo-bg.webp for desktop, photo-bg-sm.webp for phones) used on the sign-in pages and landing hero
-├── hooks/                    WhatsApp, notifications, PDF viewer, image crop, police directory …
-├── constants/, utils/        catalogues (courts, case types, holidays) and helpers
-└── styles/                   CSS grouped by role (see "Styles" below), all imported from index.css
+├── main.jsx               entry point, mounts the router
+├── router.jsx             every route in one place
+├── entry-server.jsx       server render of the landing page, used by the prerender script
+├── App.jsx                root route: app provider, toasts, confirm dialogs, tab title, scroll reset
+├── routes/                URL helpers, sign-in and role guards, page gate (plan rules), layout, error screens
+├── context/AppContext.jsx global state and actions shared by all pages
+├── services/api.js        every call to the backend
+├── pages/                 one file per screen (Dashboard, Cases, Clients, Transactions, Documents, ...)
+├── components/            auth, layout (sidebar), modals, admin editors, chat, misc. applications, shared widgets
+├── hooks/                 reusable hooks (notifications, WhatsApp, PDF viewer, chat, image crop, ...)
+├── constants/             catalogues: courts, case types, plans, holidays, jurisdiction
+├── utils/                 pure helpers (dates, names, fees, validators, PDF support, ...)
+├── styles/                CSS grouped by role: base, layout, components, pages, admin, theme, responsive
+└── assets/                background photos for the sign-in pages and landing hero
+public/                    static files: icons, web manifest, 404 page, `_headers`
+scripts/prerender.mjs      build-time prerender of the landing page
 ```
 
-Administrators sign in at `/admin` (or `?admin=1`); the normal sign-in page has no admin option.
+All CSS files are imported from `src/index.css`.
 
 ## Routing
 
-Navigation uses React Router (`react-router-dom` 6). The URL decides what is on screen; `src/router.jsx` lists every route.
+Routing uses React Router 6. The URL decides what is on screen.
 
 | URL | Who | Screen |
 | --- | --- | --- |
-| `/` | everyone | landing page (signed out) or redirect to the app (signed in) |
-| `/login`, `/register`, `/forgot-password` | signed out | sign-in tabs |
-| `/dashboard`, `/cases`, `/cases/:caseId`, `/clients`, `/clients/:clientId`, `/transactions`, `/expenses`, `/notifications`, `/documents`, `/forms`, `/todos`, `/calculator`, `/quick-access`, `/judges-on-leave`, `/contact`, `/profile`, `/my-plan` | signed in | app pages inside the sidebar layout (the old `/quickaccess`, `/judgeleave`, `/myplan` addresses redirect) |
-| `/forms/fill/:formId?caseId=` | signed in | form-fill screen that opens in its own window |
-| `/admin`, `/admin/:tab` (e.g. `/admin/judges`), `/admin/profile` | administrators | admin sign-in and console, one URL per tab |
-| anything else | everyone | "Page not found" screen (404) |
+| `/` | everyone | Landing page when signed out, redirect to the app when signed in |
+| `/login`, `/register`, `/forgot-password` | signed out | Sign-in tabs |
+| `/dashboard`, `/cases`, `/cases/:caseId`, `/clients`, `/clients/:clientId`, `/transactions`, `/expenses`, `/notifications`, `/documents`, `/misc-applications`, `/forms`, `/todos`, `/calculator`, `/quick-access`, `/judges-on-leave`, `/contact`, `/profile`, `/my-plan` | signed in | App pages inside the sidebar layout |
+| `/forms/fill/:formId?caseId=` | signed in | Form-fill screen that opens in its own window |
+| `/admin`, `/admin/:tab`, `/admin/profile` | administrators | Admin sign-in and console, one URL per tab |
+| anything else | everyone | "Page not found" |
 
-- Signed-out visitors who open a protected URL are sent to `/login` and returned to that URL after signing in.
+- A signed-out visitor who opens a protected URL is sent to `/login` and returned there after signing in.
 - Plan and role rules (upgrade notice, associates and Transactions, the Transactions PIN) live in `routes/PageGate.jsx`.
-- In code, `setActiveNav('cases')` navigates to `/cases`, and `openCase(c)` opens a case at `/cases/:id`. The sidebar uses real links.
-- Wrong links: inside the app, an address with no page shows the "Page not found" screen (`pages/NotFound.jsx`, built on `components/common/ErrorPage.jsx`) with a way home. The same screen is used for visitors who are signed out and for administrators. If a page crashes while drawing, `routes/RouteError.jsx` shows "Something went wrong" with a reload button.
-- Hosting and real 404 status: the build writes `dist/_redirects` (generated in `vite.config.js` from the lists in `routes/paths.js`, so a new page is picked up by itself). Known addresses get `index.html` with status 200; every other address gets `public/404.html` with a real 404 status, so search engines do not index mistyped links (no more soft 404s). Netlify and Cloudflare Pages both read this file. Another host needs the same rule: known paths -> `index.html`, everything else -> `404.html` with status 404.
-- Landing page for crawlers: `npm run build` runs `vite build` and then `scripts/prerender.mjs`, which writes the landing page's HTML into `dist/index.html` so search engines and link previews can read it without JavaScript. If that extra step fails it prints a warning and leaves the normal build untouched; `npm run build:plain` skips it. `public/session-flag.js` stops signed-in users from seeing that pre-rendered page flash before the dashboard opens.
-- Account switching and session expiry still do a full page reload on purpose, so no state from the previous account survives.
-- Tests: `routes/paths.test.js` covers the URL helpers and `routes/guards.test.jsx` covers the sign-in, role and plan redirects.
+- Old addresses (`/quickaccess`, `/judgeleave`, `/myplan`, `/?fillForm=`) redirect to the current ones.
+- A page that crashes while drawing shows `routes/RouteError.jsx` with a reload button.
+- Administrators sign in at `/admin`; the normal sign-in page has no admin option.
 
+## Notes for developers
 
-## PDFs on phones and tablets
-
-Android Chrome and iPhone/iPad browsers cannot show a PDF inside an `<iframe>` (they show a grey "PDF - Open" box or only page one).
-`src/components/common/PdfFrame.jsx` keeps the browser's own viewer on desktop and, on touch devices, draws the pages itself with
-`pdfjs-dist` (`PdfCanvasViewer.jsx`, loaded only when a PDF is opened). It is used for the court calendar, notifications, district PDFs,
-uploaded documents and the legal form fill window. After pulling this change run `npm install` once (new dependency `pdfjs-dist`).
-
-## Styles
-
-All CSS lives in `src/styles/`, grouped by what it styles, and `src/index.css` imports every file in a fixed order.
-
-| Folder | What is inside |
-|---|---|
-| `base/` | design tokens (`variables`), reset, fonts, text scale, icons |
-| `layout/` | app shell: sidebar, top bar, bottom navigation |
-| `components/` | shared pieces: buttons, forms, modals, calendar, notifications, chat, case cards |
-| `pages/` | one file per screen: auth, pricing, dashboard, cases, fees, landing, error pages … |
-| `admin/` | admin console |
-| `theme/` | cross-cutting skin and size passes: polish, appskin, control sizes, weights, late fixes |
-| `responsive/` | small-screen and touch rules, layered on top of everything else |
-
-Order matters: later imports win when two rules have the same specificity, so a new rule goes in the file that matches its area, and `index.css` keeps the order. Do not repeat a selector and property that an earlier file already sets (edit the earlier rule instead). `layout/bottom-nav.css` is imported by the sidebar component and `base/fonts.css` by `main.jsx`. Breakpoints used most: 860px (sidebar to top bar) and 640px (phones).
-
-Naming: files are named after what they style, not after a device. New phone or tablet rules for a feature belong in that feature's own file inside an `@media` block at the bottom. The four `responsive/` files are older layers that still depend on import order, so move rules out of them one feature at a time and check the page at 360px and 390px wide after each move.
-
-## Where sizes and text styles live
-
-| What | File |
-|---|---|
-| Desktop buttons, fields, search, filter, sort (one place, change the numbers in `:root`) | `src/styles/theme/control-sizes.css` |
-| Sign in, Register, plan, court preference, Google sign-up window (desktop and phone) | `src/styles/pages/auth-flow.css` |
-| Text scale: tables, labels, subtitles (desktop and phone) | `src/styles/base/typography.css` |
-| Phone and tablet field / button sizes in the app | `src/styles/theme/unified.css` |
-| Size tokens (`--fs-*`) and phone overrides | `src/styles/base/variables.css`, `src/styles/responsive/small-screen.css` |
-
-These files are imported last in `src/index.css`; keep them last so they win over older rules.
+- **API access** goes through `services/api.js` only. It adds the sign-in token, turns failures into friendly messages
+  (`utils/errorMessages.js`) and signs the user out when the token is rejected.
+- **State** lives in `context/AppContext.jsx`. Pages read it with `useApp()`; they do not call the API directly for shared data.
+- **Plans**: which features a user sees comes from the backend plan (`hooks/usePlanFeatures.js`); the server enforces the same rules.
+- **Dropdown choices** (case types, client and document types, ...) are edited by administrators and loaded from the server
+  (`constants/optionsStore.js`), so they are not hard-coded in the pages.
+- **PDF viewing** uses `pdfjs-dist` (`utils/pdfjsLoader.js`, `components/common/PdfCanvasViewer.jsx`) because phone browsers do not embed PDFs.
+- **Deployment**: the build is static (`dist/`). `vite.config.js` generates the host rule file (`_redirects`), `robots.txt` and `sitemap.xml`:
+  known addresses are served the app, any other address gets `404.html` with a real 404 status. This suits Netlify and Cloudflare Pages;
+  on another host, serve `index.html` for the app addresses listed in `src/routes/paths.js`.
+- Password rules match the backend's (`utils/passwordPolicy.js` and `PasswordPolicy.java`); change both together.

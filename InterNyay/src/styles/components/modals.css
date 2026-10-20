@@ -443,3 +443,29 @@
   font-size: var(--fs-sm);
   color: var(--color-critical);
 }
+
+
+.case-parties__client .client-selected {
+  padding: 10px 12px;
+  background: #fff4d6;
+  border: 1px solid #e8d08a;
+  border-left: 4px solid var(--color-gold);
+  border-radius: var(--radius-md, 10px);
+}
+
+.case-parties__client .client-search-field,
+.case-parties__client .client-search-field:focus {
+  background: #fff4d6;
+  border-color: #e8d08a;
+  border-left: 4px solid var(--color-gold);
+}
+
+.case-parties__client .client-search-field:hover {
+  background: #ffeeba;
+  border-color: var(--color-gold);
+}
+
+.case-parties__client .client-search-field .opposing-field__placeholder {
+  color: #7a5a0a;
+  font-weight: 600;
+}
