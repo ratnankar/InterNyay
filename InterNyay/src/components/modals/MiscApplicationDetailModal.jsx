@@ -74,7 +74,7 @@ function DocBlock({ title, hint, empty, uploadLabel, onPick, multiple = false, d
 
 // Window for one application: its case, details, status, order (only while disposing off and once disposed off) and documents
 export default function MiscApplicationDetailModal({ app, onChange, onDeleted, onClose }) {
-  const { addToast, handleViewDocument, handleDownloadDocument } = useApp()
+  const { addToast, bumpHearings, handleViewDocument, handleDownloadDocument } = useApp()
   const overlayHandlers = useOverlayClose(onClose)
 
   const [editing, setEditing] = useState(false)
@@ -175,6 +175,8 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
     setBusy('delete')
     try {
       await api.miscApplications.remove(app.id)
+      // Its hearing dates leave the calendar counts
+      bumpHearings(app.caseId)
       onDeleted(app.id)
       addToast('Application deleted')
     } catch (e) {

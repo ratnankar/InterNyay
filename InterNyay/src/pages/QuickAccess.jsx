@@ -8,7 +8,6 @@ import SuccessorCourts from '../components/common/SuccessorCourts'
 import DistrictPdfBar from '../components/common/DistrictPdfBar'
 import DateChips from '../components/common/DateChips'
 import ValidityCell from '../components/common/ValidityCell'
-import { formatIsoDate } from '../utils/rosterUtils'
 import ArchiveTree from '../components/common/ArchiveTree'
 import SeeMore from '../components/common/SeeMore'
 import SeeMoreList from '../components/common/SeeMoreList'
@@ -406,7 +405,6 @@ function BailRoster() {
                   <table className="qa-table">
                     <thead>
                       <tr>
-                        <th>Came On</th>
                         <th>Name of Judicial Officer</th>
                         <th>Police Station &amp; Investigation Agencies</th>
                         <th>Link 1 Judicial Officer</th>
@@ -417,7 +415,6 @@ function BailRoster() {
                     <tbody>
                       {shown.map(b => (
                         <tr key={b.id}>
-                          <td>{b.issuedOn ? formatIsoDate(b.issuedOn) : '—'}</td>
                           <td className="qa-cell-multiline">
                             {(b.judicialOfficers || []).length > 0
                               ? b.judicialOfficers.map(j => (
@@ -495,14 +492,13 @@ function DutyMagistrate() {
                   <table className="qa-table">
                     <thead>
                       <tr>
-                        <th>Came On</th><th>Court No.</th><th>Judge Name</th><th>Designation</th>
+                        <th>Court No.</th><th>Judge Name</th><th>Designation</th>
                         <th>Working Days</th><th>Holidays</th><th>Valid</th>
                       </tr>
                     </thead>
                     <tbody>
                       {shown.map(m => (
                         <tr key={m.id}>
-                          <td>{m.issuedOn ? formatIsoDate(m.issuedOn) : '—'}</td>
                           <td>{m.courtRoomNo || '—'}</td>
                           <td><strong>{m.judgeName}</strong></td>
                           <td>{m.designation || '—'}</td>

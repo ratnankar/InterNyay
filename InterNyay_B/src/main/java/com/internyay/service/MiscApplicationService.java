@@ -72,6 +72,16 @@ public class MiscApplicationService {
         return counts;
     }
 
+    // The cases that have a misc. application hearing on each date (yyyy-MM-dd -> case ids), so the calendar counts them
+    @Transactional(readOnly = true)
+    public Map<String, List<Long>> hearingDates(Long userId) {
+        Map<String, List<Long>> byDate = new java.util.TreeMap<>();
+        for (Object[] row : hearingRepo.caseIdsByDate(userId)) {
+            byDate.computeIfAbsent(String.valueOf(row[0]), k -> new java.util.ArrayList<>()).add((Long) row[1]);
+        }
+        return byDate;
+    }
+
     // Turns applications into DTOs with their documents and hearing history, each loaded once for the whole list
     private java.util.function.Function<MiscApplication, MiscApplicationDto> withDetails(List<MiscApplication> rows) {
         List<Long> ids = rows.stream().map(MiscApplication::getId).toList();

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import api from '../services/api'
+import { onLiveRefresh } from '../utils/liveRefresh'
 import { MISC_ALLOWED, MISC_APP_NAME, MISC_DISALLOWED, MISC_DISPOSED, MISC_PENDING } from '../constants/data'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatDisplayDate, hearingCountdown } from '../utils/dateUtils'
@@ -98,6 +99,22 @@ export default function MiscApplications() {
       if (ticket === latest.current) setLoading(false)
     }
   }, [search, status, outcome, addToast])
+
+  // Background reload of the pages already on screen (another device may have added, changed or deleted applications).
+  // No spinner; skipped while a normal load is running, and a failure leaves the list as it is
+  const loadedPages = useRef(0)
+  loadedPages.current = page
+  const refreshQuietly = useCallback(async () => {
+    const ticket = latest.current
+    try {
+      const params = { search: search.trim(), status, outcome: status === MISC_DISPOSED ? outcome : '', size: PAGE_SIZE }
+      const results = await Promise.all(Array.from({ length: loadedPages.current + 1 }, (_, n) => api.miscApplications.list({ ...params, page: n })))
+      if (ticket !== latest.current) return
+      const rows = results.flatMap(r => r?.content || [])
+      setItems(rows.filter((r, i) => rows.findIndex(x => x.id === r.id) === i))
+    } catch { /* keep the list as it is */ }
+  }, [search, status, outcome])
+  useEffect(() => onLiveRefresh(() => { if (!loading) refreshQuietly() }), [refreshQuietly, loading])
 
   // Starts again from the first page when the search or the filter changes (the search waits for a pause in typing)
   useEffect(() => {

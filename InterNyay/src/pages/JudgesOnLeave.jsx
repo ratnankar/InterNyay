@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import api from '../services/api'
+import { onLiveRefresh } from '../utils/liveRefresh'
 import {
   useCourts,
   useCourtSelection,
@@ -422,20 +423,21 @@ function JudgesOnLeaveBody({ onSelectJudge }) {
   const [view,       setView]       = useSessionState('judges_leave_view', 'current')
 
   // Load judges on leave for the selected court and district
-  const fetchData = useCallback(async () => {
-    setLoading(true); setError(null)
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) { setLoading(true); setError(null) }
     try {
       const result = await api.quickAccess.getJudgesOnLeave({
         court:  court  !== 'All' ? court  : undefined,
         district:  district  !== 'All' ? district  : undefined,
       })
       setData(result)
-    } catch (e) { setError(getErrorMessage(e, "We couldn't load the judges on leave. Please try again.")) }
-    finally { setLoading(false) }
+    } catch (e) { if (!silent) setError(getErrorMessage(e, "We couldn't load the judges on leave. Please try again.")) }
+    finally { if (!silent) setLoading(false) }
   }, [court, district])
 
   // Reload whenever the court or district changes
   useEffect(() => { if (ready) fetchData() }, [fetchData, ready])
+  useEffect(() => onLiveRefresh(() => { if (ready) fetchData(true) }), [fetchData, ready])
 
   // Check the search text against name, court, district and reason
   const matchesQuery = useCallback((j) => {

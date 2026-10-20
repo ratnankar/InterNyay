@@ -47,6 +47,12 @@ public class MiscApplicationController {
         return ResponseEntity.ok(service.hearingCounts(auth.currentUserId()));
     }
 
+    // Cases with a misc. application hearing on each date (yyyy-MM-dd -> case ids), for the calendar hearing counts
+    @GetMapping("/hearing-dates")
+    public ResponseEntity<Map<String, java.util.List<Long>>> hearingDates() {
+        return ResponseEntity.ok(service.hearingDates(auth.currentUserId()));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<MiscApplicationDto> get(@PathVariable Long id) {
         return ResponseEntity.ok(service.get(id, auth.currentUserId()));

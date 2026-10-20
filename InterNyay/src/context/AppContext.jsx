@@ -350,12 +350,26 @@ export function AppProvider({ children }) {
       setHearingRecords([])
     }
 
+    await fetchMiscHearingData()
+  }
+
+  // Misc. application hearing dates: per case (history counts) and per date (calendar counts)
+  // quiet: a failed reload keeps what is shown instead of blanking it
+  async function fetchMiscHearingData(quiet = false) {
     // The misc. application hearings of each case, so the history counts include them
     try {
       const counts = await miscApplicationsApi.hearingCounts()
       setMiscHearingCounts(new Map(Object.entries(counts || {}).map(([id, n]) => [Number(id), Number(n) || 0])))
     } catch (e) {
-      setMiscHearingCounts(new Map())
+      if (!quiet) setMiscHearingCounts(new Map())
+    }
+
+    // The dates of those hearings, so the calendar counts include misc. applications
+    try {
+      const byDate = await miscApplicationsApi.hearingDates()
+      setMiscHearingCaseIdsByDate(new Map(Object.entries(byDate || {}).map(([date, ids]) => [date, new Set(ids)])))
+    } catch (e) {
+      if (!quiet) setMiscHearingCaseIdsByDate(new Map())
     }
   }
 
@@ -431,6 +445,8 @@ export function AppProvider({ children }) {
 
   // Hearing dates of the misc. applications in each case (caseId -> count), added to the case's hearing history count
   const [miscHearingCounts, setMiscHearingCounts] = useState(() => new Map())
+  // Cases that have a misc. application hearing on each date (date -> case ids), counted on the calendar
+  const [miscHearingCaseIdsByDate, setMiscHearingCaseIdsByDate] = useState(() => new Map())
 
   // Case whose transaction drawer is open
   const [transactionCaseId, setTransactionCaseId] = useState(null)
@@ -877,6 +893,8 @@ export function AppProvider({ children }) {
       if (Array.isArray(noHearingList)) setNoHearingDates(new Set(noHearingList))
       if (limitsRes) applyHearingLimits(limitsRes)
       if (hearingRes) setHearingRecords(Array.isArray(hearingRes) ? hearingRes : hearingRes?.content || [])
+      // Application hearing dates too, so the calendar and the history counts stay right when they change elsewhere
+      fetchMiscHearingData(true).catch(() => {})
       if (me) {
         setCurrentUser(prev => {
           if (!prev) return prev
@@ -1352,6 +1370,7 @@ export function AppProvider({ children }) {
     setExpandedHearingCaseId(null)
     setHearingRecords([])
     setMiscHearingCounts(new Map())
+    setMiscHearingCaseIdsByDate(new Map())
     setTransactionCaseId(null)
     setTransactionsUnlocked(false)
   }
@@ -3242,6 +3261,8 @@ export function AppProvider({ children }) {
     calendarHearingRecords.forEach(h => {
       if (caseIds.has(h.caseId)) add(h.date, h.caseId)
     })
+    // Misc. application hearings count for their case too (once, even when the case itself is listed that day)
+    miscHearingCaseIdsByDate.forEach((ids, date) => ids.forEach(id => { if (caseIds.has(id)) add(date, id) }))
 
     return caseIdsByDate
   })()

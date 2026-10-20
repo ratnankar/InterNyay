@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
+import { onLiveRefresh } from '../../utils/liveRefresh'
 import { formatDisplayDate } from '../../utils/dateUtils'
 import HearingDateInput from './HearingDateInput'
 import SeeMoreList from './SeeMoreList'
@@ -60,30 +61,35 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
   const caseId = caseItem?.id
 
   // Fetch the hearing history for this case
-  const load = useCallback(() => {
+  // silent: a background reload, no spinner and no error flash
+  const load = useCallback((silent = false) => {
     if (!caseId) return
 
-    setLoading(true)
+    if (!silent) setLoading(true)
     api.cases.hearings(caseId)
       .then(rows => {
         setHearings(Array.isArray(rows) ? rows.filter(h => !isMiscOnlyHearing(h)) : [])
         setError('')
       })
-      .catch(e => setError(getErrorMessage(e, 'Could not load the hearing history')))
-      .finally(() => setLoading(false))
+      .catch(e => { if (!silent) setError(getErrorMessage(e, 'Could not load the hearing history')) })
+      .finally(() => { if (!silent) setLoading(false) })
   }, [caseId])
 
   // Reload whenever the case changes or a hearing is added or edited elsewhere (hearingsVersion bumps)
   useEffect(() => { load() }, [load, hearingsVersion])
+  // And quietly when the tab is back in view, for hearings changed on another device
+  useEffect(() => onLiveRefresh(() => load(true)), [load])
 
   // The case's pending applications, so their hearing dates can be updated here, apart from the case's own next hearing
   useEffect(() => {
     if (!caseId || dashboard) return undefined
     let cancelled = false
-    api.miscApplications.list({ caseId, page: 0, size: 100 })
+    const loadApps = quiet => api.miscApplications.list({ caseId, page: 0, size: 100 })
       .then(res => { if (!cancelled) setMiscApps(res?.content || []) })
-      .catch(() => { if (!cancelled) setMiscApps([]) })
-    return () => { cancelled = true }
+      .catch(() => { if (!cancelled && !quiet) setMiscApps([]) })
+    loadApps(false)
+    const stopLive = onLiveRefresh(() => { loadApps(true) })
+    return () => { cancelled = true; stopLive() }
   }, [caseId, dashboard, hearingsVersion])
 
   // An application changed from here: keep its row current

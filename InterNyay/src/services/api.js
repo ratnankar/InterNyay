@@ -370,6 +370,8 @@ export const miscApplications = {
   onDate:  (date)     => get('/misc-applications/on', { params: { date } }),
   // How many hearing dates the applications of each case have (caseId -> count)
   hearingCounts: ()   => get('/misc-applications/hearing-counts'),
+  // Cases that have an application hearing on each date (yyyy-MM-dd -> case ids), for the calendar counts
+  hearingDates: ()    => get('/misc-applications/hearing-dates'),
   create:  (body)     => post('/misc-applications', { body }),
   update:  (id, body) => put(`/misc-applications/${id}`, { body }),
   remove:  (id)       => del(`/misc-applications/${id}`),

@@ -16,7 +16,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -107,5 +109,19 @@ class MiscApplicationServiceTest {
         req.setHearingDate("19-10-2026");
 
         assertThatThrownBy(() -> service.update(1L, req, OWNER)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void hearingDatesGroupTheCasesOfEachDate() {
+        when(hearingRepo.caseIdsByDate(OWNER)).thenReturn(List.of(
+                new Object[]{LocalDate.of(2026, 10, 21), 3L},
+                new Object[]{LocalDate.of(2026, 10, 21), 4L},
+                new Object[]{LocalDate.of(2026, 10, 25), 3L}));
+
+        Map<String, List<Long>> byDate = service.hearingDates(OWNER);
+
+        assertThat(byDate).containsOnlyKeys("2026-10-21", "2026-10-25");
+        assertThat(byDate.get("2026-10-21")).containsExactly(3L, 4L);
+        assertThat(byDate.get("2026-10-25")).containsExactly(3L);
     }
 }

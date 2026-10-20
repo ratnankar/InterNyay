@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { onLiveRefresh } from '../utils/liveRefresh'
 import { useApp } from '../context/AppContext'
 import { formatCurrency } from '../utils/formatUtils'
 import { formatDisplayDate } from '../utils/dateUtils'
@@ -130,21 +131,22 @@ export default function Expenses({ embedded = false }) {
   }
 
   // Load all office expenses
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    setError('')
+  // silent: a background reload, no spinner and no error flash
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) { setLoading(true); setError('') }
     try {
       const rows = await api.officeExpenses.list()
       setExpenses(rows)
     } catch (e) {
-      setError(getErrorMessage(e, 'Could not load expenses'))
+      if (!silent) setError(getErrorMessage(e, 'Could not load expenses'))
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [])
 
-  // Load the expenses once on mount
+  // Load the expenses on mount, then again when the tab is back in view (an associate may have added one)
   useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => onLiveRefresh(() => fetchData(true)), [fetchData])
 
   useEffect(() => {
     // Advocates load their associates for the payment details card and the filter; associates skip this

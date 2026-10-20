@@ -34,4 +34,11 @@ public interface MiscApplicationHearingRepository extends JpaRepository<MiscAppl
         GROUP BY a.legalCase.id
         """)
     List<Object[]> countByCase(@Param("userId") Long userId);
+
+    // Every misc. application hearing date with the case it belongs to, as [date, caseId] rows, for the calendar counts
+    @Query("""
+        SELECT DISTINCT h.hearingDate, a.legalCase.id FROM MiscApplicationHearing h, MiscApplication a
+        WHERE h.miscApplicationId = a.id AND a.user.id = :userId AND h.hearingDate IS NOT NULL
+        """)
+    List<Object[]> caseIdsByDate(@Param("userId") Long userId);
 }
