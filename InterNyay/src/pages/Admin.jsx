@@ -953,7 +953,7 @@ export default function Admin() {
   const {
     visible: visibleAccounts,
     remaining: accountsRemaining,
-    showMore: showMoreAccounts,
+    showMore: showMoreAccounts, step: showMoreAccountsStep,
   } = useSeeMore(visible, `${search}|${roleFilter}`, accountsStep)
 
   // Number of associates under each advocate, keyed by advocate id
@@ -1212,7 +1212,7 @@ export default function Admin() {
               </tbody>
             </table>
           </div>
-          <SeeMore remaining={accountsRemaining} onClick={showMoreAccounts} step={accountsStep} />
+          <SeeMore remaining={accountsRemaining} onClick={showMoreAccounts} step={showMoreAccountsStep} />
         </>
       )}
 

@@ -328,7 +328,7 @@ export default function Cases() {
   const {
     visible: visibleCases,
     remaining: casesRemaining,
-    showMore: showMoreCases,
+    showMore: showMoreCases, step: showMoreCasesStep,
   } = useSeeMore(
     searchedCases,
     [filterStatus, search, sortBy, filterCourt, filterNature, filterRelief, filterCaseType, filterDateFrom, filterDateTo].join('|'),
@@ -1223,7 +1223,7 @@ export default function Cases() {
         })}
 
         {/* See more when the list is long */}
-        <SeeMore remaining={casesRemaining} onClick={showMoreCases} step={casesStep} />
+        <SeeMore remaining={casesRemaining} onClick={showMoreCases} step={showMoreCasesStep} />
 
         {/* Empty state when no cases match */}
         {searchedCases.length === 0 && (

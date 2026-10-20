@@ -231,7 +231,6 @@
 .hearings-court { margin: 14px 0 6px; font-size: var(--fs-sm); font-weight: 700; color: var(--color-navy); }
 .hearings-court:first-of-type { margin-top: 0; }
 /* "Miscellaneous Applications" label: clear of the case card above it, same left edge as the cards */
-.hearings-subhead { margin: 16px 0 6px; font-size: var(--fs-sm); font-weight: 700; color: var(--color-text-muted); }
 
 /* ---------- Alignment pass ---------- */
 

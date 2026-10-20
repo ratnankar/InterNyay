@@ -86,3 +86,21 @@
 @media (max-width: 700px) {
   .admin__correction .form-input[type="date"] { width: 100%; }
 }
+
+/* Court number chips: the label, the "Mahila court" tag and the three buttons overlapped when the chip was too narrow for all of them.
+   Wider columns, and when a chip is still too narrow the buttons drop to their own line under the label instead of overlapping it */
+.courts-admin .courts-chips { grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); align-items: stretch; }
+.courts-admin .courts-chip { flex-wrap: wrap; row-gap: 8px; border-radius: 24px; }
+.courts-admin .courts-chip__main { flex: 1 1 auto; flex-wrap: wrap; min-width: max-content; row-gap: 4px; }
+.courts-admin .courts-chip__tag { flex: 0 0 auto; position: static; }
+.courts-admin .courts-chip__actions { flex: 0 0 auto; margin-left: auto; flex-wrap: nowrap; }
+.courts-admin .courts-chip__actions .courts-btn { flex: 0 0 auto; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .courts-admin .courts-chips { grid-template-columns: minmax(0, 1fr); }
+  .courts-admin .courts-chip { padding: 10px 14px; }
+  .courts-admin .courts-chip__main { flex: 1 1 100%; min-width: 0; }
+  /* Buttons share the full width under the label in equal parts */
+  .courts-admin .courts-chip__actions { flex: 1 1 100%; width: 100%; margin-left: 0; }
+  .courts-admin .courts-chip__actions .courts-btn { flex: 1 1 0; min-width: 0; padding-left: 8px; padding-right: 8px; justify-content: center; }
+}

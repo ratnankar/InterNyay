@@ -101,7 +101,7 @@ export default function TransactionHistory({ embedded = false }) {
   const {
     visible: visibleRows,
     remaining: rowsRemaining,
-    showMore: showMoreRows,
+    showMore: showMoreRows, step: showMoreRowsStep,
   } = useSeeMore(filtered, [statusFilter, period, year, fromDate, toDate, clientSearch].join('|'), rowsStep)
 
   // Select a period preset
@@ -375,7 +375,7 @@ export default function TransactionHistory({ embedded = false }) {
             </tbody>
           </table>
         )}
-        <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={rowsStep} />
+        <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={showMoreRowsStep} />
       </div>
       </>
       )}

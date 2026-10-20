@@ -822,17 +822,17 @@ export default function Documents() {
   const {
     visible: visibleCaseGroups,
     remaining: caseGroupsRemaining,
-    showMore: showMoreCaseGroups,
+    showMore: showMoreCaseGroups, step: showMoreCaseGroupsStep,
   } = useSeeMore(caseGroups, `${searchQuery}|${sortBy}`, docGroupsStep)
   const {
     visible: visibleClientGroups,
     remaining: clientGroupsRemaining,
-    showMore: showMoreClientGroups,
+    showMore: showMoreClientGroups, step: showMoreClientGroupsStep,
   } = useSeeMore(clientGroups, `${clientSearch}|${clientSortBy}`, docGroupsStep)
   const {
     visible: visibleAdvocateDocs,
     remaining: advocateDocsRemaining,
-    showMore: showMoreAdvocateDocs,
+    showMore: showMoreAdvocateDocs, step: showMoreAdvocateDocsStep,
   } = useSeeMore(filteredAdvocateDocs, advocateSearch, docRowsStep)
 
   return (
@@ -1102,7 +1102,7 @@ export default function Documents() {
                     handleDeleteEvidence={handleDeleteEvidence}
                   />
                 ))}
-                <SeeMore remaining={caseGroupsRemaining} onClick={showMoreCaseGroups} step={docGroupsStep} />
+                <SeeMore remaining={caseGroupsRemaining} onClick={showMoreCaseGroups} step={showMoreCaseGroupsStep} />
               </div>
             )}
         </>
@@ -1215,7 +1215,7 @@ export default function Documents() {
                   handleDeleteEvidence={handleDeleteEvidence}
                 />
               ))}
-              <SeeMore remaining={clientGroupsRemaining} onClick={showMoreClientGroups} step={docGroupsStep} />
+              <SeeMore remaining={clientGroupsRemaining} onClick={showMoreClientGroups} step={showMoreClientGroupsStep} />
             </div>
           )}
         </>
@@ -1311,7 +1311,7 @@ export default function Documents() {
                   </div>
                 </div>
               ))}
-              <SeeMore remaining={advocateDocsRemaining} onClick={showMoreAdvocateDocs} step={docRowsStep} />
+              <SeeMore remaining={advocateDocsRemaining} onClick={showMoreAdvocateDocs} step={showMoreAdvocateDocsStep} />
             </div>
           )}
 

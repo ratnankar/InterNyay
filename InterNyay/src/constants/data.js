@@ -69,7 +69,6 @@ export const DOCUMENT_TYPES = [
 // Misc. application statuses, as the backend saves them
 export const MISC_PENDING = 'Pending'
 export const MISC_DISPOSED = 'Disposed Off'
-export const MISC_STATUS_OPTIONS = [MISC_PENDING, MISC_DISPOSED]
 
 // How a disposed off application ended, as the backend saves it
 export const MISC_ALLOWED = 'Allowed'

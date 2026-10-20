@@ -151,7 +151,7 @@ function StationsView({ directory }) {
 
   // Show the stations a page at a time; starts again when the search or district changes
   const rowsStep = 25
-  const { visible: visibleRows, remaining: rowsRemaining, showMore: showMoreRows } =
+  const { visible: visibleRows, remaining: rowsRemaining, showMore: showMoreRows, step: showMoreRowsStep } =
     useSeeMore(visible, `${search}|${districtFilter}`, rowsStep)
 
   // Opens the editor with a blank form or the selected station, starting from a sensible district and sub-division
@@ -242,7 +242,7 @@ function StationsView({ directory }) {
           </tbody>
         </table>
       </div>
-      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={rowsStep} />
+      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={showMoreRowsStep} />
 
       {/* Add / edit dialog */}
       {editing && (
@@ -380,7 +380,7 @@ function SubDivisionsView({ directory }) {
           </tbody>
         </table>
       </div>
-      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={rowsStep} />
+      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={showMoreRowsStep} />
 
       {/* Add / edit dialog */}
       {editing && (

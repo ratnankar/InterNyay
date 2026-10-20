@@ -98,7 +98,7 @@ export default function TodoList() {
   const {
     visible: visibleTodos,
     remaining: tasksRemaining,
-    showMore: showMoreTasks,
+    showMore: showMoreTasks, step: showMoreTasksStep,
   } = useSeeMore(filtered, [filterStatus, selectedCategory, searchQuery, sortBy].join('|'), tasksStep)
 
   // Add the task from the form, using the typed custom category if one is being entered, then reset the form
@@ -376,7 +376,7 @@ export default function TodoList() {
                   </button>
                 </div>
               ))}
-              <SeeMore remaining={tasksRemaining} onClick={showMoreTasks} step={tasksStep} />
+              <SeeMore remaining={tasksRemaining} onClick={showMoreTasks} step={showMoreTasksStep} />
             </div>
           )}
         </div>

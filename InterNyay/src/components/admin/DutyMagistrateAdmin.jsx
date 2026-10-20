@@ -210,7 +210,7 @@ export default function DutyMagistrateAdmin() {
           getDate={issuedDate}
           forceOpen={!!search.trim()}
           renderItems={monthItems => (
-            <SeeMoreList items={monthItems} step={25}>
+            <SeeMoreList items={monthItems} step={25} resetKey={search.trim()}>
             {shown => (
             <div className="admin__table-wrap">
               <table className="admin__table">

@@ -122,7 +122,7 @@ export default function NotificationsPage() {
           getDate={notificationDate}
           forceOpen={!!search.trim()}
           renderItems={monthItems => (
-            <SeeMoreList items={monthItems} step={20}>
+            <SeeMoreList items={monthItems} step={20} resetKey={search.trim()}>
             {shown => (
             <div className="notif-page__list">
               {shown.map(n => (

@@ -3,8 +3,6 @@ import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import useImageCrop from '../../hooks/useImageCrop'
 import useOverlayClose from '../../hooks/useOverlayClose'
-import useSeeMore from '../../hooks/useSeeMore'
-import SeeMore from '../common/SeeMore'
 import JudgeCard from '../common/JudgeCard'
 import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
@@ -14,7 +12,7 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import { getErrorMessage } from '../../utils/errorMessages'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
-import PlaceGroupedGrid, { sortByPlace, buildingKey } from './PlaceGroupedGrid'
+import PlaceGroupedGrid, { sortByPlace } from './PlaceGroupedGrid'
 
 // Admin screen for the judges themselves: name and photo only.
 // Where a judge sits (court, building, court no., contacts ...) is managed in the Listing section
@@ -82,7 +80,6 @@ export default function JudgeProfilesAdmin() {
   }, [visible, courtFilter])
 
   const rowsStep = 18
-  const { visible: visibleRows, remaining, showMore, step: rowsRowStep } = useSeeMore(entries, `${search}|${view}|${courtFilter}`, rowsStep, 0, { groupOf: buildingKey })
 
   const { pick: pickJudgePhoto, cropper } = useImageCrop({
     shape: 'portrait',
@@ -172,7 +169,9 @@ export default function JudgeProfilesAdmin() {
             byCourt={!courtFilter}
             storageKey="judges"
             emptyLabel="Not holding a court"
-            entries={visibleRows.map(e => {
+            step={rowsStep}
+            resetKey={`${search}|${view}|${courtFilter}`}
+            entries={entries.map(e => {
               const j = e.judge
               return {
                 ...e,
@@ -193,7 +192,6 @@ export default function JudgeProfilesAdmin() {
                 ),
               }
             })}
-            footer={<SeeMore remaining={remaining} onClick={showMore} step={rowsRowStep} />}
           />
         )}
 

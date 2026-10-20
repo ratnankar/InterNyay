@@ -78,7 +78,7 @@
   border-radius: var(--ctl-radius);
 }
 
-.btn-icon { padding: 0; }
+.btn-icon { padding: 0; flex-shrink: 0; }
 
 .change-judge__tabs button.btn-gold,
 .change-judge__tabs button.btn-outline {

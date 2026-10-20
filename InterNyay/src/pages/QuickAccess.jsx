@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Fragment, useState, useEffect, useCallback, useMemo } from 'react'
 import { onLiveRefresh } from '../utils/liveRefresh'
 import { useApp } from '../context/AppContext'
 import useSessionState from '../hooks/useSessionState'
@@ -13,10 +13,15 @@ import ArchiveTree from '../components/common/ArchiveTree'
 import SeeMore from '../components/common/SeeMore'
 import SeeMoreList from '../components/common/SeeMoreList'
 import useSeeMore from '../hooks/useSeeMore'
+import useGroupedSeeMore from '../hooks/useGroupedSeeMore'
 import {
   useCourts,
   useCourtSelection,
   hasNamedDistricts,
+  getCourtNames,
+  getDistricts,
+  isOwnDistrict,
+  isHighCourt,
 } from '../constants/courts'
 import usePoliceDirectory from '../hooks/usePoliceDirectory'
 import {
@@ -108,6 +113,72 @@ function CourtFilter({ court, setCourt, district, setDistrict, withAll = false }
   )
 }
 
+// Judges list order and grouping: building, then floor, then court number
+const natural = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+// "Ground" and "Basement" come before the numbered floors; a floor with no number goes last
+function floorRank(floor) {
+  const f = String(floor || '').trim().toLowerCase()
+  if (!f) return 1000
+  if (/basement|lower ground/.test(f)) return -1
+  if (/ground|^g$/.test(f)) return 0
+  const n = f.match(/\d+/)
+  return n ? Number(n[0]) : 999
+}
+// Position of a court complex or district in the court table, so the groups follow the table order
+const rankIn = (list, v) => { const i = list.indexOf(v); return i < 0 ? 9999 : i }
+// Sort by court, district, building (no building last), floor, court number, then the judge's name
+function sortByPlace(list) {
+  const courts = getCourtNames()
+  return [...list].sort((a, b) => {
+    const ba = (a.building || '').trim(), bb = (b.building || '').trim()
+    return rankIn(courts, a.court) - rankIn(courts, b.court)
+      || natural.compare(a.court || '', b.court || '')
+      || rankIn(getDistricts(a.court), a.district) - rankIn(getDistricts(b.court), b.district)
+      || natural.compare(a.district || '', b.district || '')
+      || (!ba !== !bb ? (ba ? -1 : 1) : 0)
+      || natural.compare(ba, bb)
+      || floorRank(a.floor) - floorRank(b.floor)
+      || natural.compare(a.courtRoomNo || '~', b.courtRoomNo || '~')
+      || natural.compare(a.name || '', b.name || '')
+  })
+}
+// Keys that tell a group's court, district and place apart
+const courtKey = j => j.court || ''
+const districtKey = j => `${courtKey(j)}|${j.district || ''}`
+const placeKey = j => `${districtKey(j)}|${(j.building || '').trim()}`
+// Cut a sorted list into court > district > building groups
+function buildTree(list) {
+  const courts = []
+  list.forEach(j => {
+    let c = courts[courts.length - 1]
+    if (!c || c.key !== courtKey(j)) { c = { key: courtKey(j), name: j.court || '', districts: [] }; courts.push(c) }
+    let d = c.districts[c.districts.length - 1]
+    if (!d || d.key !== districtKey(j)) { d = { key: districtKey(j), name: j.district || '', court: j.court || '', places: [] }; c.districts.push(d) }
+    let pl = d.places[d.places.length - 1]
+    if (!pl || pl.key !== placeKey(j)) { pl = { key: placeKey(j), building: (j.building || '').trim(), items: [] }; d.places.push(pl) }
+    pl.items.push(j)
+  })
+  return courts
+}
+const GROUP_HEADING = {
+  court: { Tag: 'h3', className: 'place-group__court' },
+  district: { Tag: 'h4', className: 'place-group__district' },
+  place: { Tag: 'h5', className: 'place-group__building' },
+}
+
+function GroupHeader({ level, open, onToggle, count, nested, children }) {
+  const { Tag, className } = GROUP_HEADING[level]
+  return (
+    <Tag className={nested ? `${className} place-group__building--nested` : className}>
+      <button type="button" className="place-group__toggle" aria-expanded={open} onClick={onToggle}>
+        <span className="place-group__arrow" aria-hidden="true">{open ? '▲' : '▼'}</span>
+        <span>{children}</span>
+        <span className="place-group__count">{count}</span>
+      </button>
+    </Tag>
+  )
+}
+
 // Quick Access: judges list for the selected court and district, with search
 function JudgesList({ initialQuery }) {
   const { court, setCourt, district, setDistrict, ready } = useCourtSelection()
@@ -117,6 +188,10 @@ function JudgesList({ initialQuery }) {
   const [error,     setError]     = useState(null)
   // Show only the courts that have no judge at present
   const [vacantOnly, setVacantOnly] = useState(false)
+  // Keys of the groups the user has closed
+  const [closedList, setClosedList] = useSessionState('quick_judges_closed', [])
+  const closed = useMemo(() => new Set(closedList), [closedList])
+  const toggleGroup = key => setClosedList(list => (list.includes(key) ? list.filter(k => k !== key) : [...list, key]))
 
   // Load judges from the API for the selected court and district
   // silent = a quiet background refresh: no spinner, and a failure keeps what is on screen
@@ -139,7 +214,7 @@ function JudgesList({ initialQuery }) {
   const vacantCount = useMemo(() => judges.filter(j => j.vacant).length, [judges])
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const pool = vacantOnly ? judges.filter(j => j.vacant) : judges
+    const pool = sortByPlace(vacantOnly ? judges.filter(j => j.vacant) : judges)
     if (!q) return pool
     return pool.filter(j =>
       [j.vacant ? 'vacant no judge' : j.name, j.designation, j.courtRoomNo, j.building, j.floor, j.jurisdiction, j.courtReaderName, j.courtEmail, j.vcMeetingId]
@@ -147,6 +222,34 @@ function JudgesList({ initialQuery }) {
         .some(v => v.toLowerCase().includes(q))
     )
   }, [judges, query, vacantOnly])
+
+  // Number of judges per group over the whole list, not only the part shown so far
+  const counts = useMemo(() => {
+    const m = new Map()
+    visible.forEach(j => [courtKey(j), districtKey(j), placeKey(j)].forEach(k => m.set(k, (m.get(k) || 0) + 1)))
+    return m
+  }, [visible])
+  // A search opens every group, so a match is never hidden in a closed one
+  const searching = query.trim() !== ''
+  const isOpen = key => searching || !closed.has(key)
+  const groupKeys = useMemo(() => [...counts.keys()], [counts])
+  const anyOpen = groupKeys.some(k => !closed.has(k))
+  const toggleAll = () => setClosedList(anyOpen ? groupKeys : [])
+  // Court and district levels show only when the filter is "All"
+  const showCourtLevel = court === 'All'
+  const showDistrictLevel = district === 'All'
+  const judgeClosed = j => {
+    if (searching) return false
+    if (showCourtLevel && closed.has(courtKey(j))) return true
+    if (showDistrictLevel && j.district && !isOwnDistrict(j.court, j.district) && closed.has(districtKey(j))) return true
+    return !!(j.building || '').trim() && closed.has(placeKey(j))
+  }
+  const { shown, remaining, showMore, step: nextStep } = useGroupedSeeMore(visible, {
+    runOf: placeKey,
+    isClosed: judgeClosed,
+    step: 24,
+    resetKey: `${court}|${district}|${query}|${vacantOnly}`,
+  })
 
   return (
     <div>
@@ -174,18 +277,69 @@ function JudgesList({ initialQuery }) {
         </div>
       )}
 
+      {/* Open or close every group at once */}
+      {!loading && !error && visible.length > 0 && !searching && (
+        <div className="place-groups__bar">
+          <button type="button" className="btn-outline btn-outline--sm" onClick={toggleAll}>
+            {anyOpen ? 'Collapse all' : 'Expand all'}
+          </button>
+        </div>
+      )}
+
       {/* Show loading rows, an error with retry, an empty message or the judge cards */}
       {loading ? <LoadingRows /> : error ? <ErrorState message={error} onRetry={() => fetchData()} /> :
         visible.length === 0
           ? <p className="qa-empty">No judges found.</p>
           : (
-            <SeeMoreList items={visible} step={24} resetKey={`${court}|${district}|${query}|${vacantOnly}`}>
-              {(shown, gridRef) => (
-                <div className="judge-grid" ref={gridRef}>
-                  {shown.map(j => <JudgeCard key={j.id} judge={j} />)}
-                </div>
-              )}
-            </SeeMoreList>
+            <>
+              <div className="place-groups">
+                {buildTree(shown).map((c, ci) => {
+                  const courtOpen = !showCourtLevel || isOpen(c.key)
+                  return (
+                    <section className="place-group" key={c.key || ci}>
+                      {showCourtLevel && (
+                        <GroupHeader level="court" open={courtOpen} count={counts.get(c.key)} onToggle={() => toggleGroup(c.key)}>
+                          {!c.name ? 'Court not stated' : isHighCourt(c.name) ? c.name : `${c.name} Court`}
+                        </GroupHeader>
+                      )}
+                      {courtOpen && c.districts.map(d => {
+                        const own = isOwnDistrict(d.court, d.name)
+                        const withDistrict = showDistrictLevel && !own && d.name
+                        const districtOpen = !withDistrict || isOpen(d.key)
+                        return (
+                          <Fragment key={d.key}>
+                            {withDistrict && (
+                              <GroupHeader level="district" open={districtOpen} count={counts.get(d.key)} onToggle={() => toggleGroup(d.key)}>
+                                {d.name} District
+                              </GroupHeader>
+                            )}
+                            {districtOpen && d.places.map(pl => {
+                              const hasPlace = !!pl.building
+                              const placeOpen = !hasPlace || isOpen(pl.key)
+                              return (
+                                <Fragment key={pl.key}>
+                                  {hasPlace && (
+                                    <GroupHeader level="place" nested={!!withDistrict} open={placeOpen} count={counts.get(pl.key)} onToggle={() => toggleGroup(pl.key)}>
+                                      {pl.building}
+                                    </GroupHeader>
+                                  )}
+                                  {placeOpen && (
+                                    <div className="judge-grid place-group__grid">
+                                      {pl.items.map(j => <JudgeCard key={j.id} judge={j} />)}
+                                    </div>
+                                  )}
+                                </Fragment>
+                              )
+                            })}
+                          </Fragment>
+                        )
+                      })}
+                    </section>
+                  )
+                })}
+              </div>
+              <SeeMore remaining={remaining} onClick={showMore} step={nextStep} />
+            </>
           )
       }
     </div>
@@ -624,7 +778,7 @@ function PoliceDirectory() {
     [index, query, districtId]
   )
   const stationsStep = 30
-  const { visible: shown, remaining: stationsRemaining, showMore: showMoreStations } =
+  const { visible: shown, remaining: stationsRemaining, showMore: showMoreStations, step: showMoreStationsStep } =
     useSeeMore(results, `${query}|${districtId}`, stationsStep, openKey ? results.findIndex(r => r.key === openKey) + 1 : 0)
 
   // Show an error with retry, a loading message or an empty message until the directory loads
@@ -694,7 +848,7 @@ function PoliceDirectory() {
           ))}
 
       {/* Load the next page of stations */}
-      <SeeMore remaining={stationsRemaining} onClick={showMoreStations} step={stationsStep} />
+      <SeeMore remaining={stationsRemaining} onClick={showMoreStations} step={showMoreStationsStep} />
 
       {/* Note about where the data comes from */}
       <p className="qa-pd-note">{buildSourceNote(directory)}</p>
@@ -741,7 +895,7 @@ function JurisdictionComingSoon({ label }) {
 function DrtTable({ rows, highlightId, showSno = true, showAmount = true }) {
   // Show the rows a page at a time, keeping the highlighted tribunal visible
   const highlightAt = highlightId ? rows.findIndex(r => r.tribunal.id === highlightId) + 1 : 0
-  const { visible, remaining, showMore } = useSeeMore(rows, rows.length, 25, highlightAt)
+  const { visible, remaining, showMore, step: nextStep } = useSeeMore(rows, rows.length, 25, highlightAt)
 
   return (
     <>
@@ -788,7 +942,7 @@ function DrtTable({ rows, highlightId, showSno = true, showAmount = true }) {
         </tbody>
       </table>
     </div>
-    <SeeMore remaining={remaining} onClick={showMore} step={25} />
+    <SeeMore remaining={remaining} onClick={showMore} step={nextStep} />
     </>
   )
 }
@@ -963,7 +1117,7 @@ function DrtJurisdiction() {
 function ConsumerCommissionTable({ rows, highlightId, showSno = true }) {
   // Show the rows a page at a time, keeping the highlighted commission visible
   const highlightAt = highlightId ? rows.findIndex(r => r.id === highlightId) + 1 : 0
-  const { visible, remaining, showMore } = useSeeMore(rows, rows.length, 25, highlightAt)
+  const { visible, remaining, showMore, step: nextStep } = useSeeMore(rows, rows.length, 25, highlightAt)
 
   return (
     <>
@@ -1004,7 +1158,7 @@ function ConsumerCommissionTable({ rows, highlightId, showSno = true }) {
         </tbody>
       </table>
     </div>
-    <SeeMore remaining={remaining} onClick={showMore} step={25} />
+    <SeeMore remaining={remaining} onClick={showMore} step={nextStep} />
     </>
   )
 }

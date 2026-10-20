@@ -11,18 +11,27 @@ export default function useSeeMore(items, resetKey = '', step = 20, minCount = 0
   const { columns = 1, groupOf } = opts
   const rowStep = columns > 1 ? Math.ceil(step / columns) * columns : step
   const [state, setState] = useState({ key: resetKey, count: rowStep })
+  if (state.key !== resetKey) setState({ key: resetKey, count: rowStep })
+
+  // Rounds a shown count up to whole grid rows and to the end of the group it stops in
+  const settle = n => {
+    let c = n
+    if (columns > 1) c = Math.ceil(c / columns) * columns
+    if (groupOf) {
+      while (c > 0 && c < items.length && groupOf(items[c - 1]) === groupOf(items[c])) c++
+    }
+    return Math.min(c, items.length)
+  }
 
   const base = state.key === resetKey ? state.count : rowStep
-  let count = Math.max(base, minCount)
-  if (columns > 1) count = Math.ceil(count / columns) * columns
-  if (groupOf) {
-    while (count > 0 && count < items.length && groupOf(items[count - 1]) === groupOf(items[count])) count++
-  }
+  const count = settle(Math.max(base, minCount))
+  // What the next click really reveals (rows and groups are completed), so the button's label is true
+  const nextStep = Math.max(settle(count + rowStep) - count, 0)
 
   return {
     visible: items.slice(0, count),
     remaining: Math.max(items.length - count, 0),
     showMore: () => setState({ key: resetKey, count: count + rowStep }),
-    step: rowStep,
+    step: nextStep,
   }
 }

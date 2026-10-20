@@ -53,11 +53,6 @@ export const statusText = app => (isDisposed(app) && app.disposalOutcome ? `${ap
 // Css-friendly suffix for a status ("Disposed Off" -> "disposed-off")
 export const statusSlug = status => String(status || 'Pending').toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
-// Short name for a file, used when the advocate has not typed one
-export function fileLabel(file, fallback) {
-  return String(file?.name || '').trim() || fallback
-}
-
 // Icon for a document row, by file extension
 export function docIcon(name) {
   const ext = String(name || '').split('.').pop().toLowerCase()

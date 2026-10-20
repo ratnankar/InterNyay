@@ -69,7 +69,7 @@ export default function DrtJurisdictionAdmin() {
   const {
     visible: visibleRows,
     remaining: rowsRemaining,
-    showMore: showMoreRows,
+    showMore: showMoreRows, step: showMoreRowsStep,
   } = useSeeMore(visible, search, rowsStep)
   // Single-use kinds already taken by another tribunal, so they cannot be added twice
   const takenKinds = useMemo(
@@ -203,7 +203,7 @@ export default function DrtJurisdictionAdmin() {
           </tbody>
         </table>
       </div>
-      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={rowsStep} />
+      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={showMoreRowsStep} />
 
       {/* Add / edit dialog */}
       {editing && (

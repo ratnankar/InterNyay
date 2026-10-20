@@ -12,24 +12,37 @@ export function Thumb({ src, name }) {
 }
 
 // Search box and list to pick one judge from the Judges list. Each judge shows the courts they hold now,
-// or "Not holding a court". excludeIds leaves some judges out of the list
+// or "Not holding a court". excludeIds leaves some judges out of the list.
+// Judges are suggested only after Search is clicked (or Enter is pressed): `applied` holds the searched text, null before that
 export default function JudgeProfilePicker({ judges, value, onChange, excludeIds = [] }) {
   const [query, setQuery] = useState('')
+  const [applied, setApplied] = useState(null)
 
   const shown = useMemo(() => {
-    const q = norm(query)
+    if (applied === null) return []
+    const q = norm(applied)
     // Newest first: a judge added a moment ago (highest id) is at the top of the list
     return judges
       .filter(j => !excludeIds.includes(j.id))
       .filter(j => !q || norm(j.name).includes(q))
       .sort((a, b) => Number(b.id) - Number(a.id))
-  }, [judges, query, excludeIds])
+  }, [judges, applied, excludeIds])
 
   return (
     <>
-      <SearchInput placeholder="Search judges…" value={query} onChange={setQuery} />
+      <div className="change-judge__search">
+        <SearchInput
+          placeholder="Type the judge's name…"
+          value={query}
+          onChange={setQuery}
+          wrapperClassName="change-judge__search-box"
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); setApplied(query) } }}
+        />
+        <button type="button" className="btn-gold" onClick={() => setApplied(query)}>Search</button>
+      </div>
       <div className="change-judge__list">
-        {shown.length === 0 && <p className="admin__hint">No judge found. Add the judge in the Judges section first, or add a new judge here.</p>}
+        {applied === null && <p className="admin__hint">Type a name and click Search to see the judges.</p>}
+        {applied !== null && shown.length === 0 && <p className="admin__hint">No judge found. Add the judge in the Judges section first, or add a new judge here.</p>}
         {shown.map(j => (
           <button
             type="button"

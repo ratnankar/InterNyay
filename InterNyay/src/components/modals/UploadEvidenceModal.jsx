@@ -232,7 +232,7 @@ export default function UploadEvidenceModal() {
             />
           </div>
 
-          <UploadNameField fileName={pickedFile} name={evidenceName} onChange={setEvidenceName} label="Evidence name" />
+          <UploadNameField fileName={pickedFile} />
 
           <div className="form-actions">
             <button type="button" className="btn-outline" onClick={close}>Cancel</button>

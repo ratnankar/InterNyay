@@ -16,10 +16,10 @@
     padding-right: var(--page-gutter);
   }
 
-  /* Children of flex/grid rows may shrink below their content, so long names wrap instead of pushing the row wider than the screen */
+  /* Children of flex/grid rows may shrink below their content, so long names wrap instead of pushing the row wider than the screen (icon buttons keep their tap size) */
   .app-main :is(.admin__header, .calendar__header, .client-card__header, .exp-card__head, .qa-row, .qa-row__left,
                 .todo-item, .notif-row, .notif-card, .contact-history__top, .hearings-panel__header,
-                .notifications-panel__header, .form-template-card__header) > * { min-width: 0; }
+                .notifications-panel__header, .form-template-card__header) > :not(.btn-icon) { min-width: 0; }
 }
 
 @media (max-width: 640px) {

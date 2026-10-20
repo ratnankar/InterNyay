@@ -1,11 +1,10 @@
 import { Fragment } from 'react'
+import SeeMore from '../common/SeeMore'
 import useSessionState from '../../hooks/useSessionState'
+import useGroupedSeeMore from '../../hooks/useGroupedSeeMore'
 import { isHighCourt, buildingWithFloor } from '../../constants/courts'
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
-
-// Same building of the same court (or the no-court group): "See more" never stops in the middle of one
-export const buildingKey = e => `${e.court || ''}|${e.district || ''}|${e.court ? (e.building || '') : ''}`
 
 // Orders entries court, then building (no building last), then court no. (1, 2, 10 — not 1, 10, 2)
 export function sortByPlace(entries) {
@@ -24,10 +23,40 @@ export function sortByPlace(entries) {
 // byCourt = false (one court picked in the filter) leaves out the court level and starts at the districts.
 // A district heading is drawn for every district court that has a district; high courts have none and go straight to the buildings.
 // Entries without a court (a judge who holds none) go in a last group named by emptyLabel.
-export default function PlaceGroupedGrid({ entries, byCourt = true, emptyLabel = 'No court', footer, storageKey = 'place_groups' }) {
+export default function PlaceGroupedGrid({ entries: allEntries, byCourt = true, emptyLabel = 'No court', footer, storageKey = 'place_groups', step, resetKey = '' }) {
   const [closed, setClosed] = useSessionState(`admin_${storageKey}_closed`, [])
   const isClosed = id => closed.includes(id)
   const toggle = id => setClosed(list => (list.includes(id) ? list.filter(x => x !== id) : [...list, id]))
+
+  const idsOf = e => {
+    const courtKey = byCourt ? (e.court || '') : 'all'
+    const named = !!e.court && !isHighCourt(e.court) && !!e.district
+    const dKey = named ? e.district : ''
+    const bKey = e.court ? (e.building || '') : ''
+    return {
+      courtId: byCourt ? `c:${courtKey}` : '',
+      districtId: named ? `d:${courtKey}|${dKey}` : '',
+      buildingId: e.court ? `b:${courtKey}|${dKey}|${bKey}` : '',
+      runId: `${courtKey}|${dKey}|${bKey}`,
+    }
+  }
+  const entryClosed = e => {
+    const { courtId, districtId, buildingId } = idsOf(e)
+    return [courtId, districtId, buildingId].some(id => id && isClosed(id))
+  }
+
+  const totals = {}
+  allEntries.forEach(e => {
+    const { courtId, districtId, buildingId } = idsOf(e)
+    ;[courtId, districtId, buildingId].forEach(id => { if (id) totals[id] = (totals[id] || 0) + 1 })
+  })
+
+  const { shown: entries, remaining, showMore, step: nextStep } = useGroupedSeeMore(allEntries, {
+    runOf: e => idsOf(e).runId,
+    isClosed: entryClosed,
+    step,
+    resetKey,
+  })
 
   const groups = []
   entries.forEach(e => {
@@ -39,36 +68,31 @@ export default function PlaceGroupedGrid({ entries, byCourt = true, emptyLabel =
         id: `c:${courtKey}`,
         title: !byCourt ? '' : e.court ? (isHighCourt(e.court) ? e.court : `${e.court} Court`) : emptyLabel,
         districts: [],
-        count: 0,
+        count: totals[`c:${courtKey}`] || 0,
       }
       groups.push(g)
     }
-    g.count++
 
     // District level: every district court row that has a district
     const named = !!e.court && !isHighCourt(e.court) && !!e.district
     const dKey = named ? e.district : ''
     let d = g.districts[g.districts.length - 1]
     if (!d || d.key !== dKey) {
-      d = { key: dKey, id: `d:${courtKey}|${dKey}`, title: named ? `${e.district} District` : '', buildings: [], count: 0 }
+      d = { key: dKey, id: `d:${courtKey}|${dKey}`, title: named ? `${e.district} District` : '', buildings: [], count: totals[`d:${courtKey}|${dKey}`] || 0 }
       g.districts.push(d)
     }
-    d.count++
 
     const bKey = e.court ? (e.building || '') : ''
     let b = d.buildings[d.buildings.length - 1]
     if (!b || b.key !== bKey) {
-      b = { key: bKey, id: `b:${courtKey}|${dKey}|${bKey}`, title: e.court ? (e.building ? buildingWithFloor(e.building, '') : 'Building not set') : '', items: [] }
+      b = { key: bKey, id: `b:${courtKey}|${dKey}|${bKey}`, title: e.court ? (e.building ? buildingWithFloor(e.building, '') : 'Building not set') : '', items: [], count: totals[`b:${courtKey}|${dKey}|${bKey}`] || 0 }
       d.buildings.push(b)
     }
     b.items.push(e)
   })
 
   // Every heading that can be closed, for Collapse all
-  const allIds = groups.flatMap(g => [
-    g.title ? g.id : null,
-    ...g.districts.flatMap(d => [d.title ? d.id : null, ...d.buildings.map(b => (b.title ? b.id : null))]),
-  ]).filter(Boolean)
+  const allIds = Object.keys(totals).filter(id => !(id === 'c:all'))
   const anyOpen = allIds.some(id => !isClosed(id))
 
   return (
@@ -118,7 +142,7 @@ export default function PlaceGroupedGrid({ entries, byCourt = true, emptyLabel =
                             <button type="button" className="place-group__toggle" aria-expanded={buildingOpen} onClick={() => toggle(b.id)}>
                               <span className="place-group__arrow" aria-hidden="true">{buildingOpen ? '▲' : '▼'}</span>
                               {b.title}
-                              <span className="place-group__count">{b.items.length}</span>
+                              <span className="place-group__count">{b.count}</span>
                             </button>
                           </h5>
                         )}
@@ -136,6 +160,7 @@ export default function PlaceGroupedGrid({ entries, byCourt = true, emptyLabel =
           </section>
         )
       })}
+      {step ? <SeeMore remaining={remaining} onClick={showMore} step={nextStep} /> : null}
       {footer}
     </div>
   )

@@ -191,7 +191,7 @@ export default function Expenses({ embedded = false }) {
   const {
     visible: visibleRows,
     remaining: rowsRemaining,
-    showMore: showMoreRows,
+    showMore: showMoreRows, step: showMoreRowsStep,
   } = useSeeMore(filtered, [statusFilter, period, year, fromDate, toDate, associateFilter].join('|'), rowsStep)
 
   // Select a period preset
@@ -691,7 +691,7 @@ export default function Expenses({ embedded = false }) {
             </tbody>
           </table>
         )}
-        <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={rowsStep} />
+        <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={showMoreRowsStep} />
       </div>
 
       {/* Confirmation popup for removing an expense */}

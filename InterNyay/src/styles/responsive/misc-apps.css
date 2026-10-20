@@ -66,7 +66,9 @@
    ========================================================================== */
 
 /* ---------- All sizes: nothing may push a window or card wider than the screen ---------- */
-.misc-page, .misc-modal { min-width: 0; max-width: 100%; }
+.misc-page { min-width: 0; max-width: 100%; }
+/* The Add Application window keeps a readable width on desktop (it used to stretch across the whole screen); phones go full width below */
+.misc-modal { min-width: 0; max-width: min(100%, 640px); }
 /* Text containers may shrink below their content so long names wrap; buttons and icons keep their size */
 .misc-pick__info, .misc-casebox > *, .misc-details > *, .misc-grid > *, .misc-docblock__head > *, .misc-hearings__app > *,
 .misc-history__row > *, .case-summary-fields__row, .case-card__left { min-width: 0; }

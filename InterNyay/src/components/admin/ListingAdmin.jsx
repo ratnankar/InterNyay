@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
-import { useCourts, getCourtNames, courtDistrictLabel } from '../../constants/courts'
+import { useCourts, getCourtNames, courtDistrictLabel, hasNamedDistricts } from '../../constants/courts'
 import useImageCrop from '../../hooks/useImageCrop'
 import { indianPhoneError } from '../../utils/validators'
 import useOverlayClose from '../../hooks/useOverlayClose'
@@ -19,14 +19,12 @@ import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
 import useUnsavedGuard from '../../hooks/useUnsavedGuard'
 import { getErrorMessage } from '../../utils/errorMessages'
-import useSeeMore from '../../hooks/useSeeMore'
-import SeeMore from '../common/SeeMore'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
 import ClearableDateInput from '../common/ClearableDateInput'
-import PlaceGroupedGrid, { sortByPlace, buildingKey } from './PlaceGroupedGrid'
+import PlaceGroupedGrid, { sortByPlace } from './PlaceGroupedGrid'
 // Patterns used to check the court email and the virtual court link
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const LINK_PATTERN = /^https?:\/\/\S+$/
@@ -145,12 +143,6 @@ export default function ListingAdmin() {
 
   // Show the rows a page at a time; starts again when the search or filter changes
   const rowsStep = 18
-  const {
-    visible: visibleRows,
-    remaining: rowsRemaining,
-    showMore: showMoreRows,
-    step: rowsRowStep,
-  } = useSeeMore(visible, `${search}|${courtFilter}|${view}`, rowsStep, 0, { groupOf: buildingKey })
   // Opens the editor with a blank form or the selected judge's values
   function startEdit(row) {
     const form = emptyForm()
@@ -257,8 +249,16 @@ export default function ListingAdmin() {
       return
     }
 
-    // A new listing always has a judge
+    // A new listing always has a judge, a court and (for a court with districts) a district
     if (editing.isNew) {
+      if (!editing.form.court) {
+        addToast('Choose the court of this listing', 'error')
+        return
+      }
+      if (hasNamedDistricts(editing.form.court) && !editing.form.district) {
+        addToast('Choose the district of this listing', 'error')
+        return
+      }
       if (editing.judgeMode === 'existing' && !editing.picked) {
         addToast('Choose the judge of this listing', 'error')
         return
@@ -346,7 +346,9 @@ export default function ListingAdmin() {
           <PlaceGroupedGrid
             byCourt={!courtFilter}
             storageKey="listing"
-            entries={visibleRows.map(j => ({
+            step={rowsStep}
+            resetKey={`${search}|${courtFilter}|${view}`}
+            entries={visible.map(j => ({
               key: j.id,
               court: j.court,
               district: j.district,
@@ -368,7 +370,6 @@ export default function ListingAdmin() {
                 />
               ),
             }))}
-            footer={<SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={rowsRowStep} />}
           />
         )}
 
@@ -445,7 +446,7 @@ export default function ListingAdmin() {
                   court={editing.form.court}
                   district={editing.form.district}
                   onChange={setCourtFields}
-                  allowNoDistrict
+                  allowNoDistrict={!editing.isNew}
                 />
 
                 <CourtPlaceFields

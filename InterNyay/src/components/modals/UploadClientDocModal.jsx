@@ -104,7 +104,7 @@ export default function UploadClientDocModal() {
             />
           </div>
 
-          <UploadNameField fileName={pickedFile} name={clientDocName} onChange={setClientDocName} />
+          <UploadNameField fileName={pickedFile} />
 
           <div className="form-actions">
             <button type="button" className="btn-outline" onClick={close}>Cancel</button>

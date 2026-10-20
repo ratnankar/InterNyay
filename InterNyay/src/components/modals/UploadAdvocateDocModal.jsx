@@ -67,7 +67,7 @@ export default function UploadAdvocateDocModal() {
             />
           </div>
 
-          <UploadNameField fileName={pickedFile} name={advocateDocName} onChange={setAdvocateDocName} />
+          <UploadNameField fileName={pickedFile} />
 
           <div className="form-actions">
             <button type="button" className="btn-outline" onClick={close}>Cancel</button>

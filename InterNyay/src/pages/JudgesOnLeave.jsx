@@ -616,7 +616,7 @@ function JudgesOnLeaveBody({ onSelectJudge }) {
                 forceOpen={!!query.trim()}
                 defaultMonth={currentMonthKey}
                 renderItems={monthItems => (
-                  <SeeMoreList items={monthItems} step={25}>
+                  <SeeMoreList items={monthItems} step={25} resetKey={query.trim()}>
                     {shown => shown.map(RowArchive)}
                   </SeeMoreList>
                 )}

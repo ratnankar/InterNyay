@@ -1066,3 +1066,6 @@ td.admin__actions > * + * { margin-left: 6px; }
   border: 1px solid var(--color-gold-border);
 }
 .place-group .place-group__grid { margin-top: var(--space-sm); }
+/* Judge picker (Listing, Change judge): the search box and its Search button on one row */
+.change-judge__search { display: flex; gap: var(--space-sm, 8px); align-items: center; }
+.change-judge__search-box { flex: 1 1 auto; min-width: 0; }
