@@ -16,6 +16,8 @@ Set these in the backend `.env` (or as OS environment variables) and restart:
 
 The assistant is enabled once `CHAT_BASE_URL` and `CHAT_MODEL` are both set.
 
+Voice input in the chat (microphone) uses the browser's own speech recognition, so it needs no server setting.
+
 ## Groq (in use)
 
 ```

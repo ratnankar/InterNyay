@@ -15,8 +15,6 @@ public interface JudgeCourtNoRecordRepository extends JpaRepository<JudgeCourtNo
 
     Optional<JudgeCourtNoRecord> findFirstByJudgeIdAndTillDateIsNullOrderByFromDateDesc(Long judgeId);
 
-    void deleteByJudgeId(Long judgeId);
-
     // True when a judge sat in any court period (history that must be kept)
     boolean existsByProfileId(Long profileId);
 }

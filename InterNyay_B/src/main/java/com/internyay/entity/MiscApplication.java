@@ -68,6 +68,4 @@ public class MiscApplication {
     // Refreshes the updated time on every save
     @PreUpdate
     void onUpdate() { this.updatedAt = LocalDateTime.now(); }
-
-    public boolean isDisposedOff() { return DISPOSED_OFF.equals(status); }
 }

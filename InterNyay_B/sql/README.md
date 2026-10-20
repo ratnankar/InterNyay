@@ -18,12 +18,15 @@ and refuses to start if they do not. It never changes the database.
 | `V9__judge_profiles_and_listings.sql` | Judges List split into `judge_profiles` (the judge) and `judges` (the court listing held by one profile) |
 | `V10__mahila_court_on_court_rooms.sql` | Mahila court flag moves from the judge listing to the court room (`courts.mahila_court`) |
 | `V11__drop_released_judges.sql` | Drops the unused `released_judges` table |
+| `V12__vacant_court.sql` | `judge_profiles.vacant` and one special profile, "Vacant", for a court whose judge was transferred and the next one has not joined yet |
+| `V13__backfill_next_hearing_history.sql` | Adds a hearing-history entry for every case whose next hearing date had none |
 | `V14__court_reader_phone.sql` | Renames `judges.court_reader_mobile` to `court_reader_phone` (data unchanged) |
 | `V15__chat_history.sql` | `chat_messages`: the saved conversation of each account with the AI assistant (deleted together with the account) |
 | `V16__chat_conversations.sql` | `chat_conversations`: several saved chats per account; each existing conversation becomes one chat, titled with its first question |
 | `V17__daily_hearing_limits.sql` | `users.daily_hearing_limit` (the usual most hearings per day) and `hearing_day_limits` (a limit for one particular date, replaces the usual one) |
 | `V18__login_log_app.sql` | `login_log.app` (WEB or CALENDAR): which app each sign-in came from, shown under Login Activity; older rows count as WEB |
 | `V19__court_floors.sql` | `courts.floor` (between building and court no., part of the unique key), plus `judges.floor` and `judge_court_no_records.floor`; existing rows get an empty floor |
+| `V20__case_building_floor.sql` | `cases.building` and `cases.floor`: the court room a case is listed in, filled in for existing cases where the court table names exactly one room |
 | `V21__misc_applications.sql` | `misc_applications` (applications filed in a case: type, filing and hearing date, Pending / Disposed Off) and `documents.misc_application_id` / `misc_role` (application, order or additional document) |
 | `V22__misc_application_options.sql` | Dropdown Options list `MISC_APPLICATION_TYPE` for the Misc. Application page: Bail Application, and Other (Type Manually) which the app needs and is locked |
 | `V23__misc_application_disposal_outcome.sql` | `misc_applications.disposal_outcome`: Allowed or Disallowed once an application is disposed off |
@@ -31,6 +34,9 @@ and refuses to start if they do not. It never changes the database.
 | `V25__misc_application_hearing_note.sql` | `misc_application_hearings.note`: what happened at that hearing |
 | `V26__drop_misc_application_history.sql` | Drops the unused `misc_applications.history` column from V21 |
 | `V27__remove_generic_misc_document_type.sql` | Removes the generic document type "Misc. Application (Type Manually)"; misc. applications and their files are added on the Misc. Application page |
+| `V28__refresh_court_judge_listings.sql` | Courts and judge listings refreshed from the Delhi District Courts rosters (8 districts) |
+| `V29__add_east_rouse_central_rosters.sql.sql` | An exact copy of V28 (the doubled `.sql.sql` is in the file name). **Do not rename, edit or delete it**: it is already applied, and Flyway refuses to start when an applied migration changes |
+| `V30__reload_all_district_rosters.sql` | Judge listings of all 11 district rosters reloaded; listings no longer on a roster are archived (`active = FALSE`), never deleted, because cases and histories point at them. Supersedes V28 and V29 |
 
 This folder keeps only the two scripts that run outside the app: `create_database.sql` and `check_links.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).
@@ -40,10 +46,10 @@ Fee calculator rules still need no file: the backend saves them itself on the fi
 Use MySQL 8.0.19 or newer (`V6__plans.sql` uses a row alias in its upsert; MySQL 5.7 and MariaDB do not support it).
 
 1. In MySQL run `create_database.sql`. It creates an empty `internyay` database as `utf8mb4_unicode_ci` and never deletes anything.
-2. Start the backend. Flyway runs V1 to V11, Hibernate validates, and the app is up. That is the whole setup.
+2. Start the backend. Flyway runs V1 to V30, Hibernate validates, and the app is up. That is the whole setup.
 3. Sign out in the browser, register your account, then make it the first administrator (see `docs/ADMIN_SETUP.md`).
 
-Expected: the log shows `Successfully applied 11 migrations`, and these row counts:
+Expected: the log shows `Successfully applied 30 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
 
 | Table | Rows |
 | --- | --- |
@@ -67,14 +73,14 @@ The rule: **never edit a migration file that has been applied anywhere. Add a ne
 Flyway stores a checksum of every applied file and the backend refuses to start if one changed.
 
 1. Change the entity (add the field).
-2. Add `src/main/resources/db/migration/V12__what_it_does.sql` (next number, two underscores, a short name), for example:
+2. Add `src/main/resources/db/migration/V31__what_it_does.sql` (the number after the highest one in that folder, two underscores, a short name), for example:
    ```sql
    ALTER TABLE cases ADD COLUMN court_hall VARCHAR(100);
    ```
 3. Make the SQL match the entity: same column name (`courtHall` -> `court_hall`), a compatible type, `NOT NULL` when the field
    is `nullable = false` or a primitive. Hibernate is only validating, so a mismatch stops the start with an error such as
    `Schema-validation: missing column [court_hall] in table [cases]` or `wrong column type encountered in column [...]`.
-4. Start the backend. Flyway applies V12, Hibernate validates.
+4. Start the backend. Flyway applies V31, Hibernate validates.
 
 Good habits: one change per file, test it on a copy of the production data first, and take a backup before deploying. Flyway Community has
 no undo, to go back you restore the backup and deploy the old version of the app. A failed migration stops the start; MySQL cannot roll
