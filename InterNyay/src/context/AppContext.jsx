@@ -26,7 +26,7 @@ import {
 import { caseFeeSummary, cleanHearingFees, cleanStageFees } from '../utils/feeUtils'
 import { hasCorporatePanelClient, caseClientNames, caseHasClient } from '../utils/caseClients'
 import { toFormParty, toRequestParty, nonClientsOf } from '../utils/caseParties'
-import { opponentParties } from '../utils/cnrPrefill'
+import { cnrCaseTitle, cnrOpponents, detectSide } from '../utils/cnrPrefill'
 import {
   auth as authApi,
   cases as casesApi,
@@ -1821,6 +1821,13 @@ export function AppProvider({ children }) {
 
   // Add a client to the case and give them a default role based on the case side and nature
   function selectClient(client) {
+    // A case read from eCourts: the first client chosen tells which side we are on, when the client is named there
+    const detected = newCaseForm.addMode === 'CNR' && caseClients.length === 0
+      ? detectSide(newCaseForm.cnrDetail, client.name)
+      : null
+    const side = detected || newCaseForm.clientSide
+    if (detected && detected !== newCaseForm.clientSide) changeClientSide(detected)
+
     setCaseClients(prev =>
       prev.some(c => Number(c.id) === Number(client.id)) ? prev : [...prev, client]
     )
@@ -1828,7 +1835,7 @@ export function AppProvider({ children }) {
     setCaseClientSubTypes(prev =>
       prev[client.id]
         ? prev
-        : { ...prev, [client.id]: sideSubType(newCaseForm.clientSide, newCaseForm.caseNature) }
+        : { ...prev, [client.id]: sideSubType(side, newCaseForm.caseNature) }
     )
   }
 
@@ -1875,15 +1882,10 @@ export function AppProvider({ children }) {
     if (side === newCaseForm.clientSide) return
 
     setNewCaseForm(f => {
-      // Opposite parties that still are the ones eCourts named follow the side: the respondents when our client is
-      // the petitioner, the petitioners when our client is the respondent. Parties the advocate changed stay
-      const names = list => list.map(p => (p.name || '').trim()).join('|')
-      const fromCourt = f.cnrDetail && names(f.opponents) === names(opponentParties(f.cnrDetail, f.clientSide))
-      return {
-        ...f,
-        clientSide: side,
-        ...(fromCourt ? { opponents: opponentParties(f.cnrDetail, side) } : {}),
-      }
+      // A case read from eCourts: opposite parties still as eCourts listed them move to the other side with our client
+      const untouched = f.addMode === 'CNR' && f.cnrDetail && !f.opponents.some(o => o.fatherName || o.address || o.phone)
+        && JSON.stringify(f.opponents.map(o => o.name)) === JSON.stringify(cnrOpponents(f.cnrDetail, f.clientSide).map(o => o.name))
+      return { ...f, clientSide: side, ...(untouched ? { opponents: cnrOpponents(f.cnrDetail, side), opponentLead: null } : {}) }
     })
     remapClientSubTypes(side, newCaseForm.caseNature)
   }
@@ -1905,10 +1907,12 @@ export function AppProvider({ children }) {
     const findClient = (id, fallback) =>
       clients.find(cl => Number(cl.id) === Number(id)) || fallback
 
-    const primary = findClient(c.clientId, {
+    // A case added by CNR may have no client at all: then there is no main client either
+    const primary = c.clientId == null ? null : findClient(c.clientId, {
       id: c.clientId, name: c.clientName || 'Client', email: ''
     })
     const additional = (c.additionalClients || []).map(x => findClient(x.id, x))
+    const caseClientList = [primary, ...additional].filter(Boolean)
 
     const { court, district } = splitCaseCourt(c)
 
@@ -1916,7 +1920,7 @@ export function AppProvider({ children }) {
     // or new (the case has no file number yet, so one can still be typed)
     const fileNoOrigin =
       c.fileSeq != null ? 'auto'
-        : hasCorporatePanelClient([primary, ...additional]) ? 'panel'
+        : hasCorporatePanelClient(caseClientList) ? 'panel'
           : (c.fileNo || '').trim() ? 'legacy'
             : 'new'
 
@@ -1936,7 +1940,7 @@ export function AppProvider({ children }) {
     // A saved title that differs from the one composed from the parties was typed by hand, so it is kept as it is
     const composedTitle = composeCaseTitle({
       clientSide,
-      ourNames: [primary, ...additional].map(x => x.name).concat(formNonClients.map(n => n.name)),
+      ourNames: caseClientList.map(x => x.name).concat(formNonClients.map(n => n.name)),
       opposingNames: formOpponents.map(o => o.name),
       withState: isPoliceChallan(c.reliefSought),
     })
@@ -1988,7 +1992,7 @@ export function AppProvider({ children }) {
     })
 
     setEditingCaseId(c.id)
-    setCaseClients([primary, ...additional])
+    setCaseClients(caseClientList)
     setCaseClientSubTypes({ ...(c.clientSubTypes || {}) })
 
     setSelectedCase(null)
@@ -2101,11 +2105,16 @@ export function AppProvider({ children }) {
   // Returns the first problem found in the case form, or null if everything required is filled
   function caseFormError() {
 
-    if (!caseClientId) {
+    // A case added by CNR, or a case saved without a client, needs neither a client nor opposite parties;
+    // every other case needs both
+    const optional = (!editingCaseId && newCaseForm.addMode === 'CNR')
+      || (!!editingCaseId && cases.find(c => c.id === editingCaseId)?.clientId == null)
+
+    if (!caseClientId && !optional) {
       return 'Please select the client for this case'
     }
 
-    if (newCaseForm.opponents.length === 0) {
+    if (newCaseForm.opponents.length === 0 && !optional) {
       return newCaseForm.clientSide === SIDE_ACCUSED
         ? 'Please enter the Complainant/Petitioner/Plaintiff'
         : 'Please enter the Accused/Respondent/Defendant'
@@ -2147,10 +2156,11 @@ export function AppProvider({ children }) {
     const payload = {
       ...newCaseForm,
 
-      // Title is generated from the client names and the opposite party, unless the advocate typed their own
+      // Title is generated from the client names and the opposite party, unless the advocate typed their own.
+      // A case added by CNR takes the title from eCourts as it is
       title: newCaseForm.titleEdited && (newCaseForm.title || '').trim()
         ? newCaseForm.title.trim()
-        : composeCaseTitle({
+        : (!editingCaseId && newCaseForm.addMode === 'CNR' && cnrCaseTitle(newCaseForm.cnrDetail)) || composeCaseTitle({
           clientSide: newCaseForm.clientSide,
           ourNames: titleOurNames(caseClients, newCaseForm.nonClients, newCaseForm.titleLead),
           opposingNames: titleOpposingNames(newCaseForm.opponents, newCaseForm.opponentLead),

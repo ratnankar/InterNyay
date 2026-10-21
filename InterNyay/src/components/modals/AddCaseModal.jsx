@@ -18,7 +18,7 @@ import {
 import { judgesForRoom } from '../../utils/courtMatch'
 import { hasCorporatePanelClient } from '../../utils/caseClients'
 import { partySubText, toFormParty } from '../../utils/caseParties'
-import { cnrDetailToForm } from '../../utils/cnrPrefill'
+import { cnrCaseTitle, cnrDetailToForm } from '../../utils/cnrPrefill'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { useCourts, useDefaultCourt, getDistricts, getCourtNosByBuilding, caseRoom, buildingWithFloor, hasNamedDistricts, isHighCourt } from '../../constants/courts'
 import { CHEQUE_BOUNCE_REASONS, WITHDRAWN_STATUS } from '../../constants/data'
@@ -398,14 +398,22 @@ const breakSlashes = text => String(text).replace(/\//g, '/\u200b')
 
 // Which side our client is on, the opposite parties, and the case title built from them
 function PartiesSection() {
-  const { newCaseForm, setNewCaseForm, caseClients, changeClientSide } = useApp()
+  const { newCaseForm, setNewCaseForm, caseClients, changeClientSide, editingCaseId, cases } = useApp()
 
   // Side our client is on (complainant or accused)
   const side = newCaseForm.clientSide
   const [complainantSide, accusedSide] = PARTY_SIDES
 
-  // Case title composed from the side, our side's names (clients and non-clients) and the opposite parties
-  const autoTitle = composeCaseTitle({
+  // A case added by CNR: the title starts as the one eCourts has; client is optional; the opposite parties are filled
+  // from eCourts and can be edited like in a case added by hand
+  const byCnr = newCaseForm.addMode === 'CNR'
+  // Client and opposite parties are optional for a case added by CNR and for a case saved without a client
+  const optional = (!editingCaseId && byCnr) || (!!editingCaseId && cases.find(c => c.id === editingCaseId)?.clientId == null)
+  const courtTitle = byCnr ? cnrCaseTitle(newCaseForm.cnrDetail) : ''
+
+  // Case title: eCourts' title when added by CNR, otherwise composed from the side, our side's names
+  // (clients and non-clients) and the opposite parties
+  const autoTitle = courtTitle || composeCaseTitle({
     clientSide: side,
     ourNames: titleOurNames(caseClients, newCaseForm.nonClients, newCaseForm.titleLead),
     opposingNames: titleOpposingNames(newCaseForm.opponents, newCaseForm.opponentLead),
@@ -423,7 +431,7 @@ function PartiesSection() {
   return (
     <div className="client-section case-parties form-grid-full">
       <p className="case-parties__title">
-        {breakSlashes(complainantSide.label)} v. {breakSlashes(accusedSide.label)} *
+        {breakSlashes(complainantSide.label)} v. {breakSlashes(accusedSide.label)}{!optional && ' *'}
       </p>
 
       <div className="case-parties__side">
@@ -444,31 +452,41 @@ function PartiesSection() {
 
       <div className="case-parties__party">
         <label className="form-label">
-          {breakSlashes(complainantSide.label)}<Req />
+          {breakSlashes(complainantSide.label)}{!optional && <Req />}
           <span className="case-parties__hint">
-            {side === SIDE_COMPLAINANT ? ' — our client' : ' — opposite parties, add one or more'}
+            {side === SIDE_COMPLAINANT
+              ? (optional ? ' — our client, optional' : ' — our client')
+              : (optional ? ' — opposite parties, optional' : ' — opposite parties, add one or more')}
           </span>
         </label>
-        {side === SIDE_COMPLAINANT ? <ClientPicker ourLabel={ourLabel} allowNonClient={false} /> : <OpponentList partyLabel={theirLabel} />}
+        {side === SIDE_COMPLAINANT
+          ? <ClientPicker ourLabel={ourLabel} allowNonClient={false} />
+          : <OpponentList partyLabel={theirLabel} />}
       </div>
 
       <div className="case-parties__vs" aria-hidden="true">v.</div>
 
       <div className="case-parties__party">
         <label className="form-label">
-          {breakSlashes(accusedSide.label)}<Req />
+          {breakSlashes(accusedSide.label)}{!optional && <Req />}
           <span className="case-parties__hint">
-            {side === SIDE_ACCUSED ? ' — our client' : ' — opposite parties, add one or more'}
+            {side === SIDE_ACCUSED
+              ? (optional ? ' — our client, optional' : ' — our client')
+              : (optional ? ' — opposite parties, optional' : ' — opposite parties, add one or more')}
           </span>
         </label>
-        {side === SIDE_ACCUSED ? <ClientPicker ourLabel={ourLabel} allowNonClient /> : <OpponentList partyLabel={theirLabel} />}
+        {side === SIDE_ACCUSED
+          ? <ClientPicker ourLabel={ourLabel} allowNonClient />
+          : <OpponentList partyLabel={theirLabel} />}
       </div>
 
       <div className="case-parties__preview">
         <label className="form-label" htmlFor="case-title-input">
           Case title
           <span className="case-parties__hint">
-            {edited ? ' — edited by you' : ' — made from the names above, you can edit it'}
+            {edited
+              ? ' — edited by you'
+              : (courtTitle ? ' — taken from eCourts, you can edit it' : ' — made from the names above, you can edit it')}
           </span>
         </label>
         <div className="case-title-row">
@@ -488,7 +506,7 @@ function PartiesSection() {
               className="btn-outline"
               onClick={() => setNewCaseForm(f => ({ ...f, title: '', titleEdited: false }))}
             >
-              Use auto title
+              {courtTitle ? 'Use eCourts title' : 'Use auto title'}
             </button>
           )}
         </div>
@@ -607,7 +625,7 @@ export default function AddCaseModal() {
     handleSaveCase,
     editingCaseId, resetCaseModal,
     isAssociate, caseClients, caseClientSubTypes,
-    addToast,
+    addToast, currentUser, cases,
   } = useApp()
 
   // The user's preferred courts (Profile > Court preference), the one with the most cases first
@@ -718,11 +736,23 @@ export default function AddCaseModal() {
   // Add by CNR: the case is read from eCourts and its details fill the form. When eCourts cannot give the case the
   // form opens empty (with the CNR typed so far) to be filled by hand
   async function fetchByCnr(cnr) {
+    // A CNR the advocate already has a case for is not fetched again; the CNR prompt stays open
+    const sameCnr = c => String(c.cnrNo || '').toUpperCase().replace(/[\s-]/g, '') === cnr
+    if ((cases || []).some(sameCnr)) {
+      addToast('You already have a case with this CNR number', 'error')
+      return
+    }
+
     try {
       const detail = await api.cases.lookupCnr(cnr)
-      setNewCaseForm(f => ({ ...f, ...cnrDetailToForm(detail), addMode: 'CNR' }))
+      setNewCaseForm(f => ({ ...f, ...cnrDetailToForm(detail, { advocateName: currentUser?.name }), addMode: 'CNR' }))
       setStage(1)
     } catch (e) {
+      // The server knows the CNR is already used (e.g. the case list here is not up to date): stay on the prompt
+      if (/already have a case/i.test(getErrorMessage(e, ''))) {
+        addToast(getErrorMessage(e, 'You already have a case with this CNR number'), 'error')
+        return
+      }
       addToast(`${getErrorMessage(e, 'Could not fetch the case from eCourts')}. Fill in the case details manually.`, 'error')
       setNewCaseForm(f => ({ ...f, cnrNo: cnr, addMode: 'MANUAL', cnrDetail: null }))
       setStage(1)
@@ -800,7 +830,7 @@ export default function AddCaseModal() {
               {newCaseForm.addMode === 'CNR' && newCaseForm.cnrDetail ? (
                 <>
                   <p className="case-parties__hint">
-                    Details taken from eCourts for CNR {newCaseForm.cnrNo}. Check them and choose the client.
+                    Details taken from eCourts for CNR {newCaseForm.cnrNo}. Check them; adding a client is optional.
                     {' '}{newCaseForm.cnrDetail.hearingCount} hearing {newCaseForm.cnrDetail.hearingCount === 1 ? 'date' : 'dates'} and{' '}
                     {newCaseForm.cnrDetail.orderCount} {newCaseForm.cnrDetail.orderCount === 1 ? 'order' : 'orders'} are
                     added when you save the case.

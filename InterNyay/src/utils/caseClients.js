@@ -14,17 +14,18 @@ export function caseHasClient(c, clientId) {
 
 // Names of every client on the case; falls back to the clients list when the case doesn't carry the name
 export function caseClientNames(c, clients = []) {
-  // Main client's name, looked up from the clients list if the case doesn't have it
+  // Main client's name, looked up from the clients list if the case doesn't have it.
+  // A case added by CNR may have no client at all
   const primary = c.clientName
     || clients.find(cl => Number(cl.id) === Number(c.clientId))?.name
-    || 'Unknown'
+    || (c.clientId == null ? '' : 'Unknown')
 
   // Names of the additional clients
   const extra = (c.additionalClients || []).map(x =>
     x.name || clients.find(cl => Number(cl.id) === Number(x.id))?.name
   ).filter(Boolean)
 
-  return [primary, ...extra]
+  return [primary, ...extra].filter(Boolean)
 }
 
 // Splits the clients of a case into those with a WhatsApp number saved and those without.
@@ -54,9 +55,9 @@ export function caseClientSubType(c, clientId) {
 export function caseClientLabels(c, clients = []) {
   const primaryName = c.clientName
     || clients.find(cl => Number(cl.id) === Number(c.clientId))?.name
-    || 'Unknown'
+    || (c.clientId == null ? '' : 'Unknown')
 
-  const entries = [{ id: c.clientId, name: primaryName }]
+  const entries = primaryName ? [{ id: c.clientId, name: primaryName }] : []
 
   ;(c.additionalClients || []).forEach(x => {
     const name = x.name || clients.find(cl => Number(cl.id) === Number(x.id))?.name

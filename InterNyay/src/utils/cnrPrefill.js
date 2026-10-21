@@ -3,8 +3,8 @@
 // table or case catalogue is left empty, never guessed wrongly.
 
 import { SIDE_ACCUSED, SIDE_COMPLAINANT, caseTypeOptions, isPoliceChallan, reliefOptions } from '../constants/caseCatalog'
-import { getCourtNames, getCourtNosByBuilding, getDistricts, isHighCourt, isOwnDistrict } from '../constants/courts'
 import { toFormParty } from './caseParties'
+import { getCourtNames, getCourtNosByBuilding, getDistricts, isHighCourt, isOwnDistrict } from '../constants/courts'
 
 // Words that say nothing about which court it is
 const GENERIC = new Set(['court', 'courts', 'complex', 'district', 'of', 'the', 'and'])
@@ -66,6 +66,7 @@ function matchRoom(court, district, courtNo) {
 
 // Relief and case type of the app's catalogue that eCourts' case type names, when it names one exactly
 function matchCatalog(nature, caseType, hasFir) {
+  if (!nature) return { reliefSought: '', caseType: '' }
   const wanted = String(caseType || '').trim().toLowerCase()
 
   if (wanted) {
@@ -87,22 +88,67 @@ function matchCatalog(nature, caseType, hasFir) {
   return { reliefSought: '', caseType: '' }
 }
 
-// Parties on the opposite side of our client: the respondents when our client is the petitioner, else the petitioners
-export function opponentNames(detail, clientSide) {
-  const list = clientSide === SIDE_ACCUSED ? detail?.petitioners : detail?.respondents
-  return Array.isArray(list) ? list : []
+// Titles and short words ignored when two names are compared
+const NAME_NOISE = new Set(['mr', 'mrs', 'ms', 'miss', 'shri', 'sh', 'smt', 'shrimati', 'dr', 'adv', 'advocate', 'm', 's', 'ms', 'and', 'the', 'late'])
+const nameWords = text => String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w && !NAME_NOISE.has(w))
+
+// Same person or firm: every word of the shorter name is in the longer one (Arun Jaitley / MR.ARUN JAITLEY).
+// A single word only matches a single word, so "Kumar" never matches every Kumar
+function sameName(a, b) {
+  const x = nameWords(a), y = nameWords(b)
+  if (x.length === 0 || y.length === 0) return false
+  const [short, long] = x.length <= y.length ? [x, y] : [y, x]
+  if (short.length === 1 && long.length > 1) return false
+  return short.every(w => long.includes(w))
 }
 
-// The opposite parties as the form keeps them
-export const opponentParties = (detail, clientSide) => opponentNames(detail, clientSide).map(name => toFormParty({ name }))
+// Which side a person is on in the case, going by the names eCourts lists: the petitioners and respondents, or when
+// advocates is true their advocates. Null when the name is on neither side or on both
+export function detectSide(detail, name, { advocates = false } = {}) {
+  if (!detail || !String(name || '').trim()) return null
+
+  const petitioner = (advocates ? detail.petitionerAdvocates : detail.petitioners) || []
+  const respondent = (advocates ? detail.respondentAdvocates : detail.respondents) || []
+  const onPetitioner = petitioner.some(n => sameName(n, name))
+  const onRespondent = respondent.some(n => sameName(n, name))
+
+  if (onPetitioner === onRespondent) return null
+  return onPetitioner ? SIDE_COMPLAINANT : SIDE_ACCUSED
+}
+
+// Case title as eCourts has it: the petitioners against the respondents, with the names kept as the court wrote them.
+// More than one name on a side is shortened to the first name and "& Ors." like every other case title
+export function cnrCaseTitle(detail) {
+  const side = list => {
+    const names = (Array.isArray(list) ? list : []).map(n => String(n || '').trim()).filter(Boolean)
+    if (names.length === 0) return ''
+    return names.length > 1 ? `${names[0]} & Ors.` : names[0]
+  }
+
+  const left = side(detail?.petitioners)
+  const right = side(detail?.respondents)
+  if (!left && !right) return ''
+  return `${left || '…'} v. ${right || '…'}`
+}
+
+// The names eCourts lists on the other side from ours, as opposite parties of the form (editable like typed ones)
+export function cnrOpponents(detail, side) {
+  const names = (side === SIDE_COMPLAINANT ? detail?.respondents : detail?.petitioners) || []
+  return names.map(n => String(n || '').trim()).filter(Boolean).map(name => toFormParty({ name }))
+}
 
 // Form values for a case read from eCourts. The result is merged into the Add Case form
-export function cnrDetailToForm(detail) {
-  const nature = detail.caseNature === 'Criminal' ? 'Criminal' : 'Civil'
+export function cnrDetailToForm(detail, { advocateName = '' } = {}) {
+  // Left empty when eCourts does not say, the advocate picks it on the form
+  const nature = detail.caseNature === 'Criminal' || detail.caseNature === 'Civil' ? detail.caseNature : ''
 
   const place = matchCourtPlace(detail)
   const room = place ? matchRoom(place.court, place.district, detail.courtNo) : null
   const catalog = matchCatalog(nature, detail.caseType, !!detail.firNo)
+
+  // Our side: the logged-in advocate is listed on one side. When he is not listed, the side is worked out later
+  // from the client chosen for the case, and until then it is the petitioner side
+  const side = detectSide(detail, advocateName, { advocates: true }) || SIDE_COMPLAINANT
 
   return {
     cnrNo: detail.cnr || '',
@@ -125,9 +171,14 @@ export function cnrDetailToForm(detail) {
     // FIR details only show for a police challan case, where they are kept
     ...(isPoliceChallan(catalog.reliefSought) ? { firNo: detail.firNo || '', policeStation: detail.policeStation || '' } : {}),
 
-    // The new case form starts on the petitioner side; opposite parties follow the side if it is changed
-    clientSide: SIDE_COMPLAINANT,
-    opponents: opponentParties(detail, SIDE_COMPLAINANT),
+    // Which side our client is on. The opposite parties start as the names eCourts lists on the other side;
+    // the advocate can edit, remove or add parties like in a case added by hand
+    clientSide: side,
+    opponents: cnrOpponents(detail, side),
+
+    // The case title is not set here: in a case added by CNR the form uses cnrCaseTitle(cnrDetail) until the advocate types their own
+    title: '',
+    titleEdited: false,
 
     // Kept for the notes on the form and for swapping the opposite parties when the side changes. Never sent
     cnrDetail: detail,
