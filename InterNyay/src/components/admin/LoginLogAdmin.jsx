@@ -204,7 +204,7 @@ export default function LoginLogAdmin({ user = null }) {
       )}
 
       <p className="loginlog__note">
-        Entries are kept for {data?.retentionDays || 180} days and then deleted automatically. A sign-out is only recorded
+        A sign-out is only recorded
         when the person uses the Sign Out button on the web app; closing the browser or an expired session is not shown, and the
         Calendar app (view only) records sign-ins and failed sign-ins only.
       </p>

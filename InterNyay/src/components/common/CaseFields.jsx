@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { useCourts, caseCourtParts, roomLabel } from '../../constants/courts'
 import { caseClientLabels } from '../../utils/caseClients'
+import { nonClientsOf, opponentsOf, partyText } from '../../utils/caseParties'
 import { caseNatureOf } from '../../utils/caseClassification'
 import { formatDisplayDate } from '../../utils/dateUtils'
 import { formatCurrency } from '../../utils/formatUtils'
@@ -28,6 +29,19 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null }
 
   // Small helper to build a label/value row for the table
   const row = (label, value, opts = {}) => ({ label, value, ...opts })
+
+  // People on our side who are not saved as clients, with their role
+  const nonClients = nonClientsOf(c).map(n => (n.subType ? `${n.name} (${n.subType})` : n.name))
+  // One opposite party keeps the separate rows; several are listed in one row, numbered
+  const opponents = opponentsOf(c)
+  const opponentRows = opponents.length > 1
+    ? [row('Opposite Parties', opponents.map((o, i) => `${i + 1}. ${partyText(o)}`).join('\n'), { multiline: true })]
+    : [
+        row('Opposite Party', opponents[0]?.name || c.opposingParty),
+        row("Father's Name",  opponents[0]?.fatherName),
+        row('Address',        opponents[0]?.address),
+        row('Phone',          opponents[0]?.phone),
+      ]
 
   // Court No, cause list number and judge rows for a hearing
   const hearingRows = [
@@ -58,10 +72,8 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null }
     row('Section',        c.firSection),
     row('Police Station', c.policeStation),
     row(clientNames.length > 1 ? 'Clients' : 'Client', clientNames.join(', '), { always: true }),
-    row('Opposite Party', c.opposingParty),
-    row("Father's Name",  c.opposingFatherName),
-    row('Address',        c.opposingAddress),
-    row('Phone',          c.opposingPhone),
+    row(nonClients.length > 1 ? 'Non-clients' : 'Non-client', nonClients.join(', ')),
+    ...opponentRows,
     row('Description',    c.description, { multiline: true }),
   ].filter(f => f.always || (f.value !== '' && f.value != null))
 

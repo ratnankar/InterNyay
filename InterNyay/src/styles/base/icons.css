@@ -9,7 +9,7 @@
 /* Icon holders across the app */
 .nav-item__icon, .qa-card__icon, .qa-panel__icon, .qa-jur-cat__icon, .qa-year-btn__icon,
 .qa-avatar, .exp-card__avatar, .doc-row__icon, .case-detail__doc-icon, .hdi__icon,
-.doc-search-icon, .upload-search__icon, .qa-pd-search__icon, .admin__tab-icon,
+.doc-search-icon, .upload-search__icon, .admin__tab-icon,
 .avatar-upload__badge, .fee-type-locked__icon, .auth-admin-heading__icon,
 .opposing-field__edit, .hearing-entry__order-icon {
   display: inline-flex;

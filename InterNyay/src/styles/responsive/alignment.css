@@ -220,7 +220,7 @@
   .loginlog__toolbar > .dropdown { flex: 1 1 0; min-width: 0; width: auto; }
   .loginlog__toolbar > button { flex: 0 0 auto; }
   .loginlog__toolbar > .admin__count { flex: 1 1 100%; margin: 0; }
-  .loginlog__toolbar > .search-input, .loginlog__toolbar > :is(.search, [class*="search"]):not(.dropdown) { flex: 1 1 100%; }
+  .loginlog__toolbar > :is(.search, [class*="search"]):not(.dropdown) { flex: 1 1 100%; }
 
   /* Cards: heading on the left, value on the right, long values (email, IP, browser, reason) wrap inside the card */
   .loginlog__table td { min-width: 0 !important; }

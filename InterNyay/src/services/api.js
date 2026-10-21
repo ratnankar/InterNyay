@@ -282,6 +282,10 @@ export const cases = {
   // Set or change the next hearing date of a case
   updateNextHearing: (id, body) => put(`/cases/${id}/next-hearing`, { body }),
 
+  // Case details from eCourts by CNR, used to fill the Add Case form. Fails with a readable message when eCourts
+  // cannot give the case
+  lookupCnr: (cnr)          => get(`/cases/cnr/${encodeURIComponent(cnr)}`),
+
   // Basic create / update / delete for cases
   create:    (body)         => post('/cases', { body }),
   update:    (id, body)     => put(`/cases/${id}`, { body }),

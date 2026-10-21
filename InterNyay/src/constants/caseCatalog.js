@@ -1,4 +1,3 @@
-
 // The two main kinds of cases an advocate can file
 export const CASE_NATURES = ['Civil', 'Criminal']
 
@@ -263,12 +262,43 @@ export function sideOfSubType(subType) {
   return null
 }
 
-// Builds the case title as "Party v. Party", placing our client first unless they are the accused/respondent
-export function composeCaseTitle({ clientSide, clientNames, opposingParty }) {
-  const ours = (clientNames || []).filter(Boolean).join(' & ') || '…'
-  const theirs = String(opposingParty || '').trim() || '…'
+// Names of our side in title order: the clients first, then the non-clients. A non-client picked with "Show in title"
+// (leadKey) comes first instead
+export function titleOurNames(clients, nonClients, leadKey) {
+  const clientNames = (clients || []).map(c => c.name)
+  const lead = leadKey ? (nonClients || []).find(n => n.key === leadKey) : null
 
-  return clientSide === SIDE_ACCUSED
+  if (!lead) return [...clientNames, ...(nonClients || []).map(n => n.name)]
+  return [lead.name, ...clientNames, ...(nonClients || []).filter(n => n !== lead).map(n => n.name)]
+}
+
+// Names of the opposite parties in title order; the one picked with "Show in title" (leadKey) comes first
+export function titleOpposingNames(opponents, leadKey) {
+  const list = opponents || []
+  const lead = leadKey ? list.find(o => o.key === leadKey) : null
+  return (lead ? [lead, ...list.filter(o => o !== lead)] : list).map(o => o.name)
+}
+
+// Builds the case title as "Party v. Party", placing our side first unless they are the accused/respondent.
+// ourNames are the clients and the non-client parties on our side (the first one is the main client), opposingNames are
+// all the opposite parties. Our side shows only the first name, followed by "& Ors." when there are more
+// For a police challan case (withState) the complainant side, the left of "v.", is just "State"
+export function composeCaseTitle({ clientSide, ourNames, opposingNames, withState = false }) {
+  const clean = names => (names || []).map(n => String(n || '').trim()).filter(Boolean)
+
+  // One side of the title: the first name, then "& Ors." when there are more
+  const sideText = list => {
+    const names = clean(list)
+    if (names.length === 0) return '…'
+    return names.length > 1 ? `${names[0]} & Ors.` : names[0]
+  }
+
+  const accused = clientSide === SIDE_ACCUSED
+  // In a police challan case the complainant side (the left of "v.") is the State alone, with no other name
+  const ours = withState && !accused ? 'State' : sideText(ourNames)
+  const theirs = withState && accused ? 'State' : sideText(opposingNames)
+
+  return accused
     ? `${theirs} v. ${ours}`
     : `${ours} v. ${theirs}`
 }

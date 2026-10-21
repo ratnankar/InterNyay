@@ -12,6 +12,7 @@ import usePersistedState from '../hooks/usePersistedState'
 import SeeMore from '../components/common/SeeMore'
 import CaseHearings from '../components/common/CaseHearings'
 import CaseFields from '../components/common/CaseFields'
+import CaseNonClients from '../components/common/CaseNonClients'
 import CaseSummaryFields from '../components/common/CaseSummaryFields'
 import { documentTitle, documentTypeLabel, isOrderDocument, isEvidenceDocument, isMiscDocument, evidenceTitle } from '../utils/documentUtils'
 import MiscDocsSection from '../components/misc/MiscDocsSection'
@@ -282,7 +283,8 @@ export default function Cases() {
           (c.judgeName || '').toLowerCase().includes(q) ||
           (c.chequeNo || '').toLowerCase().includes(q) ||
           caseCourtLabel(c).toLowerCase().includes(q) ||
-          caseClientNames(c, clients).some(name => name.toLowerCase().includes(q))
+          caseClientNames(c, clients).some(name => name.toLowerCase().includes(q)) ||
+          (c.nonClients || []).some(n => (n.name || '').toLowerCase().includes(q))
         )
       })
     }
@@ -606,6 +608,7 @@ export default function Cases() {
 
         {/* Case details */}
         <CaseFields caseItem={c} clients={clients} />
+        <CaseNonClients caseItem={c} />
 
         {/* Hearing History section (collapsible) */}
         <div className={`exp-card${openSections.hearings ? ' exp-card--open' : ''} u-mt-16`} >

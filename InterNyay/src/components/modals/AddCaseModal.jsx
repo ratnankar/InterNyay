@@ -8,18 +8,24 @@ import {
   SIDE_COMPLAINANT,
   caseTypeOptions,
   composeCaseTitle,
+  titleOurNames,
+  titleOpposingNames,
   isNiAct138Complaint,
   isPoliceChallan,
   reliefOptions,
+  sideSubType,
 } from '../../constants/caseCatalog'
-import { judgesForCourtNo } from '../../utils/courtMatch'
+import { judgesForRoom } from '../../utils/courtMatch'
 import { hasCorporatePanelClient } from '../../utils/caseClients'
+import { partySubText, toFormParty } from '../../utils/caseParties'
+import { cnrDetailToForm } from '../../utils/cnrPrefill'
+import { getErrorMessage } from '../../utils/errorMessages'
 import { useCourts, useDefaultCourt, getDistricts, getCourtNosByBuilding, caseRoom, buildingWithFloor, hasNamedDistricts, isHighCourt } from '../../constants/courts'
 import { CHEQUE_BOUNCE_REASONS, WITHDRAWN_STATUS } from '../../constants/data'
 import CaseFeeSection from './CaseFeeSection'
 import FileNumbersModal from './FileNumbersModal'
-import OpposingPartyModal from './OpposingPartyModal'
-import { CaseAgePrompt, ClientSearchPrompt } from './NewCasePrompts'
+import PartyDetailsModal from './PartyDetailsModal'
+import { AddPartyTypePrompt, CaseAddModePrompt, ClientSearchPrompt } from './NewCasePrompts'
 import useUnsavedGuard from '../../hooks/useUnsavedGuard'
 import HearingDateInput from '../common/HearingDateInput'
 import PoliceStationInput from '../common/PoliceStationInput'
@@ -142,29 +148,50 @@ function ChequeDetails({ form, setForm }) {
   )
 }
 
-// Search for and attach one or more clients to the case, or jump to adding a new client
-function ClientPicker() {
-  const { showAddCase, caseClients, removeCaseClient } = useApp()
+// Search for and attach one or more clients to the case, or jump to adding a new client.
+// People on our side who are not saved as clients can be added too, and marked as a client later
+function ClientPicker({ ourLabel, allowNonClient }) {
+  const { showAddCase, caseClients, removeCaseClient, setPrimaryCaseClient, newCaseForm, setNewCaseForm, startMarkAsClient } = useApp()
 
-  // True while the user is adding another client to a case that already has one
-  const [addingClient, setAddingClient] = useState(false)
   // Whether the client search window is open
   const [searchOpen, setSearchOpen] = useState(false)
+  // Non-client popup: null when closed, 'new' when adding, or the key of the person being edited
+  const [nonClientPopup, setNonClientPopup] = useState(null)
+  // Whether the window asking what to add (client or non-client) is open
+  const [chooserOpen, setChooserOpen] = useState(false)
 
   // Reset when the modal opens or closes
-  useEffect(() => { setAddingClient(false); setSearchOpen(false) }, [showAddCase])
+  useEffect(() => { setSearchOpen(false); setNonClientPopup(null); setChooserOpen(false) }, [showAddCase])
 
-  // Show the search box when no client is attached yet or when adding another
-  const showSearch = caseClients.length === 0 || addingClient
+  // People on our side who are not saved as clients
+  const nonClients = newCaseForm.nonClients
+  // Non-client whose name leads the title, and how many people are on our side
+  const leadKey = nonClients.some(n => n.key === newCaseForm.titleLead) ? newCaseForm.titleLead : null
+  const ourCount = caseClients.length + nonClients.length
 
-  // Hide the search box again
-  function cancelAddClient() {
-    setAddingClient(false)
+  // Add a new non-client, or save the changes to one. A new one gets the role that fits our side of the case
+  function saveNonClient(d) {
+    setNewCaseForm(f => ({
+      ...f,
+      nonClients: nonClientPopup === 'new'
+        ? [...f.nonClients, { ...toFormParty(d), subType: sideSubType(f.clientSide, f.caseNature) }]
+        : f.nonClients.map(n => (n.key === nonClientPopup ? { ...n, ...d } : n)),
+    }))
+    setNonClientPopup(null)
+  }
+
+  // Take a non-client off the case
+  function removeNonClient(key) {
+    setNewCaseForm(f => ({
+      ...f,
+      nonClients: f.nonClients.filter(n => n.key !== key),
+      titleLead: f.titleLead === key ? null : f.titleLead,
+    }))
   }
 
   return (
     <div className="case-parties__client">
-      {caseClients.length > 0 && (
+      {(caseClients.length > 0 || nonClients.length > 0) && (
         <div className="client-selected-list">
           {caseClients.map((cl, i) => (
             <div key={cl.id} className="client-selected">
@@ -174,42 +201,194 @@ function ClientPicker() {
               <div className="client-selected__info">
                 <p className="client-selected__name">
                   {cl.name}
-                  {i === 0 && caseClients.length > 1 && (
-                    <span className="client-selected__tag">Primary</span>
+                  {i === 0 && !leadKey && ourCount > 1 && (
+                    <span className="client-selected__tag">Shown in title</span>
                   )}
                 </p>
                 <p className="client-selected__email">{cl.email}</p>
               </div>
-              <button type="button" className="btn-outline" onClick={() => removeCaseClient(cl.id)}>
-                {caseClients.length === 1 ? 'Change' : 'Remove'}
-              </button>
+              <div className="client-selected__actions">
+                {(i > 0 || leadKey) && (
+                  <button type="button" className="btn-outline" onClick={() => setPrimaryCaseClient(cl.id)}>
+                    Show in title
+                  </button>
+                )}
+                <button type="button" className="btn-outline" onClick={() => removeCaseClient(cl.id)}>
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {nonClients.map(n => (
+            <div key={n.key} className="client-selected client-selected--nonclient">
+              <div className="client-selected__avatar">
+                <Icon name="user" />
+              </div>
+              <div className="client-selected__info">
+                <p className="client-selected__name">
+                  {n.name}
+                  <span className="client-selected__tag client-selected__tag--muted">Not a client</span>
+                  {leadKey === n.key && <span className="client-selected__tag">Shown in title</span>}
+                </p>
+                <p className="client-selected__email">{partySubText(n) || 'Not saved in your clients'}</p>
+              </div>
+              <div className="client-selected__actions">
+                {caseClients.length > 0 && leadKey !== n.key && (
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => setNewCaseForm(f => ({ ...f, titleLead: n.key }))}
+                  >
+                    Show in title
+                  </button>
+                )}
+                <button type="button" className="btn-outline" onClick={() => startMarkAsClient(n)}>Mark as client</button>
+                <button type="button" className="btn-outline" onClick={() => setNonClientPopup(n.key)}>Edit</button>
+                <button type="button" className="btn-outline" onClick={() => removeNonClient(n.key)}>Remove</button>
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      {showSearch ? (
-        <>
-          <button
-            type="button"
-            className="form-input opposing-field client-search-field"
-            onClick={() => setSearchOpen(true)}
-          >
-            <span className="opposing-field__placeholder">
-              {caseClients.length === 0 ? 'Click to search client…' : 'Click to search another client…'}
-            </span>
-          </button>
-          {caseClients.length > 0 && (
-            <button type="button" className="btn-outline u-mt-6" onClick={cancelAddClient}>Cancel</button>
-          )}
-        </>
-      ) : (
-        <button type="button" className="btn-outline client-add-more" onClick={() => { setAddingClient(true); setSearchOpen(true) }}>
-          + Add another client
+      {/* The search bar shows only until the first client is added; more clients come through the Add button */}
+      {caseClients.length === 0 && (
+        <button
+          type="button"
+          className="form-input opposing-field client-search-field"
+          onClick={() => setSearchOpen(true)}
+        >
+          <span className="opposing-field__placeholder">Click to search client…</span>
         </button>
       )}
 
+      {/* One Add option; it asks whether to add a client or a non-client. It stays available while the search bar is showing */}
+      {/* Non-clients can be added only on the accused side; on the complainant side the button adds a client directly */}
+      {(allowNonClient || caseClients.length > 0) && (
+        <div className="client-add-row">
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => (allowNonClient ? setChooserOpen(true) : setSearchOpen(true))}
+          >
+            {allowNonClient ? '+ Add' : '+ Add another client'}
+          </button>
+        </div>
+      )}
+
+      {chooserOpen && (
+        <AddPartyTypePrompt
+          ourLabel={ourLabel}
+          hasClient={caseClients.length > 0}
+          onClose={() => setChooserOpen(false)}
+          onClient={() => { setChooserOpen(false); setSearchOpen(true) }}
+          onNonClient={() => { setChooserOpen(false); setNonClientPopup('new') }}
+        />
+      )}
+
       {searchOpen && <ClientSearchPrompt onClose={() => setSearchOpen(false)} />}
+
+      {nonClientPopup && (
+        <PartyDetailsModal
+          title="Non-client Details"
+          partyLabel={ourLabel}
+          note="Not saved in your clients. You can mark them as a client later."
+          initial={nonClients.find(n => n.key === nonClientPopup)}
+          onClose={() => setNonClientPopup(null)}
+          onSave={saveNonClient}
+        />
+      )}
+    </div>
+  )
+}
+
+// The opposite parties of the case: one or more, each added and edited in a popup
+function OpponentList({ partyLabel }) {
+  const { newCaseForm, setNewCaseForm } = useApp()
+
+  const opponents = newCaseForm.opponents
+  // The opposite party whose name leads the title: the one picked, otherwise the first
+  const leadKey = opponents.some(o => o.key === newCaseForm.opponentLead) ? newCaseForm.opponentLead : opponents[0]?.key
+  // Popup: null when closed, 'new' when adding, or the key of the opponent being edited
+  const [popup, setPopup] = useState(null)
+
+  // Add a new opponent, or save the changes to one
+  function save(d) {
+    setNewCaseForm(f => ({
+      ...f,
+      opponents: popup === 'new'
+        ? [...f.opponents, toFormParty(d)]
+        : f.opponents.map(o => (o.key === popup ? { ...o, ...d } : o)),
+    }))
+    setPopup(null)
+  }
+
+  // Take an opponent off the case
+  function remove(key) {
+    setNewCaseForm(f => ({
+      ...f,
+      opponents: f.opponents.filter(o => o.key !== key),
+      opponentLead: f.opponentLead === key ? null : f.opponentLead,
+    }))
+  }
+
+  return (
+    <div className="case-parties__opponents">
+      {opponents.length > 0 && (
+        <div className="client-selected-list">
+          {opponents.map(o => (
+            <div key={o.key} className="client-selected">
+              <div className="client-selected__avatar">
+                <Icon name="user" />
+              </div>
+              <div className="client-selected__info">
+                <p className="client-selected__name">
+                  {o.name}
+                  {leadKey === o.key && opponents.length > 1 && (
+                    <span className="client-selected__tag">Shown in title</span>
+                  )}
+                </p>
+                <p className="client-selected__email">{partySubText(o) || 'No other details'}</p>
+              </div>
+              <div className="client-selected__actions">
+                {opponents.length > 1 && leadKey !== o.key && (
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => setNewCaseForm(f => ({ ...f, opponentLead: o.key }))}
+                  >
+                    Show in title
+                  </button>
+                )}
+                <button type="button" className="btn-outline" onClick={() => setPopup(o.key)}>Edit</button>
+                <button type="button" className="btn-outline" onClick={() => remove(o.key)}>Remove</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {opponents.length === 0 ? (
+        <button type="button" className="form-input opposing-field" onClick={() => setPopup('new')}>
+          <span className="opposing-field__placeholder">Click to add name, father name, address and phone</span>
+          <span className="opposing-field__edit" aria-hidden="true"><Icon name="edit" /></span>
+        </button>
+      ) : (
+        <button type="button" className="btn-outline client-add-more" onClick={() => setPopup('new')}>
+          + Add another opponent
+        </button>
+      )}
+
+      {popup && (
+        <PartyDetailsModal
+          title="Opposite Party Details"
+          partyLabel={partyLabel}
+          initial={opponents.find(o => o.key === popup)}
+          onClose={() => setPopup(null)}
+          onSave={save}
+        />
+      )}
     </div>
   )
 }
@@ -217,7 +396,7 @@ function ClientPicker() {
 // Lets long labels like Complainant/Petitioner/Plaintiff wrap after a slash instead of in the middle of a word
 const breakSlashes = text => String(text).replace(/\//g, '/\u200b')
 
-// Which side our client is on, the opposing party details, and the case title built from them
+// Which side our client is on, the opposite parties, and the case title built from them
 function PartiesSection() {
   const { newCaseForm, setNewCaseForm, caseClients, changeClientSide } = useApp()
 
@@ -225,43 +404,21 @@ function PartiesSection() {
   const side = newCaseForm.clientSide
   const [complainantSide, accusedSide] = PARTY_SIDES
 
-  // Case title composed from the side, client names and opposing party
-  const title = composeCaseTitle({
+  // Case title composed from the side, our side's names (clients and non-clients) and the opposite parties
+  const autoTitle = composeCaseTitle({
     clientSide: side,
-    clientNames: caseClients.map(c => c.name),
-    opposingParty: newCaseForm.opposingParty,
+    ourNames: titleOurNames(caseClients, newCaseForm.nonClients, newCaseForm.titleLead),
+    opposingNames: titleOpposingNames(newCaseForm.opponents, newCaseForm.opponentLead),
+    withState: isPoliceChallan(newCaseForm.reliefSought),
   })
 
-  // Whether the opposing party details popup is open
-  const [detailsOpen, setDetailsOpen] = useState(false)
+  // The title shown in the box: the typed one once edited, otherwise the live composed one
+  const edited = !!newCaseForm.titleEdited
+  const title = edited ? newCaseForm.title : autoTitle
 
-  // Opposing party details shown on the button; father's name and phone go in the second line
-  const opposingName = (newCaseForm.opposingParty || '').trim()
-  const opposingFather = (newCaseForm.opposingFatherName || '').trim()
-  // Second line under the opposing party name
-  const opposingSub = [
-    opposingFather && `Father: ${opposingFather}`,
-    (newCaseForm.opposingPhone || '').trim(),
-  ].filter(Boolean).join(' · ')
-
-  // Button that opens the opposing party popup (typing is done there, not inline)
-  const manualInput = (
-    <button
-      type="button"
-      className={`form-input opposing-field${opposingName ? ' opposing-field--filled' : ''}`}
-      onClick={() => setDetailsOpen(true)}
-    >
-      {opposingName ? (
-        <>
-          <span className="opposing-field__name">{opposingName}</span>
-          <span className="opposing-field__sub">{opposingSub || 'Click to add father name, address and phone'}</span>
-        </>
-      ) : (
-        <span className="opposing-field__placeholder">Click to add name, father name, address and phone</span>
-      )}
-      <span className="opposing-field__edit" aria-hidden="true"><Icon name="edit" /></span>
-    </button>
-  )
+  // Label of the side the opposite parties are on, and of our side
+  const theirLabel = side === SIDE_COMPLAINANT ? accusedSide.label : complainantSide.label
+  const ourLabel = side === SIDE_COMPLAINANT ? complainantSide.label : accusedSide.label
 
   return (
     <div className="client-section case-parties form-grid-full">
@@ -289,10 +446,10 @@ function PartiesSection() {
         <label className="form-label">
           {breakSlashes(complainantSide.label)}<Req />
           <span className="case-parties__hint">
-            {side === SIDE_COMPLAINANT ? ' — our client' : ' — opposite party, click to fill'}
+            {side === SIDE_COMPLAINANT ? ' — our client' : ' — opposite parties, add one or more'}
           </span>
         </label>
-        {side === SIDE_COMPLAINANT ? <ClientPicker /> : manualInput}
+        {side === SIDE_COMPLAINANT ? <ClientPicker ourLabel={ourLabel} allowNonClient={false} /> : <OpponentList partyLabel={theirLabel} />}
       </div>
 
       <div className="case-parties__vs" aria-hidden="true">v.</div>
@@ -301,43 +458,47 @@ function PartiesSection() {
         <label className="form-label">
           {breakSlashes(accusedSide.label)}<Req />
           <span className="case-parties__hint">
-            {side === SIDE_ACCUSED ? ' — our client' : ' — opposite party, click to fill'}
+            {side === SIDE_ACCUSED ? ' — our client' : ' — opposite parties, add one or more'}
           </span>
         </label>
-        {side === SIDE_ACCUSED ? <ClientPicker /> : manualInput}
+        {side === SIDE_ACCUSED ? <ClientPicker ourLabel={ourLabel} allowNonClient /> : <OpponentList partyLabel={theirLabel} />}
       </div>
 
-      <p className="case-parties__preview">
-        Case title: <strong>{title}</strong>
-      </p>
-
-      {detailsOpen && (
-        <OpposingPartyModal
-          partyLabel={side === SIDE_COMPLAINANT ? accusedSide.label : complainantSide.label}
-          initial={{
-            name:       newCaseForm.opposingParty,
-            fatherName: newCaseForm.opposingFatherName,
-            address:    newCaseForm.opposingAddress,
-            phone:      newCaseForm.opposingPhone,
-          }}
-          onClose={() => setDetailsOpen(false)}
-          onSave={d => {
-            setNewCaseForm(f => ({
-              ...f,
-              opposingParty:      d.name,
-              opposingFatherName: d.fatherName,
-              opposingAddress:    d.address,
-              opposingPhone:      d.phone,
-            }))
-            setDetailsOpen(false)
-          }}
-        />
-      )}
+      <div className="case-parties__preview">
+        <label className="form-label" htmlFor="case-title-input">
+          Case title
+          <span className="case-parties__hint">
+            {edited ? ' — edited by you' : ' — made from the names above, you can edit it'}
+          </span>
+        </label>
+        <div className="case-title-row">
+          <input
+            id="case-title-input"
+            className="form-input"
+            type="text"
+            maxLength={500}
+            value={title}
+            placeholder="Case title"
+            onChange={e => setNewCaseForm(f => ({ ...f, title: e.target.value, titleEdited: true }))}
+            onBlur={() => { if (edited && !title.trim()) setNewCaseForm(f => ({ ...f, title: '', titleEdited: false })) }}
+          />
+          {edited && (
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={() => setNewCaseForm(f => ({ ...f, title: '', titleEdited: false }))}
+            >
+              Use auto title
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
-// Case file number; auto-numbered for normal clients, typed by hand for corporate panel clients
+// Case file number. Corporate panel clients type it by hand. For everyone else the field starts with the next free
+// number, which can be replaced by any number or text the advocate types; a number the case already has stays fixed
 function FileNumberField({ form, setForm }) {
   const { caseClients } = useApp()
   // Whether the file numbers popup is open
@@ -345,13 +506,17 @@ function FileNumberField({ form, setForm }) {
 
   // True when a corporate panel client is attached
   const panel = hasCorporatePanelClient(caseClients)
-  // Where the current file number came from ("auto" or "legacy")
+  // Where the current file number came from ("auto", "legacy", "panel", or "new" when the case has none yet)
   const origin = form.fileNoOrigin
 
   // An existing file number that stays as it is
-  const kept = !panel && (origin === 'auto' || (origin === 'legacy' && !!form.fileNo.trim()))
-  // True when the next free number should be fetched and used
+  const kept = !panel && (origin === 'auto' || origin === 'legacy')
+  // True when the next free number should be suggested and used
   const numbered = !panel && !kept
+  // The number can be typed only while the case has none of its own (a case that just left corporate panel is given a new one)
+  const editable = numbered && origin === 'new'
+  // True once the advocate has typed their own number
+  const typed = editable && !!form.fileNoManual
 
   // Fetch the next free file number once, unless the form already has one
   useEffect(() => {
@@ -378,6 +543,7 @@ function FileNumberField({ form, setForm }) {
         <input
           className="form-input"
           placeholder="e.g. FILE/2024/045"
+          maxLength={255}
           value={form.fileNo}
           onChange={e => setForm(f => ({ ...f, fileNo: e.target.value }))}
         />
@@ -385,24 +551,33 @@ function FileNumberField({ form, setForm }) {
     )
   }
 
-  // Number displayed in the field
-  const shownNumber = origin === 'legacy' && kept ? form.fileNo : (form.fileSeq ?? '')
+  // Number displayed in the field: what was typed, else the number the case holds or the suggested one
+  const shownNumber = typed || origin === 'legacy' ? form.fileNo : (form.fileSeq ?? '')
+
+  // The number marked as chosen in the file numbers popup
+  const typedNumber = /^[1-9]\d{0,8}$/.test((form.fileNo || '').trim()) ? Number((form.fileNo || '').trim()) : undefined
+  const selected = typed ? typedNumber : form.fileSeq
 
   return (
     <div>
       <label className="form-label">
         File Number
         <span className="case-parties__hint">
-          {kept ? ' — fixed' : ' — automatic'}
+          {kept ? ' — fixed' : typed ? ' — typed by you' : editable ? ' — suggested, type to change' : ' — automatic'}
         </span>
       </label>
 
       <div className="file-no-row">
         <input
           className="form-input"
-          readOnly
+          readOnly={!editable}
+          maxLength={255}
           value={shownNumber}
-          placeholder="Assigned when the case is saved"
+          placeholder={editable ? 'e.g. 25 or FILE/2024/045' : 'Assigned when the case is saved'}
+          onChange={editable ? e => setForm(f => ({ ...f, fileNo: e.target.value, fileNoManual: true })) : undefined}
+          // Leaving the field empty goes back to the suggested number
+          onBlur={editable ? () => setForm(f => (f.fileNoManual && !(f.fileNo || '').trim()
+            ? { ...f, fileNo: '', fileNoManual: false } : f)) : undefined}
         />
         <button type="button" className="btn-outline" onClick={() => setWindowOpen(true)}>
           File numbers
@@ -411,10 +586,10 @@ function FileNumberField({ form, setForm }) {
 
       {windowOpen && (
         <FileNumbersModal
-          selected={numbered ? form.fileSeq : undefined}
+          selected={numbered ? selected : undefined}
           onClose={() => setWindowOpen(false)}
           onPick={numbered
-            ? number => { setForm(f => ({ ...f, fileSeq: number })); setWindowOpen(false) }
+            ? number => { setForm(f => ({ ...f, fileSeq: number, fileNo: '', fileNoManual: false })); setWindowOpen(false) }
             : undefined}
         />
       )}
@@ -432,6 +607,7 @@ export default function AddCaseModal() {
     handleSaveCase,
     editingCaseId, resetCaseModal,
     isAssociate, caseClients, caseClientSubTypes,
+    addToast,
   } = useApp()
 
   // The user's preferred courts (Profile > Court preference), the one with the most cases first
@@ -450,6 +626,11 @@ export default function AddCaseModal() {
 
   // Court numbers and their judges for the chosen court and district
   const [courtNumbers, setCourtNumbers] = useState([])
+  // True while those are being loaded
+  const [judgesLoading, setJudgesLoading] = useState(false)
+  // The case itself keeps no judge, it is read from the court no. whenever it is shown, so a change of judge in
+  // that court room is followed automatically
+
   // Court and district chosen on the form, used to look up court numbers
   const { court: formCourt, district: formDistrict } = newCaseForm
 
@@ -457,13 +638,16 @@ export default function AddCaseModal() {
   useEffect(() => {
     if (!showAddCase || !formCourt || !formDistrict) {
       setCourtNumbers([])
+      setJudgesLoading(false)
       return undefined
     }
 
     let alive = true
+    setJudgesLoading(true)
     api.judgesList.courtNumbers({ court: formCourt, district: formDistrict })
       .then(rows => { if (alive) setCourtNumbers(Array.isArray(rows) ? rows : []) })
       .catch(() => { if (alive) setCourtNumbers([]) })
+      .finally(() => { if (alive) setJudgesLoading(false) })
 
     return () => { alive = false }
   }, [showAddCase, formCourt, formDistrict])
@@ -495,11 +679,15 @@ export default function AddCaseModal() {
     }
   }, [courtRows, formCourt, formDistrict, newCaseForm.courtNo, newCaseForm.building, newCaseForm.floor])
 
-  // Judge names for the chosen court number, without duplicates
-  const judges = useMemo(
-    () => [...new Set(judgesForCourtNo(courtNumbers, newCaseForm.courtNo).map(j => j.judgeName))],
-    [courtNumbers, newCaseForm.courtNo]
-  )
+  // Text shown for a court room in the Court No. / Judge field: the number, then the judge(s) sitting in that room
+  function roomLabel(g, r) {
+    const names = [...new Set(
+      judgesForRoom(courtNumbers, { courtNo: r.courtNo, building: g.building, floor: r.floor })
+        .map(j => (j.judgeName || '').trim())
+        .filter(Boolean)
+    )]
+    return names.length ? `${r.courtNo} — ${names.join(' / ')}` : `${r.courtNo}`
+  }
 
   // Popup shown before a new case form: 0 = fresh/old question, 1 = the form itself
   const [stage, setStage] = useState(0)
@@ -527,15 +715,30 @@ export default function AddCaseModal() {
     onDiscard: closeModal,
   })
 
+  // Add by CNR: the case is read from eCourts and its details fill the form. When eCourts cannot give the case the
+  // form opens empty (with the CNR typed so far) to be filled by hand
+  async function fetchByCnr(cnr) {
+    try {
+      const detail = await api.cases.lookupCnr(cnr)
+      setNewCaseForm(f => ({ ...f, ...cnrDetailToForm(detail), addMode: 'CNR' }))
+      setStage(1)
+    } catch (e) {
+      addToast(`${getErrorMessage(e, 'Could not fetch the case from eCourts')}. Fill in the case details manually.`, 'error')
+      setNewCaseForm(f => ({ ...f, cnrNo: cnr, addMode: 'MANUAL', cnrDetail: null }))
+      setStage(1)
+    }
+  }
+
   // Nothing to show while the modal is closed
   if (!showAddCase) return null
 
-  // Adding a new case: ask whether it is fresh or old before the form opens
+  // Adding a new case: ask how it is added (by CNR or manually) before the form opens
   if (!editingCaseId && stage === 0) {
     return (
-      <CaseAgePrompt
+      <CaseAddModePrompt
         onClose={closeModal}
-        onChoose={caseAge => { setNewCaseForm(f => ({ ...f, caseAge })); setStage(1) }}
+        onManual={() => { setNewCaseForm(f => ({ ...f, addMode: 'MANUAL' })); setStage(1) }}
+        onFetch={fetchByCnr}
       />
     )
   }
@@ -594,23 +797,33 @@ export default function AddCaseModal() {
 
           {!isEditing && (
             <div className="case-age u-mb-16">
-              <label className="form-label">Is this case new or already running in court?</label>
-              <div className="u-flex-8">
-                {[['FRESH', 'Fresh case'], ['OLD', 'Old case']].map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={newCaseForm.caseAge === value ? 'btn-gold btn-outline--sm' : 'btn-outline btn-outline--sm'}
-                    onClick={() => setNewCaseForm(f => ({ ...f, caseAge: value }))}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {newCaseForm.caseAge === 'OLD' && (
-                <p className="case-parties__hint u-mt-6">
-                  Enter the CNR number. The next hearing date, every earlier hearing date and the orders
-                  are taken from eCourts when you add the case.
+              {newCaseForm.addMode === 'CNR' && newCaseForm.cnrDetail ? (
+                <>
+                  <p className="case-parties__hint">
+                    Details taken from eCourts for CNR {newCaseForm.cnrNo}. Check them and choose the client.
+                    {' '}{newCaseForm.cnrDetail.hearingCount} hearing {newCaseForm.cnrDetail.hearingCount === 1 ? 'date' : 'dates'} and{' '}
+                    {newCaseForm.cnrDetail.orderCount} {newCaseForm.cnrDetail.orderCount === 1 ? 'order' : 'orders'} are
+                    added when you save the case.
+                  </p>
+                  {(newCaseForm.cnrDetail.petitioners.length > 0 || newCaseForm.cnrDetail.respondents.length > 0) && (
+                    <p className="case-parties__hint u-mt-6">
+                      Petitioner: {newCaseForm.cnrDetail.petitioners.join(', ') || '—'}
+                      {newCaseForm.cnrDetail.petitionerAdvocates.length > 0 && ` (Advocate: ${newCaseForm.cnrDetail.petitionerAdvocates.join(', ')})`}
+                      {' · '}
+                      Respondent: {newCaseForm.cnrDetail.respondents.join(', ') || '—'}
+                      {newCaseForm.cnrDetail.respondentAdvocates.length > 0 && ` (Advocate: ${newCaseForm.cnrDetail.respondentAdvocates.join(', ')})`}
+                    </p>
+                  )}
+                  {newCaseForm.cnrDetail.status !== 'Pending' && (
+                    <p className="case-parties__hint u-mt-6">
+                      eCourts shows this case as {newCaseForm.cnrDetail.status}; it is added with that status.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="case-parties__hint">
+                  Fill in the case details. When you save, the hearing dates and orders of this case are taken
+                  from eCourts using the CNR number.
                 </p>
               )}
             </div>
@@ -718,8 +931,8 @@ export default function AddCaseModal() {
               </Dropdown>
             </div>
             <div>
-              <label className="form-label">Court No.</label>
-              {/* Court numbers come from the court table for the chosen court and district */}
+              <label className="form-label">Court No. / Judge</label>
+              {/* Court rooms come from the court table for the chosen court and district; each shows the judge sitting there */}
               <Dropdown
                 className="form-input"
                 value={roomKey(newCaseForm.building, newCaseForm.floor, newCaseForm.courtNo)}
@@ -729,11 +942,11 @@ export default function AddCaseModal() {
                   setNewCaseForm(f => ({ ...f, courtNo, building, floor }))
                 }}
               >
-                <option value={roomKey('', '', '')}>{newCaseForm.court ? 'Select Court No.' : 'Select a court first'}</option>
+                <option value={roomKey('', '', '')}>{newCaseForm.court ? (judgesLoading ? 'Loading court nos. and judges…' : 'Select Court No. / Judge') : 'Select a court first'}</option>
                 {caseCourtNoGroups.flatMap(g => {
                   const opt = r => (
                     <option key={roomKey(g.building, r.floor, r.courtNo)} value={roomKey(g.building, r.floor, r.courtNo)}>
-                      {r.courtNo}
+                      {roomLabel(g, r)}
                     </option>
                   )
                   // No building: plain options, no floor. With a building: one group per floor, "Building (Floor)"
@@ -746,11 +959,6 @@ export default function AddCaseModal() {
                   ))
                 })}
               </Dropdown>
-              {newCaseForm.courtNo.trim() && formCourt && (
-                judges.length > 0
-                  ? <p className="case-judge-hint">Judge: <strong>{judges.join(' / ')}</strong></p>
-                  : <p className="case-judge-hint case-judge-hint--none">No judge listed for this court no.</p>
-              )}
             </div>
             <div>
               <label className="form-label">Case Number<Req /></label>
@@ -760,6 +968,7 @@ export default function AddCaseModal() {
             <div>
               <label className="form-label">CNR Number<Req /></label>
               <input className="form-input" placeholder="e.g. DLHC010012342024"
+                readOnly={!isEditing && newCaseForm.addMode === 'CNR'}
                 value={newCaseForm.cnrNo} onChange={e => setNewCaseForm(f => ({ ...f, cnrNo: e.target.value }))} />
             </div>
             <div>
@@ -772,8 +981,8 @@ export default function AddCaseModal() {
 
             <FileNumberField form={newCaseForm} setForm={setNewCaseForm} />
             {/* Asked only when a case is added; afterwards it changes through the Next Hearing Update button.
-                For an old case the next date comes from eCourts */}
-            {!isEditing && newCaseForm.caseAge !== 'OLD' && (
+                When added by CNR the next date is the one eCourts gives */}
+            {!isEditing && (
               <div>
                 <label className="form-label">Next Hearing</label>
                 <HearingDateInput
@@ -783,7 +992,7 @@ export default function AddCaseModal() {
             )}
             <div className="form-grid-full">
               <label className="form-label">Description</label>
-              <textarea className="form-input" rows={3} placeholder="Brief description of the case…"
+              <textarea className="form-input" rows={3} style={{ resize: 'none' }} placeholder="Brief description of the case…"
                 value={newCaseForm.description} onChange={e => setNewCaseForm(f => ({ ...f, description: e.target.value }))} />
             </div>
           </div>

@@ -369,21 +369,6 @@ html.kb-open .chat__launcher { display: none; }
     font-size: 0.8125rem;
   }
 
-  /* Police Directory search is a bordered box with the input inside (icon and clear button share it), so the box itself
-     takes the size of the other search fields: 34px high, 13px text. Without this it had no height and grew to 48-60px. */
-  .app-main .qa-pd-search {
-    box-sizing: border-box;
-    height: 34px;
-    min-height: 34px;
-    padding: 0 12px;
-  }
-  .app-main .qa-pd-search .qa-pd-search__input {
-    height: 100%;
-    min-height: 0;
-    padding: 0;
-    font-size: 0.8125rem;
-  }
-
   input.form-input::placeholder,
   input.doc-search-input::placeholder {
     text-overflow: ellipsis;

@@ -186,7 +186,7 @@
 /* Scrollbar space is always reserved, so content no longer jumps sideways when a page becomes long enough to scroll.
    (Phones and tablets use overlay scrollbars, so this costs them nothing.) */
 html { scrollbar-gutter: stable; }
-.app-main, .sidebar, .modal, .modal__body, .drawer__body, .file-numbers__list, .client-result-list { scrollbar-gutter: stable; }
+.app-main, .sidebar, .modal, .drawer__body, .file-numbers__list, .client-result-list { scrollbar-gutter: stable; }
 
 /* Admin header Refresh button. "Refresh" and "Refreshing…" sit in one grid cell and the unused one is only hidden,
    so the button is always as wide as the longer label and its right edge never moves.

@@ -24,6 +24,7 @@ export default function AddClientModal() {
     newClientForm,
     setNewClientForm,
     handleAddClient,
+    markTarget,
     addToast,
   } = useApp()
 
@@ -50,8 +51,11 @@ export default function AddClientModal() {
 
   // True when the modal was opened from inside the Add Case form
   const fromCase = showAddClient === 'fromCase'
-  // Opened from another popup (Add Case, or the Misc. Application form), so it must sit on top of it
-  const stacked = fromCase || showAddClient === 'fromMisc'
+  // True when a non-client party of a case is being marked as a client (their details are filled in already)
+  const marking = showAddClient === 'markNonClient'
+  // Opened from another popup (Add Case, or the Misc. Application form), so it must sit on top of it.
+  // Marking a non-client of the open case form is also on top of it; on a saved case's page it is not
+  const stacked = fromCase || showAddClient === 'fromMisc' || (marking && markTarget?.caseId == null)
 
   // Take the chosen photo, reset the input so the same file can be picked again, and store the cropped result on the form
   function onPhotoSelected(e) {
@@ -67,7 +71,7 @@ export default function AddClientModal() {
         {cropper}
 
         <div className="modal__header">
-          <h2 className="modal__title">Register New Client</h2>
+          <h2 className="modal__title">{marking ? 'Mark as Client' : 'Register New Client'}</h2>
           <button type="button"
             aria-label="Close"
             title="Close"
@@ -79,6 +83,13 @@ export default function AddClientModal() {
         </div>
 
         <div className="client-form">
+
+          {marking && (
+            <p className="case-parties__hint">
+              The details given for {markTarget?.nonClient?.name || 'this person'} are filled in below.
+              Registering saves them in your clients and puts them on the case as a client.
+            </p>
+          )}
 
           <div className="add-client-photo">
             <label className="profile-card__avatar avatar-upload" title="Upload a photo (optional)">

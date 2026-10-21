@@ -18,8 +18,7 @@
   .todo-filters :is(.dropdown__input.dropdown__input, select),
   .txn-timeline-filter :is(.dropdown__input.dropdown__input, .form-input),
   .clients-page .list-toolbar .doc-search-input,
-  .clients-page .sort-control select,
-  .qa-pd-search__input {
+  .clients-page .sort-control select {
     box-sizing: border-box;
     height: var(--d-ctl);
     min-height: var(--d-ctl);

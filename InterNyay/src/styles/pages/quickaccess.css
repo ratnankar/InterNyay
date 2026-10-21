@@ -351,52 +351,7 @@
 
 .qa-avatar--navy { background: var(--color-navy); color: var(--color-gold); }
 
-/* Police directory: search, station cards, officer blocks, badges and notes */
-.qa-pd-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  background: var(--color-surface);
-  border: var(--border-input);
-  border-radius: var(--border-radius-md);
-  margin-bottom: 1rem; /* same gap under it as the Judges list search (.qa-search) */
-  transition: border-color 0.15s ease;
-}
-.qa-pd-search:focus-within { border-color: var(--color-gold); }
-
-.qa-pd-search__icon { font-size: var(--fs-base); opacity: 0.6; flex-shrink: 0; }
-
-.qa-pd-search__input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: var(--font-body);
-  font-size: var(--fs-base);
-  color: var(--color-text);
-  padding: 11px 0;
-  min-width: 0;
-}
-.qa-pd-search__input { text-overflow: ellipsis; } /* the long hint is cut with … instead of mid-letter on a narrow screen */
-.qa-pd-search__input::placeholder { color: var(--color-text-faint); }
-.qa-pd-search__input::-webkit-search-cancel-button { display: none; }
-
-.qa-pd-search__clear {
-  border: none;
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  line-height: 1;
-  font-size: var(--fs-xs);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.qa-pd-search__clear:hover { background: var(--color-gold-light); color: var(--color-navy); }
-
+/* Police directory: station cards, officer blocks, badges and notes */
 .qa-pd-card {
   margin-bottom: 8px;
   overflow: hidden;

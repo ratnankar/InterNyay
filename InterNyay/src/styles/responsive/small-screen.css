@@ -1409,10 +1409,6 @@ pre, code {
     font-size: var(--fs-sm);
   }
 
-  .qa-pd-search {
-    padding: 8px 12px;
-  }
-
   .todo-add-form {
     padding: 14px;
     margin-bottom: 14px;

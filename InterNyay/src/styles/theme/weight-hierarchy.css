@@ -123,13 +123,13 @@
 
 /* ---------- Fields, search boxes and dropdowns ---------- */
 /* What you type is regular; its placeholder is regular and lighter in colour */
-.form-input, .auth-input, .doc-search-input, .todo-search-input, .qa-jur-search-row__input, .qa-pd-search__input, .qa-search,
+.form-input, .auth-input, .doc-search-input, .todo-search-input, .qa-jur-search-row__input, .qa-search,
 input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], input[type="search"],
 textarea, .contact-textarea {
   font-weight: var(--w-regular);
 }
 .form-input::placeholder, .doc-search-input::placeholder, .todo-search-input::placeholder, .auth-input::placeholder,
-.qa-pd-search__input::placeholder, .qa-jur-search-row__input::placeholder, textarea::placeholder {
+.qa-jur-search-row__input::placeholder, textarea::placeholder {
   font-weight: var(--w-regular);
 }
 /* A chosen value in a dropdown or select reads one step heavier than typed text */
@@ -201,7 +201,6 @@ select.form-input, .dropdown__input, .doc-filter-select, .form-input.dropdown__i
   .txn-timeline-filter :is(.dropdown__input.dropdown__input, .form-input),
   .clients-page .list-toolbar .doc-search-input,
   .clients-page .sort-control select,
-  .qa-pd-search__input,
   :is(.admin, .app-main, .modal, .drawer) textarea.form-input {
     font-size: var(--d-field-fs);
   }

@@ -13,8 +13,31 @@ function newestFirst(a, b) {
   return byDate !== 0 ? byDate : Number(b.id) - Number(a.id)
 }
 
-// Step 1 popup: is the case new, or already running in court?
-export function CaseAgePrompt({ onChoose, onClose }) {
+// A CNR number is 16 letters and digits; spaces and dashes typed between them are ignored
+const cleanCnr = text => String(text || '').toUpperCase().replace(/[\s-]/g, '')
+const validCnr = text => /^[A-Z0-9]{16}$/.test(cleanCnr(text))
+
+// Step 1 popup: how is the case added? By CNR (the details come from eCourts) or manually.
+// onFetch(cnr) reads the case from eCourts and moves on to the form, whether it worked or not
+export function CaseAddModePrompt({ onFetch, onManual, onClose }) {
+  // 'choose': the two options. 'cnr': asking for the CNR number
+  const [step, setStep] = useState('choose')
+  const [cnr, setCnr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState('')
+
+  async function fetchCase() {
+    if (!validCnr(cnr)) { setProblem('Enter the 16-character CNR number'); return }
+
+    setProblem('')
+    setBusy(true)
+    try {
+      await onFetch(cleanCnr(cnr))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <ModalPortal>
       <div className="overlay">
@@ -22,30 +45,108 @@ export function CaseAgePrompt({ onChoose, onClose }) {
 
           <div className="modal__header">
             <h2 className="modal__title">New Case</h2>
-            <button aria-label="Close" title="Close" type="button" className="btn-icon" onClick={onClose}>
+            <button aria-label="Close" title="Close" type="button" className="btn-icon" onClick={onClose} disabled={busy}>
               <Icon name="close" />
             </button>
           </div>
 
-          <p className="form-label u-mb-12">
-            Is this case new or already running in court?
-          </p>
+          {step === 'choose' && (
+            <>
+              <p className="form-label u-mb-12">How do you want to add the case?</p>
 
-          <div className="u-flex-8">
-            <button type="button" className="btn-gold u-flex-1"  onClick={() => onChoose('FRESH')}>
-              Fresh case
-            </button>
-            <button type="button" className="btn-outline u-flex-1"  onClick={() => onChoose('OLD')}>
-              Old case
-            </button>
-          </div>
+              <div className="u-flex-8">
+                <button type="button" className="btn-gold u-flex-1" onClick={() => setStep('cnr')}>
+                  Add by CNR
+                </button>
+                <button type="button" className="btn-outline u-flex-1" onClick={onManual}>
+                  Add manually
+                </button>
+              </div>
 
-          <p className="case-parties__hint u-mt-10">
-            An old case is added with its CNR number; its hearing dates and orders are taken from eCourts.
-          </p>
+              <p className="case-parties__hint u-mt-10">
+                By CNR, the case details, hearing dates and orders are taken from eCourts. Manually, you fill in the
+                details yourself; the hearing dates and orders are still taken from eCourts when the case is saved.
+              </p>
+            </>
+          )}
+
+          {step === 'cnr' && (
+            <form onSubmit={e => { e.preventDefault(); if (!busy) fetchCase() }}>
+              <label className="form-label" htmlFor="add-case-cnr">CNR Number</label>
+              <input
+                id="add-case-cnr"
+                className="form-input"
+                placeholder="e.g. DLND020047882015"
+                maxLength={30}
+                value={cnr}
+                autoFocus
+                autoComplete="off"
+                disabled={busy}
+                onChange={e => { setCnr(e.target.value); setProblem('') }}
+              />
+
+              {problem && <p className="case-judge-hint case-judge-hint--none u-mt-6">{problem}</p>}
+
+              <p className="case-parties__hint u-mt-10">
+                If the case cannot be fetched, the form opens for you to fill in by hand.
+              </p>
+
+              <div className="form-actions">
+                <button type="button" className="btn-outline" onClick={() => { setStep('choose'); setProblem('') }} disabled={busy}>Back</button>
+                <button type="submit" className="btn-gold" disabled={busy}>
+                  {busy ? 'Fetching…' : 'Fetch case'}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </ModalPortal>
+  )
+}
+
+// Popup opened by the Add button of the client section: add a saved client, or someone who is not a client
+export function AddPartyTypePrompt({ ourLabel, hasClient, onClient, onNonClient, onClose }) {
+
+  // Escape closes this window only, not the New Case form underneath it
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      onClose()
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [onClose])
+
+  return createPortal(
+    <div className="overlay overlay--stacked">
+      <div className="modal modal--sm" onClick={e => e.stopPropagation()}>
+
+        <div className="modal__header">
+          <h2 className="modal__title">Add {String(ourLabel).replace(/\//g, '/\u200b')}</h2>
+          <button aria-label="Close" title="Close" type="button" className="btn-icon" onClick={onClose}>
+            <Icon name="close" />
+          </button>
+        </div>
+
+        <p className="form-label u-mb-12">What do you want to add?</p>
+
+        <div className="add-party-choices">
+          <button type="button" className="btn-gold" onClick={onClient}>
+            {hasClient ? 'Add another client' : 'Add client'}
+          </button>
+          <button type="button" className="btn-outline" onClick={onNonClient}>
+            Add non-client
+          </button>
+        </div>
+
+        <p className="case-parties__hint u-mt-10">
+          A client is saved in your clients. The other is only on this case and is not saved as a client.
+        </p>
+      </div>
+    </div>,
+    document.body
   )
 }
 

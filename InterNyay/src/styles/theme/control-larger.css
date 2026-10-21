@@ -247,8 +247,4 @@
   .admin__tabs.admin__tabs .admin__tab:hover { transform: none; }
   /* Keep a little room at the right so the last tab never touches the edge of the bar */
   .admin__tabs.admin__tabs::after { content: ''; flex: 0 0 2px; }
-
-  /* Quick Access search by name: the bordered wrapper is the 36px box, the input inside fills it */
-  .qa-pd-search { box-sizing: border-box; height: var(--d-ctl); min-height: var(--d-ctl); padding: 0 12px; border-radius: var(--d-radius); }
-  .qa-pd-search .qa-pd-search__input { height: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0; font-size: var(--d-ctl-fs); }
 }

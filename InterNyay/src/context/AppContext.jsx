@@ -15,6 +15,8 @@ import {
   SIDE_COMPLAINANT,
   composeCaseTitle,
   renameInCaseTitle,
+  titleOurNames,
+  titleOpposingNames,
   guessOpposingParty,
   isNiAct138Complaint,
   isPoliceChallan,
@@ -23,6 +25,8 @@ import {
 } from '../constants/caseCatalog'
 import { caseFeeSummary, cleanHearingFees, cleanStageFees } from '../utils/feeUtils'
 import { hasCorporatePanelClient, caseClientNames, caseHasClient } from '../utils/caseClients'
+import { toFormParty, toRequestParty, nonClientsOf } from '../utils/caseParties'
+import { opponentParties } from '../utils/cnrPrefill'
 import {
   auth as authApi,
   cases as casesApi,
@@ -540,21 +544,33 @@ export function AppProvider({ children }) {
 
   // Blank state of the add/edit case form (also used to reset it)
   const EMPTY_CASE_FORM = {
+    // title is used only when titleEdited is true; otherwise the title is composed from the parties
     title: '',
+    titleEdited: false,
+    // Key of the non-client whose name leads our side of the title (null: the main client leads)
+    titleLead: null,
+    // Key of the opposite party whose name leads their side of the title (null: the first one leads)
+    opponentLead: null,
     clientSide: SIDE_COMPLAINANT,
-    opposingParty: '',
-    opposingFatherName: '',
-    opposingAddress: '',
-    opposingPhone: '',
+
+    // Opposite parties, and people on our side who are not saved as clients (see utils/caseParties.js)
+    opponents: [],
+    nonClients: [],
 
     caseNo: '',
 
+    // fileNo is what the advocate typed. While fileNoManual is false the file number field shows the suggested
+    // next number (fileSeq) and the server gives the next free number when the case is saved
     fileNo: '',
     fileSeq: null,
     fileNoOrigin: 'new',
+    fileNoManual: false,
 
-    // FRESH: a new case. OLD: already running in court, its dates and orders come from eCourts using the CNR
-    caseAge: 'FRESH',
+    // CNR: the form was filled from eCourts using the CNR, so the next date and status come from the court.
+    // MANUAL: the advocate fills the form. Either way the hearing dates and orders are read from eCourts when saved
+    addMode: 'MANUAL',
+    // What eCourts said about the case when it was added by CNR. Only for the notes on the form, never sent
+    cnrDetail: null,
 
     cnrNo: '',
     filingDate: '',
@@ -607,6 +623,9 @@ export function AppProvider({ children }) {
 
   // Role of each client in the case (Accused, Plaintiff/Petitioner, ...)
   const [caseClientSubTypes, setCaseClientSubTypes] = useState({})
+
+  // Non-client being marked as a client: { caseId, nonClient }. caseId is null when it happens inside the case form
+  const [markTarget, setMarkTarget] = useState(null)
 
   // Blank state of the fee form
   const EMPTY_FEE_FORM = {
@@ -1813,6 +1832,16 @@ export function AppProvider({ children }) {
     )
   }
 
+  // Make one of the case's clients the primary (main) client by moving them to the front of the list
+  function setPrimaryCaseClient(id) {
+    setCaseClients(prev => {
+      const picked = prev.find(c => Number(c.id) === Number(id))
+      if (!picked || prev[0] === picked) return prev
+      return [picked, ...prev.filter(c => c !== picked)]
+    })
+    setNewCaseForm(f => (f.titleLead ? { ...f, titleLead: null } : f))
+  }
+
   // Remove a client from the case and drop their role
   function removeCaseClient(id) {
     setCaseClients(prev => prev.filter(c => Number(c.id) !== Number(id)))
@@ -1831,13 +1860,31 @@ export function AppProvider({ children }) {
         return [cl.id, !current || AUTO_SUBTYPES.includes(current) ? sideSubType(side, nature) : current]
       }))
     )
+
+    // Non-clients are on our side too, so their role follows the side in the same way
+    setNewCaseForm(f => ({
+      ...f,
+      nonClients: f.nonClients.map(n =>
+        !n.subType || AUTO_SUBTYPES.includes(n.subType) ? { ...n, subType: sideSubType(side, nature) } : n
+      ),
+    }))
   }
 
   // Switch our side of the case (complainant / accused) and refresh the client roles
   function changeClientSide(side) {
     if (side === newCaseForm.clientSide) return
 
-    setNewCaseForm(f => ({ ...f, clientSide: side }))
+    setNewCaseForm(f => {
+      // Opposite parties that still are the ones eCourts named follow the side: the respondents when our client is
+      // the petitioner, the petitioners when our client is the respondent. Parties the advocate changed stay
+      const names = list => list.map(p => (p.name || '').trim()).join('|')
+      const fromCourt = f.cnrDetail && names(f.opponents) === names(opponentParties(f.cnrDetail, f.clientSide))
+      return {
+        ...f,
+        clientSide: side,
+        ...(fromCourt ? { opponents: opponentParties(f.cnrDetail, side) } : {}),
+      }
+    })
     remapClientSubTypes(side, newCaseForm.caseNature)
   }
 
@@ -1865,11 +1912,13 @@ export function AppProvider({ children }) {
 
     const { court, district } = splitCaseCourt(c)
 
-    // Where the file number came from: auto (generated), panel (corporate panel client) or legacy (typed in by hand earlier)
+    // Where the file number came from: auto (generated), panel (corporate panel client), legacy (typed in by hand earlier)
+    // or new (the case has no file number yet, so one can still be typed)
     const fileNoOrigin =
       c.fileSeq != null ? 'auto'
         : hasCorporatePanelClient([primary, ...additional]) ? 'panel'
-          : 'legacy'
+          : (c.fileNo || '').trim() ? 'legacy'
+            : 'new'
 
     const roles = c.clientSubTypes || {}
     // Older cases don't store the side, so work it out from the client's role
@@ -1878,18 +1927,33 @@ export function AppProvider({ children }) {
       sideOfSubType(roles[c.clientId] || roles[String(c.clientId)]) ||
       SIDE_COMPLAINANT
 
+    // Older cases have no opposite party saved, so it is read from the title
+    const formOpponents = (c.opponents?.length ? c.opponents : [{ name: guessOpposingParty(c.title, clientSide) }])
+      .filter(o => (o.name || '').trim())
+      .map(toFormParty)
+    const formNonClients = nonClientsOf(c).map(toFormParty)
+
+    // A saved title that differs from the one composed from the parties was typed by hand, so it is kept as it is
+    const composedTitle = composeCaseTitle({
+      clientSide,
+      ourNames: [primary, ...additional].map(x => x.name).concat(formNonClients.map(n => n.name)),
+      opposingNames: formOpponents.map(o => o.name),
+      withState: isPoliceChallan(c.reliefSought),
+    })
+    const savedTitle = (c.title || '').trim()
+
     // Copy every field of the case into the form, using safe defaults for missing values
     setNewCaseForm({
       title:          c.title          || '',
+      titleEdited:    !!savedTitle && savedTitle !== composedTitle,
       clientSide,
-      opposingParty:  c.opposingParty  || guessOpposingParty(c.title, clientSide),
-      opposingFatherName: c.opposingFatherName || '',
-      opposingAddress:    c.opposingAddress    || '',
-      opposingPhone:      c.opposingPhone      || '',
+      opponents: formOpponents,
+      nonClients: formNonClients,
       caseNo:         c.caseNo         || '',
       fileNo:         c.fileNo         || '',
       fileSeq:        c.fileSeq        ?? null,
       fileNoOrigin,
+      fileNoManual:   false,
       cnrNo:          c.cnrNo          || '',
       filingDate:     c.filingDate     || '',
       court,
@@ -2041,16 +2105,20 @@ export function AppProvider({ children }) {
       return 'Please select the client for this case'
     }
 
-    if (!newCaseForm.opposingParty.trim()) {
+    if (newCaseForm.opponents.length === 0) {
       return newCaseForm.clientSide === SIDE_ACCUSED
         ? 'Please enter the Complainant/Petitioner/Plaintiff'
         : 'Please enter the Accused/Respondent/Defendant'
     }
 
-    // Opposite party's phone is optional but must be valid if entered
-    const opposingPhoneProblem = indianPhoneError(newCaseForm.opposingPhone, { label: "opposite party's phone number" })
-    if (opposingPhoneProblem) {
-      return `Opposite party: ${opposingPhoneProblem}`
+    // A party's phone is optional but must be valid if entered
+    const partyPhones = [
+      ...newCaseForm.opponents.map(p => ['Opposite party', p]),
+      ...newCaseForm.nonClients.map(p => ['Non-client', p]),
+    ]
+    for (const [who, p] of partyPhones) {
+      const phoneProblem = indianPhoneError(p.phone, { label: `${p.name}'s phone number` })
+      if (phoneProblem) return `${who}: ${phoneProblem}`
     }
 
     if (!newCaseForm.caseNo) {
@@ -2079,16 +2147,18 @@ export function AppProvider({ children }) {
     const payload = {
       ...newCaseForm,
 
-      // Title is generated from the client names and the opposite party
-      title: composeCaseTitle({
-        clientSide: newCaseForm.clientSide,
-        clientNames: caseClients.map(c => c.name),
-        opposingParty: newCaseForm.opposingParty
-      }),
-      opposingParty: newCaseForm.opposingParty.trim(),
-      opposingFatherName: (newCaseForm.opposingFatherName || '').trim(),
-      opposingAddress: (newCaseForm.opposingAddress || '').trim(),
-      opposingPhone: (newCaseForm.opposingPhone || '').trim(),
+      // Title is generated from the client names and the opposite party, unless the advocate typed their own
+      title: newCaseForm.titleEdited && (newCaseForm.title || '').trim()
+        ? newCaseForm.title.trim()
+        : composeCaseTitle({
+          clientSide: newCaseForm.clientSide,
+          ourNames: titleOurNames(caseClients, newCaseForm.nonClients, newCaseForm.titleLead),
+          opposingNames: titleOpposingNames(newCaseForm.opponents, newCaseForm.opponentLead),
+          withState: isPoliceChallan(newCaseForm.reliefSought)
+        }),
+
+      opponents: newCaseForm.opponents.map(toRequestParty),
+      nonClients: newCaseForm.nonClients.map(toRequestParty),
 
       // First client is the main one, the rest are sent as additional clients with their roles
       clientId: caseClientId,
@@ -2099,13 +2169,16 @@ export function AppProvider({ children }) {
       )
     }
 
-    // The old/fresh choice only matters when a case is created; for an old case eCourts gives the next date
+    delete payload.titleEdited
+    delete payload.titleLead
+    delete payload.opponentLead
+    delete payload.cnrDetail
+
+    // How the case was added only matters when it is created
     if (editingCaseId) {
-      delete payload.caseAge
+      delete payload.addMode
       // The next hearing is not part of Edit Case; it changes only through the Next Hearing Update button
       delete payload.nextHearing
-    } else if (newCaseForm.caseAge === 'OLD') {
-      payload.nextHearing = ''
     }
 
     // Remove blank fee rows before saving
@@ -2114,13 +2187,22 @@ export function AppProvider({ children }) {
     // Additional fees have been removed, so they are never sent (saved ones are left untouched)
     delete payload.additionalFees
 
-    // Panel clients don't use the automatic file number sequence
+    // Panel clients type their file number and don't use the automatic sequence. For everyone else the field starts with the
+    // suggested next number; when the advocate types their own, a plain number (25) joins the sequence on the server and
+    // anything else (FILE/2024/045) is kept as typed. An empty field means the next free number
+    const typedFileNo = (newCaseForm.fileNo || '').trim()
     if (hasCorporatePanelClient(caseClients)) {
       payload.fileSeq = null
+    } else if (newCaseForm.fileNoOrigin === 'new' && newCaseForm.fileNoManual && typedFileNo) {
+      payload.fileNo = typedFileNo
+      payload.fileSeq = /^[1-9]\d{0,8}$/.test(typedFileNo) ? Number(typedFileNo) : null
     } else {
+      // Nothing typed: the suggested number is only a request, the server gives the next free one if it was taken
+      if (newCaseForm.fileNoOrigin === 'new') payload.fileNo = ''
       payload.fileSeq = newCaseForm.fileSeq ?? null
     }
     delete payload.fileNoOrigin
+    delete payload.fileNoManual
 
     // FIR details only apply to police challan cases
     if (!isPoliceChallan(newCaseForm.reliefSought)) {
@@ -2186,12 +2268,12 @@ export function AppProvider({ children }) {
 
       resetCaseModal()
 
-      // An old case arrives with its past hearing dates, so the hearing lists are loaded again
+      // The case arrives with its past hearing dates when eCourts had them, so the hearing lists are loaded again
       if (created?.id) bumpHearings(created.id)
 
       addToast(
-        newCaseForm.caseAge === 'OLD'
-          ? 'Old case added with its hearing dates from eCourts'
+        newCaseForm.addMode === 'CNR'
+          ? 'Case added with its hearing dates from eCourts'
           : 'Case added successfully'
       )
 
@@ -2458,6 +2540,47 @@ export function AppProvider({ children }) {
     }
   }
 
+  // Starts marking a non-client party as a client: the Register Client form opens with their details filled in.
+  // caseId is the saved case they are on, or null when they are in the case form that is open right now
+  function startMarkAsClient(nonClient, caseId = null) {
+    setMarkTarget({ caseId, nonClient })
+    setNewClientForm({
+      name: nonClient.name || '',
+      email: '',
+      whatsappPhone: nonClient.phone || '',
+      additionalPhone: '',
+      address: nonClient.address || '',
+      type: 'INDIVIDUAL',
+      customLabel: '',
+      profilePicture: ''
+    })
+    setShowAddClient('markNonClient')
+  }
+
+  // The non-client has been registered as a client: the client takes their place on the case
+  async function finishMarkAsClient(created) {
+    const { caseId, nonClient } = markTarget
+    setMarkTarget(null)
+
+    // In the case form: the client replaces the non-client there and is saved together with the case
+    if (caseId == null) {
+      setNewCaseForm(f => ({ ...f, nonClients: f.nonClients.filter(n => n.key !== nonClient.key) }))
+      selectClient(created)
+      if (nonClient.subType) setCaseClientSubTypes(prev => ({ ...prev, [created.id]: nonClient.subType }))
+      return
+    }
+
+    // On a saved case: the case is updated right away
+    const c = cases.find(x => x.id === caseId)
+    if (!c) return
+
+    await handleUpdateCase(caseId, {
+      additionalClientIds: [...(c.additionalClients || []).map(x => x.id), created.id],
+      clientSubTypes: nonClient.subType ? { [created.id]: nonClient.subType } : undefined,
+      nonClients: nonClientsOf(c).filter(n => n.id !== nonClient.id).map(toRequestParty),
+    })
+  }
+
   // Validates and creates a new client; when it was opened from the case form the new client is selected for the case
   async function handleAddClient(
     fromCase = false
@@ -2509,7 +2632,11 @@ export function AppProvider({ children }) {
         created
       ])
 
-      if (fromCase) {
+      if (showAddClient === 'markNonClient' && markTarget) {
+
+        await finishMarkAsClient(created)
+
+      } else if (fromCase) {
 
         selectClient(created)
       }
@@ -3531,9 +3658,12 @@ export function AppProvider({ children }) {
         caseClients,
 
         selectClient,
+        markTarget,
+        startMarkAsClient,
         changeClientSide,
         remapClientSubTypes,
         removeCaseClient,
+        setPrimaryCaseClient,
         resetCaseModal,
 
         editingCaseId,

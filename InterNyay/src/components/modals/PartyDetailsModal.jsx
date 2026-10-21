@@ -5,8 +5,9 @@ import { indianPhoneError } from '../../utils/validators'
 import Req from '../common/Req'
 
 import Icon from '../common/Icon'
-// Popup to add or edit the opposing party's details
-export default function OpposingPartyModal({ partyLabel, initial, onSave, onClose }) {
+// Popup to add or edit the details of one party: an opposite party, or a non-client on our side.
+// title is the heading, partyLabel the side or role shown under it, note an optional hint above the fields
+export default function PartyDetailsModal({ title = 'Opposite Party Details', partyLabel, note, initial, onSave, onClose }) {
   // Form values, started from the existing party when editing
   const [values, setValues] = useState({
     name:       initial?.name       || '',
@@ -29,7 +30,7 @@ export default function OpposingPartyModal({ partyLabel, initial, onSave, onClos
   // Name is required and the phone must be a valid Indian number; trim everything before handing it back
   function save() {
     if (!values.name.trim()) {
-      setError(`Enter the name of the ${partyLabel}`)
+      setError(`Enter the name of the ${partyLabel || 'party'}`)
       return
     }
 
@@ -54,13 +55,15 @@ export default function OpposingPartyModal({ partyLabel, initial, onSave, onClos
 
         <div className="modal__header">
           <div>
-            <h2 className="modal__title">Opposite Party Details</h2>
+            <h2 className="modal__title">{title}</h2>
             <p className="opposing-modal__sub">{partyLabel}</p>
           </div>
           <button aria-label="Close" title="Close" type="button" className="btn-icon" onClick={onClose}><Icon name="close" /></button>
         </div>
 
         <div className="client-form">
+          {note && <p className="case-parties__hint">{note}</p>}
+
           <div>
             <label className="form-label">Name<Req /></label>
             <input
