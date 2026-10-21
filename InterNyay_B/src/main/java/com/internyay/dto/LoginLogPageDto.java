@@ -16,7 +16,4 @@ public class LoginLogPageDto {
     // Last 24 hours
     public long logins24h;
     public long failed24h;
-
-    // Days the log is kept
-    public int retentionDays;
 }

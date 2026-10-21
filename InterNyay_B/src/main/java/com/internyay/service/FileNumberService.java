@@ -79,4 +79,22 @@ public class FileNumberService {
         c.setFileNo(String.valueOf(seq));
         return seq;
     }
+
+    // Gives the case the number the advocate typed. Unlike assign, it never swaps it for another number:
+    // a number an open case already holds is refused, and a number above the next one is allowed
+    public int assignTyped(Case c, Long userId, int seq) {
+
+        // Lock the advocate row so two cases saved together can't get the same number
+        userRepo.findByIdForUpdate(userId);
+
+        long self = c.getId() == null ? -1L : c.getId();
+
+        if (caseRepo.countOpenHolders(userId, seq, self) > 0) {
+            throw new IllegalArgumentException("File number " + seq + " is already used by another open case");
+        }
+
+        c.setFileSeq(seq);
+        c.setFileNo(String.valueOf(seq));
+        return seq;
+    }
 }

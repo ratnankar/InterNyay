@@ -377,11 +377,17 @@ public class ChatTools {
                 .put("clients", clients.stream().map(v -> Rec.of()
                         .always("id", v.id()).put("name", v.name()).put("email", v.email())
                         .put("role", v.role()).put("primary", v.primary() ? true : null).map()).toList())
-                .put("opposingParty", Rec.of()
-                        .put("name", c.getOpposingParty())
-                        .put("fatherName", c.getOpposingFatherName())
-                        .put("address", c.getOpposingAddress())
-                        .put("phone", c.getOpposingPhone()).map())
+                .put("opposingParties", c.getOpponents().stream().map(o -> Rec.of()
+                        .put("name", o.getName())
+                        .put("fatherName", o.getFatherName())
+                        .put("address", o.getAddress())
+                        .put("phone", o.getPhone()).map()).toList())
+                .put("nonClientParties", c.getNonClients().stream().map(n -> Rec.of()
+                        .put("name", n.getName())
+                        .put("fatherName", n.getFatherName())
+                        .put("address", n.getAddress())
+                        .put("phone", n.getPhone())
+                        .put("role", n.getSubType()).map()).toList())
                 .put("policeChallan", Rec.of()
                         .put("firNo", c.getFirNo())
                         .put("section", c.getFirSection())
@@ -1169,12 +1175,14 @@ public class ChatTools {
     // All searchable text of a case in one string
     private String haystack(Case c) {
         StringBuilder sb = new StringBuilder();
-        for (String s : new String[]{c.getTitle(), c.getCaseNo(), c.getFileNo(), c.getCnrNo(), c.getOpposingParty(),
+        for (String s : new String[]{c.getTitle(), c.getCaseNo(), c.getFileNo(), c.getCnrNo(),
                 c.getCourt(), c.getDistrict(), c.getCourtNo(), c.getReliefSought(), c.getCaseType(), c.getFirNo(),
                 c.getPoliceStation(), c.getDescription(), c.getStatus(), c.getCaseNature()}) {
             if (s != null) sb.append(s.toLowerCase()).append(' ');
         }
         clientsOf(c).forEach(v -> sb.append(lower(v.name())).append(' '));
+        c.getOpponents().forEach(o -> sb.append(lower(o.getName())).append(' '));
+        c.getNonClients().forEach(n -> sb.append(lower(n.getName())).append(' '));
         return sb.toString();
     }
 

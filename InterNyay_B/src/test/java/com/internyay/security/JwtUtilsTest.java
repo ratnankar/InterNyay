@@ -80,6 +80,14 @@ class JwtUtilsTest {
     }
 
     @Test
+    void zeroExpirationMeansTheTokenNeverExpires() {
+        JwtUtils forever = jwtWith(SECRET, 0L);
+        String token = forever.generateToken(user);
+
+        assertThat(forever.validateToken(token, user)).isTrue();
+    }
+
+    @Test
     void garbageIsRejected() {
         assertThat(jwt.validateToken("not-a-token", user)).isFalse();
         assertThat(jwt.validateToken("", user)).isFalse();

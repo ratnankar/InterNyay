@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,10 +33,6 @@ import java.util.Locale;
 public class LoginLogService {
 
     private final LoginLogRepository repo;
-
-    // How long rows are kept, set with loginlog.retention-days
-    @Value("${loginlog.retention-days:180}")
-    private int retentionDays;
 
     // A successful sign-in
     public void success(User user, Method method) {
@@ -95,15 +90,7 @@ public class LoginLogService {
                 .totalElements(result.getTotalElements())
                 .logins24h(repo.countByEventTypeAndCreatedAtAfter(EventType.LOGIN, since))
                 .failed24h(repo.countByEventTypeAndCreatedAtAfter(EventType.LOGIN_FAILED, since))
-                .retentionDays(retentionDays)
                 .build();
-    }
-
-    // Called by the scheduler, deletes rows older than the retention period
-    public int purgeOld() {
-        int removed = repo.deleteOlderThan(LocalDateTime.now().minusDays(retentionDays));
-        log.info("Login log: removed {} row(s) older than {} days", removed, retentionDays);
-        return removed;
     }
 
     // Anything but a known event name means "all"

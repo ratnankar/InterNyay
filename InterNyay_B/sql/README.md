@@ -37,6 +37,9 @@ and refuses to start if they do not. It never changes the database.
 | `V28__refresh_court_judge_listings.sql` | Courts and judge listings refreshed from the Delhi District Courts rosters (8 districts) |
 | `V29__add_east_rouse_central_rosters.sql.sql` | An exact copy of V28 (the doubled `.sql.sql` is in the file name). **Do not rename, edit or delete it**: it is already applied, and Flyway refuses to start when an applied migration changes |
 | `V30__reload_all_district_rosters.sql` | Judge listings of all 11 district rosters reloaded; listings no longer on a roster are archived (`active = FALSE`), never deleted, because cases and histories point at them. Supersedes V28 and V29 |
+| `V31__app_notes.sql` | `app_notes`: private notes of the Calendar app, one row per note per account; a deleted note stays as a row with `deleted_at` set so the deletion reaches the other phones |
+| `V32__app_preferences.sql` | `app_preferences`: court colours, court filter and view settings of the Calendar app, one row per account (a small JSON object plus the time of the last change) |
+| `V33__case_opponents_and_non_clients.sql` | `case_opposing_parties` (a case can have several opposite parties) and `case_non_clients` (people on our side who are not saved as clients, with their role). The single opposite party of each existing case is copied into the first table, then `cases.opposing_party`, `opposing_father_name`, `opposing_address` and `opposing_phone` are dropped |
 
 This folder keeps only the two scripts that run outside the app: `create_database.sql` and `check_links.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).
@@ -46,10 +49,10 @@ Fee calculator rules still need no file: the backend saves them itself on the fi
 Use MySQL 8.0.19 or newer (`V6__plans.sql` uses a row alias in its upsert; MySQL 5.7 and MariaDB do not support it).
 
 1. In MySQL run `create_database.sql`. It creates an empty `internyay` database as `utf8mb4_unicode_ci` and never deletes anything.
-2. Start the backend. Flyway runs V1 to V30, Hibernate validates, and the app is up. That is the whole setup.
+2. Start the backend. Flyway runs V1 to V33, Hibernate validates, and the app is up. That is the whole setup.
 3. Sign out in the browser, register your account, then make it the first administrator (see `docs/ADMIN_SETUP.md`).
 
-Expected: the log shows `Successfully applied 30 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
+Expected: the log shows `Successfully applied 33 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
 
 | Table | Rows |
 | --- | --- |
@@ -73,14 +76,14 @@ The rule: **never edit a migration file that has been applied anywhere. Add a ne
 Flyway stores a checksum of every applied file and the backend refuses to start if one changed.
 
 1. Change the entity (add the field).
-2. Add `src/main/resources/db/migration/V31__what_it_does.sql` (the number after the highest one in that folder, two underscores, a short name), for example:
+2. Add `src/main/resources/db/migration/V33__what_it_does.sql` (the number after the highest one in that folder, two underscores, a short name), for example:
    ```sql
    ALTER TABLE cases ADD COLUMN court_hall VARCHAR(100);
    ```
 3. Make the SQL match the entity: same column name (`courtHall` -> `court_hall`), a compatible type, `NOT NULL` when the field
    is `nullable = false` or a primitive. Hibernate is only validating, so a mismatch stops the start with an error such as
    `Schema-validation: missing column [court_hall] in table [cases]` or `wrong column type encountered in column [...]`.
-4. Start the backend. Flyway applies V31, Hibernate validates.
+4. Start the backend. Flyway applies V33, Hibernate validates.
 
 Good habits: one change per file, test it on a copy of the production data first, and take a backup before deploying. Flyway Community has
 no undo, to go back you restore the backup and deploy the old version of the app. A failed migration stops the start; MySQL cannot roll

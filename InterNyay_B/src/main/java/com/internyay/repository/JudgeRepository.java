@@ -36,7 +36,7 @@ public interface JudgeRepository extends JpaRepository<Judge, Long> {
 
     // Court room numbers with the judge name, used to match eCourts data
     @Query("""
-        SELECT new com.internyay.dto.JudgeCourtNoDto(j.courtRoomNo, j.profile.name)
+        SELECT new com.internyay.dto.JudgeCourtNoDto(j.courtRoomNo, j.profile.name, j.building, j.floor)
         FROM Judge j
         WHERE j.active = true
         AND j.courtRoomNo IS NOT NULL AND j.courtRoomNo <> ''

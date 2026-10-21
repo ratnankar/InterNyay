@@ -1,5 +1,6 @@
 package com.internyay.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -21,8 +22,8 @@ public class CaseRequest {
     @Size(max = 255) public String building;
     @Size(max = 50) public String floor;
 
-    // File number of the advocate
-    public String fileNo;
+    // File number of the advocate, as typed by them. Empty means the next free number is given
+    @Size(max = 255) public String fileNo;
 
     public Integer fileSeq;
 
@@ -32,11 +33,9 @@ public class CaseRequest {
 
     // COMPLAINANT or ACCUSED
     public String clientSide;
-    @Size(max = 255) public String opposingParty;
 
-    @Size(max = 255) public String opposingFatherName;
-    @Size(max = 500) public String opposingAddress;
-    @Size(max = 30)  public String opposingPhone;
+    // Opposite parties. Null leaves them as they are, a list (even an empty one) replaces them
+    public List<@Valid CasePartyRequest> opponents;
 
     // Civil or Criminal
     public String caseNature;
@@ -75,6 +74,9 @@ public class CaseRequest {
 
     // Role of each client in the case
     public Map<Long, String> clientSubTypes;
+
+    // People on our side who are not saved as clients. Null leaves them as they are, a list replaces them
+    public List<@Valid CasePartyRequest> nonClients;
 
     // Fee details
     public String feeType;

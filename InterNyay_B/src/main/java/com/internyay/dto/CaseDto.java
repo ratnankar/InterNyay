@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 // Full case details sent to the frontend, fees and documents included
 @Data
@@ -26,10 +27,11 @@ public class CaseDto {
     public LocalDate filingDate;
 
     public String clientSide;
+
+    // Opposite parties of the case
+    public List<CasePartyDto> opponents;
+    // Names of all opposite parties joined with " & ", for places that show one line (PDF forms, search)
     public String opposingParty;
-    public String opposingFatherName;
-    public String opposingAddress;
-    public String opposingPhone;
 
     public String court;
     public String district;
@@ -70,6 +72,9 @@ public class CaseDto {
 
     // Role of each client in the case
     public Map<Long, String> clientSubTypes;
+
+    // People on our side who are not saved as clients
+    public List<CasePartyDto> nonClients;
 
     // Fee details, which fields are used depends on the fee type
     public String feeType;
@@ -133,6 +138,14 @@ public class CaseDto {
                 ? List.of()
                 : c.getAdditionalClients().stream().map(ClientRefDto::from).toList();
 
+        List<CasePartyDto> opponents = c.getOpponents() == null
+                ? List.of()
+                : c.getOpponents().stream().map(CasePartyDto::from).toList();
+
+        List<CasePartyDto> nonClients = c.getNonClients() == null
+                ? List.of()
+                : c.getNonClients().stream().map(CasePartyDto::from).toList();
+
         return CaseDto.builder()
                 .id(c.getId())
                 .title(c.getTitle())
@@ -142,10 +155,8 @@ public class CaseDto {
                 .cnrNo(c.getCnrNo())
                 .filingDate(c.getFilingDate())
                 .clientSide(c.getClientSide())
-                .opposingParty(c.getOpposingParty())
-                .opposingFatherName(c.getOpposingFatherName())
-                .opposingAddress(c.getOpposingAddress())
-                .opposingPhone(c.getOpposingPhone())
+                .opponents(opponents)
+                .opposingParty(opponents.stream().map(o -> o.name).collect(Collectors.joining(" & ")))
                 .court(c.getCourt())
                 .district(c.getDistrict())
                 .courtNo(c.getCourtNo())
@@ -170,6 +181,7 @@ public class CaseDto {
                 .clientId(c.getClient() != null ? c.getClient().getId() : null)
                 .clientName(c.getClient() != null ? c.getClient().getName() : null)
                 .additionalClients(extraClients)
+                .nonClients(nonClients)
                 .clientSubTypes(c.getClientSubTypes() == null
                         ? new LinkedHashMap<>()
                         : new LinkedHashMap<>(c.getClientSubTypes()))

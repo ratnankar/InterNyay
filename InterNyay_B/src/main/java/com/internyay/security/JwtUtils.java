@@ -20,8 +20,8 @@ public class JwtUtils {
     @Value("${internyay.jwt.secret}")
     private String secret;
 
-    // How long a token stays valid
-    @Value("${internyay.jwt.expiration-ms}")
+    // How long a token stays valid. 0 or less means it never expires (the user stays signed in until they sign out)
+    @Value("${internyay.jwt.expiration-ms:0}")
     private long expirationMs;
 
     // Signing key built from the secret (must be at least 32 bytes for HS256)
@@ -32,12 +32,11 @@ public class JwtUtils {
     // Creates a signed token with the email as subject
     public String generateToken(UserDetails userDetails) {
         Date now = new Date();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userDetails.getUsername())
-                .issuedAt(now)
-                .expiration(new Date(now.getTime() + expirationMs))
-                .signWith(getKey(), Jwts.SIG.HS256)
-                .compact();
+                .issuedAt(now);
+        if (expirationMs > 0) builder.expiration(new Date(now.getTime() + expirationMs));
+        return builder.signWith(getKey(), Jwts.SIG.HS256).compact();
     }
 
     // Verifies the signature and expiry, then returns the claims
@@ -59,7 +58,7 @@ public class JwtUtils {
         try {
             Claims claims = parseClaims(token);
             return claims.getSubject().equals(userDetails.getUsername())
-                    && claims.getExpiration().after(new Date());
+                    && (claims.getExpiration() == null || claims.getExpiration().after(new Date()));
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

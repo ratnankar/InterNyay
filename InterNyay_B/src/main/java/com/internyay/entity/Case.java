@@ -55,17 +55,6 @@ public class Case {
     @Column(length = 20)
     private String clientSide;
 
-    // Details of the opposing party
-    private String opposingParty;
-
-    private String opposingFatherName;
-
-    @Column(length = 500)
-    private String opposingAddress;
-
-    @Column(length = 30)
-    private String opposingPhone;
-
     // The court table row this case is filed at: a court complex with its district (like Saket / South),
     // or a high court. The case keeps no copy of that text, court and district are read from this row.
     // Loaded together with the case because court and district are needed wherever a case is shown
@@ -170,6 +159,20 @@ public class Case {
     @BatchSize(size = 50)
     @Builder.Default
     private List<Client> additionalClients = new ArrayList<>();
+
+    // Opposite parties, in the order they were entered. A case can have several
+    @OneToMany(mappedBy = "legalCase", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    @BatchSize(size = 50)
+    @Builder.Default
+    private List<CaseOpponent> opponents = new ArrayList<>();
+
+    // People on our side who are not saved as clients, in the order they were entered
+    @OneToMany(mappedBy = "legalCase", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    @BatchSize(size = 50)
+    @Builder.Default
+    private List<CaseNonClient> nonClients = new ArrayList<>();
 
     // Role of each client in this case, client id -> sub type
     @ElementCollection(fetch = FetchType.LAZY)

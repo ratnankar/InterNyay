@@ -122,6 +122,8 @@ public class CaseService {
         c.setAdditionalClients(resolveAdditionalClients(req.getAdditionalClientIds(), client.getId(), userId));
         applyClassification(c, req);
         applyFilingAndParties(c, req);
+        applyOpponents(c, req.getOpponents());
+        applyNonClients(c, req.getNonClients());
         applyClientSubTypes(c, req.getClientSubTypes());
         numberNewCase(c, req, userId);
 
@@ -159,6 +161,8 @@ public class CaseService {
         if (req.getDescription() != null) c.setDescription(req.getDescription());
         applyClassification(c, req);
         applyFilingAndParties(c, req);
+        applyOpponents(c, req.getOpponents());
+        applyNonClients(c, req.getNonClients());
         if (req.getNextHearing() != null) {
             LocalDate nextHearing = parseDate("Next hearing date", req.getNextHearing());
 
@@ -238,16 +242,50 @@ public class CaseService {
         caseRepo.save(c);
     }
 
-    // Corporate panel cases use a typed file number, the others get the next free sequence
+    // The file number is the one the advocate typed. Corporate panel cases always use their typed number; for the
+    // others, an empty field gets the next free sequence number
     private void numberNewCase(Case c, CaseRequest req, Long userId) {
 
+        String typed = trimmedOrNull(req.getFileNo());
+
         if (isCorporatePanel(c)) {
-            c.setFileNo(trimmedOrNull(req.getFileNo()));
+            c.setFileNo(typed);
             c.setFileSeq(null);
             return;
         }
 
+        if (typed != null) {
+            applyTypedFileNo(c, typed, userId);
+            return;
+        }
+
         fileNumbers.assign(c, userId, req.getFileSeq());
+    }
+
+    // Keeps a typed file number as typed. A plain number (25, 1043) joins the running sequence, so it can't be given
+    // twice and the next automatic number moves past it; anything else (FILE/2024/045, 12-A, 007) stays text only
+    private void applyTypedFileNo(Case c, String typed, Long userId) {
+
+        Integer seq = plainFileSeq(typed);
+
+        if (seq == null) {
+            c.setFileNo(typed);
+            c.setFileSeq(null);
+            return;
+        }
+
+        fileNumbers.assignTyped(c, userId, seq);
+    }
+
+    // The sequence number a typed file number stands for: a whole number from 1, no leading zeros, small enough for an
+    // int. Null for anything else, including blank text
+    static Integer plainFileSeq(String text) {
+        if (text == null) return null;
+
+        String t = text.trim();
+        if (!t.matches("[1-9][0-9]{0,8}")) return null;
+
+        return Integer.valueOf(t);
     }
 
     // Re-number only when needed: left corporate panel, or a reopened case clashing with an open one
@@ -270,7 +308,12 @@ public class CaseService {
                 && caseRepo.countOpenHolders(userId, current, c.getId()) > 0;
 
         if (needsFirstNumber) {
-            fileNumbers.assign(c, userId, req.getFileSeq());
+            // A plain number typed for a case that had none is kept as typed (a case leaving corporate panel
+            // still gets a fresh sequence number, its old panel reference is not a sequence number)
+            Integer typedSeq = wasCorporatePanel ? null : plainFileSeq(req.getFileNo());
+
+            if (typedSeq != null) fileNumbers.assignTyped(c, userId, typedSeq);
+            else fileNumbers.assign(c, userId, req.getFileSeq());
         } else if (reopenedIntoClash) {
             fileNumbers.assign(c, userId, null);
         } else if (current != null) {
@@ -373,15 +416,70 @@ public class CaseService {
         }
     }
 
-    // Filing date, client side, opposing party and claim details
+    // Filing date and the side our client is on
     private void applyFilingAndParties(Case c, CaseRequest req) {
 
-        if (req.getFilingDate()    != null) c.setFilingDate(parseDate("Filing date", req.getFilingDate()));
-        if (req.getClientSide()    != null) c.setClientSide(CaseCatalog.canonicalSide(req.getClientSide()));
-        if (req.getOpposingParty() != null) c.setOpposingParty(trimmedOrNull(req.getOpposingParty()));
-        if (req.getOpposingFatherName() != null) c.setOpposingFatherName(trimmedOrNull(req.getOpposingFatherName()));
-        if (req.getOpposingAddress() != null) c.setOpposingAddress(trimmedOrNull(req.getOpposingAddress()));
-        if (req.getOpposingPhone() != null) c.setOpposingPhone(trimmedOrNull(req.getOpposingPhone()));
+        if (req.getFilingDate() != null) c.setFilingDate(parseDate("Filing date", req.getFilingDate()));
+        if (req.getClientSide() != null) c.setClientSide(CaseCatalog.canonicalSide(req.getClientSide()));
+    }
+
+    // Most opposite parties, and most non-client parties, one case can have
+    private static final int MAX_PARTIES = 25;
+
+    // Replaces the opposite parties with the given list. Null leaves them as they are
+    private void applyOpponents(Case c, List<CasePartyRequest> requested) {
+        if (requested == null) return;
+        checkPartyCount(requested, "opposite parties");
+
+        c.getOpponents().clear();
+        for (CasePartyRequest r : requested) {
+            CaseOpponent o = new CaseOpponent();
+            fillParty(o, r, "Opposite party");
+            o.setLegalCase(c);
+            c.getOpponents().add(o);
+        }
+    }
+
+    // Replaces the non-client parties on our side with the given list. Null leaves them as they are.
+    // The role is checked against the admin's list, but a role a person on this case already has stays valid
+    private void applyNonClients(Case c, List<CasePartyRequest> requested) {
+        if (requested == null) return;
+        checkPartyCount(requested, "non-client parties");
+
+        Set<String> alreadySaved = new HashSet<>();
+        for (CaseNonClient old : c.getNonClients()) {
+            if (old.getSubType() != null) alreadySaved.add(old.getSubType().toLowerCase());
+        }
+
+        c.getNonClients().clear();
+        for (CasePartyRequest r : requested) {
+            CaseNonClient n = new CaseNonClient();
+            fillParty(n, r, "Party");
+
+            String wanted = trimmedOrNull(r.getSubType());
+            String saved = wanted != null && alreadySaved.contains(wanted.toLowerCase()) ? wanted : null;
+            n.setSubType(canonicalSubType(wanted, saved));
+
+            n.setLegalCase(c);
+            c.getNonClients().add(n);
+        }
+    }
+
+    private void checkPartyCount(List<CasePartyRequest> requested, String what) {
+        if (requested.size() > MAX_PARTIES) {
+            throw new IllegalArgumentException("A case can have at most " + MAX_PARTIES + " " + what);
+        }
+    }
+
+    // Copies the details of one party, the name is required
+    private void fillParty(CaseParty target, CasePartyRequest r, String label) {
+        String name = trimmedOrNull(r.getName());
+        if (name == null) throw new IllegalArgumentException(label + " name is required");
+
+        target.setName(name);
+        target.setFatherName(trimmedOrNull(r.getFatherName()));
+        target.setAddress(trimmedOrNull(r.getAddress()));
+        target.setPhone(trimmedOrNull(r.getPhone()));
     }
 
     // Accepts ISO dates only, the label is used in the error message
