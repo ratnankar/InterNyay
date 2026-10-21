@@ -26,6 +26,7 @@ public class CaseController {
     private final DocumentService documentService;
     private final HearingService hearingService;
     private final FileNumberService fileNumberService;
+    private final EcourtsCaseService ecourtsCases;
     private final AuthHelper auth;
     private final com.internyay.service.PlanService planService;
 
@@ -60,6 +61,13 @@ public class CaseController {
     public ResponseEntity<List<HearingLeaveDto>> hearingLeave(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(hearingLeaveService.onLeaveFor(auth.currentUserId(), date));
+    }
+
+    // Case details from eCourts by CNR, to fill the Add Case form. Answers 400 with a readable message when the case
+    // cannot be read, and the advocate then adds the case manually
+    @GetMapping("/cnr/{cnr}")
+    public ResponseEntity<EcourtsCaseService.CaseDetail> lookupCnr(@PathVariable String cnr) {
+        return ResponseEntity.ok(ecourtsCases.lookup(cnr));
     }
 
     // Create a case

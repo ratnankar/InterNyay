@@ -60,12 +60,13 @@ public class CaseRequest {
 
     public String nextHearing;
 
-    // OLD: a case already running in court, its hearing history and next date come from eCourts using the CNR.
-    // FRESH (or empty): a new case
-    public String caseAge;
+    // How the case is being added. CNR: the form was filled from eCourts using the CNR, so the next hearing and the
+    // status come from the court. MANUAL (or empty): the advocate filled the form, his values are kept.
+    // Either way the hearing and order history of the case is read from eCourts when it is saved
+    public String addMode;
 
-    // True for an old case
-    public boolean isOldCase() { return "OLD".equalsIgnoreCase(caseAge == null ? "" : caseAge.trim()); }
+    // True when the case is added by CNR
+    public boolean isCnrMode() { return "CNR".equalsIgnoreCase(addMode == null ? "" : addMode.trim()); }
 
     // Main client is required, others are optional
     @NotNull public Long clientId;

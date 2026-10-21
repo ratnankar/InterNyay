@@ -7,6 +7,7 @@ import com.internyay.util.CaseCatalog;
 import com.internyay.util.CaseStatuses;
 import com.internyay.util.FeeMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import java.util.Set;
 
 // Create, update, list and delete cases, always scoped to the owning advocate
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CaseService {
 
@@ -87,14 +89,15 @@ public class CaseService {
         String cnr = EcourtsCaseService.normalizeCnr(req.getCnrNo());
         if (cnr == null) throw new IllegalArgumentException(CNR_REQUIRED);
 
-        // An old case is read from eCourts first, so nothing is created when eCourts cannot be reached
-        EcourtsCaseService.Snapshot snap = req.isOldCase() ? ecourtsCases.fetch(req.getCnrNo()) : null;
+        // Every case is read from eCourts when it is saved, to bring in its hearing and order history. A case that
+        // eCourts cannot give (not listed yet, or eCourts is down) is still saved with what the advocate entered
+        EcourtsCaseService.Snapshot snap = readFromEcourts(cnr);
 
         LocalDate nextHearing;
         String status = req.getStatus() != null ? req.getStatus() : "Pending";
 
-        if (snap != null) {
-            // The date and status come from the court, so the closed-day check does not apply
+        if (snap != null && req.isCnrMode()) {
+            // Added by CNR: the date and status come from the court, so the closed-day check does not apply
             if (snap.disposed()) {
                 status = snap.withdrawn() ? CaseStatuses.WITHDRAWN : CaseStatuses.DECIDED;
                 nextHearing = null;
@@ -138,6 +141,17 @@ public class CaseService {
         }
 
         return toDto(saved);
+    }
+
+    // The case as eCourts has it, or null when it cannot be read; the reason is only logged, adding a case never
+    // fails because of eCourts
+    private EcourtsCaseService.Snapshot readFromEcourts(String cnr) {
+        try {
+            return ecourtsCases.fetch(cnr);
+        } catch (RuntimeException e) {
+            log.info("Hearing history of CNR {} not read from eCourts: {}", cnr, e.getMessage());
+            return null;
+        }
     }
 
     // Partial update, also keeps the file number in step when the status or client changes

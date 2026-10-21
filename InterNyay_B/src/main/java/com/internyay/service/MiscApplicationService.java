@@ -330,7 +330,7 @@ public class MiscApplicationService {
         cr.setDistrict(req.getDistrict());
         cr.setClientId(req.getClientId());
         cr.setStatus("Pending");
-        cr.setCaseAge("FRESH");
+        cr.setAddMode("MANUAL");
 
         CaseDto created = caseService.create(cr, userId);
         return ownedCase(created.getId(), userId);
