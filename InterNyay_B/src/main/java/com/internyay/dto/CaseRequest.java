@@ -68,8 +68,8 @@ public class CaseRequest {
     // True when the case is added by CNR
     public boolean isCnrMode() { return "CNR".equalsIgnoreCase(addMode == null ? "" : addMode.trim()); }
 
-    // Main client is required, others are optional
-    @NotNull public Long clientId;
+    // Main client: required for every case except one added by CNR (checked in CaseService.create); others are optional
+    public Long clientId;
 
     public List<Long> additionalClientIds;
 

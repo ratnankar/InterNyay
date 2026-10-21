@@ -69,6 +69,7 @@ public class CaseService {
     }
 
     private static final String CNR_REQUIRED = "Enter the 16-character CNR number";
+    private static final String CLIENT_REQUIRED = "Please select the client for this case";
 
     // A CNR that is sent must be a valid one: it cannot be cleared or replaced by something that is not a CNR.
     // (A request that does not send the CNR leaves it as it is, so other edits to an older case still work)
@@ -78,20 +79,33 @@ public class CaseService {
         return cnr;
     }
 
+    // Throws when the advocate already has a case with this CNR number
+    public void assertCnrFree(String rawCnr, Long userId) {
+        String cnr = EcourtsCaseService.normalizeCnr(rawCnr);
+        if (cnr != null && caseRepo.existsByUser_IdAndCnrNoIgnoreCase(userId, cnr))
+            throw new IllegalArgumentException("You already have a case with this CNR number (" + cnr + ")");
+    }
+
     // Validates the client belongs to the user, then fills dates, court, classification and parties
     @Transactional
     public CaseDto create(CaseRequest req, Long userId) {
 
         User user = userRepo.getReferenceById(userId);
-        Client client = ownedClient(req.getClientId(), userId);
+        // A case added by CNR may be saved without a client; every other case needs one
+        if (req.getClientId() == null && !req.isCnrMode()) throw new IllegalArgumentException(CLIENT_REQUIRED);
+        Client client = req.getClientId() == null ? null : ownedClient(req.getClientId(), userId);
 
         // Every case needs its 16-character CNR number, stored without spaces or dashes in capitals
         String cnr = EcourtsCaseService.normalizeCnr(req.getCnrNo());
         if (cnr == null) throw new IllegalArgumentException(CNR_REQUIRED);
+        assertCnrFree(cnr, userId);
 
         // Every case is read from eCourts when it is saved, to bring in its hearing and order history. A case that
         // eCourts cannot give (not listed yet, or eCourts is down) is still saved with what the advocate entered
         EcourtsCaseService.Snapshot snap = readFromEcourts(cnr);
+
+        if (req.getCaseNo() != null && caseRepo.existsByUser_IdAndCaseNoIgnoreCase(userId, req.getCaseNo().trim()))
+            throw new IllegalArgumentException("You already have a case with case number \"" + req.getCaseNo().trim() + "\"");
 
         LocalDate nextHearing;
         String status = req.getStatus() != null ? req.getStatus() : "Pending";
@@ -122,7 +136,7 @@ public class CaseService {
 
         applyCourt(c, req.getCourt(), req.getDistrict());
         setRoom(c, req);
-        c.setAdditionalClients(resolveAdditionalClients(req.getAdditionalClientIds(), client.getId(), userId));
+        c.setAdditionalClients(resolveAdditionalClients(req.getAdditionalClientIds(), client == null ? null : client.getId(), userId));
         applyClassification(c, req);
         applyFilingAndParties(c, req);
         applyOpponents(c, req.getOpponents());
@@ -216,14 +230,14 @@ public class CaseService {
             }
         }
 
-        if (req.getClientId() != null && !req.getClientId().equals(c.getClient().getId())) {
+        if (req.getClientId() != null && (c.getClient() == null || !req.getClientId().equals(c.getClient().getId()))) {
             c.setClient(ownedClient(req.getClientId(), userId));
         }
 
         if (req.getAdditionalClientIds() != null) {
             c.getAdditionalClients().clear();
             c.getAdditionalClients().addAll(
-                    resolveAdditionalClients(req.getAdditionalClientIds(), c.getClient().getId(), userId));
+                    resolveAdditionalClients(req.getAdditionalClientIds(), c.getClient() == null ? null : c.getClient().getId(), userId));
         }
 
         applyClientSubTypes(c, req.getClientSubTypes());
@@ -536,7 +550,7 @@ public class CaseService {
     private void applyClientSubTypes(Case c, Map<Long, String> requested) {
 
         Set<Long> onCase = new HashSet<>();
-        onCase.add(c.getClient().getId());
+        if (c.getClient() != null) onCase.add(c.getClient().getId());
         c.getAdditionalClients().forEach(x -> onCase.add(x.getId()));
 
         Map<Long, String> current = c.getClientSubTypes();

@@ -16,6 +16,12 @@ import java.util.List;
 // Cases of an advocate plus the queries used for file numbers, hearings and admin stats
 public interface CaseRepository extends JpaRepository<Case, Long> {
 
+    // Whether the advocate already has a case with this case number (deleted cases are hidden by @SQLRestriction)
+    boolean existsByUser_IdAndCaseNoIgnoreCase(Long userId, String caseNo);
+
+    // Whether the advocate already has a case with this CNR number (stored normalized; deleted cases are hidden)
+    boolean existsByUser_IdAndCnrNoIgnoreCase(Long userId, String cnrNo);
+
     // Case list with search, status, nature and client filters
     @Query("""
         SELECT c FROM Case c

@@ -67,6 +67,8 @@ public class CaseController {
     // cannot be read, and the advocate then adds the case manually
     @GetMapping("/cnr/{cnr}")
     public ResponseEntity<EcourtsCaseService.CaseDetail> lookupCnr(@PathVariable String cnr) {
+        // A case the advocate already has under this CNR is not fetched again
+        caseService.assertCnrFree(cnr, auth.currentUserId());
         return ResponseEntity.ok(ecourtsCases.lookup(cnr));
     }
 

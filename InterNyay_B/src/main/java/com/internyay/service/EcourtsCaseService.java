@@ -260,10 +260,29 @@ public class EcourtsCaseService {
         return out;
     }
 
-    // Criminal when eCourts files the case under criminal law or names a criminal procedure, otherwise Civil
+    // Words that put a case on the criminal side, and words that put it on the civil side
+    private static final java.util.regex.Pattern CRIMINAL_WORDS = java.util.regex.Pattern.compile(
+            "criminal|\\bcrl\\b|\\bcr\\.?\\s?p\\.?\\s?c\\b|\\bbnss?\\b|\\bipc\\b|\\bbail\\b|challan|sessions|police|\\bfir\\b");
+    private static final java.util.regex.Pattern CIVIL_WORDS = java.util.regex.Pattern.compile(
+            "civil|\\bcs\\b|matrimon|family|divorce|custody|injunction|consumer|commercial|recovery|"
+          + "partition|\\btenan|\\brent\\b|eviction|probate|succession|arbitration|\\bexecution|motor accident|\\bmacp?\\b");
+
+    // Criminal, Civil, or empty when eCourts gives nothing to tell. Looks at the category path, the case type names
+    // and the FIR; an empty answer is better than a wrong "Civil", the Add Case form then asks the advocate
     private static String natureOf(JsonNode data) {
-        String hay = (text(data, "caseCategoryFacetPath") + " " + text(data, "caseTypeSub")).toLowerCase(Locale.ROOT);
-        return hay.contains("criminal") ? "Criminal" : "Civil";
+        String hay = (text(data, "caseCategoryFacetPath") + " " + text(data, "caseTypeSub") + " "
+                + text(data, "caseTypeRaw") + " " + text(data, "caseType")).toLowerCase(Locale.ROOT);
+
+        boolean criminal = CRIMINAL_WORDS.matcher(hay).find();
+        boolean civil = CIVIL_WORDS.matcher(hay).find();
+        if (criminal && !civil) return "Criminal";
+        if (civil && !criminal) return "Civil";
+
+        // A case with an FIR is a criminal case
+        JsonNode fir = data.path("firDetails");
+        if (!text(fir, "caseNumber").isEmpty() || !text(fir, "policeStation").isEmpty()) return "Criminal";
+
+        return criminal ? "Criminal" : "";
     }
 
     // The judge named for the case: the listed judge, else the one on the latest hearing that names one

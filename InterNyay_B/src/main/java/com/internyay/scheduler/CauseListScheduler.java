@@ -24,9 +24,9 @@ public class CauseListScheduler {
     private boolean startupCatchUp;
 
     // Evening run, gets tomorrow's cause list numbers
-    @Scheduled(cron = "${ecourts.api.cron:0 0 18 * * *}", zone = "Asia/Kolkata")
+    @Scheduled(cron = "${ecourts.api.cron:0 18 19 * * *}", zone = "Asia/Kolkata")
     public void fetchTomorrowsCauseListNos() {
-        run("6 PM run", () -> service.fetchForTomorrow());
+        run("7:18 PM run", () -> service.fetchForTomorrow());
     }
 
     // Catch up on startup in case the app was down at the scheduled time

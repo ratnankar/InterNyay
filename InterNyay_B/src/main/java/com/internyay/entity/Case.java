@@ -16,7 +16,9 @@ import java.util.Map;
 // A court case of an advocate, with its fees, client links and next hearing. Deleted cases are hidden by @SQLRestriction
 @SQLRestriction("(deleted IS NULL OR deleted = 0)")
 @Entity
-@Table(name = "cases", indexes = {
+@Table(name = "cases", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_cases_user_case_no", columnNames = {"user_id", "case_no"})
+}, indexes = {
         @Index(name = "idx_cases_next_hearing", columnList = "next_hearing"),
         @Index(name = "idx_cases_cnr_no", columnList = "cnr_no"),
         @Index(name = "idx_cases_user_status", columnList = "user_id, status")
@@ -31,8 +33,8 @@ public class Case {
     @Column(nullable = false, length = 500)
     private String title;
 
-    // Case number is unique
-    @Column(nullable = false, unique = true)
+    // Case number is unique for each advocate (two advocates may hold the same case, e.g. both added it by CNR)
+    @Column(nullable = false)
     private String caseNo;
 
     // Advocate's own file number, fileSeq is the number part
@@ -145,9 +147,9 @@ public class Case {
     @Builder.Default
     private List<StageFee> stageFees = new ArrayList<>();
 
-    // Main client of the case
+    // Main client of the case. Empty only for a case added by CNR without a client; the advocate can add one later
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false)
+    @JoinColumn(name = "client_id")
     private Client client;
 
     // Other clients in the same case
