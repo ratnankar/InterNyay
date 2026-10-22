@@ -32,8 +32,32 @@
 .hearing-card--expanded {
   padding: 0;
   background: var(--color-surface);
-  border-color: var(--sk-blue, #16386f);
   box-shadow: var(--shadow-lg);
+}
+
+/* Opened card keeps the normal soft border (no dark navy outline); it just fades in with the shadow */
+.hearing-card.hearing-card--expanded {
+  border: var(--border-default);
+  animation: hearing-card-fade 0.28s ease both;
+}
+
+.hearing-card--expanded > .hearing-card__detail {
+  animation: hearing-detail-fade 0.3s ease both;
+}
+
+@keyframes hearing-card-fade {
+  from { box-shadow: var(--shadow-sm); }
+  to   { box-shadow: var(--shadow-lg); }
+}
+
+@keyframes hearing-detail-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hearing-card.hearing-card--expanded,
+  .hearing-card--expanded > .hearing-card__detail { animation: none; }
 }
 
 /* Opened card: the left accent bar stays at its widened hover size and the caret turns navy */

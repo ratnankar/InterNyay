@@ -199,11 +199,11 @@ export default function Dashboard() {
                   aria-pressed={remindersOn}
                   aria-label="Automatic reminder"
                   title={!hasReminderNumber
-                    ? 'Automatic reminder is OFF — add a client WhatsApp number to turn it on'
+                    ? 'No phone number saved — click to add one'
                     : remindersOn
                       ? 'Automatic reminder is ON for this case — click to turn it off'
                       : 'Automatic reminder is OFF for this case — click to turn it on'}
-                  disabled={!hasReminderNumber || !!whatsappBusy[`case-${c.id}`]}
+                  disabled={!!whatsappBusy[`case-${c.id}`]}
                   onClick={e => {
                     e.stopPropagation()
                     toggleCaseReminders(c)

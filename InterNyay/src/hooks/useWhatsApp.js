@@ -62,7 +62,7 @@ export default function useWhatsApp({
   // Turn the automatic reminder for one case on or off and update the case in local state
   const toggleCaseReminders = c => runOnce(`case-${c.id}`, async () => {
     if (!caseHasReminderNumber(c)) {
-      addToast('Add a WhatsApp number for a client on this case to turn on automatic reminders', 'error')
+      await askToAddNumber(c, 'automatic reminder')
       return
     }
     // Reminders are on unless explicitly set to false, so flip the current value
@@ -110,19 +110,32 @@ export default function useWhatsApp({
     if (!sent && !failed && !noNumber) addToast('No message was sent', 'error')
   }
 
+  // Tells the user a phone number is missing and offers to open the client's edit form to add it.
+  // Returns true when the edit form was opened.
+  async function askToAddNumber(c, what) {
+    const { missing } = caseClientsByNumber(c, clients)
+    if (missing.length === 0) {
+      addToast('Add a client with a phone number to this case to turn on automatic reminders', 'error')
+      return false
+    }
+    const who = missing.map(m => m.name).join(', ')
+    const goAdd = await confirmDialog({
+      title: 'Add a phone number',
+      message: `${who} ${missing.length === 1 ? 'has' : 'have'} no phone number saved, so the ${what} can't be sent.\n\nAdd the number now?`,
+      confirmLabel: 'Add number',
+      cancelLabel: 'Not now',
+    })
+    const target = missing.find(m => m.client)
+    if (goAdd && target) { openClientForEdit?.(target.client); return true }
+    return false
+  }
+
   // Works out who a manual reminder can go to. When nobody on the case has a WhatsApp number it asks the user to add one
   // (opening the client's edit form) and returns null; otherwise it returns the names to send to and the names to skip.
   async function recipientsOrAskForNumber(c, what) {
     const { withNumber, missing } = caseClientsByNumber(c, clients)
     if (withNumber.length === 0 && missing.length > 0) {
-      const who = missing.map(m => m.name).join(', ')
-      const goAdd = await confirmDialog({
-        title: 'Add a WhatsApp number',
-        message: `${who} ${missing.length === 1 ? 'has' : 'have'} no WhatsApp number saved, so the ${what} can't be sent.\n\nAdd the number now?`,
-        confirmLabel: 'Add number',
-        cancelLabel: 'Not now',
-      })
-      if (goAdd && missing[0].client) openClientForEdit?.(missing[0].client)
+      await askToAddNumber(c, what)
       return null
     }
     return { names: withNumber.map(m => m.name), skipped: missing.map(m => m.name) }

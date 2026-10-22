@@ -10,6 +10,7 @@ import useSeeMore from '../hooks/useSeeMore'
 import useGridColumns from '../hooks/useGridColumns'
 import usePersistedState from '../hooks/usePersistedState'
 import SeeMore from '../components/common/SeeMore'
+import ScrollToTopButton from '../components/common/ScrollToTopButton'
 // Sort choices for the clients list as [value, label] pairs
 const SORT_OPTIONS = [
   ['name',   'Name A–Z'],
@@ -82,6 +83,7 @@ export default function Clients() {
 
   return (
     <div className="clients-page">
+      <ScrollToTopButton />
       {/* Full-size view of a client's photo */}
       {viewClient && (
         <ImageViewer

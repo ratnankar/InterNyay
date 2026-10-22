@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { STATUS_COLORS, isClosedCase } from '../constants/data'
 import { statusChangeQuestion } from '../utils/caseStatus'
@@ -25,6 +25,7 @@ import ToggleSwitch from '../components/common/ToggleSwitch'
 import { confirmDialog } from '../utils/confirmDialog'
 import useSessionState from '../hooks/useSessionState'
 import ClearableDateInput from '../components/common/ClearableDateInput'
+import ScrollToTopButton from '../components/common/ScrollToTopButton'
 // Status filter buttons
 const STATUSES = ['All', 'Pending', 'On Hold', 'Decided', 'Withdrawn']
 
@@ -355,6 +356,21 @@ export default function Cases() {
   const cardEls    = useRef(new Map())
   const beforeRects = useRef(null)
   const openCardId = selectedCase?.id ?? null
+
+  // Arriving with a case already open (e.g. "Open in Cases" on the dashboard): bring that card into view
+  // so there is no scrolling to find it. Waits a moment so the page's own scroll-to-top has finished first
+  useEffect(() => {
+    if (openCardId == null) return
+    const t = setTimeout(() => {
+      const el = cardEls.current.get(openCardId)
+      if (!el) return
+      const top = el.getBoundingClientRect().top
+      if (top < 0 || top > window.innerHeight * 0.4) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 80)
+    return () => clearTimeout(t)
+  }, [openCardId])
 
   function noteCardPositions() {
     const rects = new Map()
@@ -793,10 +809,10 @@ export default function Cases() {
           <div className="case-detail__whatsapp-row">
             <ToggleSwitch
               checked={caseRemindersOn(c)}
-              disabled={!caseHasReminderNumber(c) || !!whatsappBusy[`case-${c.id}`]}
+              disabled={!!whatsappBusy[`case-${c.id}`]}
               title={caseHasReminderNumber(c)
                 ? undefined
-                : 'Add a client WhatsApp number to turn this on'}
+                : 'No phone number saved — click to add one'}
               onChange={() => toggleCaseReminders(c)}
               label="Automatic reminder"
             />
@@ -863,6 +879,7 @@ export default function Cases() {
 
   return (
     <div>
+      <ScrollToTopButton />
       {/* Page title and the Add Case button */}
       <div className="page-header">
         <div>
@@ -1169,7 +1186,7 @@ export default function Cases() {
               key={c.id}
               ref={el => { if (el) cardEls.current.set(c.id, el); else cardEls.current.delete(c.id) }}
               className={`card case-card${expanded ? ' case-card--open' : ''}`}
-              style={{ '--case-accent': STATUS_COLORS[c.status] || '#999' }}
+              style={{ '--case-accent': STATUS_COLORS[c.status] || '#999', scrollMarginTop: 72 }}
               onClick={e => {
                 // Clicks inside the expanded details (or in pop-ups opened from them) never toggle the card
                 if (!e.currentTarget.contains(e.target) || e.target.closest('.case-detail')) return
