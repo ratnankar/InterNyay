@@ -86,3 +86,15 @@ export function caseHasCorporatePanel(c, clients = []) {
     isCorporatePanelClient(clients.find(cl => Number(cl.id) === id))
   )
 }
+
+// True when a client on the case has a WhatsApp number, read from the clients list so it stays
+// right as soon as a number is added or removed. Falls back to the server's flag for clients not in the list
+export function caseHasWhatsappNumber(c, clients = []) {
+  const known = caseClientIds(c)
+    .map(id => clients.find(cl => Number(cl.id) === id))
+    .filter(Boolean)
+
+  if (known.some(cl => String(cl.whatsappPhone || '').trim())) return true
+  if (known.length < caseClientIds(c).length) return c?.whatsappNumberMissing === false
+  return false
+}

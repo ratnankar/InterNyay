@@ -123,3 +123,5 @@
 
 /* Miscellaneous Application: cards, windows and pickers on phones */
 @import './styles/responsive/misc-apps.css';
+
+@import './styles/pages/hearing-cards.css';

@@ -1,0 +1,72 @@
+.hearings-panel > .hearing-card {
+  margin-top: 12px;
+}
+
+.hearings-panel > .hearings-court + .hearing-card {
+  margin-top: 0;
+}
+
+.hearing-card {
+  position: relative;
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  padding: 0;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.hearing-card + .hearing-card {
+  border-top: var(--border-default);
+}
+
+.hearing-card > .hearing-row {
+  padding: 14px 16px;
+  border-radius: 13px;
+}
+
+.hearing-card--misc {
+  background: var(--color-surface-alt);
+}
+
+.hearing-card--expanded {
+  padding: 0;
+  background: var(--color-surface);
+  border-color: var(--sk-blue, #16386f);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Opened card: the left accent bar stays at its widened hover size and the caret turns navy */
+.hearing-card--expanded .hearing-row__bar { transform: scaleX(1.75); transform-origin: left center; }
+.hearing-card--expanded .hearing-row__caret { color: var(--sk-blue, #16386f); }
+
+.hearing-card--expanded > .hearing-row {
+  border-radius: 13px 13px 0 0;
+}
+
+.hearing-card__detail {
+  padding: 12px 16px 16px;
+}
+
+@media (max-width: 640px) {
+  .hearings-panel {
+    padding: 12px;
+  }
+
+  .hearing-card {
+    border-radius: 14px;
+  }
+
+  .hearing-card > .hearing-row {
+    padding: 12px;
+  }
+
+  .hearing-card--expanded {
+    padding: 0;
+    border-radius: 14px;
+  }
+
+  .hearing-card__detail {
+    padding: 10px 12px 12px;
+  }
+}

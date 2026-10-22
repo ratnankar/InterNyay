@@ -125,8 +125,12 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
   background: #f7f9fc; border: 1.5px solid #d3dbe8; border-radius: 10px; color: var(--color-text);
   transition: border-color .15s, box-shadow .15s, background .15s;
 }
-.form-input:hover, .auth-input:hover { border-color: #b8c4d6; }
-.form-input:focus, .auth-input:focus, .contact-textarea:focus, .doc-filter-select:focus {
+.qa-search {
+  background: #f7f9fc; border: 1.5px solid #d3dbe8; border-radius: 10px;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.form-input:hover, .auth-input:hover, .qa-search:hover { border-color: #b8c4d6; }
+.form-input:focus, .auth-input:focus, .contact-textarea:focus, .doc-filter-select:focus, .qa-search:focus {
   outline: none; background: #fff; border-color: var(--color-gold); box-shadow: var(--sk-focus);
 }
 .upload-dropzone { border-radius: 14px; border-color: #c3cfe6; background: var(--sk-mist); }

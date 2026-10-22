@@ -1,4 +1,3 @@
-
 /* Lift cards slightly on hover */
 .case-card,
 .client-card,
@@ -6,8 +5,7 @@
 .judge-card,
 .qa-pd-card,
 .notif-card,
-.calc-info-card,
-.hearing-card:not(.hearing-card--expanded) {
+.calc-info-card {
   transition: all 0.2s;
 }
 
@@ -17,8 +15,7 @@
 .judge-card:hover,
 .qa-pd-card:hover,
 .notif-card:hover,
-.calc-info-card:hover,
-.hearing-card:not(.hearing-card--expanded):hover {
+.calc-info-card:hover {
   border-color: var(--color-gold);
   box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
@@ -32,8 +29,7 @@
   .judge-card:hover,
   .qa-pd-card:hover,
   .notif-card:hover,
-  .calc-info-card:hover,
-  .hearing-card:not(.hearing-card--expanded):hover {
+  .calc-info-card:hover {
     transform: none;
   }
 }
@@ -67,8 +63,18 @@
 
 .exp-card__body .hearing-entry:hover,
 .exp-card__body .case-detail__doc-row--clickable:hover {
-  background-color: #fffaf0;
-  box-shadow: inset 0 0 0 1px var(--color-gold-border);
+  background-color: #f7f9fd;
+  box-shadow: inset 0 0 0 1px #c3cfe6;
+}
+
+/* Hearing history rows inside an opened hearing card use the same navy hover */
+.hearing-card__detail .hearing-entry {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  border-radius: var(--border-radius-md);
+}
+.hearing-card__detail .hearing-entry:hover {
+  background-color: #f7f9fd;
+  box-shadow: inset 0 0 0 1px #c3cfe6;
 }
 
 .exp-card__body .case-detail__doc-row {
@@ -81,4 +87,52 @@
 
 .exp-card__body .case-detail__doc-row + .case-detail__doc-row {
   border-top: var(--border-default);
+}
+
+
+/* Hearing cards: a calm navy hover instead of the gold border.
+   The card gets a soft blue wash, the left accent bar grows, and the caret nudges forward. */
+.hearing-card:not(.hearing-card--expanded) {
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.hearing-card:not(.hearing-card--expanded):hover {
+  border-color: #c3cfe6;
+  background-color: #f7f9fd;
+  box-shadow: var(--sk-card-shadow, var(--shadow-sm));
+  transform: none;
+}
+
+.hearing-card:not(.hearing-card--expanded):hover > .hearing-row:hover {
+  background: transparent;
+}
+
+.hearing-row__bar {
+  transform-origin: left center;
+  transition: transform 0.2s var(--ease-out, ease-out);
+}
+
+.hearing-card:not(.hearing-card--expanded):hover .hearing-row__bar {
+  transform: scaleX(1.75);
+}
+
+.hearing-row__caret {
+  transition: transform 0.2s var(--ease-out, ease-out), color 0.2s;
+}
+
+.hearing-card:not(.hearing-card--expanded):hover .hearing-row__caret {
+  color: var(--sk-blue, #16386f);
+  transform: translateX(2px);
+}
+
+.hearing-card:not(.hearing-card--expanded) > .hearing-row:focus-visible {
+  outline: 2px solid var(--sk-blue, #16386f);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hearing-row__bar,
+  .hearing-row__caret { transition: none; }
+  .hearing-card:not(.hearing-card--expanded):hover .hearing-row__bar,
+  .hearing-card:not(.hearing-card--expanded):hover .hearing-row__caret { transform: none; }
 }

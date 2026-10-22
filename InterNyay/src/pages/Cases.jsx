@@ -145,6 +145,8 @@ export default function Cases() {
     handleViewDocument,
     whatsappBusy,
     toggleCaseReminders,
+    caseRemindersOn,
+    caseHasReminderNumber,
     setCaseReminderDays,
     sendHearingReminder,
     setShowUploadEvidence,
@@ -790,8 +792,11 @@ export default function Cases() {
 
           <div className="case-detail__whatsapp-row">
             <ToggleSwitch
-              checked={c.whatsappReminders !== false}
-              disabled={!!whatsappBusy[`case-${c.id}`]}
+              checked={caseRemindersOn(c)}
+              disabled={!caseHasReminderNumber(c) || !!whatsappBusy[`case-${c.id}`]}
+              title={caseHasReminderNumber(c)
+                ? undefined
+                : 'Add a client WhatsApp number to turn this on'}
               onChange={() => toggleCaseReminders(c)}
               label="Automatic reminder"
             />
@@ -819,7 +824,7 @@ export default function Cases() {
               <button
                 type="button"
                 className={`wa-days-toggle__btn${(c.reminderDaysBefore || 1) === 1 ? ' wa-days-toggle__btn--active' : ''}`}
-                disabled={c.whatsappReminders === false || !!whatsappBusy[`case-${c.id}`]}
+                disabled={!caseRemindersOn(c) || !!whatsappBusy[`case-${c.id}`]}
                 onClick={() => setCaseReminderDays(c, 1)}
               >
                 1 day before
@@ -827,7 +832,7 @@ export default function Cases() {
               <button
                 type="button"
                 className={`wa-days-toggle__btn${(c.reminderDaysBefore || 1) === 2 ? ' wa-days-toggle__btn--active' : ''}`}
-                disabled={c.whatsappReminders === false || !!whatsappBusy[`case-${c.id}`]}
+                disabled={!caseRemindersOn(c) || !!whatsappBusy[`case-${c.id}`]}
                 onClick={() => setCaseReminderDays(c, 2)}
               >
                 2 days before

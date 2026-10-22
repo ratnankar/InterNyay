@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { caseClientsByNumber } from './caseClients'
+import { caseClientsByNumber, caseHasWhatsappNumber } from './caseClients'
 
 const clients = [
   { id: 1, name: 'Asha Rao', whatsappPhone: '9876543210' },
@@ -32,5 +32,21 @@ describe('caseClientsByNumber', () => {
     const { withNumber, missing } = caseClientsByNumber({ clientId: 2 }, clients)
     expect(withNumber).toHaveLength(0)
     expect(missing.map(x => x.id)).toEqual([2])
+  })
+})
+
+describe('caseHasWhatsappNumber', () => {
+  it('is false when no client on the case has a WhatsApp number', () => {
+    expect(caseHasWhatsappNumber({ clientId: 2 }, clients)).toBe(false)
+  })
+
+  it('turns true as soon as a number is added to the client', () => {
+    const c = { clientId: 2 }
+    const updated = clients.map(cl => (cl.id === 2 ? { ...cl, whatsappPhone: '9000000000' } : cl))
+    expect(caseHasWhatsappNumber(c, updated)).toBe(true)
+  })
+
+  it('counts an additional client with a number', () => {
+    expect(caseHasWhatsappNumber({ clientId: 2, additionalClients: [{ id: 1 }] }, clients)).toBe(true)
   })
 })

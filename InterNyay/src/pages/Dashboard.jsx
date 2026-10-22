@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import Calendar from '../components/common/Calendar'
 import Notifications from '../components/common/Notifications'
@@ -31,13 +31,47 @@ function dayWord(date) {
   return ''
 }
 
+// Greeting, today's date and the New Case button. Kept in its own memoised component so that hearing and reminder
+// updates elsewhere on the dashboard never re-render or re-measure it (that made the New Case button flicker)
+const DashboardHeader = memo(function DashboardHeader({ userName, onNewCase }) {
+  // Greeting name: first name (with title). When even that does not fit on one line, "Counsel" is shown instead
+  const titleRef = useRef(null)
+  const [tooLong, setTooLong] = useState(false)
+  const [viewWidth, setViewWidth] = useState(() => window.innerWidth)
+  const shownName = greetingName(userName)
+  useEffect(() => {
+    const onResize = () => setViewWidth(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  // A new name or screen width starts from the real name again
+  useLayoutEffect(() => { setTooLong(false) }, [shownName, viewWidth])
+  // Only when the name, width or fit state changes: if the line is wider than its space, switch to "Counsel"
+  useLayoutEffect(() => {
+    const el = titleRef.current
+    if (el && !tooLong && el.scrollWidth > el.clientWidth + 1) setTooLong(true)
+  }, [shownName, viewWidth, tooLong])
+
+  return (
+    <div className="page-header page-header--hero">
+      <div className="page-header__main">
+        <h1 className="page-title page-title--one-line" ref={titleRef}>{getGreeting()}, <span className="page-title__name">{(!tooLong && shownName) || 'Counsel'}</span></h1>
+        <p className="page-subtitle">
+          {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      </div>
+      <button type="button" className="btn-gold" onClick={onNewCase}>+ New Case</button>
+    </div>
+  )
+})
+
 // Dashboard: hearings for the selected calendar date, with the calendar and notifications beside them
 export default function Dashboard() {
   const {
     cases, clients, calendarDate, calendarDateKey, todayCases,
     openCase, setShowAddCase,
     expandedHearingCaseId, setExpandedHearingCaseId,
-    whatsappBusy, sendHearingReminder, toggleCaseReminders,
+    whatsappBusy, sendHearingReminder, toggleCaseReminders, caseRemindersOn, caseHasReminderNumber,
     openEditFee, currentUser,
   } = useApp()
 
@@ -63,23 +97,7 @@ export default function Dashboard() {
   // Court headings only help when the day has hearings at more than one court
   const showCourtHeadings = new Set(sortedRows.map(r => r.court)).size > 1
 
-  // Greeting name: first name (with title). When even that does not fit on one line, "Counsel" is shown instead
-  const titleRef = useRef(null)
-  const [tooLong, setTooLong] = useState(false)
-  const [viewWidth, setViewWidth] = useState(() => window.innerWidth)
-  const shownName = greetingName(currentUser?.name)
-  useEffect(() => {
-    const onResize = () => setViewWidth(window.innerWidth)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-  // A new name or screen width starts from the real name again
-  useLayoutEffect(() => { setTooLong(false) }, [shownName, viewWidth])
-  // Runs after every draw: if the line is wider than its space, switch to "Counsel"
-  useLayoutEffect(() => {
-    const el = titleRef.current
-    if (el && !tooLong && el.scrollWidth > el.clientWidth + 1) setTooLong(true)
-  })
+  const openNewCase = useCallback(() => setShowAddCase(true), [setShowAddCase])
 
   const hearingTotal = todayCases.length + miscToday.length
 
@@ -106,16 +124,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* Greeting, today's date and the New Case button */}
-      <div className="page-header page-header--hero">
-        <div className="page-header__main">
-          <h1 className="page-title page-title--one-line" ref={titleRef}>{getGreeting()}, <span className="page-title__name">{(!tooLong && shownName) || 'Counsel'}</span></h1>
-          <p className="page-subtitle">
-            {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-        <button type="button" className="btn-gold" onClick={() => setShowAddCase(true)}>+ New Case</button>
-      </div>
+      <DashboardHeader userName={currentUser?.name} onNewCase={openNewCase} />
 
       {/* Main column with hearings, side column with calendar and notifications */}
       <div className="dashboard__grid">
@@ -168,7 +177,8 @@ export default function Dashboard() {
 
             // Whether this date is the case's next hearing and whether reminders are on
             const scheduled = c.nextHearing === calendarDateKey
-            const remindersOn = c.whatsappReminders !== false
+            const remindersOn = caseRemindersOn(c)
+            const hasReminderNumber = caseHasReminderNumber(c)
 
             // Badge showing the nature of the case
             const natureBadge = nature ? <span className="badge badge--nature">{nature}</span> : null
@@ -188,10 +198,12 @@ export default function Dashboard() {
                   className={`wa-icon-btn wa-icon-btn--${remindersOn ? 'on' : 'off'}`}
                   aria-pressed={remindersOn}
                   aria-label="Automatic reminder"
-                  title={remindersOn
-                    ? 'Automatic reminder is ON for this case — click to turn it off'
-                    : 'Automatic reminder is OFF for this case — click to turn it on'}
-                  disabled={!!whatsappBusy[`case-${c.id}`]}
+                  title={!hasReminderNumber
+                    ? 'Automatic reminder is OFF — add a client WhatsApp number to turn it on'
+                    : remindersOn
+                      ? 'Automatic reminder is ON for this case — click to turn it off'
+                      : 'Automatic reminder is OFF for this case — click to turn it on'}
+                  disabled={!hasReminderNumber || !!whatsappBusy[`case-${c.id}`]}
                   onClick={e => {
                     e.stopPropagation()
                     toggleCaseReminders(c)

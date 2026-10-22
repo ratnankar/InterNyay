@@ -13,6 +13,7 @@ import { getErrorMessage } from '../../utils/errorMessages'
 import { isClosedCase } from '../../constants/data'
 import { confirmDialog } from '../../utils/confirmDialog'
 import useSessionState from '../../hooks/useSessionState'
+import { beginOrderTask, endOrderTask, usePendingOrders } from '../../utils/pendingOrders'
 // Hearing history of a case with its documents, and the button to set the next hearing
 export default function CaseHearings({ caseItem, dashboard = false }) {
   const {
@@ -43,6 +44,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
   const [draftNote, setDraftNote] = useState('')
   // Row currently saving, uploading or deleting, so its buttons can be disabled
   const [busyId, setBusyId] = useState(null)
+  const pendingOrders = usePendingOrders()
 
   // Hidden file input used to attach an order PDF to a hearing
   const fileRef = useRef(null)
@@ -139,8 +141,8 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     const file = e.target.files?.[0]
     const hearingId = uploadForRef.current
     if (!file || !hearingId) return
+    if (!beginOrderTask(hearingId)) return
 
-    setBusyId(hearingId)
     try {
       await api.hearings.uploadOrder(hearingId, file)
       bumpHearings(caseId)
@@ -148,14 +150,15 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     } catch (err) {
       addToast(getErrorMessage(err, 'Could not upload the order'), 'error')
     } finally {
-      setBusyId(null)
+      endOrderTask(hearingId)
       uploadForRef.current = null
     }
   }
 
   // Get the order from eCourts: the first time it is fetched and stored, after that the stored copy is used
   async function fetchOrder(h) {
-    setBusyId(h.id)
+    if (!beginOrderTask(h.id)) return
+
     try {
       const res = await api.hearings.fetchOrder(h.id)
       if (res?.status === 'FETCHED' || res?.status === 'STORED') {
@@ -167,15 +170,15 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not get the order from eCourts'), 'error')
     } finally {
-      setBusyId(null)
+      endOrderTask(h.id)
     }
   }
 
   // Detach the order PDF from a hearing after a confirm
   async function removeOrder(h) {
     if (!await confirmDialog(`Remove the order attached to ${formatDisplayDate(h.date)}?`)) return
+    if (!beginOrderTask(h.id)) return
 
-    setBusyId(h.id)
     try {
       await api.hearings.removeOrder(h.id)
       bumpHearings(caseId)
@@ -183,7 +186,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not remove the order'), 'error')
     } finally {
-      setBusyId(null)
+      endOrderTask(h.id)
     }
   }
 
@@ -264,7 +267,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
           <SeeMoreList items={hearings} step={10} resetKey={caseItem.id}>
           {shownHearings => shownHearings.map(h => {
           const editing = editingId === h.id
-          const busy = busyId === h.id
+          const busy = busyId === h.id || pendingOrders.has(h.id)
           const orderDue = !!h.orderDue
           const { note } = splitHearingNotes(h.notes)
 
@@ -311,7 +314,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
                         disabled={busy}
                         onClick={() => saveEntry(h)}
                       >
-                        {busy ? 'Saving…' : 'Save'}
+                        {busyId === h.id ? 'Saving…' : 'Save'}
                       </button>
                     </div>
                   </>

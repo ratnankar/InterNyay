@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import api from '../services/api'
-import { caseClientsByNumber } from '../utils/caseClients'
+import { caseClientsByNumber, caseHasWhatsappNumber } from '../utils/caseClients'
 import { formatDisplayDate } from '../utils/dateUtils'
 import { formatCurrency } from '../utils/formatUtils'
 import { getErrorMessage } from '../utils/errorMessages'
@@ -52,8 +52,19 @@ export default function useWhatsApp({
     }
   }, [])
 
+  // Whether the case has any client number to send to
+  const caseHasReminderNumber = c => caseHasWhatsappNumber(c, clients)
+
+  // Automatic reminders really run only if the advocate hasn't turned them off and a client has a number.
+  // Adding a number later switches them on by itself
+  const caseRemindersOn = c => c.whatsappReminders !== false && caseHasReminderNumber(c)
+
   // Turn the automatic reminder for one case on or off and update the case in local state
   const toggleCaseReminders = c => runOnce(`case-${c.id}`, async () => {
+    if (!caseHasReminderNumber(c)) {
+      addToast('Add a WhatsApp number for a client on this case to turn on automatic reminders', 'error')
+      return
+    }
     // Reminders are on unless explicitly set to false, so flip the current value
     const turnOn = c.whatsappReminders === false
     try {
@@ -187,6 +198,8 @@ export default function useWhatsApp({
     reloadWhatsApp: loadStatus,
     whatsappBusy: busy,
     toggleCaseReminders,
+    caseRemindersOn,
+    caseHasReminderNumber,
     setCaseReminderDays,
     sendHearingReminder,
     sendPaymentReminder,
