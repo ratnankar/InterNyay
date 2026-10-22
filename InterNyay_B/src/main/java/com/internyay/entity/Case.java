@@ -204,9 +204,31 @@ public class Case {
         return d == null || d.isEmpty() ? null : d;
     }
 
-    // Reminders are on unless the advocate switched them off
-    public boolean isWhatsappRemindersEnabled() {
+    // The advocate's own choice: on unless they switched it off for this case
+    public boolean isWhatsappReminderPreferenceOn() {
         return whatsappReminders == null || whatsappReminders;
+    }
+
+    // True when the main client or any additional client has a WhatsApp number saved
+    public boolean hasClientWhatsappNumber() {
+        if (client != null && hasText(client.getWhatsapp_phone())) return true;
+        if (additionalClients != null) {
+            for (Client cl : additionalClients) {
+                if (cl != null && hasText(cl.getWhatsapp_phone())) return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasText(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    // Automatic reminders really run only when the advocate hasn't switched them off and
+    // at least one client has a number. Nothing is stored for "no number", so adding a
+    // number later turns the reminders on by itself
+    public boolean isWhatsappRemindersEnabled() {
+        return isWhatsappReminderPreferenceOn() && hasClientWhatsappNumber();
     }
 
     // How many days before the hearing to remind, 1 or 2

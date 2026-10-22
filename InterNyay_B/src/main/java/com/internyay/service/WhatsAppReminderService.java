@@ -50,11 +50,22 @@ public class WhatsAppReminderService {
         return new WhatsAppStatusDto(sender.isConfigured(), sender.isDryRun(), failed);
     }
 
-    // Turn automatic reminders on or off for a case and optionally change the lead time
+    // Turn automatic reminders on or off for a case and optionally change the lead time.
+    // Turning on needs a client WhatsApp number
     @Transactional
     public boolean setCaseEnabled(Long userId, Long caseId, boolean enabled, Integer daysBefore) {
         Case c = findOwned(caseId, userId);
-        c.setWhatsappReminders(enabled);
+        boolean hasNumber = c.hasClientWhatsappNumber();
+
+        if (enabled && !hasNumber) {
+            throw new IllegalArgumentException(
+                    "Add a WhatsApp number for a client on this case to turn on automatic reminders");
+        }
+
+        // With no number nothing is saved, so the case turns on by itself once a number is added
+        if (hasNumber) {
+            c.setWhatsappReminders(enabled);
+        }
         if (daysBefore != null) {
             c.setReminderDaysBefore(daysBefore == 2 ? 2 : 1);
         }
@@ -100,7 +111,7 @@ public class WhatsAppReminderService {
 
         for (Case c : caseRepo.findByNextHearing(target)) {
             try {
-                // Skip inactive advocates, cases with reminders off, a different lead time or a finished case
+                // Skip inactive advocates, cases with reminders off or no client number, a different lead time or a finished case
                 if (Boolean.FALSE.equals(c.getUser().getActive()))                continue;
                 if (!c.isWhatsappRemindersEnabled())                              continue;
                 if (c.getReminderDaysBeforeOrDefault() != daysAhead)              continue;

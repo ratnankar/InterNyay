@@ -400,7 +400,8 @@ public class ChatTools {
                         .put("claimAmount", c.getClaimAmount())
                         .put("noticeDate", c.getNoticeDate()).map())
                 .always("whatsappReminders", c.isWhatsappRemindersEnabled()
-                        ? "on, " + c.getReminderDaysBeforeOrDefault() + " day(s) before" : "off")
+                        ? "on, " + c.getReminderDaysBeforeOrDefault() + " day(s) before"
+                        : (c.hasClientWhatsappNumber() ? "off" : "off (no client WhatsApp number)"))
                 .put("createdAt", c.getCreatedAt());
 
         if (!ctx.feesHidden()) {

@@ -89,7 +89,11 @@ public class CaseDto {
     public List<StageFeeDto> stageFees;
 
     // WhatsApp reminder settings of the case
+    // The advocate's own on/off choice (on unless switched off)
     public boolean whatsappReminders;
+
+    // True when no client on the case has a WhatsApp number, so automatic reminders cannot run
+    public boolean whatsappNumberMissing;
 
     public int reminderDaysBefore;
 
@@ -195,7 +199,8 @@ public class CaseDto {
                 .dateWiseAmount(c.getDateWiseAmount())
                 .hearingFees(fees)
                 .stageFees(stages)
-                .whatsappReminders(c.isWhatsappRemindersEnabled())
+                .whatsappReminders(c.isWhatsappReminderPreferenceOn())
+                .whatsappNumberMissing(!c.hasClientWhatsappNumber())
                 .reminderDaysBefore(c.getReminderDaysBeforeOrDefault())
                 .documents(docs)
                 .createdAt(c.getCreatedAt())
