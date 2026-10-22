@@ -230,6 +230,40 @@ public class CourtService {
         return list();
     }
 
+    // Admin marks a whole court as a Juvenile Justice Board (its cases have no CNR, nothing is fetched from eCourts for
+    // them) or clears the mark. Every row of the court is set, and a court counts as a board when any of its rows is
+    // marked, so rows added to it later need no mark of their own
+    @Transactional
+    public List<CourtDto> setJuvenileJusticeBoard(String court, boolean juvenileJusticeBoard) {
+        String wanted = clean(court);
+        List<Court> rows = repo.findAllByOrderByIdAsc().stream()
+                .filter(r -> r.getCourt().equalsIgnoreCase(wanted)).toList();
+        if (rows.isEmpty()) throw new NoSuchElementException("Court not found");
+        if (rows.stream().anyMatch(Court::isHighCourt)) {
+            throw new IllegalArgumentException(rows.get(0).getCourt() + " is a high court and cannot be a Juvenile Justice Board");
+        }
+        rows.forEach(r -> r.setJuvenileJusticeBoard(juvenileJusticeBoard));
+        repo.saveAll(rows);
+        return list();
+    }
+
+    // True when the case's court is marked as a Juvenile Justice Board
+    public boolean isJuvenileJusticeBoard(Court place) {
+        return place != null && repo.findByJuvenileJusticeBoardTrue().stream()
+                .anyMatch(r -> r.getCourt().equalsIgnoreCase(place.getCourt()));
+    }
+
+    public boolean isJuvenileJusticeBoard(com.internyay.entity.Case c) {
+        return isJuvenileJusticeBoard(c.getCourtPlace());
+    }
+
+    // Same check for many cases: the marked courts are read once by the caller (a job going through a day's cases)
+    public java.util.function.Predicate<com.internyay.entity.Case> juvenileBoardCases() {
+        java.util.Set<String> boards = repo.findByJuvenileJusticeBoardTrue().stream()
+                .map(r -> r.getCourt().toLowerCase()).collect(java.util.stream.Collectors.toSet());
+        return c -> c.getCourtPlace() != null && boards.contains(c.getCourtPlace().getCourt().toLowerCase());
+    }
+
     // Admin adds at any level: a court, a district under a court, a building or a court no. A building and a court no. can be
     // added without a district (they then wait in the court's "no district" list until a district is chosen)
     @Transactional

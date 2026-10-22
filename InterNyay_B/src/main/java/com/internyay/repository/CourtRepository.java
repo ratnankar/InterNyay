@@ -14,5 +14,8 @@ public interface CourtRepository extends JpaRepository<Court, Long> {
 
     List<Court> findByMahilaCourtTrue();
 
+    // Rows of the courts marked as Juvenile Justice Boards
+    List<Court> findByJuvenileJusticeBoardTrue();
+
     boolean existsByCourtAndDistrictAndBuildingAndFloorAndCourtNo(String court, String district, String building, String floor, String courtNo);
 }

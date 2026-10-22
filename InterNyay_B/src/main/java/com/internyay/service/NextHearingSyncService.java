@@ -37,6 +37,7 @@ public class NextHearingSyncService {
     private final CaseRepository caseRepo;
     private final HearingRepository hearingRepo;
     private final HearingService hearingService;
+    private final CourtService courtService;
     private final RestClient http;
     private final String token;
 
@@ -44,6 +45,7 @@ public class NextHearingSyncService {
             CaseRepository caseRepo,
             HearingRepository hearingRepo,
             HearingService hearingService,
+            CourtService courtService,
             RestClient.Builder builder,
             @Value("${ecourts.api.base-url:https://webapi.ecourtsindia.com}") String baseUrl,
             @Value("${ecourts.api.token:}") String token) {
@@ -55,6 +57,7 @@ public class NextHearingSyncService {
         this.caseRepo = caseRepo;
         this.hearingRepo = hearingRepo;
         this.hearingService = hearingService;
+        this.courtService = courtService;
         this.http = builder.baseUrl(baseUrl).requestFactory(factory).build();
         this.token = token == null ? "" : token.trim();
     }
@@ -79,7 +82,12 @@ public class NextHearingSyncService {
         List<Case> cases = caseRepo.findByNextHearingAndCnrNoIsNotNull(hearingDate);
         int updated = 0;
 
+        java.util.function.Predicate<Case> juvenile = courtService.juvenileBoardCases();
+
         for (Case c : cases) {
+            // Juvenile Justice Board cases are not read from eCourts
+            if (juvenile.test(c)) continue;
+
             String cnr = normalizeCnr(c.getCnrNo());
 
             if (cnr == null) {

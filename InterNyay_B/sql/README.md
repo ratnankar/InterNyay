@@ -40,6 +40,9 @@ and refuses to start if they do not. It never changes the database.
 | `V31__app_notes.sql` | `app_notes`: private notes of the Calendar app, one row per note per account; a deleted note stays as a row with `deleted_at` set so the deletion reaches the other phones |
 | `V32__app_preferences.sql` | `app_preferences`: court colours, court filter and view settings of the Calendar app, one row per account (a small JSON object plus the time of the last change) |
 | `V33__case_opponents_and_non_clients.sql` | `case_opposing_parties` (a case can have several opposite parties) and `case_non_clients` (people on our side who are not saved as clients, with their role). The single opposite party of each existing case is copied into the first table, then `cases.opposing_party`, `opposing_father_name`, `opposing_address` and `opposing_phone` are dropped |
+| `V36__juvenile_justice_board.sql` | `courts.juvenile_justice_board`: the mark for a Juvenile Justice Board. Its cases have no CNR and nothing is fetched from eCourts for them (cause list number, next-hearing sync, orders) |
+| `V37__juvenile_justice_board_whole_court.sql` | The mark belongs to a whole court (Admin > Courts, every row of the court), not a court no.; marks set on single court numbers are cleared |
+| `V38__case_no_optional.sql` | `cases.case_no` may be empty: a Juvenile Justice Board case needs neither a CNR nor a case number (every other case still needs one) |
 
 This folder keeps only the two scripts that run outside the app: `create_database.sql` and `check_links.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).
@@ -49,10 +52,10 @@ Fee calculator rules still need no file: the backend saves them itself on the fi
 Use MySQL 8.0.19 or newer (`V6__plans.sql` uses a row alias in its upsert; MySQL 5.7 and MariaDB do not support it).
 
 1. In MySQL run `create_database.sql`. It creates an empty `internyay` database as `utf8mb4_unicode_ci` and never deletes anything.
-2. Start the backend. Flyway runs V1 to V33, Hibernate validates, and the app is up. That is the whole setup.
+2. Start the backend. Flyway runs V1 to V38, Hibernate validates, and the app is up. That is the whole setup.
 3. Sign out in the browser, register your account, then make it the first administrator (see `docs/ADMIN_SETUP.md`).
 
-Expected: the log shows `Successfully applied 33 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
+Expected: the log shows `Successfully applied 38 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
 
 | Table | Rows |
 | --- | --- |

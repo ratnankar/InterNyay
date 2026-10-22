@@ -35,12 +35,14 @@ public class CauseListService {
     private static final Pattern CNR_FORMAT = Pattern.compile("[A-Z0-9]{16}");
 
     private final CaseRepository caseRepo;
+    private final CourtService courtService;
     private final RestClient http;
     private final String token;
     private final int batchSize;
 
     public CauseListService(
             CaseRepository caseRepo,
+            CourtService courtService,
             RestClient.Builder builder,
             @Value("${ecourts.api.base-url:https://webapi.ecourtsindia.com}") String baseUrl,
             @Value("${ecourts.api.token:}") String token,
@@ -51,6 +53,7 @@ public class CauseListService {
         factory.setReadTimeout(30_000);
 
         this.caseRepo = caseRepo;
+        this.courtService = courtService;
         this.http = builder.baseUrl(baseUrl).requestFactory(factory).build();
         this.token = token == null ? "" : token.trim();
         this.batchSize = Math.max(1, batchSize);
@@ -90,7 +93,12 @@ public class CauseListService {
 
         Map<String, List<Long>> idsByCnr = new LinkedHashMap<>();
 
+        // No cause list is fetched for a Juvenile Justice Board, even if an old case there still holds a CNR
+        java.util.function.Predicate<Case> juvenile = courtService.juvenileBoardCases();
+
         for (Case c : caseRepo.findByNextHearingAndCnrNoIsNotNull(hearingDate)) {
+
+            if (juvenile.test(c)) continue;
 
             if (onlyMissing && c.getCauseListNo() != null && hearingDate.equals(c.getListingDate())) continue;
 

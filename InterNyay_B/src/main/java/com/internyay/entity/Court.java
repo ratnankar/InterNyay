@@ -41,4 +41,9 @@ public class Court {
     // True when this court room is a Mahila court. Orders are not declared for these courts, so none are fetched from eCourts
     @Column(name = "mahila_court", nullable = false, columnDefinition = "boolean default false")
     private boolean mahilaCourt;
+
+    // True when the whole court is a Juvenile Justice Board (the admin marks every row of the court). Its cases have no
+    // CNR number, so nothing is fetched from eCourts for them (cause list number, next hearing, orders)
+    @Column(name = "juvenile_justice_board", nullable = false, columnDefinition = "boolean default false")
+    private boolean juvenileJusticeBoard;
 }

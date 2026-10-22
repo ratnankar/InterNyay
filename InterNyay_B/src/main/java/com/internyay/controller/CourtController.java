@@ -3,6 +3,7 @@ package com.internyay.controller;
 import com.internyay.dto.CourtDto;
 import com.internyay.dto.CourtMoveRequest;
 import com.internyay.dto.CourtRequest;
+import com.internyay.dto.JuvenileJusticeBoardRequest;
 import com.internyay.dto.MahilaCourtRequest;
 import com.internyay.service.CourtNoTransferService;
 import com.internyay.service.CourtService;
@@ -40,6 +41,13 @@ public class CourtController {
     public ResponseEntity<List<CourtDto>> setMahila(@PathVariable Long id,
                                                     @RequestBody MahilaCourtRequest req) {
         return ResponseEntity.ok(courtService.setMahilaCourt(id, req.mahilaCourt()));
+    }
+
+    // Admin: mark or unmark a whole court as a Juvenile Justice Board (no CNR, nothing fetched from eCourts)
+    @PutMapping("/jjb")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CourtDto>> setJuvenileJusticeBoard(@RequestBody JuvenileJusticeBoardRequest req) {
+        return ResponseEntity.ok(courtService.setJuvenileJusticeBoard(req.court(), req.juvenileJusticeBoard()));
     }
 
     // Admin: move a court no. to another building and district of the same court

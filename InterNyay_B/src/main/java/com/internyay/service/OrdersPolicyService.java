@@ -17,6 +17,7 @@ import java.util.Optional;
 public class OrdersPolicyService {
 
     private final CourtRepository courtRepo;
+    private final CourtService courtService;
 
     // Whether orders are declared, and the reason when they are not
     public record Verdict(boolean declared, String reason) {
@@ -28,6 +29,11 @@ public class OrdersPolicyService {
 
         if (CaseCatalog.isFamilyDispute(c.getReliefSought())) {
             return Verdict.no("Orders are not declared in family dispute cases");
+        }
+
+        // Juvenile Justice Board cases have no CNR, so there is nothing to fetch from eCourts
+        if (courtService.isJuvenileJusticeBoard(c)) {
+            return Verdict.no("Orders are not fetched for a Juvenile Justice Board");
         }
 
         Court place = c.getCourtPlace();

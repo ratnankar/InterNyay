@@ -69,6 +69,7 @@ public class CaseService {
     }
 
     private static final String CNR_REQUIRED = "Enter the 16-character CNR number";
+    private static final String CASE_NO_REQUIRED = "Enter the case number";
     private static final String CLIENT_REQUIRED = "Please select the client for this case";
 
     // A CNR that is sent must be a valid one: it cannot be cleared or replaced by something that is not a CNR.
@@ -91,26 +92,39 @@ public class CaseService {
     public CaseDto create(CaseRequest req, Long userId) {
 
         User user = userRepo.getReferenceById(userId);
+
+        // A case heard by a Juvenile Justice Board has no CNR number and is never read from eCourts, so it is always
+        // added by hand (the case number is still required)
+        boolean juvenile = courtService.isJuvenileJusticeBoard(courtService.placeOf(req.getCourt(), req.getDistrict()));
+        boolean byCnr = req.isCnrMode() && !juvenile;
+
         // A case added by CNR may be saved without a client; every other case needs one
-        if (req.getClientId() == null && !req.isCnrMode()) throw new IllegalArgumentException(CLIENT_REQUIRED);
+        if (req.getClientId() == null && !byCnr) throw new IllegalArgumentException(CLIENT_REQUIRED);
         Client client = req.getClientId() == null ? null : ownedClient(req.getClientId(), userId);
 
-        // Every case needs its 16-character CNR number, stored without spaces or dashes in capitals
-        String cnr = EcourtsCaseService.normalizeCnr(req.getCnrNo());
-        if (cnr == null) throw new IllegalArgumentException(CNR_REQUIRED);
-        assertCnrFree(cnr, userId);
+        // Every other case needs its 16-character CNR number, stored without spaces or dashes in capitals
+        String cnr = null;
+        EcourtsCaseService.Snapshot snap = null;
+        if (!juvenile) {
+            cnr = EcourtsCaseService.normalizeCnr(req.getCnrNo());
+            if (cnr == null) throw new IllegalArgumentException(CNR_REQUIRED);
+            assertCnrFree(cnr, userId);
 
-        // Every case is read from eCourts when it is saved, to bring in its hearing and order history. A case that
-        // eCourts cannot give (not listed yet, or eCourts is down) is still saved with what the advocate entered
-        EcourtsCaseService.Snapshot snap = readFromEcourts(cnr);
+            // Every case is read from eCourts when it is saved, to bring in its hearing and order history. A case that
+            // eCourts cannot give (not listed yet, or eCourts is down) is still saved with what the advocate entered
+            snap = readFromEcourts(cnr);
+        }
 
-        if (req.getCaseNo() != null && caseRepo.existsByUser_IdAndCaseNoIgnoreCase(userId, req.getCaseNo().trim()))
-            throw new IllegalArgumentException("You already have a case with case number \"" + req.getCaseNo().trim() + "\"");
+        // The case number is required, except for a Juvenile Justice Board case (stored as empty then)
+        String caseNo = trimmedOrNull(req.getCaseNo());
+        if (caseNo == null && !juvenile) throw new IllegalArgumentException(CASE_NO_REQUIRED);
+        if (caseNo != null && caseRepo.existsByUser_IdAndCaseNoIgnoreCase(userId, caseNo))
+            throw new IllegalArgumentException("You already have a case with case number \"" + caseNo + "\"");
 
         LocalDate nextHearing;
         String status = req.getStatus() != null ? req.getStatus() : "Pending";
 
-        if (snap != null && req.isCnrMode()) {
+        if (snap != null && byCnr) {
             // Added by CNR: the date and status come from the court, so the closed-day check does not apply
             if (snap.disposed()) {
                 status = snap.withdrawn() ? CaseStatuses.WITHDRAWN : CaseStatuses.DECIDED;
@@ -125,7 +139,7 @@ public class CaseService {
 
         Case c = Case.builder()
                 .title(req.getTitle())
-                .caseNo(req.getCaseNo())
+                .caseNo(caseNo)
                 .cnrNo(cnr)
                 .status(status)
                 .description(req.getDescription())
@@ -179,12 +193,30 @@ public class CaseService {
         boolean wasWithdrawn = CaseStatuses.isWithdrawn(c.getStatus());
 
         if (req.getTitle()       != null) c.setTitle(req.getTitle());
-        if (req.getCaseNo()      != null) c.setCaseNo(req.getCaseNo());
         if (req.getFileNo()      != null) c.setFileNo(req.getFileNo());
-        if (req.getCnrNo()       != null) c.setCnrNo(requireCnr(req.getCnrNo()));
+        boolean wasJuvenile = courtService.isJuvenileJusticeBoard(c);
         Court previousPlace = c.getCourtPlace();
         if (req.getCourt()       != null) applyCourt(c, req.getCourt(), req.getDistrict());
         applyCourtNo(c, req, previousPlace);
+
+        // A Juvenile Justice Board case has no CNR and no cause list number. A case moved out of a board court needs a CNR now
+        boolean juvenile = courtService.isJuvenileJusticeBoard(c);
+
+        // The case number can only be left empty in a Juvenile Justice Board court
+        if (req.getCaseNo() != null) c.setCaseNo(trimmedOrNull(req.getCaseNo()));
+        if (!juvenile && (c.getCaseNo() == null || c.getCaseNo().isBlank())) {
+            throw new IllegalArgumentException(CASE_NO_REQUIRED);
+        }
+
+        if (juvenile) {
+            c.setCnrNo(null);
+            c.setCauseListNo(null);
+            c.setListingDate(null);
+        } else if (req.getCnrNo() != null) {
+            c.setCnrNo(requireCnr(req.getCnrNo()));
+        } else if (wasJuvenile) {
+            throw new IllegalArgumentException(CNR_REQUIRED);
+        }
         if (req.getStatus()      != null) c.setStatus(req.getStatus());
         if (req.getDescription() != null) c.setDescription(req.getDescription());
         applyClassification(c, req);
@@ -264,7 +296,7 @@ public class CaseService {
         c.setCauseListNo(null);
         c.setListingDate(null);
         // Case number is tagged so it can be reused for a new case
-        c.setCaseNo(c.getCaseNo() + "#deleted-" + c.getId());
+        if (c.getCaseNo() != null) c.setCaseNo(c.getCaseNo() + "#deleted-" + c.getId());
         c.setDeleted(true);
         c.setDeletedAt(LocalDateTime.now());
         caseRepo.save(c);

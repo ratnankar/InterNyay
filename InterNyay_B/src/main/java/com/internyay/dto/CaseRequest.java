@@ -13,7 +13,8 @@ public class CaseRequest {
 
     // Required fields
     @NotBlank @Size(max = 500) public String title;
-    @NotBlank public String caseNo;
+    // Required for every case except one heard by a Juvenile Justice Board (checked in CaseService)
+    public String caseNo;
     @NotBlank public String court;
 
     public String district;

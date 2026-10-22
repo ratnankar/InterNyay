@@ -203,7 +203,7 @@ public class WhatsAppReminderService {
         return List.of(
                 client.getName(),
                 messageTitle(c),
-                c.getCaseNo(),
+                caseNoText(c),
                 date.format(HEARING_DATE),
                 courtLine(c),
                 advocateName(c));
@@ -218,9 +218,14 @@ public class WhatsAppReminderService {
         return List.of(
                 client.getName(),
                 messageTitle(c),
-                c.getCaseNo(),
+                caseNoText(c),
                 "Rs. " + inr.format(amountDue(c)),
                 advocateName(c));
+    }
+
+    // Case number for the message; a Juvenile Justice Board case has none, and a template value cannot be empty
+    private static String caseNoText(Case c) {
+        return c.getCaseNo() == null || c.getCaseNo().isBlank() ? "-" : c.getCaseNo();
     }
 
     // Case title for the message, "A vs B", "A vs. B" or "A v/s B" is sent as "A v. B"

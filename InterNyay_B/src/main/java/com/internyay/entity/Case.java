@@ -33,8 +33,8 @@ public class Case {
     @Column(nullable = false, length = 500)
     private String title;
 
-    // Case number is unique for each advocate (two advocates may hold the same case, e.g. both added it by CNR)
-    @Column(nullable = false)
+    // Case number is unique for each advocate (two advocates may hold the same case, e.g. both added it by CNR).
+    // Empty only for a case of a Juvenile Justice Board; every other case needs one (checked in CaseService)
     private String caseNo;
 
     // Advocate's own file number, fileSeq is the number part
