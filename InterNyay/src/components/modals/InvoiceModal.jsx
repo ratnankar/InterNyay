@@ -85,7 +85,7 @@ export default function InvoiceModal() {
 
             <div className="invoice__case-info">
               <p><strong>Case:</strong> {c.title}</p>
-              <p><strong>Case No:</strong> {c.caseNo} • {caseCourtLabel(c)}</p>
+              <p>{c.caseNo && <><strong>Case No:</strong> {c.caseNo} • </>}{caseCourtLabel(c)}</p>
             </div>
 
             <table className="invoice__table">

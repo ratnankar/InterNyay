@@ -321,7 +321,7 @@ export default function TransactionHistory({ embedded = false }) {
               {visibleRows.map(t => (
                 <tr key={t.id}>
                   <td>{t.clientName}</td>
-                  <td>{t.caseTitle} <span className="case-card__info">({t.caseNo})</span></td>
+                  <td>{t.caseTitle} {t.caseNo && <span className="case-card__info">({t.caseNo})</span>}</td>
                   <td>{t.description}</td>
                   <td>
                     {/* Fee date, or the day the case was added when the fee has no date of its own */}

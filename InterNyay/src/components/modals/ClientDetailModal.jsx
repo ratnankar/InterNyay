@@ -318,7 +318,7 @@ export default function ClientDetailModal() {
                     <div className="client-case-row__info">
                       <p className="client-case-row__title">{c.title}</p>
                       <p className="case-card__info">
-                        Case No: {c.caseNo} • {caseCourtLabel(c)}
+                        {c.caseNo ? `Case No: ${c.caseNo} • ` : ''}{caseCourtLabel(c)}
                       </p>
                       <div className="case-card__meta-row u-mt-4">
                         <span

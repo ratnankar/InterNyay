@@ -561,7 +561,7 @@ export default function Documents() {
         d.name.toLowerCase().includes(q) ||
         d.caseName.toLowerCase().includes(q) ||
         d.client.toLowerCase().includes(q) ||
-        d.caseNo.toLowerCase().includes(q)
+        (d.caseNo || '').toLowerCase().includes(q)
       )
     }
 
@@ -594,7 +594,7 @@ export default function Documents() {
       if (!map[doc.caseId]) {
         map[doc.caseId] = {
           caseName: doc.caseName,
-          caseNo: doc.caseNo,
+          caseNo: doc.caseNo || '',
           client: doc.client,
           caseType: doc.caseType,
           docs: []

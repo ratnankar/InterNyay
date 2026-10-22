@@ -6,7 +6,7 @@ import { caseCreatedDate, formatDate, hearingDateProblem } from '../utils/dateUt
 import { indianPhoneError, emailError } from '../utils/validators'
 import { passwordProblem } from '../utils/passwordPolicy'
 import useWhatsApp from '../hooks/useWhatsApp'
-import { isHighCourt, splitCaseCourt, loadCourts, resetCourts, loadCourtPreferences, resetCourtPreferences } from '../constants/courts'
+import { isHighCourt, isJuvenileBoard, splitCaseCourt, loadCourts, resetCourts, loadCourtPreferences, resetCourtPreferences } from '../constants/courts'
 import { WITHDRAWN_STATUS, WITHDRAWN_OUTCOME } from '../constants/data'
 import { statusChangeQuestion } from '../utils/caseStatus'
 import {
@@ -2130,12 +2130,15 @@ export function AppProvider({ children }) {
       if (phoneProblem) return `${who}: ${phoneProblem}`
     }
 
-    if (!newCaseForm.caseNo) {
+    // The case number is required, except for a Juvenile Justice Board case
+    if (!newCaseForm.caseNo && !isJuvenileBoard(newCaseForm.court)) {
       return 'Please fill all required fields'
     }
 
-    // Every case, new or old, added or edited, needs its 16-character CNR number
-    if (!/^[A-Z0-9]{16}$/.test((newCaseForm.cnrNo || '').toUpperCase().replace(/[\s-]/g, ''))) {
+    // Every case, new or old, added or edited, needs its 16-character CNR number, except a Juvenile Justice Board case
+    // (it has none); the case number above is still required
+    if (!isJuvenileBoard(newCaseForm.court)
+      && !/^[A-Z0-9]{16}$/.test((newCaseForm.cnrNo || '').toUpperCase().replace(/[\s-]/g, ''))) {
       return 'Enter the 16-character CNR number'
     }
 
@@ -2183,6 +2186,13 @@ export function AppProvider({ children }) {
     delete payload.titleLead
     delete payload.opponentLead
     delete payload.cnrDetail
+
+    // A Juvenile Justice Board case has no CNR (the case number is optional) and is always added by hand
+    if (isJuvenileBoard(newCaseForm.court)) {
+      payload.cnrNo = ''
+      payload.caseNo = (newCaseForm.caseNo || '').trim()
+      payload.addMode = 'MANUAL'
+    }
 
     // How the case was added only matters when it is created
     if (editingCaseId) {

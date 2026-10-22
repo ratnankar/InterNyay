@@ -66,6 +66,7 @@ export function CaseAddModePrompt({ onFetch, onManual, onClose }) {
               <p className="case-parties__hint u-mt-10">
                 By CNR, the case details, hearing dates and orders are taken from eCourts. Manually, you fill in the
                 details yourself; the hearing dates and orders are still taken from eCourts when the case is saved.
+                A case of a Juvenile Justice Board has no CNR and its case number is optional: add it manually and choose the board as the court.
               </p>
             </>
           )}

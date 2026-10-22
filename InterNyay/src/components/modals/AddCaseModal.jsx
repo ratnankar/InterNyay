@@ -20,7 +20,7 @@ import { hasCorporatePanelClient } from '../../utils/caseClients'
 import { partySubText, toFormParty } from '../../utils/caseParties'
 import { cnrCaseTitle, cnrDetailToForm } from '../../utils/cnrPrefill'
 import { getErrorMessage } from '../../utils/errorMessages'
-import { useCourts, useDefaultCourt, getDistricts, getCourtNosByBuilding, caseRoom, buildingWithFloor, hasNamedDistricts, isHighCourt } from '../../constants/courts'
+import { useCourts, useDefaultCourt, getDistricts, getCourtNosByBuilding, caseRoom, buildingWithFloor, hasNamedDistricts, isHighCourt, isJuvenileBoard } from '../../constants/courts'
 import { CHEQUE_BOUNCE_REASONS, WITHDRAWN_STATUS } from '../../constants/data'
 import CaseFeeSection from './CaseFeeSection'
 import FileNumbersModal from './FileNumbersModal'
@@ -775,6 +775,8 @@ export default function AddCaseModal() {
 
   // True when editing an existing case instead of adding one
   const isEditing = !!editingCaseId
+  // A Juvenile Justice Board has no CNR number: the field is not asked and nothing is fetched from eCourts
+  const juvenileBoard = isJuvenileBoard(newCaseForm.court)
   // Relief options depend on the case nature
   const reliefs = reliefOptions(newCaseForm.caseNature)
   // Case type options depend on the nature and relief
@@ -991,16 +993,25 @@ export default function AddCaseModal() {
               </Dropdown>
             </div>
             <div>
-              <label className="form-label">Case Number<Req /></label>
+              <label className="form-label">Case Number{!juvenileBoard && <Req />}</label>
               <input className="form-input" placeholder="e.g. W.P.(C) 1234/2024"
                 value={newCaseForm.caseNo} onChange={e => setNewCaseForm(f => ({ ...f, caseNo: e.target.value }))} />
             </div>
-            <div>
-              <label className="form-label">CNR Number<Req /></label>
-              <input className="form-input" placeholder="e.g. DLHC010012342024"
-                readOnly={!isEditing && newCaseForm.addMode === 'CNR'}
-                value={newCaseForm.cnrNo} onChange={e => setNewCaseForm(f => ({ ...f, cnrNo: e.target.value }))} />
-            </div>
+            {juvenileBoard ? (
+              <div>
+                <label className="form-label">CNR Number</label>
+                <p className="case-parties__hint">
+                  Not needed for a Juvenile Justice Board. The cause list number and orders are not fetched from eCourts for this case.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <label className="form-label">CNR Number<Req /></label>
+                <input className="form-input" placeholder="e.g. DLHC010012342024"
+                  readOnly={!isEditing && newCaseForm.addMode === 'CNR'}
+                  value={newCaseForm.cnrNo} onChange={e => setNewCaseForm(f => ({ ...f, cnrNo: e.target.value }))} />
+              </div>
+            )}
             <div>
               <label className="form-label">Filing Date</label>
               <ClearableDateInput className="form-input" 

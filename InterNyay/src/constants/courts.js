@@ -292,6 +292,13 @@ export function roomLabel(c) {
   return buildingWithFloor(building, floor)
 }
 
+// True when the whole court is marked as a Juvenile Justice Board in the court table. Such cases have no CNR number
+// and nothing is fetched from eCourts for them
+export const isJuvenileBoard = court => !!court && snapshot.rows.some(r => r.court === court && r.juvenileJusticeBoard)
+
+// Same for a case, or for the Add Case form (it has a court too)
+export const isJuvenileBoardCase = c => isJuvenileBoard(c?.court)
+
 // Courts above the district level (they have no district)
 export const isHighCourt = court => snapshot.highCourts.includes(court)
 

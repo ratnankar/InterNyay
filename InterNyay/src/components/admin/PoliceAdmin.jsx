@@ -302,7 +302,7 @@ function SubDivisionsView({ directory }) {
 
   // Show the sub-divisions a page at a time; starts again when the search or district changes
   const rowsStep = 25
-  const { visible: visibleRows, remaining: rowsRemaining, showMore: showMoreRows } =
+  const { visible: visibleRows, remaining: rowsRemaining, showMore: showMoreRows, step: showMoreRowsStep } =
     useSeeMore(visible, `${search}|${districtFilter}`, rowsStep)
 
   // Opens the editor with a blank form or the selected sub-division

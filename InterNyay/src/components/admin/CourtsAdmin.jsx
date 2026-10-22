@@ -111,9 +111,10 @@ export default function CourtsAdmin() {
   const tree = useMemo(() => {
     const courts = new Map()
     rows.forEach(r => {
-      if (!courts.has(r.court)) courts.set(r.court, { court: r.court, high: false, rowId: r.id, districts: new Map() })
+      if (!courts.has(r.court)) courts.set(r.court, { court: r.court, high: false, jjb: false, rowId: r.id, districts: new Map() })
       const c = courts.get(r.court)
       if (r.highCourt) c.high = true
+      if (r.juvenileJusticeBoard) c.jjb = true
       const dKey = r.district || ''
       if (!c.districts.has(dKey)) c.districts.set(dKey, { district: dKey, rowId: r.id, buildings: new Map() })
       const d = c.districts.get(dKey)
@@ -161,6 +162,17 @@ export default function CourtsAdmin() {
       await api.courts.setMahila(n.id, !n.mahilaCourt)
       await loadCourts(true)
       addToast(n.mahilaCourt ? `Court no. ${n.courtNo} is no longer a Mahila court` : `Court no. ${n.courtNo} marked as a Mahila court`)
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not update the court'), 'error')
+    }
+  }
+
+  // Marks or unmarks a whole court as a Juvenile Justice Board: its cases have no CNR and nothing is fetched from eCourts
+  async function toggleJuvenile(c) {
+    try {
+      await api.courts.setJuvenileJusticeBoard(c.court, !c.jjb)
+      await loadCourts(true)
+      addToast(c.jjb ? `${c.court} is no longer a Juvenile Justice Board` : `${c.court} marked as a Juvenile Justice Board`)
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not update the court'), 'error')
     }
@@ -291,8 +303,13 @@ export default function CourtsAdmin() {
           return (
             <section key={cKey} className="archive__year">
               <div className="courts-row courts-row--year">
-                <Head level="year" open={!!open[cKey]} label={c.high ? `${c.court} · High court` : c.court}
+                <Head level="year" open={!!open[cKey]} label={c.high ? `${c.court} · High court` : c.jjb ? `${c.court} · Juvenile Justice Board` : c.court}
                       count={c.count} onToggle={() => toggle(cKey)} />
+                {!c.high && (
+                  <button type="button" className="courts-btn courts-btn--gold courts-row__action"
+                          title={c.jjb ? 'Clear the Juvenile Justice Board mark' : 'Mark as a Juvenile Justice Board: cases have no CNR and nothing is fetched from eCourts'}
+                          onClick={() => toggleJuvenile(c)}>{c.jjb ? 'Unmark JJB' : 'Mark JJB'}</button>
+                )}
                 {c.rowId && <RemoveBtn label="Remove court" onClick={() => remove({ id: c.rowId, court: c.court }, 'court')} />}
               </div>
 

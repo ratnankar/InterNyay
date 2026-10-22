@@ -199,6 +199,8 @@ export const courts = {
   remove: (id, scope = 'row') => del(`/courts/${id}`, { params: { scope } }),
   // Mark a court room as a Mahila court (orders are not declared there) or clear the mark
   setMahila: (id, mahilaCourt) => put(`/courts/${id}/mahila`, { body: { mahilaCourt } }),
+  // Mark a whole court as a Juvenile Justice Board (no CNR, nothing fetched from eCourts) or clear the mark
+  setJuvenileJusticeBoard: (court, juvenileJusticeBoard) => put('/courts/jjb', { body: { court, juvenileJusticeBoard } }),
   // Moves a court no. to another building and district of the same court
   move:   (id, body) => put(`/courts/${id}/move`, { body }),
 }
