@@ -5,15 +5,19 @@ import com.internyay.dto.JudgeCourtNoDto;
 import com.internyay.entity.Case;
 import com.internyay.entity.Hearing;
 import com.internyay.entity.JudgeOnLeave;
+import com.internyay.entity.Holiday;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.HearingRepository;
+import com.internyay.repository.HolidayRepository;
 import com.internyay.repository.JudgeOnLeaveRepository;
 import com.internyay.repository.JudgeRepository;
 import com.internyay.util.CourtMatch;
+import com.internyay.util.HolidayCourts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +38,8 @@ public class HearingLeaveService {
     private final JudgeOnLeaveRepository leaveRepo;
     private final HearingRepository hearingRepo;
     private final RouseAvenueLeaveService rouseAvenueLeave;
+    private final HolidayRepository holidayRepo;
+    private final CourtService courtService;
 
     // Per request cache so the same court isn't queried again for every case
     private class Lookup {
@@ -93,7 +99,8 @@ public class HearingLeaveService {
             String judge = h.getJudgeName() != null
                     ? h.getJudgeName()
                     : judgeNameFor(c, lookup).orElse(null);
-            Integer causeListNo = causeListNoFor(c, date);
+            // The case row only holds the number of its next date, a heard hearing keeps its own
+            Integer causeListNo = h.getCauseListNo() != null ? h.getCauseListNo() : causeListNoFor(c, date);
 
             if (judge != null) {
                 result.add(HearingLeaveDto.sitting(c, date, judge, causeListNo));
@@ -154,7 +161,8 @@ public class HearingLeaveService {
             return Optional.empty();
         }
 
-        List<JudgeOnLeave> leaves = lookup.leavesOn(c, date);
+        // Same rule as the Judges on Leave page: leave doesn't count on a Sunday or on a holiday of the judge's court
+        List<JudgeOnLeave> leaves = leaveCounts(c, date) ? lookup.leavesOn(c, date) : List.of();
 
         for (JudgeCourtNoDto judge : inRoom) {
             for (JudgeOnLeave leave : leaves) {
@@ -174,5 +182,21 @@ public class HearingLeaveService {
                         : ", none matching by name: " + leaves.stream().map(JudgeOnLeave::getName).toList());
 
         return Optional.of(HearingLeaveDto.sitting(c, date, sitting.judgeName(), causeListNo));
+    }
+
+    // Whether leave counts on this date for the case's court. Never on a Sunday; a District holiday removes District Court
+    // judges, a High Court holiday removes High Court judges, and a holiday for both removes everyone
+    private boolean leaveCounts(Case c, LocalDate date) {
+
+        if (date.getDayOfWeek() == DayOfWeek.SUNDAY) return false;
+
+        Optional<Holiday> holiday = holidayRepo.findByDate(date);
+        if (holiday.isEmpty()) return true;
+
+        String applies = HolidayCourts.orDefault(holiday.get().getCourtType()).toUpperCase();
+        if (HolidayCourts.BOTH.equals(applies)) return false;
+
+        boolean highCourt = courtService.highCourt(c.getCourt()).isPresent();
+        return HolidayCourts.HIGH.equals(applies) ? !highCourt : highCourt;
     }
 }

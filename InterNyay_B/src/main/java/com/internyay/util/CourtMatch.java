@@ -1,6 +1,8 @@
 package com.internyay.util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -73,24 +75,58 @@ public final class CourtMatch {
     // True when both names are probably the same judge
     public static boolean sameJudge(String a, String b) {
 
-        // Different numerals mean different judges
+        // Roman numerals tell judges with the same name apart: both must carry the same one, or neither
         String numeralA = numeralSuffix(a);
         String numeralB = numeralSuffix(b);
-        if (numeralA != null && numeralB != null && !numeralA.equals(numeralB)) return false;
+        if (!java.util.Objects.equals(numeralA, numeralB)) return false;
 
-        // Compare the names word by word without titles
-        Set<String> first = nameTokens(a, numeralA);
-        Set<String> second = nameTokens(b, numeralB);
+        List<String> first = nameTokens(a, numeralA);
+        List<String> second = nameTokens(b, numeralB);
         if (first.isEmpty() || second.isEmpty()) return false;
 
-        // Every word of the shorter name must be found in the longer one
-        Set<String> small = first.size() <= second.size() ? first : second;
-        Set<String> large = small == first ? second : first;
+        List<String> small = first.size() <= second.size() ? first : second;
+        List<String> large = small == first ? second : first;
 
-        // A single word only matches when both names are the same length
-        if (small.size() < 2 && small.size() != large.size()) return false;
+        // A surname is never enough: with two or more words, at least two full words (not initials) must be shared.
+        // "R. Kumar" or "Akshay Kumar" are not "Rajesh Kumar". A one-word name only matches an identical one-word name.
+        long fullWordsShared = small.stream().filter(t -> t.length() > 1 && large.contains(t)).count();
+        if (small.size() == 1) {
+            if (large.size() != 1 || small.get(0).length() < 2 || !small.get(0).equals(large.get(0))) return false;
+        } else if (fullWordsShared < 2) {
+            return false;
+        }
 
-        return small.stream().allMatch(t -> large.stream().anyMatch(o -> tokenMatch(t, o)));
+        // Same number of words only: every word pairs with exactly one word of the other name (any order)
+        if (small.size() == large.size()) return pairsUp(small, large);
+
+        // Names with a different number of words are different judges
+        return false;
+    }
+
+    // Every word of the first list pairs with a different word of the second list
+    private static boolean pairsUp(List<String> first, List<String> second) {
+        List<String> left = new ArrayList<>(second);
+        for (String t : first) {
+            String hit = left.stream().filter(o -> tokenMatch(t, o)).findFirst().orElse(null);
+            if (hit == null) return false;
+            left.remove(hit);
+        }
+        return true;
+    }
+
+    // Type-ahead search: every word typed must start a different word of the name, in any order, ignoring titles.
+    // "Ms. Kanika Handa" finds "Kanika Handa", and "handa kan" finds it too
+    public static boolean nameSearchMatches(String query, String name) {
+        List<String> typed = nameTokens(query, null);
+        if (typed.isEmpty() || name == null) return false;
+
+        List<String> left = new ArrayList<>(nameTokens(name, numeralSuffix(name)));
+        for (String t : typed) {
+            String hit = left.stream().filter(w -> w.startsWith(t)).findFirst().orElse(null);
+            if (hit == null) return false;
+            left.remove(hit);
+        }
+        return true;
     }
 
     // Roman numeral at the end of the name, if any
@@ -102,14 +138,22 @@ public final class CourtMatch {
     }
 
     // Lower case words of the name without titles and the numeral
-    private static Set<String> nameTokens(String name, String numeralSuffix) {
-        if (name == null) return Set.of();
+    private static List<String> nameTokens(String name, String numeralSuffix) {
+        if (name == null) return List.of();
 
-        Set<String> tokens = Arrays.stream(name.toLowerCase(Locale.ROOT).split("[^a-z]+"))
+        // Accents are dropped so "Sarita" and "Sarită" compare the same
+        String plain = java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+
+        List<String> tokens = Arrays.stream(plain.toLowerCase(Locale.ROOT).split("[^a-z]+"))
                 .filter(s -> !s.isEmpty() && !NAME_NOISE.contains(s))
-                .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        if (numeralSuffix != null) tokens.remove(numeralSuffix);
+        // Only the trailing numeral is removed, not a name that happens to look like one
+        if (numeralSuffix != null && !tokens.isEmpty()
+                && tokens.get(tokens.size() - 1).equals(numeralSuffix)) {
+            tokens.remove(tokens.size() - 1);
+        }
         return tokens;
     }
 

@@ -230,6 +230,7 @@ public class CaseService {
                 hearingDays.assertAllowed(nextHearing, userId, c.getId());
                 // The date being replaced stays in the hearing history
                 if (nextHearing != null) hearingService.recordHeard(c, c.getNextHearing(), userId);
+                hearingService.keepCauseListNo(c, userId);
                 c.setCauseListNo(null);
                 c.setListingDate(null);
             }

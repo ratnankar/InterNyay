@@ -27,8 +27,8 @@ public interface JudgeOnLeaveRepository
     @Query("""
         SELECT j
         FROM JudgeOnLeave j
-        WHERE (:court IS NULL OR j.court = :court)
-        AND (:district IS NULL OR j.district = :district)
+        WHERE (:court IS NULL OR LOWER(j.court) = LOWER(:court))
+        AND (:district IS NULL OR LOWER(j.district) = LOWER(:district))
         AND j.leaveFrom <= :today
         AND j.leaveTo >= :today
         AND j.hiddenByAdmin = false
@@ -44,8 +44,8 @@ public interface JudgeOnLeaveRepository
     @Query("""
         SELECT j
         FROM JudgeOnLeave j
-        WHERE j.court = :court
-        AND (:district IS NULL OR j.district = :district)
+        WHERE LOWER(j.court) = LOWER(:court)
+        AND (:district IS NULL OR LOWER(j.district) = LOWER(:district))
         AND j.leaveFrom <= :date
         AND j.leaveTo >= :date
         AND j.hiddenByAdmin = false
@@ -60,8 +60,8 @@ public interface JudgeOnLeaveRepository
     @Query("""
         SELECT j
         FROM JudgeOnLeave j
-        WHERE (:court IS NULL OR j.court = :court)
-        AND (:district IS NULL OR j.district = :district)
+        WHERE (:court IS NULL OR LOWER(j.court) = LOWER(:court))
+        AND (:district IS NULL OR LOWER(j.district) = LOWER(:district))
         AND j.leaveFrom > :today
         AND j.hiddenByAdmin = false
         ORDER BY j.leaveFrom ASC
@@ -76,8 +76,8 @@ public interface JudgeOnLeaveRepository
     @Query("""
         SELECT j
         FROM JudgeOnLeave j
-        WHERE (:court IS NULL OR j.court = :court)
-        AND (:district IS NULL OR j.district = :district)
+        WHERE (:court IS NULL OR LOWER(j.court) = LOWER(:court))
+        AND (:district IS NULL OR LOWER(j.district) = LOWER(:district))
         AND j.leaveTo < :today
         AND j.hiddenByAdmin = false
         ORDER BY j.leaveFrom DESC, j.name ASC
@@ -92,8 +92,8 @@ public interface JudgeOnLeaveRepository
     @Query("""
         SELECT j
         FROM JudgeOnLeave j
-        WHERE (:court IS NULL OR j.court = :court)
-        AND (:district IS NULL OR j.district = :district)
+        WHERE (:court IS NULL OR LOWER(j.court) = LOWER(:court))
+        AND (:district IS NULL OR LOWER(j.district) = LOWER(:district))
         ORDER BY j.leaveFrom DESC, j.name ASC
     """)
     List<JudgeOnLeave> findAllForAdmin(

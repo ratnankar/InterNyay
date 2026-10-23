@@ -103,7 +103,7 @@ public class Case {
     // Date of the next hearing
     private LocalDate nextHearing;
 
-    // Serial number on the cause list, fetched from eCourts
+    // Serial number on the cause list, read from the Delhi High Court PDFs or the district cause list relay
     @Column(name = "listing_no")
     private Integer causeListNo;
 

@@ -79,7 +79,7 @@ All times are India time (`Asia/Kolkata`). Each can be changed in `application.p
 | Job | Default | Purpose |
 | --- | --- | --- |
 | `JudgeLeaveScheduler` | every hour | Reads the district court leave pages (`judgeleave.scrape.cron`) |
-| `CauseListScheduler` | 18:00 daily | Fetches cause list numbers from eCourts (`ecourts.api.cron`) |
+| `CauseListScheduler` | 19:18 and 21:30 daily | Fetches Delhi High Court and Supreme Court cause list numbers from the published PDFs (`ecourts.api.cron`, `causelist.sci.cron`) |
 | `NextHearingSyncScheduler` | 18:00 daily | Updates next hearing dates from eCourts (`ecourts.api.next-hearing-cron`) |
 | `WhatsAppReminderScheduler` | 10:00 daily | Sends hearing and payment reminders (`whatsapp.reminder.cron`) |
 

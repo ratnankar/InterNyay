@@ -128,12 +128,17 @@ public class GlobalExceptionHandler {
                     ? HttpStatus.NOT_FOUND
                     : HttpStatus.INTERNAL_SERVER_ERROR;
 
+        if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
+            log.error("Unhandled runtime error", ex);
+        }
+
         return ResponseEntity.status(status).body(Map.of("message", message));
     }
 
     // Last fallback for anything not handled above
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleAny(Exception ex) {
+        log.error("Unhandled error", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("message", msg(ex, ex.getClass().getSimpleName())));
     }

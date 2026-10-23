@@ -42,6 +42,22 @@ public interface HearingRepository extends JpaRepository<Hearing, Long> {
         """)
     List<Hearing> findWithCaseByUserAndDate(Long userId, LocalDate date);
 
+    // Hearings of every user on a date, with the case and its court row loaded (district cause list relay)
+    @Query("""
+        SELECT h FROM Hearing h
+        JOIN FETCH h.legalCase c
+        JOIN FETCH c.courtPlace
+        WHERE h.date = :date
+        """)
+    List<Hearing> findAllWithCaseByDate(LocalDate date);
+
+    // Saves the cause list number on the hearings of those cases on that date
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE hearings SET listing_no = :causeListNo WHERE `date` = :date AND case_id IN (:caseIds)",
+            nativeQuery = true)
+    int saveCauseListNo(Integer causeListNo, LocalDate date, List<Long> caseIds);
+
     // One hearing with its case (and the case's court row) loaded, so no lazy loading is needed afterwards
     @Query("""
         SELECT h FROM Hearing h

@@ -61,18 +61,21 @@ public class JudgeService {
         return judgeRepo.findByFilters(blankToNull(court), blankToNull(district));
     }
 
-    // Type-ahead: every typed word must appear in the name
+    // Type-ahead by the shared name rules: titles, case, dots and word order don't matter, and every typed word
+    // has to start a different word of the name. The same judge written another way ranks first.
     public List<Judge> search(String q, String court, String district, int limit) {
         String text = blankToNull(q);
         if (text == null) return List.of();
 
         String phrase = text.toLowerCase();
-        List<String> tokens = Arrays.asList(phrase.split("\\s+"));
 
-        return judgeRepo.searchByName("%" + tokens.get(0) + "%", blankToNull(court), blankToNull(district))
+        return judgeRepo.searchByName("%", blankToNull(court), blankToNull(district))
                 .stream()
-                .filter(j -> j.getName() != null && containsAll(j.getName().toLowerCase(), tokens))
-                .sorted(Comparator.comparing((Judge j) -> !j.getName().toLowerCase().startsWith(phrase)))
+                .filter(j -> j.getName() != null
+                        && (CourtMatch.nameSearchMatches(text, j.getName()) || j.getName().toLowerCase().contains(phrase)))
+                .sorted(Comparator
+                        .comparing((Judge j) -> !CourtMatch.sameJudge(text, j.getName()))
+                        .thenComparing(j -> !j.getName().toLowerCase().startsWith(phrase)))
                 .limit(Math.max(1, Math.min(limit, 50)))
                 .toList();
     }

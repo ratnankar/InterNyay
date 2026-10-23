@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
 
-// Fetches cause list numbers from eCourts on a schedule
+// Fetches Delhi High Court and Supreme Court cause list numbers from the published PDFs on a schedule
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -27,6 +27,13 @@ public class CauseListScheduler {
     @Scheduled(cron = "${ecourts.api.cron:0 18 19 * * *}", zone = "Asia/Kolkata")
     public void fetchTomorrowsCauseListNos() {
         run("7:18 PM run", () -> service.fetchForTomorrow());
+    }
+
+    // The Supreme Court publishes its list later in the evening (around 8-9 PM), so it gets a second run.
+    // Only cases that still have no number are looked up again
+    @Scheduled(cron = "${causelist.sci.cron:0 30 21 * * *}", zone = "Asia/Kolkata")
+    public void fetchMissingCauseListNosLater() {
+        run("9:30 PM run (Supreme Court)", () -> service.fetchMissingForTomorrow());
     }
 
     // Catch up on startup in case the app was down at the scheduled time

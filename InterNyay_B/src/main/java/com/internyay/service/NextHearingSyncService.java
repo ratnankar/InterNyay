@@ -109,6 +109,7 @@ public class NextHearingSyncService {
 
             if (fetched == null || fetched.equals(c.getNextHearing())) continue;
 
+            hearingService.keepCauseListNo(c, c.getUser().getId());
             c.setCauseListNo(null);
             c.setListingDate(null);
             c.setNextHearing(fetched);

@@ -28,6 +28,9 @@ public class HearingDto {
 
     public String judgeName;
 
+    // Serial number on that day's cause list, when it was read
+    public Integer causeListNo;
+
     // True when orders are not declared for this hearing's court or case type, so none can be fetched from eCourts
     public boolean ordersNotDeclared;
     public String ordersNotDeclaredReason;
@@ -52,6 +55,7 @@ public class HearingDto {
                 .orderDue(OrderCutoff.passed(h.getDate()))
                 .noOrderOnRecord(h.getOrderDocId() == null && Boolean.TRUE.equals(h.getNoOrderOnRecord()))
                 .judgeName(h.getJudgeName())
+                .causeListNo(h.getCauseListNo())
                 .caseId(h.getLegalCase().getId())
                 .caseTitle(h.getLegalCase().getTitle())
                 .caseNo(h.getLegalCase().getCaseNo())

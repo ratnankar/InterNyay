@@ -54,8 +54,9 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     // Cases of a user that are listed on a date
     List<Case> findByUser_IdAndNextHearing(Long userId, LocalDate nextHearing);
 
-    // Loads clients and user together to avoid extra queries in the reminder jobs
-    @EntityGraph(attributePaths = {"client", "additionalClients", "user"})
+    // Loads clients, user and court together: the reminder and cause list jobs run outside a session,
+    // and an entity graph makes every attribute it does not list lazy, so the court must be named here
+    @EntityGraph(attributePaths = {"client", "additionalClients", "user", "courtPlace"})
     List<Case> findByNextHearing(LocalDate nextHearing);
 
     // Cases on a date that have a CNR number, so eCourts can be checked

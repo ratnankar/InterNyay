@@ -44,6 +44,10 @@ public class Hearing {
     // File name eCourts uses for this hearing's order (e.g. order-4.pdf), read from the case-detail API
     private String ecourtsOrderFile;
 
+    // Serial number this hearing had on the cause list of its date (the case row only holds the number of its next date)
+    @Column(name = "listing_no")
+    private Integer causeListNo;
+
     // Judge who heard the matter
     private String judgeName;
 

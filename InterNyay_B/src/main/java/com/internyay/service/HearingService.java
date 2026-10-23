@@ -159,7 +159,8 @@ public class HearingService {
         }
 
         if (req.getNextHearing() != null && !req.getNextHearing().equals(c.getNextHearing())) {
-            // A new date invalidates the old cause list number and listing date
+            // A new date invalidates the old cause list number and listing date, the hearing keeps the old one
+            keepCauseListNo(c, userId);
             c.setCauseListNo(null);
             c.setListingDate(null);
             c.setNextHearing(req.getNextHearing());
@@ -184,6 +185,23 @@ public class HearingService {
                 .user(userRepo.getReferenceById(userId))
                 .build());
         renumberOrders(legalCase.getId(), userId);
+    }
+
+    // The cause list number on a case row belongs to the date it was listed for and is cleared when the case moves on.
+    // Call this before clearing it: the number goes to the hearing of that date (created when missing), so it is kept
+    @Transactional
+    public void keepCauseListNo(Case legalCase, Long userId) {
+        Integer no = legalCase.getCauseListNo();
+        LocalDate listed = legalCase.getListingDate();
+        if (no == null || listed == null) return;
+
+        recordHeard(legalCase, listed, userId);
+        hearingRepo.findByLegalCase_IdAndUser_IdAndDate(legalCase.getId(), userId, listed).ifPresent(h -> {
+            if (h.getCauseListNo() == null) {
+                h.setCauseListNo(no);
+                hearingRepo.save(h);
+            }
+        });
     }
 
     // A case taken out of Withdrawn loses the Withdrawn mark on its hearing history, the dates stay

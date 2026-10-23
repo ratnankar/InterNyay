@@ -11,6 +11,9 @@ public interface HolidayRepository extends JpaRepository<Holiday, Long> {
     // All holidays by date
     List<Holiday> findAllByOrderByDateAsc();
 
+    // Holiday on a date, if any
+    java.util.Optional<Holiday> findByDate(java.time.LocalDate date);
+
     // Used to block two holidays on the same date
     boolean existsByDate(java.time.LocalDate date);
 }
