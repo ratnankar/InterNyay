@@ -16,6 +16,7 @@ import CourtsAdmin from '../components/admin/CourtsAdmin'
 import BailRosterAdmin from '../components/admin/BailRosterAdmin'
 import PoliceAdmin from '../components/admin/PoliceAdmin'
 import JudgeLeaveAdmin from '../components/admin/JudgeLeaveAdmin'
+import CauseListRelay from '../components/admin/CauseListRelay'
 import DutyMagistrateAdmin from '../components/admin/DutyMagistrateAdmin'
 import SuccessorCourts from '../components/common/SuccessorCourts'
 import DrtJurisdictionAdmin from '../components/admin/DrtJurisdictionAdmin'
@@ -81,6 +82,9 @@ const TAB_GROUPS = [
   ] },
   { id: 'leave', icon: 'beach', label: 'Judges on Leave', tabs: [
     { id: 'leave', label: 'Judges on Leave' },
+  ] },
+  { id: 'causelist', icon: 'clipboard', label: 'Cause List', tabs: [
+    { id: 'causelist', label: 'District Cause List' },
   ] },
   { id: 'updates', icon: 'megaphone', label: 'Updates', tabs: [
     { id: 'notifications', label: 'Notifications' },
@@ -1447,6 +1451,8 @@ export default function Admin() {
       {tab === 'judges' && <JudgesAdmin key={refreshKey} />}
 
       {tab === 'leave' && <JudgeLeaveAdmin key={refreshKey} />}
+
+      {tab === 'causelist' && <CauseListRelay key={refreshKey} />}
 
       {tab === 'bail' && <BailRosterAdmin key={refreshKey} />}
 

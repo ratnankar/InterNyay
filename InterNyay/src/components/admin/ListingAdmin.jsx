@@ -25,6 +25,7 @@ import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
 import ClearableDateInput from '../common/ClearableDateInput'
 import PlaceGroupedGrid, { sortByPlace } from './PlaceGroupedGrid'
+import { nameSearchMatches } from '../../utils/judgeMatch'
 // Patterns used to check the court email and the virtual court link
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const LINK_PATTERN = /^https?:\/\/\S+$/
@@ -132,6 +133,7 @@ export default function ListingAdmin() {
       return [j.name, j.designation, j.courtRoomNo, ...(j.courtNoHistory || []).map(r => r.courtRoomNo), j.building, j.floor, j.court, j.district, j.jurisdiction, j.courtReaderName]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
+        || (!j.vacant && nameSearchMatches(search, j.name))
     }))
   }, [judges, search, courtFilter, view])
 

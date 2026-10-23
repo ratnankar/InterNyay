@@ -18,6 +18,7 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import SearchInput from '../common/SearchInput'
 import ClearableDateInput from '../common/ClearableDateInput'
+import { nameSearchMatches } from '../../utils/judgeMatch'
 
 const issuedDate = row => row.issuedOn
 
@@ -120,6 +121,9 @@ export default function BailRosterAdmin() {
       ]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
+      // Judge names also match by the shared name rules (titles, word order)
+      || [...(r.judicialOfficers || []).map(j => j.name), r.linkOneJudge?.name, r.linkTwoJudge?.name]
+        .some(n => n && nameSearchMatches(search, n))
     )
   }, [rows, search])
 

@@ -14,6 +14,7 @@ import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
 import ClearableDateInput from '../common/ClearableDateInput'
+import { nameSearchMatches } from '../../utils/judgeMatch'
 
 const leaveStartDate = r => r.leaveFrom
 
@@ -80,7 +81,8 @@ export default function JudgeLeaveAdmin() {
     if (!q) return rows
     return rows.filter(r =>
       [r.name, r.reason, r.court, r.district]
-        .some(v => orEmpty(v).toLowerCase().includes(q)))
+        .some(v => orEmpty(v).toLowerCase().includes(q))
+      || nameSearchMatches(search, r.name))
   }, [rows, search])
 
   // Leave happening now first, then upcoming leave soonest first

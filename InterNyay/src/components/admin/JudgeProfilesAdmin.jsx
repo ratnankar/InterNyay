@@ -13,6 +13,7 @@ import { getErrorMessage } from '../../utils/errorMessages'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
 import PlaceGroupedGrid, { sortByPlace } from './PlaceGroupedGrid'
+import { nameSearchMatches } from '../../utils/judgeMatch'
 
 // Admin screen for the judges themselves: name and photo only.
 // Where a judge sits (court, building, court no., contacts ...) is managed in the Listing section
@@ -55,7 +56,7 @@ export default function JudgeProfilesAdmin() {
       if (view === 'multi' && j.courtCount < 2) return false
       if (courtFilter && !(j.courtNames || []).includes(courtFilter)) return false
       if (!q) return true
-      return [j.name, ...j.courts].some(v => v.toLowerCase().includes(q))
+      return [j.name, ...j.courts].some(v => v.toLowerCase().includes(q)) || nameSearchMatches(search, j.name)
     })
   }, [judges, search, view, courtFilter])
 

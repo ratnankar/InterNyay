@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Icon from '../common/Icon'
 import SearchInput from '../common/SearchInput'
+import { nameSearchMatches } from '../../utils/judgeMatch'
 
 // Name with spaces collapsed and lower case
 const norm = (name) => String(name || '').trim().replace(/\s+/g, ' ').toLowerCase()
@@ -24,7 +25,7 @@ export default function JudgeProfilePicker({ judges, value, onChange, excludeIds
     // Newest first: a judge added a moment ago (highest id) is at the top of the list
     return judges
       .filter(j => !excludeIds.includes(j.id))
-      .filter(j => !q || norm(j.name).includes(q))
+      .filter(j => !q || norm(j.name).includes(q) || nameSearchMatches(applied, j.name))
       .sort((a, b) => Number(b.id) - Number(a.id))
   }, [judges, applied, excludeIds])
 

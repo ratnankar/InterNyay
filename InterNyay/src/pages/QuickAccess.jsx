@@ -30,6 +30,7 @@ import {
   buildSourceNote,
 } from '../utils/policeDirectory'
 import SuggestInput from '../components/common/SuggestInput'
+import { nameSearchMatches, sameJudge } from '../utils/judgeMatch'
 import SearchInput from '../components/common/SearchInput'
 import PdfFrame from '../components/common/PdfFrame'
 import { printPdfUrl } from '../utils/printPdf'
@@ -179,9 +180,15 @@ function GroupHeader({ level, open, onToggle, count, nested, children }) {
 }
 
 // Quick Access: judges list for the selected court and district, with search
-function JudgesList({ initialQuery }) {
+function JudgesList({ initialQuery, jumpName }) {
   const { court, setCourt, district, setDistrict, ready } = useCourtSelection()
   const [query,     setQuery]     = useState(initialQuery || '')
+  // Coming from "View in Judges List": look in every court, since the judge may sit in a court other than the preferred one
+  useEffect(() => {
+    if (!jumpName) return
+    setCourt('All')
+    setDistrict('All')
+  }, [jumpName, setCourt, setDistrict])
   const [judges,    setJudges]    = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
@@ -215,12 +222,16 @@ function JudgesList({ initialQuery }) {
     const q = query.trim().toLowerCase()
     const pool = sortByPlace(vacantOnly ? judges.filter(j => j.vacant) : judges)
     if (!q) return pool
+    // Untouched name from "View in Judges List": only that judge, by the same rules as the leave matching
+    if (jumpName && query === jumpName) return pool.filter(j => !j.vacant && sameJudge(jumpName, j.name))
     return pool.filter(j =>
       [j.vacant ? 'vacant no judge' : j.name, j.designation, j.courtRoomNo, j.building, j.floor, j.jurisdiction, j.courtReaderName, j.courtEmail, j.vcMeetingId]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
+      // Names also match whatever the title, spelling of the dots or word order ("Ms. Kanika Handa", "handa kanika")
+      || (!j.vacant && nameSearchMatches(query, j.name))
     )
-  }, [judges, query, vacantOnly])
+  }, [judges, query, vacantOnly, jumpName])
 
   // Number of judges per group over the whole list, not only the part shown so far
   const counts = useMemo(() => {
@@ -1419,7 +1430,7 @@ export default function QuickAccess() {
           </div>
           {/* Content of the open section */}
           <div className="qa-panel__body">
-            {active === 'list'       && <JudgesList initialQuery={judgeQuery} />}
+            {active === 'list'       && <JudgesList initialQuery={judgeQuery} jumpName={judgeQuery} />}
             {active === 'successor'  && <SuccessorCourts />}
             {active === 'bail'       && <BailRoster />}
             {active === 'magistrate' && <DutyMagistrate />}

@@ -19,6 +19,7 @@ import { holidayCourtClass, holidayCourtLabel } from '../constants/holidays'
 import { leavesByDate } from '../utils/leaveCounts'
 import ModalPortal from '../components/common/ModalPortal'
 import useSessionState from '../hooks/useSessionState'
+import { nameSearchMatches } from '../utils/judgeMatch'
 
 // Each archive entry is dated by the first day of the month it stands for
 const archiveEntryDate = e => e.monthStart
@@ -446,6 +447,7 @@ function JudgesOnLeaveBody({ onSelectJudge }) {
     return [j.name, j.court, j.district, j.reason]
       .filter(Boolean)
       .some(v => v.toLowerCase().includes(q))
+      || nameSearchMatches(query, j.name)
   }, [query])
 
   // Build a row renderer for a status ('today' or 'upcoming'); clicking or pressing Enter opens the detail popup

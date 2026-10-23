@@ -1,0 +1,55 @@
+.relay {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.relay__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 460px;
+  padding: 18px;
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.relay__title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--color-navy);
+}
+
+.relay__progress {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.relay__image {
+  align-self: flex-start;
+  max-width: 100%;
+  background: var(--color-surface-alt);
+  border: var(--border-input);
+  border-radius: var(--border-radius-sm);
+}
+
+.relay__input {
+  max-width: 220px;
+  letter-spacing: 2px;
+  font-family: var(--font-mono);
+}
+
+.relay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.relay__log {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--color-text-mid);
+}

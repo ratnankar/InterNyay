@@ -790,6 +790,14 @@ export const admin = {
     refresh:   ()             => post('/admin/judges-on-leave/refresh'),
   },
 
+  causeListRelay: {
+    start:   (date)         => post('/admin/cause-list-relay/start', { params: { date } }),
+    refreshDate: (date)     => post('/admin/cause-list-relay/refresh-date', { params: { date } }),
+    answer:  (id, captcha)  => post(`/admin/cause-list-relay/${id}/answer`, { body: { captcha } }),
+    skip:    (id)           => post(`/admin/cause-list-relay/${id}/skip`),
+    refresh: (id)          => post(`/admin/cause-list-relay/${id}/refresh`),
+  },
+
   // Messages sent through the Contact Us form
   contactMessages: {
     list:        (status)      => get('/admin/contact-messages', { params: { status } }),

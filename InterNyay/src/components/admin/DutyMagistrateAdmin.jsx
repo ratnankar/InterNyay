@@ -17,6 +17,7 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import SearchInput from '../common/SearchInput'
 import ClearableDateInput from '../common/ClearableDateInput'
+import { nameSearchMatches } from '../../utils/judgeMatch'
 
 const issuedDate = row => row.issuedOn
 
@@ -93,6 +94,7 @@ export default function DutyMagistrateAdmin() {
       [r.judgeName, r.designation, r.courtRoomNo, r.court, r.district]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
+      || nameSearchMatches(search, r.judgeName)
     )
   }, [rows, search])
 
