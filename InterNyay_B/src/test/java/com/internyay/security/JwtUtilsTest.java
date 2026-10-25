@@ -80,6 +80,24 @@ class JwtUtilsTest {
     }
 
     @Test
+    void freshTokenIsNotRenewedButAnOldOneIs() {
+        ReflectionTestUtils.setField(jwt, "refreshAfterMs", 1_000L);
+        String token = jwt.generateToken(user);
+        assertThat(jwt.needsRefresh(token)).isFalse();
+
+        ReflectionTestUtils.setField(jwt, "refreshAfterMs", 1L);
+        try { Thread.sleep(20); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+        assertThat(jwt.needsRefresh(token)).isTrue();
+    }
+
+    @Test
+    void neverExpiringTokensAreNotRenewed() {
+        JwtUtils forever = jwtWith(SECRET, 0L);
+        ReflectionTestUtils.setField(forever, "refreshAfterMs", 1L);
+        assertThat(forever.needsRefresh(forever.generateToken(user))).isFalse();
+    }
+
+    @Test
     void zeroExpirationMeansTheTokenNeverExpires() {
         JwtUtils forever = jwtWith(SECRET, 0L);
         String token = forever.generateToken(user);

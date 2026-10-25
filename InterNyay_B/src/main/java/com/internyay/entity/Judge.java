@@ -40,6 +40,8 @@ public class Judge {
 
     // Video conferencing details
     private String vcMeetingId;
+    // Court code of the listing, optional
+    private String courtCode;
     private String courtEmail;
 
     @Column(length = 1000)

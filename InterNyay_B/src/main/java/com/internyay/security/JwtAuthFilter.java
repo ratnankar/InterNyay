@@ -21,6 +21,9 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    // Response header that carries a renewed token (the frontend swaps it in)
+    public static final String REFRESH_HEADER = "X-Refreshed-Token";
+
     // Creates and checks tokens
     private final JwtUtils jwtUtils;
     private final UserDetailsService userDetailsService;
@@ -45,6 +48,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(auth);
+                        // Sliding session: hand back a fresh token so an active user is never signed out
+                        if (jwtUtils.needsRefresh(token)) {
+                            response.setHeader(REFRESH_HEADER, jwtUtils.generateToken(userDetails));
+                        }
                     }
                 }
             // Bad or expired token, treat the request as not logged in

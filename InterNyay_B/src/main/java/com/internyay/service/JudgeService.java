@@ -108,6 +108,21 @@ public class JudgeService {
         return names;
     }
 
+    // The portal court code (CL_court_no) of the live listing in this court room, or null when the listing has none
+    // or the room is shared by listings with different codes (then the code cannot tell them apart)
+    public String courtCodeFor(String court, String district, String courtNo) {
+        if (court == null || CourtMatch.courtNo(courtNo) == null) return null;
+
+        Set<String> codes = judgeRepo.findByFilters(blankToNull(court), blankToNull(district)).stream()
+                .filter(j -> CourtMatch.sameCourtNo(courtNo, j.getCourtRoomNo()))
+                .map(j -> blankToNull(j.getCourtCode()))
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .collect(Collectors.toSet());
+
+        return codes.size() == 1 ? codes.iterator().next() : null;
+    }
+
     // True when the name contains every token
     private boolean containsAll(String name, List<String> tokens) {
         return tokens.stream().allMatch(name::contains);
@@ -443,6 +458,7 @@ public class JudgeService {
     public Judge create(JudgeRequest req) {
         Court place = requirePlace(req);
         requireSeatFree(place, null);
+        requireCourtCodeFree(place, req.getCourtCode(), null);
 
         JudgeProfile judge;
         if (req.getJudgeId() != null) {
@@ -468,12 +484,25 @@ public class JudgeService {
         Court place = requirePlace(req);
         Judge listing = getActive(id);
         if (placeChanged(listing, place)) requireSeatFree(place, id);
+        requireCourtCodeFree(place, req.getCourtCode(), id);
         applyText(listing, req, place);
         listing.setUpdatedAt(LocalDateTime.now());
         Judge saved = judgeRepo.save(listing);
         trackCourtNo(saved, req.getCourtNoFrom(), Boolean.TRUE.equals(req.getCourtNoCorrection()));
         syncDutyMagistrates(saved);
         return saved;
+    }
+
+    // Every listing of a court and district has its own court code: the code cannot already belong to another active listing there
+    private void requireCourtCodeFree(Court place, String courtCode, Long ignoreId) {
+        String code = blankToNull(courtCode);
+        if (code == null) return;
+        for (Judge other : judgeRepo.findByCourtAndDistrictAndCourtCodeIgnoreCaseAndActiveTrue(place.getCourt(), place.getDistrict(), code)) {
+            if (!other.getId().equals(ignoreId)) {
+                throw new IllegalArgumentException("Court code " + code + " is already used by another listing of this court"
+                        + (other.getCourtRoomNo() == null ? "" : " (Court No. " + other.getCourtRoomNo() + ")"));
+            }
+        }
     }
 
     // True when the court, building or court no. of the place is not the judge's current one
@@ -699,6 +728,7 @@ public class JudgeService {
         judge.setBuilding(blankToNull(place.getBuilding()));
         judge.setFloor(blankToNull(place.getFloor()));
         judge.setVcMeetingId(blankToNull(req.getVcMeetingId()));
+        judge.setCourtCode(blankToNull(req.getCourtCode()));
         judge.setCourtEmail(blankToNull(req.getCourtEmail()));
         judge.setVirtualCourtLink(blankToNull(req.getVirtualCourtLink()));
         judge.setCourtReaderName(blankToNull(req.getCourtReaderName()));

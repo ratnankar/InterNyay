@@ -66,5 +66,8 @@ public interface JudgeRepository extends JpaRepository<Judge, Long> {
     // True when a judge has any listing, removed ones included
     boolean existsByProfileId(Long profileId);
 
+    // Active listings of a court and district that already use this court code
+    List<Judge> findByCourtAndDistrictAndCourtCodeIgnoreCaseAndActiveTrue(String court, String district, String courtCode);
+
     long countByActiveTrue();
 }

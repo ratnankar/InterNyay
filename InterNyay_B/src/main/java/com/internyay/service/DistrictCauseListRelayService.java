@@ -273,10 +273,28 @@ public class DistrictCauseListRelayService {
         // court room, so the court room is matched through the judge Quick Access has for it
         String judgeName = judgeNameOf(task);
 
+        // The court code saved on the Quick Access listing is the portal's own court value, so it is tried first
+        String storedCode = judgeService.courtCodeFor(task.court(), task.district(), task.courtNo());
+
         for (String establishmentCode : establishmentCodes) {
             List<Option> courts = portal.courts(session, stateCode, district.value(), complexCode, establishmentCode);
             courts.forEach(o -> offeredCourts.add(o.text()));
             allCourts.addAll(courts);
+
+            if (storedCode != null) {
+                Option byCode = courts.stream()
+                        .filter(o -> o.value() != null && o.value().trim().equalsIgnoreCase(storedCode))
+                        .findFirst()
+                        .orElse(null);
+
+                if (byCode != null) {
+                    Selection selection = new Selection(stateCode, district.value(), complexCode, establishmentCode,
+                            byCode.value(), byCode.text(), task.kind());
+                    log.info("Court no. '{}' of {} / {} matched by court code {} to portal court '{}'", task.courtNo(),
+                            task.court(), task.district(), storedCode, byCode.text());
+                    return new Pending(run, task, session, selection);
+                }
+            }
 
             List<Option> tied = judgeName == null ? List.of() : JudgeNameMatch.topTied(courts, Option::text, judgeName);
 
@@ -312,6 +330,11 @@ public class DistrictCauseListRelayService {
                         task.district(), court.text());
                 return new Pending(run, task, session, selection);
             }
+        }
+
+        if (storedCode != null) {
+            log.warn("Court code {} of {} / {} court no. '{}' is not in the portal's court list, matching by judge name instead",
+                    storedCode, task.court(), task.district(), task.courtNo());
         }
 
         String sample = offeredCourts.stream().limit(12).collect(java.util.stream.Collectors.joining("; "));

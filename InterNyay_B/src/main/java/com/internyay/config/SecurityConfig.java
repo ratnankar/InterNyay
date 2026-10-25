@@ -156,8 +156,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(Arrays.asList(allowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        // Lets the frontend read the file name when downloading
-        config.setExposedHeaders(List.of("Content-Disposition"));
+        // Lets the frontend read the file name when downloading, and the renewed login token
+        config.setExposedHeaders(List.of("Content-Disposition", "X-Refreshed-Token"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

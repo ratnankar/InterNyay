@@ -24,6 +24,10 @@ public class JwtUtils {
     @Value("${internyay.jwt.expiration-ms:0}")
     private long expirationMs;
 
+    // A token older than this gets swapped for a new one on the next request (sliding session). 0 or less turns renewal off
+    @Value("${internyay.jwt.refresh-after-ms:86400000}")
+    private long refreshAfterMs;
+
     // Signing key built from the secret (must be at least 32 bytes for HS256)
     private SecretKey getKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
@@ -46,6 +50,17 @@ public class JwtUtils {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    // True when the token has an expiry and was issued long enough ago that it should be renewed
+    public boolean needsRefresh(String token) {
+        if (expirationMs <= 0 || refreshAfterMs <= 0) return false;
+        try {
+            Date issued = parseClaims(token).getIssuedAt();
+            return issued != null && System.currentTimeMillis() - issued.getTime() >= refreshAfterMs;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 
     // Reads the email out of the token

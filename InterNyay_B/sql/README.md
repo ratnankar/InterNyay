@@ -120,3 +120,7 @@ MySQL cannot enforce these, so they are matched by name or by app code: `judges.
 ## Note when recreating the MySQL database later
 
 Document details, payment QR codes and the details of every PDF are rows in MySQL, so they disappear with the database. The uploaded files themselves (documents, notification, district, legal form and court calendar PDFs) live in file storage and are named by random keys, so they can never show up under a new account, but they would stay behind as unused files. Whenever you recreate the MySQL database, also empty the `data/uploads` folder (or the S3 bucket), and sign out in the browser, because an old login token carries the old user id.
+
+## Court code and the cause list relay
+
+The `court_code` of a listing is the value the eCourts portal posts as `CL_court_no` (for example `1^4`). `DistrictCauseListRelayService` looks it up through `JudgeService.courtCodeFor` and picks the portal court with it first; only when a listing has no code, or the code is no longer in the portal's list, does it fall back to matching the judge's name. Run `check_court_codes.sql` to see which active listings still have no code.

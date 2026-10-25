@@ -2,6 +2,7 @@ package com.internyay.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -43,6 +44,10 @@ public class JudgeRequest {
     private String building;
     private String floor;
     private String vcMeetingId;
+
+    // Court code, optional
+    @Size(max = 255, message = "Court code is too long")
+    private String courtCode;
 
     // Court email, can be empty
     @Pattern(
