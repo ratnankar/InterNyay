@@ -34,6 +34,7 @@ const LINK_PATTERN = /^https?:\/\/\S+$/
 // The judge's name and photo are not here, they belong to the judge (Judges section)
 const TEXT_FIELDS = [
   { key: 'designation',       label: 'Designation',                  required: true },
+  { key: 'courtCode',         label: 'Court code' },
   { key: 'vcMeetingId',       label: 'VC meeting ID' },
   { key: 'courtEmail',        label: 'Court email ID',               type: 'email' },
   { key: 'virtualCourtLink',  label: 'Virtual court hearing link',   type: 'url' },
@@ -130,7 +131,7 @@ export default function ListingAdmin() {
       if (view === 'multi' && !(j.courtCount > 1)) return false
       if (view === 'vacant' && !j.vacant) return false
       if (!q) return true
-      return [j.name, j.designation, j.courtRoomNo, ...(j.courtNoHistory || []).map(r => r.courtRoomNo), j.building, j.floor, j.court, j.district, j.jurisdiction, j.courtReaderName]
+      return [j.name, j.designation, j.courtRoomNo, ...(j.courtNoHistory || []).map(r => r.courtRoomNo), j.building, j.floor, j.court, j.district, j.jurisdiction, j.courtReaderName, j.courtCode]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
         || (!j.vacant && nameSearchMatches(search, j.name))
@@ -497,6 +498,11 @@ export default function ListingAdmin() {
                       {...(f.key === 'courtReaderPhone' ? { inputMode: 'tel', maxLength: 16 } : {})}
                     />
                     {errors[f.key] && <p className="admin__hint admin__hint--error">{errors[f.key]}</p>}
+                    {f.key === 'courtCode' && !errors.courtCode && (
+                      <p className="admin__hint">
+                        The eCourts portal value (like 1^4). The cause list relay uses it to pick this court on the portal; without it the court is guessed from the judge's name.
+                      </p>
+                    )}
                     {f.key === 'virtualCourtLink' && editing.form.virtualCourtLink.trim() && !errors.virtualCourtLink && (
                       <p className="admin__hint">
                         <CopyButton text={editing.form.virtualCourtLink.trim()} label="Copy link" title="Copy virtual hearing link" />

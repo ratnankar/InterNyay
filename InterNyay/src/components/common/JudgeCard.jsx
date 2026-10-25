@@ -65,6 +65,7 @@ export default function JudgeCard({ judge, actions, tags, note }) {
         {judge.courtRoomNo && <Field label="Court No.">{judge.courtRoomNo}</Field>}
         {judge.building && <Field label="Building">{buildingWithFloor(judge.building, judge.floor)}</Field>}
         {judge.floor && <Field label="Floor">{judge.floor}</Field>}
+        {judge.courtCode && <Field label="Court Code">{judge.courtCode}</Field>}
         {judge.vcMeetingId && <Field label="VC Meeting ID">{judge.vcMeetingId}</Field>}
 
         {judge.courtEmail && (

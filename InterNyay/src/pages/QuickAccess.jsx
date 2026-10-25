@@ -225,7 +225,7 @@ function JudgesList({ initialQuery, jumpName }) {
     // Untouched name from "View in Judges List": only that judge, by the same rules as the leave matching
     if (jumpName && query === jumpName) return pool.filter(j => !j.vacant && sameJudge(jumpName, j.name))
     return pool.filter(j =>
-      [j.vacant ? 'vacant no judge' : j.name, j.designation, j.courtRoomNo, j.building, j.floor, j.jurisdiction, j.courtReaderName, j.courtEmail, j.vcMeetingId]
+      [j.vacant ? 'vacant no judge' : j.name, j.designation, j.courtRoomNo, j.building, j.floor, j.jurisdiction, j.courtReaderName, j.courtEmail, j.vcMeetingId, j.courtCode]
         .filter(Boolean)
         .some(v => v.toLowerCase().includes(q))
       // Names also match whatever the title, spelling of the dots or word order ("Ms. Kanika Handa", "handa kanika")

@@ -53,6 +53,15 @@ export function forgetAccountByToken(token) {
   saveAccounts(getAccounts().filter(a => a.token !== token))
 }
 
+// The server renewed a login token (sliding session): swap it in for the one in use and for its saved copy
+export function replaceToken(oldToken, newToken) {
+  if (!oldToken || !newToken || oldToken === newToken) return
+  try {
+    if (localStorage.getItem(TOKEN_KEY) === oldToken) localStorage.setItem(TOKEN_KEY, newToken)
+  } catch { /* storage unavailable */ }
+  saveAccounts(getAccounts().map(a => (a.token === oldToken ? { ...a, token: newToken } : a)))
+}
+
 // Makes a saved account the one in use; returns false if it is not in the list
 export function activateAccount(id) {
   const account = getAccounts().find(a => a.id === id)

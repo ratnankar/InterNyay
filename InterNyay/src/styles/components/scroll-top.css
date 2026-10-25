@@ -1,43 +1,95 @@
-/* Floating back-to-top button: fades and rises in once the page is scrolled */
+/* Floating back-to-top button.
+   Sits in the middle of the page area (the sidebar is not counted). When a "See more" button is on screen
+   it glides up and rests just above it, so the two never overlap.
+   ScrollToTopButton.jsx sets: --st-x (page centre), --st-clear (space needed above See more). */
 .scroll-top-btn {
+  --st-size: 46px;
+  --st-base: 24px;
   position: fixed;
-  right: 20px;
-  bottom: 24px;
+  left: var(--st-x, 50%);
+  bottom: max(var(--st-base), var(--st-clear, 0px));
   z-index: 80;
-  width: 42px;
-  height: 42px;
+  width: var(--st-size);
+  height: var(--st-size);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--color-gold-border, #e8d08a);
+  padding: 0;
+  border: 0;
   border-radius: 50%;
-  background: var(--color-navy, #16386f);
+  background: linear-gradient(145deg, #1d4a8f 0%, var(--color-navy, #16386f) 55%, #0a1628 100%);
   color: #e6c870;
-  box-shadow: var(--shadow-lg, 0 8px 24px rgba(10, 22, 40, 0.25));
+  box-shadow: 0 6px 18px rgba(10, 22, 40, 0.28), 0 0 0 1px rgba(230, 200, 112, 0.25);
   cursor: pointer;
+  overflow: visible;
   opacity: 0;
-  transform: translateY(10px);
+  transform: translate(-50%, 18px) scale(0.7);
   pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.2s;
+  /* bottom is animated so the button glides when "See more" appears or disappears */
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    bottom 0.3s ease, box-shadow 0.25s ease, background-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .scroll-top-btn--show {
   opacity: 1;
-  transform: none;
+  transform: translate(-50%, 0) scale(1);
   pointer-events: auto;
+  animation: scroll-top-pulse 2.8s ease-out 0.6s 2;
 }
 
-.scroll-top-btn:hover { background: #0a1628; }
-.scroll-top-btn:focus-visible { outline: 2px solid var(--color-gold, #c9a227); outline-offset: 2px; }
 
-/* Small screens: sit above the bottom navigation bar */
+.scroll-top-btn__arrow {
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+/* Hover: lifts, glows gold, and the arrow nudges upward */
+.scroll-top-btn--show:hover {
+  transform: translate(-50%, -4px) scale(1.08);
+  background: linear-gradient(145deg, #2458a8 0%, #16386f 55%, #0a1628 100%);
+  box-shadow: 0 12px 26px rgba(10, 22, 40, 0.35), 0 0 0 1px var(--color-gold, #c9a227),
+    0 0 18px rgba(230, 200, 112, 0.45);
+  animation: none;
+}
+
+.scroll-top-btn--show:hover .scroll-top-btn__arrow {
+  animation: scroll-top-arrow 0.9s ease-in-out infinite;
+}
+
+.scroll-top-btn--show:active {
+  transform: translate(-50%, -1px) scale(0.95);
+  transition-duration: 0.1s;
+}
+
+.scroll-top-btn:focus-visible {
+  outline: 2px solid var(--color-gold, #c9a227);
+  outline-offset: 4px;
+}
+
+@keyframes scroll-top-arrow {
+  0%, 100% { transform: translateY(1px); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Soft gold pulse when the button first appears, to draw the eye once */
+@keyframes scroll-top-pulse {
+  0% { box-shadow: 0 6px 18px rgba(10, 22, 40, 0.28), 0 0 0 0 rgba(230, 200, 112, 0.55); }
+  70% { box-shadow: 0 6px 18px rgba(10, 22, 40, 0.28), 0 0 0 14px rgba(230, 200, 112, 0); }
+  100% { box-shadow: 0 6px 18px rgba(10, 22, 40, 0.28), 0 0 0 0 rgba(230, 200, 112, 0); }
+}
+
+/* Small screens: keep clear of the bottom navigation bar */
 @media (max-width: 860px) {
   .scroll-top-btn {
-    right: 14px;
-    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    --st-size: 44px;
+    --st-base: calc(86px + env(safe-area-inset-bottom, 0px));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scroll-top-btn { transition: none; }
+  .scroll-top-btn,
+  .scroll-top-btn__arrow { transition: opacity 0.2s ease; }
+  .scroll-top-btn--show,
+  .scroll-top-btn--show:hover .scroll-top-btn__arrow { animation: none; }
 }

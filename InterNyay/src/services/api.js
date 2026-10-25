@@ -3,7 +3,7 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api' : '')
 
 import { makeApiError, makeNetworkError, ApiError, MESSAGES } from '../utils/errorMessages'
-import { forgetAccountByToken } from '../utils/accounts'
+import { forgetAccountByToken, replaceToken } from '../utils/accounts'
 import { canEmbedPdf } from '../utils/pdfSupport'
 
 // fetch that reports "server unreachable" as a friendly error instead of the browser's "Failed to fetch"
@@ -91,6 +91,10 @@ async function rawRequest(method, path, { body, params } = {}) {
   if (body) options.body = JSON.stringify(body)
 
   const res = await http(url.toString(), options)
+
+  // Sliding session: the server sends a renewed token once the current one is a day old
+  const renewed = token && res.headers.get('X-Refreshed-Token')
+  if (renewed) replaceToken(token, renewed)
 
   if (!res.ok) {
     // Token expired or invalid: clear the saved login and reload so the user lands on the login page (login attempts are excluded)
