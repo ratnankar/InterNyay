@@ -53,6 +53,14 @@ public class Case {
 
     private LocalDate filingDate;
 
+    // What the eCourts case page says (filled when the case is added by CNR, the advocate can edit them)
+    @Column(length = 255) private String caseStage;
+    @Column(length = 1000) private String actsSections;
+    private LocalDate registrationDate;
+    private LocalDate firstHearingDate;
+    private LocalDate decisionDate;
+    @Column(length = 255) private String disposalNature;
+
     // Whether our client is the COMPLAINANT or the ACCUSED
     @Column(length = 20)
     private String clientSide;

@@ -43,7 +43,7 @@ public class CaseService {
     private final JudgeService judgeService;
     private final FileNumberService fileNumbers;
     private final HearingService hearingService;
-    private final EcourtsCaseService ecourtsCases;
+    private final CnrLookupService cnrLookup;
     private final OldCaseImportService oldCaseImport;
     private final MiscApplicationRepository miscApplicationRepo;
 
@@ -105,14 +105,16 @@ public class CaseService {
         // Every other case needs its 16-character CNR number, stored without spaces or dashes in capitals
         String cnr = null;
         EcourtsCaseService.Snapshot snap = null;
+        CnrLookupService.Claim claim = null;
         if (!juvenile) {
             cnr = EcourtsCaseService.normalizeCnr(req.getCnrNo());
             if (cnr == null) throw new IllegalArgumentException(CNR_REQUIRED);
             assertCnrFree(cnr, userId);
 
-            // Every case is read from eCourts when it is saved, to bring in its hearing and order history. A case that
-            // eCourts cannot give (not listed yet, or eCourts is down) is still saved with what the advocate entered
-            snap = readFromEcourts(cnr);
+            // A case added by CNR brings the history that was read from eCourts while the form was filled (the lookup the
+            // form carries). Without a valid lookup (expired, or a case added by hand) it is saved with what was entered
+            claim = byCnr ? cnrLookup.claim(userId, req.getLookupToken(), cnr) : null;
+            snap = claim == null ? null : claim.snapshot();
         }
 
         // The case number is required, except for a Juvenile Justice Board case (stored as empty then)
@@ -164,22 +166,14 @@ public class CaseService {
 
         if (snap != null) oldCaseImport.importHistory(saved, snap, userId);
 
+        // The orders of the case are downloaded in the background and attached to their hearings when they are in
+        cnrLookup.attachOrdersAfterSave(saved.getId(), userId, claim);
+
         if (saved.getNextHearing() != null) {
             hearingService.recordHeard(saved, saved.getNextHearing(), userId);
         }
 
         return toDto(saved);
-    }
-
-    // The case as eCourts has it, or null when it cannot be read; the reason is only logged, adding a case never
-    // fails because of eCourts
-    private EcourtsCaseService.Snapshot readFromEcourts(String cnr) {
-        try {
-            return ecourtsCases.fetch(cnr);
-        } catch (RuntimeException e) {
-            log.info("Hearing history of CNR {} not read from eCourts: {}", cnr, e.getMessage());
-            return null;
-        }
     }
 
     // Partial update, also keeps the file number in step when the status or client changes
@@ -482,6 +476,19 @@ public class CaseService {
 
         if (req.getFilingDate() != null) c.setFilingDate(parseDate("Filing date", req.getFilingDate()));
         if (req.getClientSide() != null) c.setClientSide(CaseCatalog.canonicalSide(req.getClientSide()));
+
+        // What the eCourts case page gives. Null leaves a value as it is, an empty text clears it
+        if (req.getCaseStage()      != null) c.setCaseStage(trimmedOrNull(req.getCaseStage()));
+        if (req.getActsSections()   != null) c.setActsSections(trimmedOrNull(req.getActsSections()));
+        if (req.getDisposalNature() != null) c.setDisposalNature(trimmedOrNull(req.getDisposalNature()));
+        if (req.getRegistrationDate()  != null) c.setRegistrationDate(optionalDate("Registration date", req.getRegistrationDate()));
+        if (req.getFirstHearingDate()  != null) c.setFirstHearingDate(optionalDate("First hearing date", req.getFirstHearingDate()));
+        if (req.getDecisionDate()      != null) c.setDecisionDate(optionalDate("Decision date", req.getDecisionDate()));
+    }
+
+    // An empty text clears the date, anything else must be a date
+    private LocalDate optionalDate(String label, String text) {
+        return text.isBlank() ? null : parseDate(label, text);
     }
 
     // Most opposite parties, and most non-client parties, one case can have

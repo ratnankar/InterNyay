@@ -323,6 +323,17 @@ public class DistrictCauseListRelayService {
                 }
             }
 
+            // Family courts are listed by their own room code ("FC-46") and carry no judge name in the portal's list, so
+            // the code itself is looked for. Only a code with letters in it: a bare number would fit too many courts
+            if (court == null && task.courtNo() != null && task.courtNo().matches("(?i).*[a-z].*\\d.*")) {
+                String code = squash(task.courtNo());
+                List<Option> byRoomCode = courts.stream().filter(o -> squash(o.text()).contains(code)).toList();
+
+                if (byRoomCode.size() == 1) {
+                    court = byRoomCode.get(0);
+                }
+            }
+
             if (court != null) {
                 Selection selection = new Selection(stateCode, district.value(), complexCode, establishmentCode,
                         court.value(), court.text(), task.kind());

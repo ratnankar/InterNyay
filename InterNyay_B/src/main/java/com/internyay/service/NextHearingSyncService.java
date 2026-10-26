@@ -6,6 +6,7 @@ import com.internyay.entity.Hearing;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.HearingRepository;
 import com.internyay.util.CaseStatuses;
+import com.internyay.util.OrderCutoff;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -15,11 +16,15 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 // At 6 PM on a hearing date, reads the case from the eCourts case-detail API using its CNR: moves the next hearing
@@ -122,6 +127,98 @@ public class NextHearingSyncService {
                 hearingDate, cases.size(), updated);
 
         return new Result(hearingDate, cases.size(), updated);
+    }
+
+    // ---- One case, when the advocate asks for it ------------------------------------------------------------------
+
+    public enum SyncStatus {
+        // eCourts gave a later date and the case moved to it
+        UPDATED,
+        // eCourts reports the case disposed: it is now Decided or Withdrawn
+        CLOSED,
+        // eCourts still shows the old date (or none): nothing changed, ask again later
+        NOT_YET,
+        // Asked again for the same case within a few minutes: eCourts was not called
+        TOO_SOON,
+        // Could not be asked (no CNR, not due yet, no token, eCourts error ...)
+        UNAVAILABLE
+    }
+
+    public record CaseSync(SyncStatus status, String message, LocalDate nextHearing, String caseStatus) {}
+
+    // How long before the same case can be sent to eCourts again (keeps the paid API calls down)
+    private static final Duration RECHECK_AFTER = Duration.ofMinutes(10);
+    private final Map<Long, Instant> lastAsked = new ConcurrentHashMap<>();
+
+    // The "Update next date" button of a case: from 6 PM on its hearing date (or any later day) the case is read from
+    // eCourts and moved to the new date. The date only moves forward, so an API that still shows the old date changes
+    // nothing. Only the owner of the case can ask
+    public CaseSync syncCase(Long caseId, Long userId) {
+
+        Case c = caseRepo.findById(caseId).orElseThrow(() -> new RuntimeException("Case not found"));
+        if (c.getUser() == null || !c.getUser().getId().equals(userId)) throw new RuntimeException("Forbidden");
+
+        LocalDate heard = c.getNextHearing();
+
+        if (CaseStatuses.isClosed(c.getStatus()))
+            return unavailable(c, "This case is already closed");
+        if (courtService.juvenileBoardCases().test(c))
+            return unavailable(c, "Juvenile Justice Board cases are not read from eCourts");
+
+        String cnr = normalizeCnr(c.getCnrNo());
+        if (cnr == null)
+            return unavailable(c, "Add the 16-character CNR number to this case to check eCourts");
+        if (heard == null || !OrderCutoff.passed(heard))
+            return unavailable(c, "The next date can be checked from 6 PM on the hearing date");
+        if (token.isEmpty())
+            return unavailable(c, "Checking eCourts is not set up on this server");
+
+        Instant now = Instant.now();
+        lastAsked.values().removeIf(t -> t.plus(Duration.ofHours(1)).isBefore(now));
+        Instant last = lastAsked.get(c.getId());
+        if (last != null && last.plus(RECHECK_AFTER).isAfter(now)) {
+            return new CaseSync(SyncStatus.TOO_SOON,
+                    "eCourts was checked a few minutes ago, try again after some time", heard, c.getStatus());
+        }
+        lastAsked.put(c.getId(), now);
+
+        JsonNode data = fetchCaseData(cnr);
+        if (data == null) return unavailable(c, "Could not read the case from eCourts right now, try again later");
+
+        return switch (moveCase(c, data, heard)) {
+            case MOVED -> new CaseSync(SyncStatus.UPDATED, "Next hearing date updated", c.getNextHearing(), c.getStatus());
+            case CLOSED -> new CaseSync(SyncStatus.CLOSED, "eCourts shows this case as " + c.getStatus(), null, c.getStatus());
+            case UNCHANGED -> new CaseSync(SyncStatus.NOT_YET,
+                    "eCourts has not given a new date yet, try again later", heard, c.getStatus());
+        };
+    }
+
+    private static CaseSync unavailable(Case c, String message) {
+        return new CaseSync(SyncStatus.UNAVAILABLE, message, c.getNextHearing(), c.getStatus());
+    }
+
+    private enum Move { MOVED, CLOSED, UNCHANGED }
+
+    // One case whose hearing date is over: saves the order file of that date, closes the case when eCourts has it
+    // disposed, otherwise moves it to the new date when that is later than the passed one
+    private Move moveCase(Case c, JsonNode data, LocalDate heard) {
+
+        saveOrderFile(c, heard, EcourtsCaseService.orderFilesOf(data).get(heard));
+
+        if (closeIfDisposed(c, data, heard)) return Move.CLOSED;
+
+        LocalDate fetched = parseDate(data.path("nextHearingDate").asText(null));
+        if (fetched == null || !fetched.isAfter(heard)) return Move.UNCHANGED;
+
+        Long userId = c.getUser().getId();
+        hearingService.recordHeard(c, heard, userId);
+        hearingService.keepCauseListNo(c, userId);
+        c.setCauseListNo(null);
+        c.setListingDate(null);
+        c.setNextHearing(fetched);
+        caseRepo.save(c);
+        hearingService.recordHeard(c, fetched, userId);
+        return Move.MOVED;
     }
 
     private boolean closeIfDisposed(Case c, JsonNode data, LocalDate hearingDate) {

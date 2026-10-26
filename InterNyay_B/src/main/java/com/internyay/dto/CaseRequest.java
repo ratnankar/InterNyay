@@ -32,6 +32,14 @@ public class CaseRequest {
 
     public String filingDate;
 
+    // eCourts case page details
+    @Size(max = 255) public String caseStage;
+    @Size(max = 1000) public String actsSections;
+    public String registrationDate;
+    public String firstHearingDate;
+    public String decisionDate;
+    @Size(max = 255) public String disposalNature;
+
     // COMPLAINANT or ACCUSED
     public String clientSide;
 
@@ -63,8 +71,12 @@ public class CaseRequest {
 
     // How the case is being added. CNR: the form was filled from eCourts using the CNR, so the next hearing and the
     // status come from the court. MANUAL (or empty): the advocate filled the form, his values are kept.
-    // Either way the hearing and order history of the case is read from eCourts when it is saved
+    // The hearing and order history comes with the lookup (lookupToken); a case added by hand has none
     public String addMode;
+
+    // The lookup of the case on eCourts that filled the form (from POST /cases/cnr/.../answer). The history and the
+    // orders of that lookup are saved with the case; without it (or when it has expired) the case is saved as typed
+    public String lookupToken;
 
     // True when the case is added by CNR
     public boolean isCnrMode() { return "CNR".equalsIgnoreCase(addMode == null ? "" : addMode.trim()); }

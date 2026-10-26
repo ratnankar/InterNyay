@@ -25,8 +25,9 @@ public class CaseController {
     private final HearingLeaveService hearingLeaveService;
     private final DocumentService documentService;
     private final HearingService hearingService;
+    private final NextHearingSyncService nextHearingSync;
     private final FileNumberService fileNumberService;
-    private final EcourtsCaseService ecourtsCases;
+    private final CnrLookupService cnrLookup;
     private final AuthHelper auth;
     private final com.internyay.service.PlanService planService;
 
@@ -63,13 +64,24 @@ public class CaseController {
         return ResponseEntity.ok(hearingLeaveService.onLeaveFor(auth.currentUserId(), date));
     }
 
-    // Case details from eCourts by CNR, to fill the Add Case form. Answers 400 with a readable message when the case
-    // cannot be read, and the advocate then adds the case manually
-    @GetMapping("/cnr/{cnr}")
-    public ResponseEntity<EcourtsCaseService.CaseDetail> lookupCnr(@PathVariable String cnr) {
-        // A case the advocate already has under this CNR is not fetched again
-        caseService.assertCnrFree(cnr, auth.currentUserId());
-        return ResponseEntity.ok(ecourtsCases.lookup(cnr));
+    // Case details from the eCourts portal by CNR, to fill the Add Case form. The portal asks for a CAPTCHA, so it is
+    // three calls: start (answers with the CAPTCHA image), answer (the typed CAPTCHA; answers with the case, or a new
+    // CAPTCHA when it was wrong) and refresh (a new CAPTCHA). 400 with a readable message when the case cannot be read,
+    // and the advocate then adds the case manually
+    @PostMapping("/cnr/start")
+    public ResponseEntity<CnrLookupService.Step> startCnr(@RequestParam String cnr) {
+        return ResponseEntity.ok(cnrLookup.start(auth.currentUserId(), cnr));
+    }
+
+    @PostMapping("/cnr/{sessionId}/answer")
+    public ResponseEntity<CnrLookupService.Step> answerCnr(
+            @PathVariable String sessionId, @Valid @RequestBody CnrAnswer body) {
+        return ResponseEntity.ok(cnrLookup.answer(auth.currentUserId(), sessionId, body.captcha()));
+    }
+
+    @PostMapping("/cnr/{sessionId}/refresh")
+    public ResponseEntity<CnrLookupService.Step> refreshCnr(@PathVariable String sessionId) {
+        return ResponseEntity.ok(cnrLookup.refresh(auth.currentUserId(), sessionId));
     }
 
     // Create a case
@@ -110,6 +122,12 @@ public class CaseController {
             @PathVariable Long id, @RequestBody NextHearingRequest req) {
 
         return ResponseEntity.ok(hearingService.moveNextHearing(id, req, auth.currentUserId()));
+    }
+
+    // "Update next date" button: reads the case from eCourts once its hearing date is over and moves it to the new date
+    @PostMapping("/{id}/sync-next-hearing")
+    public ResponseEntity<NextHearingSyncService.CaseSync> syncNextHearing(@PathVariable Long id) {
+        return ResponseEntity.ok(nextHearingSync.syncCase(id, auth.currentUserId()));
     }
 
     // Documents attached to a case

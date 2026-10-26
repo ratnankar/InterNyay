@@ -26,6 +26,7 @@ public class HearingService {
     private final DocumentService documentService;
     private final HearingDayService hearingDays;
     private final OrdersPolicyService ordersPolicy;
+    private final OrderDownloadTracker orderDownloads;
 
     // Hearings in a date range, oldest first. Read inside a transaction because each hearing's case is
     // loaded lazily and open-in-view is off, so the DTO could not read the case title outside one
@@ -42,6 +43,11 @@ public class HearingService {
 
         List<HearingDto> rows = hearingRepo.findByLegalCase_IdAndUser_IdOrderByDateDesc(caseId, userId)
                 .stream().map(HearingDto::from).toList();
+
+        // Orders read from eCourts when the case was added are still on their way: no fetch button until they are in
+        if (orderDownloads.isRunning(caseId)) {
+            rows.forEach(r -> { if (r.isOrderOnEcourts()) r.setOrderDownloading(true); });
+        }
 
         // Mahila courts and family disputes do not declare orders, the screen then offers no eCourts fetch
         OrdersPolicyService.Verdict orders = ordersPolicy.forCase(c);

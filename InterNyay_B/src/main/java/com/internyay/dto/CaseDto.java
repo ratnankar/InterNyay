@@ -26,6 +26,14 @@ public class CaseDto {
     public String cnrNo;
     public LocalDate filingDate;
 
+    // eCourts case page details
+    public String caseStage;
+    public String actsSections;
+    public LocalDate registrationDate;
+    public LocalDate firstHearingDate;
+    public LocalDate decisionDate;
+    public String disposalNature;
+
     public String clientSide;
 
     // Opposite parties of the case
@@ -158,6 +166,12 @@ public class CaseDto {
                 .fileSeq(c.getFileSeq())
                 .cnrNo(c.getCnrNo())
                 .filingDate(c.getFilingDate())
+                .caseStage(c.getCaseStage())
+                .actsSections(c.getActsSections())
+                .registrationDate(c.getRegistrationDate())
+                .firstHearingDate(c.getFirstHearingDate())
+                .decisionDate(c.getDecisionDate())
+                .disposalNature(c.getDisposalNature())
                 .clientSide(c.getClientSide())
                 .opponents(opponents)
                 .opposingParty(opponents.stream().map(o -> o.name).collect(Collectors.joining(" & ")))

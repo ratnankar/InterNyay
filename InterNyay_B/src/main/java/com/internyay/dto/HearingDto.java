@@ -32,6 +32,9 @@ public class HearingDto {
     public Integer causeListNo;
 
     // True when orders are not declared for this hearing's court or case type, so none can be fetched from eCourts
+    // True while the order of this hearing is still being downloaded from eCourts after the case was added
+    public boolean orderDownloading;
+
     public boolean ordersNotDeclared;
     public String ordersNotDeclaredReason;
 
