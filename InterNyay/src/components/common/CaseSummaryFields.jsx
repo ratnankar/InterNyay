@@ -33,6 +33,7 @@ export default function CaseSummaryFields({ caseItem: c }) {
       row('Relief Sought', c.reliefSought),
       row('Case No',       c.caseNo || '—', { always: true }),
       row('CNR No',        c.cnrNo, { mono: true }),
+      row('Case Stage',    c.caseStage),
     ]),
   ].filter(col => col.length > 0)
 

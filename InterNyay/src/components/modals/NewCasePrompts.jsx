@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useApp } from '../../context/AppContext'
 import Icon from '../common/Icon'
 import ModalPortal from '../../components/common/ModalPortal'
+import api from '../../services/api'
+import { getErrorMessage } from '../../utils/errorMessages'
 
 // How many recently added clients are suggested before anything is typed
 const SUGGESTION_COUNT = 5
@@ -18,23 +20,90 @@ const cleanCnr = text => String(text || '').toUpperCase().replace(/[\s-]/g, '')
 const validCnr = text => /^[A-Z0-9]{16}$/.test(cleanCnr(text))
 
 // Step 1 popup: how is the case added? By CNR (the details come from eCourts) or manually.
-// onFetch(cnr) reads the case from eCourts and moves on to the form, whether it worked or not
-export function CaseAddModePrompt({ onFetch, onManual, onClose }) {
-  // 'choose': the two options. 'cnr': asking for the CNR number
-  const [step, setStep] = useState('choose')
-  const [cnr, setCnr] = useState('')
-  const [busy, setBusy] = useState(false)
+// By CNR: the CNR is typed (or comes from a scanned QR), eCourts shows a CAPTCHA, and the case is read once it is typed.
+//  onFetched(detail, token) - the case was read; token ties the form to that lookup
+//  onFailed(cnr, message)   - eCourts could not give the case: the form opens empty to be filled by hand
+//  hasCnr(cnr)              - the advocate already has a case with this CNR
+//  initialCnr               - a CNR read from a scanned QR; the CAPTCHA is asked straight away
+export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClose, initialCnr = '' }) {
+  // 'choose': the two options. 'cnr': asking for the CNR number. 'captcha': asking for the CAPTCHA of eCourts
+  const [step, setStep] = useState(initialCnr ? 'cnr' : 'choose')
+  const [cnr, setCnr] = useState(initialCnr)
+  const [busy, setBusy] = useState(!!initialCnr)
   const [problem, setProblem] = useState('')
+  const [session, setSession] = useState({ id: '', image: '' })
+  const [captcha, setCaptcha] = useState('')
+  const startedFor = useRef('')
+  const closed = useRef(false)
 
-  async function fetchCase() {
-    if (!validCnr(cnr)) { setProblem('Enter the 16-character CNR number'); return }
+  useEffect(() => () => { closed.current = true }, [])
+
+  // Shows the CAPTCHA image of a step answer
+  function showCaptcha(answer, note = '') {
+    setSession({ id: answer.sessionId, image: answer.captchaImage })
+    setCaptcha('')
+    setProblem(note || answer.message || '')
+    setStep('captcha')
+  }
+
+  // Asks eCourts for a CAPTCHA for the CNR
+  async function startLookup(raw) {
+    const clean = cleanCnr(raw)
+    if (!validCnr(clean)) { setProblem('Enter the 16-character CNR number'); setStep('cnr'); setBusy(false); return }
+    if (hasCnr?.(clean)) { setProblem('You already have a case with this CNR number'); setStep('cnr'); setBusy(false); return }
 
     setProblem('')
     setBusy(true)
     try {
-      await onFetch(cleanCnr(cnr))
+      const answer = await api.cases.cnrStart(clean)
+      if (!closed.current) showCaptcha(answer)
+    } catch (e) {
+      const message = getErrorMessage(e, 'Could not reach eCourts')
+      if (/already have a case/i.test(message)) { setProblem(message); setStep('cnr') }
+      else if (!closed.current) onFailed(clean, message)
     } finally {
-      setBusy(false)
+      if (!closed.current) setBusy(false)
+    }
+  }
+
+  // A scanned CNR goes straight to the CAPTCHA
+  useEffect(() => {
+    if (!initialCnr || startedFor.current === initialCnr) return
+    startedFor.current = initialCnr
+    startLookup(initialCnr)
+  }, [initialCnr]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sends the typed CAPTCHA
+  async function submitCaptcha() {
+    if (!captcha.trim()) { setProblem('Type the CAPTCHA shown in the picture'); return }
+
+    setProblem('')
+    setBusy(true)
+    try {
+      const answer = await api.cases.cnrAnswer(session.id, captcha.trim())
+      if (closed.current) return
+      if (answer.status === 'DONE') onFetched(answer.detail, answer.sessionId)
+      else if (answer.status === 'CAPTCHA') showCaptcha(answer)
+      else { setProblem(answer.message || 'This session expired, start again'); setStep('cnr') }
+    } catch (e) {
+      if (!closed.current) onFailed(cleanCnr(cnr), getErrorMessage(e, 'Could not read the case from eCourts'))
+    } finally {
+      if (!closed.current) setBusy(false)
+    }
+  }
+
+  // A new picture, when the CAPTCHA cannot be read
+  async function newCaptcha() {
+    setBusy(true)
+    try {
+      const answer = await api.cases.cnrRefresh(session.id)
+      if (closed.current) return
+      if (answer.status === 'CAPTCHA') showCaptcha(answer)
+      else { setProblem(answer.message || 'This session expired, start again'); setStep('cnr') }
+    } catch (e) {
+      if (!closed.current) setProblem(getErrorMessage(e, 'Could not get a new CAPTCHA'))
+    } finally {
+      if (!closed.current) setBusy(false)
     }
   }
 
@@ -64,15 +133,16 @@ export function CaseAddModePrompt({ onFetch, onManual, onClose }) {
               </div>
 
               <p className="case-parties__hint u-mt-10">
-                By CNR, the case details, hearing dates and orders are taken from eCourts. Manually, you fill in the
-                details yourself; the hearing dates and orders are still taken from eCourts when the case is saved.
+                By CNR, the case details, hearing dates and orders are taken from eCourts (you type the CAPTCHA eCourts shows),
+                and the order PDFs are downloaded in the background. Manually, you fill in the details yourself and no hearing dates
+                or orders are brought in.
                 A case of a Juvenile Justice Board has no CNR and its case number is optional: add it manually and choose the board as the court.
               </p>
             </>
           )}
 
           {step === 'cnr' && (
-            <form onSubmit={e => { e.preventDefault(); if (!busy) fetchCase() }}>
+            <form onSubmit={e => { e.preventDefault(); if (!busy) startLookup(cnr) }}>
               <label className="form-label" htmlFor="add-case-cnr">CNR Number</label>
               <input
                 id="add-case-cnr"
@@ -89,11 +159,45 @@ export function CaseAddModePrompt({ onFetch, onManual, onClose }) {
               {problem && <p className="case-judge-hint case-judge-hint--none u-mt-6">{problem}</p>}
 
               <p className="case-parties__hint u-mt-10">
-                If the case cannot be fetched, the form opens for you to fill in by hand.
+                eCourts will show a CAPTCHA next. If the case cannot be fetched, the form opens for you to fill in by hand.
               </p>
 
               <div className="form-actions">
                 <button type="button" className="btn-outline" onClick={() => { setStep('choose'); setProblem('') }} disabled={busy}>Back</button>
+                <button type="submit" className="btn-gold" disabled={busy}>
+                  {busy ? 'Contacting eCourts…' : 'Next'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {step === 'captcha' && (
+            <form onSubmit={e => { e.preventDefault(); if (!busy) submitCaptcha() }}>
+              <p className="form-label">CNR {cleanCnr(cnr)}</p>
+              <p className="case-parties__hint u-mb-6">Type the letters and numbers shown by eCourts.</p>
+
+              <div className="cnr-captcha">
+                {session.image && <img className="cnr-captcha__img" src={session.image} alt="CAPTCHA from eCourts" />}
+                <button type="button" className="btn-refresh" onClick={newCaptcha} disabled={busy} title="New picture" aria-label="New picture"><Icon name="refresh" /></button>
+              </div>
+
+              <input
+                className="form-input u-mt-10"
+                placeholder="CAPTCHA"
+                maxLength={12}
+                value={captcha}
+                autoFocus
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                disabled={busy}
+                onChange={e => { setCaptcha(e.target.value); setProblem('') }}
+              />
+
+              {problem && <p className="case-judge-hint case-judge-hint--none u-mt-6" role="alert">{problem}</p>}
+
+              <div className="form-actions">
+                <button type="button" className="btn-outline" onClick={() => { setStep('cnr'); setProblem('') }} disabled={busy}>Back</button>
                 <button type="submit" className="btn-gold" disabled={busy}>
                   {busy ? 'Fetching…' : 'Fetch case'}
                 </button>

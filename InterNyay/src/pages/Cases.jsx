@@ -20,12 +20,16 @@ import CaseStatusSelect from '../components/common/CaseStatusSelect'
 import Dropdown from '../components/common/Dropdown'
 
 import Icon from '../components/common/Icon'
+import CnrScannerModal from '../components/modals/CnrScannerModal'
+import ImportCasesModal from '../components/modals/ImportCasesModal'
+import { clearImported, loadImported, saveImported } from '../utils/myCasesImport'
 import DocInfoButton from '../components/common/DocInfoButton'
 import ToggleSwitch from '../components/common/ToggleSwitch'
 import { confirmDialog } from '../utils/confirmDialog'
 import useSessionState from '../hooks/useSessionState'
 import ClearableDateInput from '../components/common/ClearableDateInput'
 import ScrollToTopButton from '../components/common/ScrollToTopButton'
+import SyncNextHearingButton from '../components/common/SyncNextHearingButton'
 // Status filter buttons
 const STATUSES = ['All', 'Pending', 'On Hold', 'Decided', 'Withdrawn']
 
@@ -135,7 +139,9 @@ export default function Cases() {
     setFilterStatus,
     selectedCase,
     setSelectedCase,
+    showAddCase,
     setShowAddCase,
+    setScanCnr,
     setUploadDocCaseId,
     openEditCase,
     setTransactionCaseId,
@@ -156,6 +162,19 @@ export default function Cases() {
     hearingCountsByCase,
     currentUser,
   } = useApp()
+  const [scannerOpen, setScannerOpen] = useState(false)
+
+  // Import from eCourts: the cases of the uploaded My Cases file, and whether the list is open.
+  // A case is added from the list one at a time; when its form closes the list opens again
+  const [importItems, setImportItems] = useState(loadImported)
+  const [importOpen, setImportOpen] = useState(false)
+  const backToImport = useRef(false)
+
+  useEffect(() => {
+    if (showAddCase || !backToImport.current) return
+    backToImport.current = false
+    setImportOpen(true)
+  }, [showAddCase])
 
   // Bring back this user's last status chip. A reload already starts with it (AppContext); this covers signing in or
   // switching account, and runs before the first paint so the chips never flash All first
@@ -887,16 +906,53 @@ export default function Cases() {
           <p className="page-subtitle">Track your cases, hearings and case details in one place</p>
         </div>
 
-        <button type="button"
-          className="btn-gold"
-          onClick={() => {
+        <div className="page-header__actions">
+          <button type="button" className="btn-outline" onClick={() => setImportOpen(true)}>
+            <Icon name="upload" /> Import from eCourts
+          </button>
+          <button type="button" className="btn-outline" onClick={() => setScannerOpen(true)}>
+            <Icon name="qr-scan" /> Scan QR
+          </button>
+          <button type="button"
+            className="btn-gold"
+            onClick={() => {
+              setSelectedCase(null)
+              setShowAddCase(true)
+            }}
+          >
+            + Add Case
+          </button>
+        </div>
+      </div>
+
+      {importOpen && (
+        <ImportCasesModal
+          items={importItems}
+          onClose={() => setImportOpen(false)}
+          onLoaded={list => { setImportItems(list); saveImported(list) }}
+          onClear={() => { setImportItems(null); clearImported() }}
+          onAdd={item => {
+            // Only the CNR is passed on: the Add Case window asks eCourts for the case, and the list comes back after it closes
+            backToImport.current = true
+            setImportOpen(false)
             setSelectedCase(null)
+            setScanCnr(item.cnr)
             setShowAddCase(true)
           }}
-        >
-          + Add Case
-        </button>
-      </div>
+        />
+      )}
+
+      {scannerOpen && (
+        <CnrScannerModal
+          onClose={() => setScannerOpen(false)}
+          onScan={cnr => {
+            setScannerOpen(false)
+            setSelectedCase(null)
+            setScanCnr(cnr)
+            setShowAddCase(true)
+          }}
+        />
+      )}
 
       {/* Status filter buttons */}
       <div className="case-filters">
@@ -1222,16 +1278,26 @@ export default function Cases() {
                         Next Hearing
                       </p>
 
-                      <p className="case-card__hearing-date">
-                        {formatDisplayDate(c.nextHearing)}
-                      </p>
+                      {/* Once the date is over the old date is hidden and a refresh button takes its place; it
+                          goes away and the new date shows when eCourts gives the case a later date */}
+                      <SyncNextHearingButton
+                        caseItem={c}
+                        hint="Not updated"
+                        fallback={
+                          <>
+                            <p className="case-card__hearing-date">
+                              {formatDisplayDate(c.nextHearing)}
+                            </p>
 
-                      {(() => {
-                        const cd = hearingCountdown(c.nextHearing)
-                        return cd && (
-                          <p className={`case-card__hearing-when case-card__hearing-when--${cd.tone}`}>{cd.text}</p>
-                        )
-                      })()}
+                            {(() => {
+                              const cd = hearingCountdown(c.nextHearing)
+                              return cd && (
+                                <p className={`case-card__hearing-when case-card__hearing-when--${cd.tone}`}>{cd.text}</p>
+                              )
+                            })()}
+                          </>
+                        }
+                      />
                     </div>
                   </div>
                 )}

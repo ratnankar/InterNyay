@@ -5,6 +5,7 @@ import { formatDate } from '../../utils/dateUtils'
 import { getErrorMessage } from '../../utils/errorMessages'
 import ClearableDateInput from '../common/ClearableDateInput'
 import '../../styles/admin/cause-relay.css'
+import Icon from '../common/Icon'
 
 function tomorrow() {
   const d = new Date()
@@ -118,11 +119,13 @@ export default function CauseListRelay() {
             </button>
             <button
               type="button"
-              className="btn-outline"
+              className="btn-refresh"
               onClick={() => run(() => api.admin.causeListRelay.refresh(step.sessionId))}
               disabled={busy}
+              title="New image"
+              aria-label="New image"
             >
-              New image
+              <Icon name="refresh" />
             </button>
             <button
               type="button"

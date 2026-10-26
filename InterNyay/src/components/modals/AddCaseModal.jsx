@@ -66,7 +66,8 @@ function ChallanDetails({ form, setForm }) {
           placeholder="e.g. 303(2) BNS"
           maxLength={255}
           value={form.firSection}
-          onChange={e => setForm(f => ({ ...f, firSection: e.target.value }))}
+          // Section and Acts & Sections hold the same text in a police challan case: changing one changes the other
+          onChange={e => setForm(f => ({ ...f, firSection: e.target.value, actsSections: e.target.value }))}
         />
       </div>
 
@@ -264,7 +265,7 @@ function ClientPicker({ ourLabel, allowNonClient }) {
       )}
 
       {/* One Add option; it asks whether to add a client or a non-client. It stays available while the search bar is showing */}
-      {/* Non-clients can be added only on the accused side; on the complainant side the button adds a client directly */}
+      {/* Non-clients can be added on either side: whichever side our client is on */}
       {(allowNonClient || caseClients.length > 0) && (
         <div className="client-add-row">
           <button
@@ -460,7 +461,7 @@ function PartiesSection() {
           </span>
         </label>
         {side === SIDE_COMPLAINANT
-          ? <ClientPicker ourLabel={ourLabel} allowNonClient={false} />
+          ? <ClientPicker ourLabel={ourLabel} allowNonClient />
           : <OpponentList partyLabel={theirLabel} />}
       </div>
 
@@ -619,7 +620,7 @@ function FileNumberField({ form, setForm }) {
 export default function AddCaseModal() {
   const { courtNames, highCourts, rows: courtRows } = useCourts()
   const {
-    showAddCase, setShowAddCase,
+    showAddCase, setShowAddCase, scanCnr, setScanCnr,
     newCaseForm, setNewCaseForm,
     remapClientSubTypes,
     handleSaveCase,
@@ -711,7 +712,7 @@ export default function AddCaseModal() {
   const [stage, setStage] = useState(0)
 
   // Start from the first question every time the modal is closed
-  useEffect(() => { if (!showAddCase) setStage(0) }, [showAddCase])
+  useEffect(() => { if (!showAddCase) { setStage(0); setScanCnr('') } }, [showAddCase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // How the form looked when it was opened, to know whether anything was typed since
   const { fileSeq: _fileSeq, ...formWithoutAutoNumber } = newCaseForm
@@ -733,31 +734,22 @@ export default function AddCaseModal() {
     onDiscard: closeModal,
   })
 
-  // Add by CNR: the case is read from eCourts and its details fill the form. When eCourts cannot give the case the
-  // form opens empty (with the CNR typed so far) to be filled by hand
-  async function fetchByCnr(cnr) {
-    // A CNR the advocate already has a case for is not fetched again; the CNR prompt stays open
-    const sameCnr = c => String(c.cnrNo || '').toUpperCase().replace(/[\s-]/g, '') === cnr
-    if ((cases || []).some(sameCnr)) {
-      addToast('You already have a case with this CNR number', 'error')
-      return
-    }
-
-    try {
-      const detail = await api.cases.lookupCnr(cnr)
-      setNewCaseForm(f => ({ ...f, ...cnrDetailToForm(detail, { advocateName: currentUser?.name }), addMode: 'CNR' }))
-      setStage(1)
-    } catch (e) {
-      // The server knows the CNR is already used (e.g. the case list here is not up to date): stay on the prompt
-      if (/already have a case/i.test(getErrorMessage(e, ''))) {
-        addToast(getErrorMessage(e, 'You already have a case with this CNR number'), 'error')
-        return
-      }
-      addToast(`${getErrorMessage(e, 'Could not fetch the case from eCourts')}. Fill in the case details manually.`, 'error')
-      setNewCaseForm(f => ({ ...f, cnrNo: cnr, addMode: 'MANUAL', cnrDetail: null }))
-      setStage(1)
-    }
+  // Add by CNR: the case was read from eCourts (the advocate typed the CAPTCHA in the prompt) and its details fill the form.
+  // The token ties the form to that lookup, so its hearing history and orders are saved with the case
+  function onCnrFetched(detail, token) {
+    setNewCaseForm(f => ({ ...f, ...cnrDetailToForm(detail, { advocateName: currentUser?.name }), addMode: 'CNR', lookupToken: token }))
+    setStage(1)
   }
+
+  // eCourts could not give the case: the form opens empty (with the CNR typed so far) to be filled by hand
+  function onCnrFailed(cnr, message) {
+    addToast(`${message || 'Could not fetch the case from eCourts'}. Fill in the case details manually.`, 'error')
+    setNewCaseForm(f => ({ ...f, cnrNo: cnr, addMode: 'MANUAL', cnrDetail: null, lookupToken: '' }))
+    setStage(1)
+  }
+
+  // A CNR the advocate already has a case for is not fetched again
+  const hasCnr = cnr => (cases || []).some(c => String(c.cnrNo || '').toUpperCase().replace(/[\s-]/g, '') === cnr)
 
   // Nothing to show while the modal is closed
   if (!showAddCase) return null
@@ -768,7 +760,10 @@ export default function AddCaseModal() {
       <CaseAddModePrompt
         onClose={closeModal}
         onManual={() => { setNewCaseForm(f => ({ ...f, addMode: 'MANUAL' })); setStage(1) }}
-        onFetch={fetchByCnr}
+        onFetched={onCnrFetched}
+        onFailed={onCnrFailed}
+        hasCnr={hasCnr}
+        initialCnr={scanCnr}
       />
     )
   }
@@ -800,7 +795,10 @@ export default function AddCaseModal() {
         ...f,
         reliefSought,
         caseType: types.length === 1 ? types[0] : '',
-        ...(isPoliceChallan(reliefSought) ? {} : { firNo: '', firSection: '', policeStation: '' }),
+        ...(isPoliceChallan(reliefSought)
+          // Section and Acts & Sections are the same text: whichever is empty takes the other's
+          ? (f.firSection ? (f.actsSections ? {} : { actsSections: f.firSection }) : { firSection: (f.actsSections || '').slice(0, 255) })
+          : { firNo: '', firSection: '', policeStation: '' }),
       }
     })
   }
@@ -835,7 +833,7 @@ export default function AddCaseModal() {
                     Details taken from eCourts for CNR {newCaseForm.cnrNo}. Check them; adding a client is optional.
                     {' '}{newCaseForm.cnrDetail.hearingCount} hearing {newCaseForm.cnrDetail.hearingCount === 1 ? 'date' : 'dates'} and{' '}
                     {newCaseForm.cnrDetail.orderCount} {newCaseForm.cnrDetail.orderCount === 1 ? 'order' : 'orders'} are
-                    added when you save the case.
+                    added when you save the case; the order PDFs are downloaded in the background.
                   </p>
                   {(newCaseForm.cnrDetail.petitioners.length > 0 || newCaseForm.cnrDetail.respondents.length > 0) && (
                     <p className="case-parties__hint u-mt-6">
@@ -854,8 +852,8 @@ export default function AddCaseModal() {
                 </>
               ) : (
                 <p className="case-parties__hint">
-                  Fill in the case details. When you save, the hearing dates and orders of this case are taken
-                  from eCourts using the CNR number.
+                  Fill in the case details. The hearing dates and orders of a case added by hand are not brought in;
+                  add the case by CNR to get them from eCourts.
                 </p>
               )}
             </div>
@@ -1017,6 +1015,47 @@ export default function AddCaseModal() {
               <ClearableDateInput className="form-input" 
                 value={newCaseForm.filingDate} onChange={e => setNewCaseForm(f => ({ ...f, filingDate: e.target.value }))} />
             </div>
+            <div>
+              <label className="form-label">Registration Date</label>
+              <ClearableDateInput className="form-input"
+                value={newCaseForm.registrationDate} onChange={e => setNewCaseForm(f => ({ ...f, registrationDate: e.target.value }))} />
+            </div>
+            <div>
+              <label className="form-label">First Hearing Date</label>
+              <ClearableDateInput className="form-input"
+                value={newCaseForm.firstHearingDate} onChange={e => setNewCaseForm(f => ({ ...f, firstHearingDate: e.target.value }))} />
+            </div>
+            <div>
+              <label className="form-label">Case Stage</label>
+              <input className="form-input" placeholder="e.g. Arguments" maxLength={255}
+                value={newCaseForm.caseStage} onChange={e => setNewCaseForm(f => ({ ...f, caseStage: e.target.value }))} />
+            </div>
+            <div className="form-grid-full">
+              <label className="form-label">Acts &amp; Sections</label>
+              {/* In a police challan case this is the same text as the Section above (changing one changes the other), so it is limited to the Section's length */}
+              <input className="form-input" placeholder="e.g. Negotiable Instruments Act - Section 138"
+                maxLength={isPoliceChallan(newCaseForm.reliefSought) ? 255 : 1000}
+                value={newCaseForm.actsSections}
+                onChange={e => setNewCaseForm(f => ({
+                  ...f,
+                  actsSections: e.target.value,
+                  ...(isPoliceChallan(f.reliefSought) ? { firSection: e.target.value.slice(0, 255) } : {}),
+                }))} />
+            </div>
+            {(newCaseForm.decisionDate || newCaseForm.disposalNature) && (
+              <>
+                <div>
+                  <label className="form-label">Decision Date</label>
+                  <ClearableDateInput className="form-input"
+                    value={newCaseForm.decisionDate} onChange={e => setNewCaseForm(f => ({ ...f, decisionDate: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="form-label">Nature of Disposal</label>
+                  <input className="form-input" placeholder="As eCourts gives it" maxLength={255}
+                    value={newCaseForm.disposalNature} onChange={e => setNewCaseForm(f => ({ ...f, disposalNature: e.target.value }))} />
+                </div>
+              </>
+            )}
 
             <PartiesSection />
 

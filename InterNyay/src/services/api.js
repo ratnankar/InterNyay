@@ -288,9 +288,15 @@ export const cases = {
   // Set or change the next hearing date of a case
   updateNextHearing: (id, body) => put(`/cases/${id}/next-hearing`, { body }),
 
+  // "Update next date" button: eCourts is asked for the new date once the hearing date is over (from 6 PM on that day)
+  syncNextHearing: (id) => post(`/cases/${id}/sync-next-hearing`),
+
   // Case details from eCourts by CNR, used to fill the Add Case form. Fails with a readable message when eCourts
   // cannot give the case
-  lookupCnr: (cnr)          => get(`/cases/cnr/${encodeURIComponent(cnr)}`),
+  // Case details from the eCourts portal by CNR: start gives the CAPTCHA image, answer gives the case (or a new CAPTCHA)
+  cnrStart:   (cnr)         => post('/cases/cnr/start', { params: { cnr } }),
+  cnrAnswer:  (id, captcha) => post(`/cases/cnr/${encodeURIComponent(id)}/answer`, { body: { captcha } }),
+  cnrRefresh: (id)          => post(`/cases/cnr/${encodeURIComponent(id)}/refresh`),
 
   // Basic create / update / delete for cases
   create:    (body)         => post('/cases', { body }),

@@ -2,7 +2,7 @@
 // Everything here is a best guess the advocate checks on the form: what cannot be matched with the app's own court
 // table or case catalogue is left empty, never guessed wrongly.
 
-import { SIDE_ACCUSED, SIDE_COMPLAINANT, caseTypeOptions, isPoliceChallan, reliefOptions } from '../constants/caseCatalog'
+import { SIDE_ACCUSED, SIDE_COMPLAINANT, caseTypeOptions, isPoliceChallan, reliefOptions, sideSubType } from '../constants/caseCatalog'
 import { toFormParty } from './caseParties'
 import { getCourtNames, getCourtNosByBuilding, getDistricts, isHighCourt, isOwnDistrict } from '../constants/courts'
 
@@ -94,7 +94,7 @@ const nameWords = text => String(text || '').toLowerCase().split(/[^a-z0-9]+/).f
 
 // Same person or firm: every word of the shorter name is in the longer one (Arun Jaitley / MR.ARUN JAITLEY).
 // A single word only matches a single word, so "Kumar" never matches every Kumar
-function sameName(a, b) {
+export function sameName(a, b) {
   const x = nameWords(a), y = nameWords(b)
   if (x.length === 0 || y.length === 0) return false
   const [short, long] = x.length <= y.length ? [x, y] : [y, x]
@@ -127,14 +127,32 @@ export function cnrCaseTitle(detail) {
 
   const left = side(detail?.petitioners)
   const right = side(detail?.respondents)
-  if (!left && !right) return ''
+  if (!left && !right) return caseNumberTitle(detail)
   return `${left || '…'} v. ${right || '…'}`
+}
+
+// Title of a case whose parties eCourts does not list (family and Mahila court cases show no names): the case number,
+// with the case type in front when the number does not already say it, so the case still has a title to be found by
+function caseNumberTitle(detail) {
+  const no = String(detail?.caseNo || '').trim()
+  const type = String(detail?.caseType || '').trim()
+  if (no) return type && !no.toLowerCase().includes(type.toLowerCase()) ? `${type} ${no}` : no
+  return type || (detail?.cnr ? `Case ${detail.cnr}` : '')
 }
 
 // The names eCourts lists on the other side from ours, as opposite parties of the form (editable like typed ones)
 export function cnrOpponents(detail, side) {
   const names = (side === SIDE_COMPLAINANT ? detail?.respondents : detail?.petitioners) || []
   return names.map(n => String(n || '').trim()).filter(Boolean).map(name => toFormParty({ name }))
+}
+
+// The names eCourts lists on OUR side, as non-client parties of the form. They stay non-clients until the advocate
+// marks one as a client (or picks that person as the client), so both sides of the case are always visible
+export function cnrOurSide(detail, side, nature = '') {
+  const names = (side === SIDE_COMPLAINANT ? detail?.petitioners : detail?.respondents) || []
+  return names
+    .map(n => String(n || '').trim()).filter(Boolean)
+    .map(name => toFormParty({ name, subType: sideSubType(side, nature) }))
 }
 
 // Form values for a case read from eCourts. The result is merged into the Add Case form
@@ -154,6 +172,12 @@ export function cnrDetailToForm(detail, { advocateName = '' } = {}) {
     cnrNo: detail.cnr || '',
     caseNo: detail.caseNo || '',
     filingDate: detail.filingDate || '',
+    registrationDate: detail.registrationDate || '',
+    firstHearingDate: detail.firstHearingDate || '',
+    caseStage: detail.caseStage || '',
+    actsSections: detail.actsSections || '',
+    decisionDate: detail.decisionDate || '',
+    disposalNature: detail.disposalNature || '',
     nextHearing: detail.nextHearing || '',
 
     caseNature: nature,
@@ -169,12 +193,15 @@ export function cnrDetailToForm(detail, { advocateName = '' } = {}) {
     } : {}),
 
     // FIR details only show for a police challan case, where they are kept
-    ...(isPoliceChallan(catalog.reliefSought) ? { firNo: detail.firNo || '', policeStation: detail.policeStation || '' } : {}),
+    ...(isPoliceChallan(catalog.reliefSought) ? { firNo: detail.firNo || '', firSection: String(detail.actsSections || '').slice(0, 255), policeStation: detail.policeStation || '' } : {}),
 
     // Which side our client is on. The opposite parties start as the names eCourts lists on the other side;
     // the advocate can edit, remove or add parties like in a case added by hand
     clientSide: side,
     opponents: cnrOpponents(detail, side),
+    // The names eCourts lists on our side start as non-clients; the advocate marks the real client(s) from them
+    nonClients: cnrOurSide(detail, side, nature),
+    titleLead: null,
 
     // The case title is not set here: in a case added by CNR the form uses cnrCaseTitle(cnrDetail) until the advocate types their own
     title: '',

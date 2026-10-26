@@ -26,7 +26,7 @@ import {
 import { caseFeeSummary, cleanHearingFees, cleanStageFees } from '../utils/feeUtils'
 import { hasCorporatePanelClient, caseClientNames, caseHasClient } from '../utils/caseClients'
 import { toFormParty, toRequestParty, nonClientsOf } from '../utils/caseParties'
-import { cnrCaseTitle, cnrOpponents, detectSide } from '../utils/cnrPrefill'
+import { cnrCaseTitle, cnrOpponents, cnrOurSide, detectSide, sameName } from '../utils/cnrPrefill'
 import {
   auth as authApi,
   cases as casesApi,
@@ -423,6 +423,8 @@ export function AppProvider({ children }) {
 
   // Visibility flags and targets for the global modals
   const [showAddCase, setShowAddCase] = useState(false)
+  // A CNR read from a scanned QR: the Add Case window fetches that case as soon as it opens
+  const [scanCnr, setScanCnr] = useState('')
   const [showAddClient, setShowAddClient] = useState(false)
   const [uploadDocCaseId, setUploadDocCaseId] = useState(null)
   const [docPreview, setDocPreview] = useState(null)
@@ -566,14 +568,23 @@ export function AppProvider({ children }) {
     fileNoOrigin: 'new',
     fileNoManual: false,
 
-    // CNR: the form was filled from eCourts using the CNR, so the next date and status come from the court.
-    // MANUAL: the advocate fills the form. Either way the hearing dates and orders are read from eCourts when saved
+    // CNR: the form was filled from eCourts using the CNR, so the next date and status come from the court; the hearing
+    // dates and orders of that lookup are saved with the case.
+    // MANUAL: the advocate fills the form, no hearing dates or orders are brought in
     addMode: 'MANUAL',
     // What eCourts said about the case when it was added by CNR. Only for the notes on the form, never sent
     cnrDetail: null,
+    // The server side lookup (CAPTCHA session) behind a case added by CNR; sent so its history and orders are saved
+    lookupToken: '',
 
     cnrNo: '',
     filingDate: '',
+    caseStage: '',
+    actsSections: '',
+    registrationDate: '',
+    firstHearingDate: '',
+    decisionDate: '',
+    disposalNature: '',
     court: '',
     district: '',
     courtNo: '',
@@ -1832,6 +1843,19 @@ export function AppProvider({ children }) {
       prev.some(c => Number(c.id) === Number(client.id)) ? prev : [...prev, client]
     )
 
+    // A client picked from the names eCourts listed on our side takes that person's place; the others stay non-clients
+    if (newCaseForm.addMode === 'CNR') {
+      setNewCaseForm(f => {
+        const gone = f.nonClients.find(n => sameName(n.name, client.name))
+        if (!gone) return f
+        return {
+          ...f,
+          nonClients: f.nonClients.filter(n => n !== gone),
+          titleLead: f.titleLead === gone.key ? null : f.titleLead,
+        }
+      })
+    }
+
     setCaseClientSubTypes(prev =>
       prev[client.id]
         ? prev
@@ -1882,10 +1906,22 @@ export function AppProvider({ children }) {
     if (side === newCaseForm.clientSide) return
 
     setNewCaseForm(f => {
-      // A case read from eCourts: opposite parties still as eCourts listed them move to the other side with our client
-      const untouched = f.addMode === 'CNR' && f.cnrDetail && !f.opponents.some(o => o.fatherName || o.address || o.phone)
-        && JSON.stringify(f.opponents.map(o => o.name)) === JSON.stringify(cnrOpponents(f.cnrDetail, f.clientSide).map(o => o.name))
-      return { ...f, clientSide: side, ...(untouched ? { opponents: cnrOpponents(f.cnrDetail, side), opponentLead: null } : {}) }
+      // A case read from eCourts: names still as eCourts listed them move to the other side with our client,
+      // so both sides stay visible. Opposite parties that were edited, and non-clients that were edited or
+      // marked as clients, stay where they are
+      const plain = p => !p.fatherName && !p.address && !p.phone
+      const sameNames = (list, from) => JSON.stringify(list.map(p => p.name)) === JSON.stringify(from.map(p => p.name))
+      const byCnr = f.addMode === 'CNR' && f.cnrDetail
+
+      const opponentsUntouched = byCnr && f.opponents.every(plain) && sameNames(f.opponents, cnrOpponents(f.cnrDetail, f.clientSide))
+      const nonClientsUntouched = byCnr && f.nonClients.every(plain) && sameNames(f.nonClients, cnrOurSide(f.cnrDetail, f.clientSide))
+
+      return {
+        ...f,
+        clientSide: side,
+        ...(opponentsUntouched ? { opponents: cnrOpponents(f.cnrDetail, side), opponentLead: null } : {}),
+        ...(nonClientsUntouched ? { nonClients: cnrOurSide(f.cnrDetail, side, f.caseNature), titleLead: null } : {}),
+      }
     })
     remapClientSubTypes(side, newCaseForm.caseNature)
   }
@@ -1960,6 +1996,12 @@ export function AppProvider({ children }) {
       fileNoManual:   false,
       cnrNo:          c.cnrNo          || '',
       filingDate:     c.filingDate     || '',
+      caseStage: c.caseStage || '',
+      actsSections: c.actsSections || '',
+      registrationDate: c.registrationDate || '',
+      firstHearingDate: c.firstHearingDate || '',
+      decisionDate: c.decisionDate || '',
+      disposalNature: c.disposalNature || '',
       court,
       district,
       courtNo:        c.courtNo        || '',
@@ -2193,10 +2235,12 @@ export function AppProvider({ children }) {
       payload.caseNo = (newCaseForm.caseNo || '').trim()
       payload.addMode = 'MANUAL'
     }
+    if (payload.addMode !== 'CNR') delete payload.lookupToken
 
     // How the case was added only matters when it is created
     if (editingCaseId) {
       delete payload.addMode
+      delete payload.lookupToken
       // The next hearing is not part of Edit Case; it changes only through the Next Hearing Update button
       delete payload.nextHearing
     }
@@ -2557,6 +2601,34 @@ export function AppProvider({ children }) {
 
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not update the hearing'), 'error')
+    }
+  }
+
+  // "Update next date" button: asks eCourts for the new date of a case whose hearing date is over. When it moves,
+  // the card shows the new date (and the button goes away); when eCourts has nothing new yet, the case is left as it is
+  async function syncNextHearing(caseId) {
+    try {
+      const res = await casesApi.syncNextHearing(caseId)
+
+      if (res?.status === 'UPDATED' || res?.status === 'CLOSED') {
+        setCases(prev =>
+          prev.map(c =>
+            c.id === caseId
+              ? { ...c, nextHearing: res.nextHearing ?? null, status: res.caseStatus || c.status, causeListNo: null, listingDate: null }
+              : c
+          )
+        )
+        bumpHearings(caseId)
+        addToast(res.message || 'Next hearing date updated')
+        return true
+      }
+
+      addToast(res?.message || 'eCourts has not given a new date yet', 'error')
+      return false
+
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not check eCourts'), 'error')
+      return false
     }
   }
 
@@ -3623,6 +3695,8 @@ export function AppProvider({ children }) {
         // Modal visibility and the selected case
         showAddCase,
         setShowAddCase,
+        scanCnr,
+        setScanCnr,
 
         showAddClient,
         setShowAddClient,
@@ -3641,6 +3715,7 @@ export function AppProvider({ children }) {
         openNextHearing,
         closeNextHearing,
         handleSaveNextHearing,
+        syncNextHearing,
 
         hearingsVersion,
         optionsVersion,

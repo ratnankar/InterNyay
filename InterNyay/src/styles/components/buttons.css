@@ -307,3 +307,34 @@ textarea.form-input { min-height: 0; }
 
 /* ---------- Dashboard greeting: "Good Afternoon," keeps the title size, the name after it is a little smaller ---------- */
 .page-title .page-title__name { font-size: 0.9em; }
+
+
+/* Round-corner icon button for "refresh": next hearing date from eCourts, new CAPTCHA picture */
+.btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  padding: 0;
+  border: 1.5px solid var(--color-gold-border);
+  border-radius: var(--ctl-radius);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 17px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-refresh:hover:not(:disabled) { background: rgba(184, 134, 11, 0.10); border-color: rgba(184, 134, 11, 0.55); }
+.btn-refresh:disabled { opacity: 0.55; cursor: default; }
+
+/* Turns while the refresh is running */
+.icon--spin { animation: icon-spin 0.9s linear infinite; }
+@keyframes icon-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .icon--spin { animation: none; } }
+
+/* Refresh button with its small hint ("Not updated") on the case card */
+.sync-next { display: inline-flex; align-items: center; gap: 8px; }
+.sync-next__hint { font-size: var(--fs-xs); color: var(--color-text-muted); }
