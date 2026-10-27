@@ -84,7 +84,7 @@ export default function MiscNextHearingModal({ app, onClose, onChange }) {
                 placeholder="Select next hearing date"
               />
               <p className="next-hearing__hint">
-                Sundays, dates you've crossed out on the calendar and days that already have their daily limit of hearings can't be chosen.
+                Dates you've crossed out on the calendar and days that already have their daily limit of hearings can't be chosen.
                 The case's own next hearing date is not changed.
               </p>
             </div>

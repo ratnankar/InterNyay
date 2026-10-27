@@ -4,11 +4,13 @@ import { caseClientLabels } from '../../utils/caseClients'
 import { nonClientsOf, opponentsOf, partyText } from '../../utils/caseParties'
 import { caseNatureOf } from '../../utils/caseClassification'
 import { formatDisplayDate } from '../../utils/dateUtils'
+import useLastHearingDate from '../../hooks/useLastHearingDate'
 import { formatCurrency } from '../../utils/formatUtils'
 
 // Detail rows of a case, with an optional hearing
-export default function CaseFields({ caseItem: c, clients = [], hearing = null }) {
+export default function CaseFields({ caseItem: c, clients = [], hearing = null, showParties = true, withLastHearing = false }) {
   useCourts()
+  const lastHearingDate = useLastHearingDate(c.id, withLastHearing && !hearing)
   // Split the case's court into district and court name
   const { district, court } = caseCourtParts(c)
   // Building and floor of the court room
@@ -63,6 +65,7 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null }
     row('Filing Date',   c.filingDate ? formatDisplayDate(c.filingDate) : ''),
     row('Registration Date', c.registrationDate ? formatDisplayDate(c.registrationDate) : ''),
     row('First Hearing',  c.firstHearingDate ? formatDisplayDate(c.firstHearingDate) : ''),
+    row('Last Hearing',   lastHearingDate ? formatDisplayDate(lastHearingDate) : ''),
     row('Case Stage',    c.caseStage),
     row('Acts & Sections', c.actsSections),
     row('District',      district),
@@ -77,9 +80,11 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null }
     row('FIR No',         c.firNo),
     row('Section',        c.firSection),
     row('Police Station', c.policeStation),
-    row(clientNames.length > 1 ? 'Clients' : 'Client', clientNames.join(', '), { always: true }),
-    row(nonClients.length > 1 ? 'Non-clients' : 'Non-client', nonClients.join(', ')),
-    ...opponentRows,
+    ...(showParties ? [
+      row(clientNames.length > 1 ? 'Clients' : 'Client', clientNames.join(', '), { always: true }),
+      row(nonClients.length > 1 ? 'Non-clients' : 'Non-client', nonClients.join(', ')),
+      ...opponentRows,
+    ] : []),
     row('Description',    c.description, { multiline: true }),
   ].filter(f => f.always || (f.value !== '' && f.value != null))
 

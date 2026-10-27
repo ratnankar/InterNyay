@@ -196,6 +196,14 @@ export const courtPreferences = {
   save: (courtIds)   => put('/court-preferences', { body: { courtIds } }),
 }
 
+// The "Import from eCourts" list (cases of the uploaded My Cases file), kept on the account so it follows it to any device.
+// get() gives { items, updatedAt } (items is null when nothing was imported); save() keeps the newest upload
+export const ecourtsImport = {
+  get:   ()                   => get('/ecourts-import'),
+  save:  (items, updatedAt)   => put('/ecourts-import', { body: { items, updatedAt } }),
+  clear: ()                   => del('/ecourts-import'),
+}
+
 // Court table: courts, districts, buildings and court numbers (single source for every court dropdown)
 export const courts = {
   list:   ()     => get('/courts'),

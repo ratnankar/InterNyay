@@ -12,7 +12,7 @@ import usePersistedState from '../hooks/usePersistedState'
 import SeeMore from '../components/common/SeeMore'
 import CaseHearings from '../components/common/CaseHearings'
 import CaseFields from '../components/common/CaseFields'
-import CaseNonClients from '../components/common/CaseNonClients'
+import CaseParties from '../components/common/CaseParties'
 import CaseSummaryFields from '../components/common/CaseSummaryFields'
 import { documentTitle, documentTypeLabel, isOrderDocument, isEvidenceDocument, isMiscDocument, evidenceTitle } from '../utils/documentUtils'
 import MiscDocsSection from '../components/misc/MiscDocsSection'
@@ -22,7 +22,7 @@ import Dropdown from '../components/common/Dropdown'
 import Icon from '../components/common/Icon'
 import CnrScannerModal from '../components/modals/CnrScannerModal'
 import ImportCasesModal from '../components/modals/ImportCasesModal'
-import { clearImported, loadImported, saveImported } from '../utils/myCasesImport'
+import { fetchImported, forgetImported, loadImported, saveImported, uploadImported } from '../utils/myCasesImport'
 import DocInfoButton from '../components/common/DocInfoButton'
 import ToggleSwitch from '../components/common/ToggleSwitch'
 import { confirmDialog } from '../utils/confirmDialog'
@@ -166,7 +166,34 @@ export default function Cases() {
 
   // Import from eCourts: the cases of the uploaded My Cases file, and whether the list is open.
   // A case is added from the list one at a time; when its form closes the list opens again
-  const [importItems, setImportItems] = useState(loadImported)
+  const [importItems, setImportItems] = useState(() => loadImported(currentUser?.id != null ? String(currentUser.id) : undefined))
+  const importOwnerId = currentUser?.id != null ? String(currentUser.id) : ''
+  const importOwnerRef = useRef(importOwnerId)
+
+  useEffect(() => {
+    if (importOwnerRef.current === importOwnerId) return
+    importOwnerRef.current = importOwnerId
+    setImportItems(loadImported(importOwnerId))
+    setImportOpen(false)
+  }, [importOwnerId])
+
+  // The list is kept on the account: bring it in on opening the page (a new device or browser has no local copy).
+  // A list uploaded before it was kept on the account is sent up once
+  useEffect(() => {
+    if (!importOwnerId) return undefined
+    let alive = true
+    fetchImported().then(list => {
+      if (!alive) return
+      if (list) {
+        setImportItems(list)
+        saveImported(list, importOwnerId)
+      } else {
+        const local = loadImported(importOwnerId)
+        if (local) uploadImported(local)
+      }
+    })
+    return () => { alive = false }
+  }, [importOwnerId])
   const [importOpen, setImportOpen] = useState(false)
   const backToImport = useRef(false)
 
@@ -644,8 +671,8 @@ export default function Cases() {
         </div>
 
         {/* Case details */}
-        <CaseFields caseItem={c} clients={clients} />
-        <CaseNonClients caseItem={c} />
+        <CaseFields caseItem={c} clients={clients} showParties={false} withLastHearing />
+        <CaseParties caseItem={c} clients={clients} />
 
         {/* Hearing History section (collapsible) */}
         <div className={`exp-card${openSections.hearings ? ' exp-card--open' : ''} u-mt-16`} >
@@ -929,8 +956,8 @@ export default function Cases() {
         <ImportCasesModal
           items={importItems}
           onClose={() => setImportOpen(false)}
-          onLoaded={list => { setImportItems(list); saveImported(list) }}
-          onClear={() => { setImportItems(null); clearImported() }}
+          onLoaded={list => { setImportItems(list); saveImported(list, importOwnerId); uploadImported(list) }}
+          onClear={() => { setImportItems(null); forgetImported(importOwnerId) }}
           onAdd={item => {
             // Only the CNR is passed on: the Add Case window asks eCourts for the case, and the list comes back after it closes
             backToImport.current = true

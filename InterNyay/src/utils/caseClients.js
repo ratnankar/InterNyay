@@ -98,3 +98,27 @@ export function caseHasWhatsappNumber(c, clients = []) {
   if (known.length < caseClientIds(c).length) return c?.whatsappNumberMissing === false
   return false
 }
+
+export function caseClientEntries(c, clients = []) {
+  const entries = []
+  const primaryId = c?.clientId
+  const primaryName = c?.clientName
+    || clients.find(cl => Number(cl.id) === Number(primaryId))?.name
+    || (primaryId == null ? '' : 'Unknown')
+
+  if (primaryName) entries.push({ id: primaryId, name: primaryName })
+
+  ;(c?.additionalClients || []).forEach(x => {
+    const name = x.name || clients.find(cl => Number(cl.id) === Number(x.id))?.name
+    if (name) entries.push({ id: x.id, name })
+  })
+
+  return entries.map(entry => {
+    const client = clients.find(cl => Number(cl.id) === Number(entry.id))
+    return {
+      ...entry,
+      subType: caseClientSubType(c, entry.id),
+      phone: String(client?.whatsappPhone || client?.phone || '').trim(),
+    }
+  })
+}

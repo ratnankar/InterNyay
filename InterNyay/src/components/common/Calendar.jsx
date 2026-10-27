@@ -42,8 +42,6 @@ export default function Calendar() {
   // Holiday (if any) that falls on the selected date
   const selectedHoliday = holidayByDate.get(selectedStr)
 
-  // Sundays are always off for court hearings
-  const selectedIsSunday  = calendarDate.getDay() === SUNDAY
   // True if the user has marked this date as a no-hearing day
   const selectedIsCrossed = noHearingDates.has(selectedStr)
 
@@ -133,7 +131,6 @@ export default function Calendar() {
               title={
                 isCrossed ? 'No hearing on this date'
                 : holiday ? `${holiday.label} — ${holidayCourtLabel(holiday)} holiday`
-                : isSundayCell ? 'Sunday — no hearings'
                 : hearingCount > 0 ? `${hearingCount} hearing${hearingCount === 1 ? '' : 's'}${dayLimit != null ? ` of ${dayLimit}${isFull ? ' — full' : ''}` : ''}`
                 : undefined
               }
@@ -169,32 +166,26 @@ export default function Calendar() {
       </div>
 
       <div className="calendar__cross-box" data-no-compact>
-        {selectedIsSunday ? (
-          <p className="calendar__cross-note">Sunday — no hearings can be set on this day.</p>
-        ) : (
-          <>
-            <button
-              type="button"
-              className={`btn-outline btn-outline--sm calendar__cross-btn${selectedIsCrossed ? ' calendar__cross-btn--on' : ''}`}
-              onClick={toggleCross}
-              title={selectedIsCrossed
-                ? 'Take the cross off — hearings can be set on this date again'
-                : 'Mark this date so no hearing can be set on it'}
-            >
-              {selectedIsCrossed ? <><Icon name="close" /> Remove cross from this date</> : <><Icon name="close" /> Mark as no-hearing date</>}
-            </button>
-            <button
-              type="button"
-              className="btn-outline btn-outline--sm calendar__cross-btn calendar__limit-btn"
-              onClick={() => setLimitOpen(true)}
-              title="Set how many hearings can be listed on this date and on a usual day"
-            >
-              Daily hearing limit{selectedIsCrossed ? ': 0' : selectedLimit != null ? `: ${selectedLimit}` : ''}
-            </button>
-            {selectedIsCrossed && (
-              <p className="calendar__cross-note">No hearing will be taken on this date.</p>
-            )}
-          </>
+        <button
+          type="button"
+          className={`btn-outline btn-outline--sm calendar__cross-btn${selectedIsCrossed ? ' calendar__cross-btn--on' : ''}`}
+          onClick={toggleCross}
+          title={selectedIsCrossed
+            ? 'Take the cross off — hearings can be set on this date again'
+            : 'Mark this date so no hearing can be set on it'}
+        >
+          {selectedIsCrossed ? <><Icon name="close" /> Remove cross from this date</> : <><Icon name="close" /> Mark as no-hearing date</>}
+        </button>
+        <button
+          type="button"
+          className="btn-outline btn-outline--sm calendar__cross-btn calendar__limit-btn"
+          onClick={() => setLimitOpen(true)}
+          title="Set how many hearings can be listed on this date and on a usual day"
+        >
+          Daily hearing limit{selectedIsCrossed ? ': 0' : selectedLimit != null ? `: ${selectedLimit}` : ''}
+        </button>
+        {selectedIsCrossed && (
+          <p className="calendar__cross-note">No hearing will be taken on this date.</p>
         )}
       </div>
 

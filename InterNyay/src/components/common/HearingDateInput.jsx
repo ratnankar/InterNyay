@@ -168,8 +168,8 @@ export default function HearingDateInput({
               const sunday = isSunday(ds)
               const crossed = noHearingDates.has(ds)
               // A day that already holds its daily limit; the limit can be raised from the dashboard calendar
-              const full = !sunday && !crossed && ds !== value && isDayFull(ds, caseId)
-              const blocked = sunday || crossed || full
+              const full = !crossed && ds !== value && isDayFull(ds, caseId)
+              const blocked = crossed || full
 
               const cls = [
                 'hdi__day',
@@ -188,7 +188,6 @@ export default function HearingDateInput({
                   disabled={blocked}
                   title={
                     crossed ? 'Marked as a no-hearing date'
-                    : sunday ? 'Sunday — no hearings'
                     : full ? `Full — ${hearingCountsByDate.get(ds) || 0} of ${hearingLimitFor(ds)} hearings`
                     : undefined
                   }
@@ -205,7 +204,7 @@ export default function HearingDateInput({
             })}
           </div>
 
-          <p className="hdi__legend">Sundays, crossed-out dates and full days can't be chosen.</p>
+          <p className="hdi__legend">Crossed-out dates and full days can't be chosen.</p>
         </div>,
         document.body
       )}

@@ -2,6 +2,8 @@
 // cases into categories. Only what is needed to show the list and pick a case is kept; when the advocate adds a case
 // only its CNR is used, and everything else comes from eCourts again (the normal "Add by CNR" lookup).
 
+import { ecourtsImport } from '../services/api'
+
 // A CNR number is 16 letters and digits
 const CNR = /^[A-Z0-9]{16}$/
 
@@ -102,22 +104,63 @@ export function parseMyCases(fileText) {
   return items
 }
 
-// The list is kept for the browser session so a refresh does not ask for the file again
+// The list belongs to the account and is kept on the server, so it is still there on another device, in a new browser
+// or after the tab was closed. This browser also keeps a copy for the session, so the window opens at once and a
+// refresh does not wait for the server.
 const KEY = 'internyay.myCasesImport'
 
-export function saveImported(items) {
-  try { sessionStorage.setItem(KEY, JSON.stringify(items)) } catch { /* too big or not allowed: the list just is not kept */ }
+function activeUserId() {
+  try {
+    const id = JSON.parse(localStorage.getItem('internyay_user') || 'null')?.id
+    return id == null ? '' : String(id)
+  } catch { return '' }
 }
 
-export function loadImported() {
+function keyFor(userId) {
+  return `${KEY}.${userId}`
+}
+
+// Saves the copy of this browser
+export function saveImported(items, userId = activeUserId()) {
+  if (!userId) return
+  try { sessionStorage.setItem(keyFor(userId), JSON.stringify(items)) } catch { /* too big or not allowed: the list just is not kept here */ }
+}
+
+// The copy of this browser (null when there is none)
+export function loadImported(userId = activeUserId()) {
+  try { sessionStorage.removeItem(KEY) } catch { /* nothing to clear */ }
+  if (!userId) return null
   try {
-    const items = JSON.parse(sessionStorage.getItem(KEY) || 'null')
+    const items = JSON.parse(sessionStorage.getItem(keyFor(userId)) || 'null')
     return Array.isArray(items) && items.length ? items : null
   } catch { return null }
 }
 
-export function clearImported() {
-  try { sessionStorage.removeItem(KEY) } catch { /* nothing to clear */ }
+// Removes the copy of this browser only. Used when signing out: the list stays on the account
+export function clearImported(userId = activeUserId()) {
+  try {
+    sessionStorage.removeItem(KEY)
+    if (userId) sessionStorage.removeItem(keyFor(userId))
+  } catch { /* nothing to clear */ }
+}
+
+// The list of the account from the server. Null when nothing was imported or the server cannot be reached
+export async function fetchImported() {
+  try {
+    const res = await ecourtsImport.get()
+    return Array.isArray(res?.items) && res.items.length ? res.items : null
+  } catch { return null }
+}
+
+// Keeps the list on the account. A failure is not shown: this browser still has its copy and the next upload tries again
+export async function uploadImported(items) {
+  try { await ecourtsImport.save(items, Date.now()) } catch { /* kept in this browser only for now */ }
+}
+
+// "Clear" in the import window: the list is forgotten on the account and in this browser
+export async function forgetImported(userId = activeUserId()) {
+  clearImported(userId)
+  try { await ecourtsImport.clear() } catch { /* the next sign-in shows it again; clear once more */ }
 }
 
 // Same CNR with spaces and dashes taken out

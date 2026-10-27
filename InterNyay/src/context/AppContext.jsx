@@ -46,6 +46,7 @@ import { downloadNameOf } from '../utils/documentUtils'
 import { getAccounts, rememberAccount, syncActiveAccount, forgetAccountByToken, activateAccount } from '../utils/accounts'
 import { confirmDialog } from '../utils/confirmDialog'
 import { clearSessionState } from '../utils/sessionStore'
+import { clearImported } from '../utils/myCasesImport'
 
 // The status chip the signed-in user picked last on the Cases page (see pages/Cases.jsx). Read when the app starts, from the cached
 // user, so a reload shows the right chip from the first paint instead of flashing All first
@@ -1355,6 +1356,7 @@ export function AppProvider({ children }) {
     resetCourts()
     resetCourtPreferences()
     clearSessionState()
+    clearImported()
 
     // Let the server log the sign-out (fire and forget, uses the token that is about to be cleared)
     authApi.logout()
