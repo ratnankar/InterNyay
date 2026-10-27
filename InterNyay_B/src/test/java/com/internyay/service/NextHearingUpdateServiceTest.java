@@ -1,5 +1,7 @@
 package com.internyay.service;
 
+import com.internyay.entity.Case;
+import com.internyay.entity.User;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.CaseRepository.HearingDateDue;
 import com.internyay.service.NextHearingUpdateService.Result;
@@ -11,14 +13,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,13 +39,17 @@ class NextHearingUpdateServiceTest {
     @Mock CaseRepository caseRepo;
     @Mock ScrapingService scraping;
     @Mock HearingService hearingService;
+    @Mock TransactionTemplate tx;
 
     private NextHearingUpdateService service;
 
     @BeforeEach
     void setUp() {
-        service = new NextHearingUpdateService(caseRepo, scraping, hearingService, true, 0, 50);
+        service = new NextHearingUpdateService(caseRepo, scraping, hearingService, tx, true, 0, 50);
         when(scraping.available()).thenReturn(true);
+        // The transaction template just runs what it is given
+        doAnswer(inv -> { ((Consumer<?>) inv.getArgument(0)).accept(null); return null; })
+                .when(tx).executeWithoutResult(any());
     }
 
     private static HearingDateDue due(long id, String cnr) {
@@ -137,9 +146,61 @@ class NextHearingUpdateServiceTest {
 
     @Test
     void doesNothingWhenSwitchedOff() {
-        NextHearingUpdateService off = new NextHearingUpdateService(caseRepo, scraping, hearingService, false, 0, 50);
+        NextHearingUpdateService off = new NextHearingUpdateService(caseRepo, scraping, hearingService, tx, false, 0, 50);
 
         assertThat(off.runBlocking(HEARD).due()).isZero();
         verify(caseRepo, never()).findOpenWithCnrListedOn(any());
+    }
+
+    // ---- manual Refresh button ------------------------------------------------------------------------------------
+
+    private static final LocalDate TODAY = LocalDate.now(java.time.ZoneId.of("Asia/Kolkata"));
+
+    private Case openCase(LocalDate next) {
+        Case c = Case.builder().id(7L).cnrNo("C1").status("Pending").nextHearing(next)
+                .user(User.builder().id(1L).build()).build();
+        when(caseRepo.findById(7L)).thenReturn(Optional.of(c));
+        return c;
+    }
+
+    @Test
+    void refreshMarksADisposedCaseDecidedAndClearsItsDate() {
+        Case c = openCase(TODAY);
+        when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(new CaseOutlook(true, TODAY.plusDays(30))));
+
+        var r = service.refreshSingleCase(7L, 1L);
+
+        assertThat(r.status()).isEqualTo("Decided");
+        assertThat(r.nextHearing()).isNull();
+        assertThat(c.getDecisionDate()).isEqualTo(TODAY);
+        verify(hearingService, never()).applyEcourtsNextHearing(anyLong(), any(), any());
+    }
+
+    @Test
+    void refreshMovesAPassedDateToTheLaterDateOnEcourts() {
+        openCase(TODAY.minusDays(1));
+        when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(new CaseOutlook(false, NEW_DATE.plusYears(5))));
+        when(hearingService.applyEcourtsNextHearing(7L, TODAY.minusDays(1), NEW_DATE.plusYears(5))).thenReturn(true);
+
+        assertThat(service.refreshSingleCase(7L, 1L).message()).contains("Moved");
+    }
+
+    @Test
+    void refreshDoesNotTreatAnUpcomingHearingAsHeard() {
+        openCase(TODAY.plusDays(10));
+        when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(new CaseOutlook(false, TODAY.plusDays(40))));
+
+        var r = service.refreshSingleCase(7L, 1L);
+
+        assertThat(r.nextHearing()).isEqualTo(TODAY.plusDays(10));
+        verify(hearingService, never()).applyEcourtsNextHearing(anyLong(), any(), any());
+    }
+
+    @Test
+    void refreshRefusesACaseOfAnotherUser() {
+        openCase(TODAY);
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.refreshSingleCase(7L, 2L));
     }
 }

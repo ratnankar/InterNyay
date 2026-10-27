@@ -228,6 +228,15 @@ public class NextHearingUpdateService {
                     "Next hearing set from eCourts: " + ecourtsNext);
         }
 
+        // The stored date is still upcoming, so that hearing has not been held: it must not be moved into the
+        // history as "heard". The advocate can change it with Update if the court really rescheduled it
+        if (ecourtsNext != null && currentNext != null && currentNext.isAfter(today)
+                && !ecourtsNext.equals(currentNext)) {
+            return new RefreshResult(caseId, currentNext, c.getStatus(), c.getDecisionDate(),
+                    "eCourts shows " + ecourtsNext + " but your next hearing " + currentNext
+                            + " has not come yet; use Update if the date was changed");
+        }
+
         // A later date on eCourts is moved in, exactly like the scheduled run does
         if (ecourtsNext != null && currentNext != null && ecourtsNext.isAfter(currentNext)) {
             boolean moved = hearingService.applyEcourtsNextHearing(caseId, currentNext, ecourtsNext);
@@ -242,6 +251,12 @@ public class NextHearingUpdateService {
         if (ecourtsNext != null && ecourtsNext.equals(currentNext)) {
             return new RefreshResult(caseId, currentNext, c.getStatus(), c.getDecisionDate(),
                     "eCourts shows the same next hearing date");
+        }
+
+        // eCourts shows an earlier date than the stored one (a past date that was already heard)
+        if (ecourtsNext != null) {
+            return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
+                    "eCourts shows " + ecourtsNext + ", which is not later than the stored date, so nothing was changed");
         }
 
         return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
