@@ -90,14 +90,16 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
     try {
       const res = await api.cases.refreshHearing(caseId)
 
-      // The date moved (or got cleared) — sync it in the visible case object immediately
-      if (res && res.nextHearing !== undefined) {
-        syncCaseNextHearing(caseId, res.nextHearing)
-      }
-
-      // The status changed (e.g. Active → Decided) — ask the parent to reload the case so
-      // `closed` becomes true and the Update/Refresh buttons disappear
-      if (res && res.status && res.status !== caseItem?.status) {
+      // Sync only what really changed: the sync also clears the cause list number, which belongs to the old date
+      const dateChanged = res && res.nextHearing !== undefined
+        && (res.nextHearing || null) !== (caseItem?.nextHearing || null)
+      const statusChanged = res && res.status && res.status !== caseItem?.status
+      if (dateChanged || statusChanged) {
+        syncCaseNextHearing(
+          caseId,
+          res.nextHearing,
+          statusChanged ? { status: res.status, decisionDate: res.decisionDate || null } : {}
+        )
         onCaseRefreshed?.(caseId, res)
       }
 

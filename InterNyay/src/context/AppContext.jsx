@@ -2523,10 +2523,11 @@ export function AppProvider({ children }) {
   }, [])
 
   // Shows a case's next hearing date (or blank) everywhere at once, e.g. after its hearing entry was deleted
-  function syncCaseNextHearing(caseId, nextHearing) {
+  // `extra` carries other fields that changed with it (status and decisionDate after a case was found disposed)
+  function syncCaseNextHearing(caseId, nextHearing, extra = {}) {
     const date = nextHearing || null
     const apply = c => (c && c.id === caseId
-      ? { ...c, nextHearing: date, causeListNo: null, listingDate: null }
+      ? { ...c, ...extra, nextHearing: date, causeListNo: null, listingDate: null }
       : c)
     setCases(prev => prev.map(apply))
     setSelectedCase(prev => apply(prev))
