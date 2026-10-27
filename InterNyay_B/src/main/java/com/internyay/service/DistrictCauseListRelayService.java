@@ -2,9 +2,11 @@ package com.internyay.service;
 
 import com.internyay.dto.CauseListRelayStep;
 import com.internyay.entity.Case;
+import com.internyay.entity.CauseListRunLog;
 import com.internyay.entity.Hearing;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.HearingRepository;
+import com.internyay.scraper.CaptchaSolverClient;
 import com.internyay.scraper.CaseKey;
 import com.internyay.scraper.CourtNoToken;
 import com.internyay.scraper.DistrictCauseListParser;
@@ -33,6 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @Slf4j
@@ -50,6 +53,11 @@ public class DistrictCauseListRelayService {
     private static final Map<String, String> DISTRICT_ALIASES = Map.of("rouseavenue", "New Delhi");
 
     private record Task(String court, String district, String courtNo, String kind, List<Long> caseIds) {}
+
+    // What an unattended run did: court rooms found, handled, left because the CAPTCHA could not be read, failed
+    public record UnattendedResult(int rooms, int done, int needCaptcha, int failed, int saved) {
+        public static final UnattendedResult EMPTY = new UnattendedResult(0, 0, 0, 0, 0);
+    }
 
     private static final class Run {
         private final java.time.LocalDate date;
@@ -84,11 +92,19 @@ public class DistrictCauseListRelayService {
     private final CourtService courtService;
     private final JudgeService judgeService;
     private final DistrictPortalClient portal;
+    private final CaptchaSolverClient solver;
+    private final CauseListRunLogService runLog;
+    private final long autoBudgetNanos;
     private final String stateCode;
     private final Duration sessionTtl;
 
     private final Map<String, Pending> pending = new HashMap<>();
     private Run current;
+
+    // Log row and lines of the run an admin is walking through (null when none)
+    private Long currentLogId;
+    private final List<String> currentLines = new ArrayList<>();
+    private int currentSkipped;
 
     public DistrictCauseListRelayService(
             CaseRepository caseRepo,
@@ -96,6 +112,9 @@ public class DistrictCauseListRelayService {
             CourtService courtService,
             JudgeService judgeService,
             DistrictPortalClient portal,
+            CaptchaSolverClient solver,
+            CauseListRunLogService runLog,
+            @Value("${causelist.district.auto-budget-seconds:20}") int autoBudgetSeconds,
             @Value("${causelist.district.state-code:26}") String stateCode,
             @Value("${causelist.district.session-ttl-minutes:10}") int ttlMinutes) {
         this.caseRepo = caseRepo;
@@ -103,6 +122,9 @@ public class DistrictCauseListRelayService {
         this.courtService = courtService;
         this.judgeService = judgeService;
         this.portal = portal;
+        this.solver = solver;
+        this.runLog = runLog;
+        this.autoBudgetNanos = Math.max(5, autoBudgetSeconds) * 1_000_000_000L;
         this.stateCode = stateCode;
         this.sessionTtl = Duration.ofMinutes(Math.max(1, ttlMinutes));
     }
@@ -111,7 +133,18 @@ public class DistrictCauseListRelayService {
         pending.clear();
         List<String> unusable = new ArrayList<>();
         List<Task> tasks = buildTasks(date, unusable);
+
+        // A run that was left open is closed before the new one starts
+        if (currentLogId != null) {
+            runLog.finish(currentLogId, CauseListRunLog.Status.ABANDONED, manualTotals(),
+                    "Replaced by a new run before it finished", currentLines);
+        }
+
         current = new Run(date, tasks);
+        currentLines.clear();
+        currentSkipped = 0;
+        currentLogId = runLog.begin(date, CauseListRunLog.Origin.MANUAL, "Admin relay").getId();
+        currentLines.add("Started for " + date + ": " + tasks.size() + " court room(s) to look up");
 
         String note = tasks.isEmpty()
                 ? "Nothing to fetch: every district court case listed on this date already has its cause list number"
@@ -154,6 +187,11 @@ public class DistrictCauseListRelayService {
         return next(new ArrayList<>(), save(held, result.html()));
     }
 
+    // The page asks for this after a WORKING step: the automatic reading goes on with the next court rooms
+    public synchronized CauseListRelayStep resume() {
+        return next(new ArrayList<>(), "");
+    }
+
     public synchronized CauseListRelayStep skip(String sessionId) {
         Pending held = take(sessionId);
 
@@ -185,14 +223,44 @@ public class DistrictCauseListRelayService {
         }
 
         Run run = current;
+        long deadline = System.nanoTime() + autoBudgetNanos;
+        List<String> notes = new ArrayList<>();
+        if (message != null && !message.isBlank()) notes.add(message);
 
         while (!run.queue.isEmpty()) {
+            // One request must not run for minutes: after the budget the page is told to ask again
+            if (solver.available() && System.nanoTime() > deadline) {
+                trace(notes, skipped);
+                return new CauseListRelayStep("WORKING", null, null, null, null, null, 0, run.queue.size(),
+                        run.total - run.queue.size(), run.saved, String.join("; ", notes), skipped);
+            }
+
             Task task = run.queue.poll();
 
             try {
                 Pending held = prepare(run, task);
+
+                if (solver.available()) {
+                    Auto auto = readAutomatically(held);
+
+                    if (auto != null) {
+                        if (auto.error() != null) {
+                            skipped.add(label(task) + ": " + auto.error());
+                        } else if (auto.result().html() == null) {
+                            String why = auto.result().message() == null || auto.result().message().isBlank()
+                                    ? "no cause list returned" : auto.result().message();
+                            skipped.add(label(task) + ": " + why);
+                        } else {
+                            notes.add(save(held, auto.result().html()));
+                        }
+                        continue;
+                    }
+                }
+
                 String id = UUID.randomUUID().toString();
-                CauseListRelayStep step = captchaStep(id, held, message, skipped);
+                CauseListRelayStep step = captchaStep(id, held, String.join("; ", notes), skipped);
+                notes.add("Waiting for a CAPTCHA: " + label(task));
+                trace(notes, skipped);
                 pending.put(id, held);
                 return step;
 
@@ -207,8 +275,148 @@ public class DistrictCauseListRelayService {
             }
         }
 
+        trace(notes, skipped);
+        finishManualRun(run);
+
         return new CauseListRelayStep("DONE", null, null, null, null, null, 0, 0,
-                run.total, run.saved, message, skipped);
+                run.total, run.saved, String.join("; ", notes), skipped);
+    }
+
+    // Adds what a step did to the manual run's log and saves its progress
+    private void trace(List<String> notes, List<String> skipped) {
+        if (currentLogId == null) return;
+
+        currentLines.addAll(notes);
+        currentLines.addAll(skipped);
+        currentSkipped += skipped.size();
+        runLog.update(currentLogId, manualTotals(), currentLines);
+    }
+
+    // Closes the log row of the manual run that just reached its end
+    private void finishManualRun(Run run) {
+        if (currentLogId == null) return;
+
+        String summary = run.saved + " number(s) saved in " + run.total + " court room(s)"
+                + (currentSkipped > 0 ? "; " + currentSkipped + " skipped or failed" : "");
+        currentLines.add(summary);
+        runLog.finish(currentLogId, currentSkipped > 0 ? CauseListRunLog.Status.PARTIAL : CauseListRunLog.Status.SUCCESS,
+                manualTotals(), summary, currentLines);
+        currentLogId = null;
+    }
+
+    private CauseListRunLogService.Totals manualTotals() {
+        Run run = current;
+        if (run == null) return CauseListRunLogService.Totals.NONE;
+
+        int handled = run.total - run.queue.size();
+        return new CauseListRunLogService.Totals(0, run.total, handled, 0, currentSkipped, run.saved);
+    }
+
+    // What the automatic reading of one court room gave: the portal's answer, or the error that ends this court room
+    private record Auto(SubmitResult result, String error) {}
+
+    // Reads the CAPTCHA with the solver and submits it, with a fresh image after each refused guess. Returns null when the
+    // CAPTCHA could not be read (the admin then types it as before)
+    private Auto readAutomatically(Pending held) {
+        for (int attempt = 1; attempt <= solver.maxAttempts(); attempt++) {
+            byte[] image;
+
+            try {
+                image = portal.captcha(held.session);
+            } catch (IOException | RuntimeException e) {
+                log.warn("District cause list {}: CAPTCHA image could not be loaded: {}", label(held.task), e.getMessage());
+                return null;
+            }
+
+            Optional<String> text = solver.solve(image);
+
+            if (text.isEmpty()) {
+                if (!solver.available()) break;
+                continue;
+            }
+
+            SubmitResult result;
+
+            try {
+                result = portal.submit(held.session, held.selection, held.run.date, text.get());
+            } catch (IOException | RuntimeException e) {
+                log.error("District cause list submit failed: {}", e.getMessage());
+                return new Auto(null, e.getMessage());
+            }
+
+            if (!result.captchaRejected()) {
+                log.info("District cause list {}: CAPTCHA read automatically on attempt {}", label(held.task), attempt);
+                return new Auto(result, null);
+            }
+        }
+
+        log.info("District cause list {}: CAPTCHA not read automatically, asking the admin", label(held.task));
+        return null;
+    }
+
+    // Looks up a date's district cause lists with no admin present. Court rooms whose CAPTCHA the solver cannot read are
+    // counted and left alone (an admin finishes them in Admin > Cause List, or the next hourly run tries again).
+    // Does not touch the run an admin may have open on the page. Stops at the deadline so runs never overlap.
+    public UnattendedResult runUnattended(java.time.LocalDate date, long deadlineNanos, Consumer<String> note) {
+        List<String> unusable = new ArrayList<>();
+        List<Task> tasks = buildTasks(date, unusable);
+        unusable.forEach(note);
+
+        if (tasks.isEmpty()) return new UnattendedResult(0, 0, 0, unusable.size(), 0);
+
+        if (!solver.available()) {
+            note.accept("CAPTCHA solver unavailable: " + tasks.size() + " court room(s) left for an admin or the next run");
+            return new UnattendedResult(tasks.size(), 0, tasks.size(), unusable.size(), 0);
+        }
+
+        Run run = new Run(date, List.of());
+        int done = 0, needCaptcha = 0, failed = unusable.size(), index = 0;
+
+        for (Task task : tasks) {
+            index++;
+
+            if (System.nanoTime() > deadlineNanos) {
+                int left = tasks.size() - index + 1;
+                note.accept("Time limit reached, " + left + " court room(s) left for the next run");
+                needCaptcha += left;
+                break;
+            }
+
+            try {
+                Pending held = prepare(run, task);
+                Auto auto = readAutomatically(held);
+
+                if (auto == null) {
+                    needCaptcha++;
+                    note.accept(label(task) + ": CAPTCHA could not be read, needs an admin");
+                } else if (auto.error() != null) {
+                    failed++;
+                    note.accept(label(task) + ": " + auto.error());
+                } else if (auto.result().html() == null) {
+                    failed++;
+                    String why = auto.result().message() == null || auto.result().message().isBlank()
+                            ? "no cause list returned" : auto.result().message();
+                    note.accept(label(task) + ": " + why);
+                } else {
+                    done++;
+                    note.accept(save(held, auto.result().html()));
+                }
+
+            } catch (PortalUnavailableException e) {
+                int left = tasks.size() - index + 1;
+                log.warn("Unattended district cause list stopped: {}", e.getMessage());
+                note.accept(e.getMessage() + ". Stopped, " + left + " court room(s) not tried");
+                failed += left;
+                break;
+
+            } catch (IOException | RuntimeException e) {
+                failed++;
+                log.warn("Unattended district cause list task {} failed: {}", label(task), e.getMessage());
+                note.accept(label(task) + ": " + e.getMessage());
+            }
+        }
+
+        return new UnattendedResult(tasks.size(), done, needCaptcha, failed, run.saved);
     }
 
     private Pending prepare(Run run, Task task) throws IOException {

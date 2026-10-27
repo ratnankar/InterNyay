@@ -3,6 +3,7 @@ package com.internyay.service;
 import com.internyay.entity.Hearing;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.HearingRepository;
+import com.internyay.scraper.CaptchaSolverClient;
 import com.internyay.scraper.DistrictPortalClient;
 import com.internyay.scraper.DistrictPortalClient.PortalSession;
 import com.internyay.scraper.DistrictPortalClient.SubmitResult;
@@ -26,14 +27,16 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-// Reads a case from the eCourts Services portal (case status by CNR) while the advocate types the CAPTCHA the portal
-// shows, in three calls: start (CAPTCHA image), answer (case details, or a new CAPTCHA when the answer was wrong).
+// Reads a case from the eCourts Services portal (case status by CNR). start reads the portal's CAPTCHA with the CAPTCHA
+// service and answers DONE with the case details when that works; when the service is off, down or cannot read the image
+// it answers CAPTCHA and the advocate types it: answer (case details, or a new CAPTCHA when the answer was wrong).
 //
 // Once the portal has accepted the CAPTCHA the orders of the case are downloaded in the background right away, on the
 // same portal session, into memory. When the case is then saved, CaseService claims the lookup (the token the form
@@ -77,6 +80,7 @@ public class CnrLookupService {
     private static final long MAX_PDF_BYTES = 25L * 1024 * 1024;
 
     private final DistrictPortalClient portal;
+    private final CaptchaSolverClient solver;
     private final CaseRepository caseRepo;
     private final HearingRepository hearingRepo;
     private final HearingService hearingService;
@@ -107,6 +111,7 @@ public class CnrLookupService {
 
     public CnrLookupService(
             DistrictPortalClient portal,
+            CaptchaSolverClient solver,
             CaseRepository caseRepo,
             HearingRepository hearingRepo,
             HearingService hearingService,
@@ -119,6 +124,7 @@ public class CnrLookupService {
             @Value("${cnr.portal.max-staged-mb:80}") int maxStagedMb,
             @Value("${causelist.district.state-code:26}") String stateCode) {
         this.portal = portal;
+        this.solver = solver;
         this.caseRepo = caseRepo;
         this.hearingRepo = hearingRepo;
         this.hearingService = hearingService;
@@ -140,7 +146,7 @@ public class CnrLookupService {
 
     // ---- the advocate's calls -----------------------------------------------------------------------------------
 
-    // Opens a portal session for the CNR and returns its CAPTCHA
+    // Opens a portal session for the CNR. DONE when the CAPTCHA was read automatically, CAPTCHA (its image) otherwise
     public Step start(Long userId, String rawCnr) {
 
         String cnr = EcourtsCaseService.normalizeCnr(rawCnr);
@@ -149,7 +155,7 @@ public class CnrLookupService {
             throw new IllegalArgumentException("You already have a case with this CNR number (" + cnr + ")");
 
         Pending held;
-        String image;
+        byte[] image;
         try {
             // The first ajax request settles the portal session; the CAPTCHA is fetched after it, so it belongs to the
             // session the answer is sent on (otherwise the first CAPTCHA of every lookup was refused).
@@ -167,7 +173,7 @@ public class CnrLookupService {
             }
             if (session == null) throw new IOException("the portal only gave unusable sessions");
             held = new Pending(userId, cnr, session);
-            image = captchaOf(session);
+            image = portal.captcha(session);
         } catch (IOException | RuntimeException e) {
             log.warn("eCourts portal session for CNR {} could not be opened ({}): {}", cnr, e.getClass().getSimpleName(), e.getMessage(), e);
             throw new IllegalArgumentException("Could not reach eCourts right now (" + reasonOf(e) + "), try again in a moment");
@@ -178,7 +184,7 @@ public class CnrLookupService {
             dropOldest(userId);
             open.put(id, held);
         }
-        return new Step(CAPTCHA, id, image, "", null);
+        return solveAutomatically(id, held, image);
     }
 
     // Sends the typed CAPTCHA. A wrong one gives a new image; the right one gives the case
@@ -188,35 +194,11 @@ public class CnrLookupService {
         if (held == null) return expired();
         if (captcha == null || captcha.isBlank()) throw new IllegalArgumentException("Type the CAPTCHA shown");
 
-        SubmitResult result;
-        try {
-            result = portal.searchCnr(held.session, searchPath, held.cnr, captcha);
-        } catch (IOException | RuntimeException e) {
-            log.warn("eCourts case search for CNR {} failed: {}", held.cnr, e.getMessage());
-            throw new IllegalArgumentException("Could not read the case from eCourts right now, try again in a moment");
+        SubmitResult result = search(held, captcha);
+        if (result.html() == null && result.captchaRejected()) {
+            return nextCaptcha(sessionId, held, "The CAPTCHA was wrong, type the new one");
         }
-
-        if (result.html() == null) {
-            if (result.captchaRejected()) return nextCaptcha(sessionId, held, "The CAPTCHA was wrong, type the new one");
-            forget(sessionId);
-            String why = result.message() == null || result.message().isBlank() ? "" : " (" + result.message() + ")";
-            throw new IllegalArgumentException("eCourts has no case with CNR " + held.cnr + why);
-        }
-
-        ParsedCase parsed = PortalCaseParser.parse(result.html());
-        if (!parsed.found()) {
-            log.warn("Case page for CNR {} could not be read: {}", held.cnr, abbreviate(result.html()));
-            forget(sessionId);
-            throw new IllegalArgumentException("The case page of eCourts could not be read. Fill in the case details manually");
-        }
-        if (!parsed.cnr().equalsIgnoreCase(held.cnr)) {
-            forget(sessionId);
-            throw new IllegalArgumentException("eCourts answered with a different case. Try again");
-        }
-
-        held.parsed = parsed;
-        stageOrders(held);
-        return new Step(DONE, sessionId, null, "", EcourtsCaseService.detailOf(parsed));
+        return conclude(sessionId, held, result);
     }
 
     // The portal answers its home page (no app token) for a page address it does not know, so the addresses are tried in
@@ -381,17 +363,78 @@ public class CnrLookupService {
 
     // ---- helpers ------------------------------------------------------------------------------------------------
 
-    private Step nextCaptcha(String id, Pending held, String message) {
+    private Step solveAutomatically(String id, Pending held, byte[] image) {
+        if (!solver.available()) return captchaStep(id, image);
+
+        byte[] current = image;
+        for (int attempt = 1; attempt <= solver.maxAttempts(); attempt++) {
+            Optional<String> text = solver.solve(current);
+            if (text.isPresent()) {
+                SubmitResult result = search(held, text.get());
+                if (result.html() != null || !result.captchaRejected()) {
+                    log.info("CNR {}: CAPTCHA read automatically on attempt {}", held.cnr, attempt);
+                    return conclude(id, held, result);
+                }
+            } else if (!solver.available()) {
+                break;
+            }
+            current = freshCaptcha(id, held);
+        }
+        log.info("CNR {}: CAPTCHA not read automatically, asking the advocate", held.cnr);
+        return captchaStep(id, current);
+    }
+
+    private SubmitResult search(Pending held, String captcha) {
         try {
-            return new Step(CAPTCHA, id, captchaOf(held.session), message, null);
+            return portal.searchCnr(held.session, searchPath, held.cnr, captcha);
+        } catch (IOException | RuntimeException e) {
+            log.warn("eCourts case search for CNR {} failed: {}", held.cnr, e.getMessage());
+            throw new IllegalArgumentException("Could not read the case from eCourts right now, try again in a moment");
+        }
+    }
+
+    private Step conclude(String id, Pending held, SubmitResult result) {
+        if (result.html() == null) {
+            forget(id);
+            String why = result.message() == null || result.message().isBlank() ? "" : " (" + result.message() + ")";
+            throw new IllegalArgumentException("eCourts has no case with CNR " + held.cnr + why);
+        }
+
+        ParsedCase parsed = PortalCaseParser.parse(result.html());
+        if (!parsed.found()) {
+            log.warn("Case page for CNR {} could not be read: {}", held.cnr, abbreviate(result.html()));
+            forget(id);
+            throw new IllegalArgumentException("The case page of eCourts could not be read. Fill in the case details manually");
+        }
+        if (!parsed.cnr().equalsIgnoreCase(held.cnr)) {
+            forget(id);
+            throw new IllegalArgumentException("eCourts answered with a different case. Try again");
+        }
+
+        held.parsed = parsed;
+        stageOrders(held);
+        return new Step(DONE, id, null, "", EcourtsCaseService.detailOf(parsed));
+    }
+
+    private Step nextCaptcha(String id, Pending held, String message) {
+        return new Step(CAPTCHA, id, dataUrl(freshCaptcha(id, held)), message, null);
+    }
+
+    private byte[] freshCaptcha(String id, Pending held) {
+        try {
+            return portal.captcha(held.session);
         } catch (IOException | RuntimeException e) {
             forget(id);
             throw new IllegalArgumentException("Could not get a new CAPTCHA from eCourts, try again in a moment");
         }
     }
 
-    private String captchaOf(PortalSession session) throws IOException {
-        return "data:image/png;base64," + Base64.getEncoder().encodeToString(portal.captcha(session));
+    private static Step captchaStep(String id, byte[] image) {
+        return new Step(CAPTCHA, id, dataUrl(image), "", null);
+    }
+
+    private static String dataUrl(byte[] image) {
+        return "data:image/png;base64," + Base64.getEncoder().encodeToString(image);
     }
 
     // The advocate's own open lookup, or null
