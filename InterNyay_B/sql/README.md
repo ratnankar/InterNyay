@@ -43,6 +43,7 @@ and refuses to start if they do not. It never changes the database.
 | `V36__juvenile_justice_board.sql` | `courts.juvenile_justice_board`: the mark for a Juvenile Justice Board. Its cases have no CNR and nothing is fetched from eCourts for them (cause list number, next-hearing sync, orders) |
 | `V37__juvenile_justice_board_whole_court.sql` | The mark belongs to a whole court (Admin > Courts, every row of the court), not a court no.; marks set on single court numbers are cleared |
 | `V38__case_no_optional.sql` | `cases.case_no` may be empty: a Juvenile Justice Board case needs neither a CNR nor a case number (every other case still needs one) |
+| `V45__ecourts_import_list.sql` | `ecourts_imports`: the "Import from eCourts" list (cases of the uploaded My Cases file), one row per account (JSON list plus time of the upload), so the list is there on every device |
 
 This folder keeps only the two scripts that run outside the app: `create_database.sql` and `check_links.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).

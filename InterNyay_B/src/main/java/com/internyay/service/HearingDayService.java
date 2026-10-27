@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
@@ -27,7 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-// Days on which no hearing can be scheduled: Sundays, days the advocate blocked and days that already hold as many
+// Days on which no hearing can be scheduled: days the advocate blocked and days that already hold as many
 // hearings as the advocate's daily limit allows
 @Service
 @RequiredArgsConstructor
@@ -46,11 +45,6 @@ public class HearingDayService {
     private final UserRepository userRepo;
     private final MiscApplicationHearingRepository miscHearingRepo;
 
-    // Sundays are always closed
-    public static boolean isSunday(LocalDate date) {
-        return date.getDayOfWeek() == DayOfWeek.SUNDAY;
-    }
-
     // Throws when a hearing date falls on a closed day or the day is already full
     public void assertAllowed(LocalDate date, Long userId) {
         assertAllowed(date, userId, null);
@@ -61,10 +55,6 @@ public class HearingDayService {
     public void assertAllowed(LocalDate date, Long userId, Long caseId) {
         if (date == null) return;
 
-        if (isSunday(date)) {
-            throw new IllegalArgumentException(
-                    "Hearings cannot be set on a Sunday (" + PRETTY.format(date) + ") — pick another date");
-        }
         if (repo.existsByUserIdAndBlockedDate(userId, date)) {
             throw new IllegalArgumentException(
                     PRETTY.format(date) + " is marked as a no-hearing date — pick another date "
@@ -177,13 +167,10 @@ public class HearingDayService {
                 .toList();
     }
 
-    // Block a date, Sundays are already closed
+    // Block a date
     @Transactional
     public LocalDate mark(LocalDate date, Long userId) {
         if (date == null) throw new IllegalArgumentException("Date is required");
-        if (isSunday(date)) {
-            throw new IllegalArgumentException("Sundays are already closed for hearings");
-        }
         // A no-hearing date is a date with a limit of 0, so a limit set earlier for it is dropped
         limitRepo.deleteByUserIdAndLimitDate(userId, date);
         if (!repo.existsByUserIdAndBlockedDate(userId, date)) {

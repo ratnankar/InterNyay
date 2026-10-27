@@ -559,7 +559,7 @@ public class ChatTools {
 
         return Rec.of()
                 .always("date", date)
-                .always("sundayOrBlocked", blocked(date, ctx))
+                .always("blocked", blocked(date, ctx))
                 .always("judgeAndLeaveDetails", rows)
                 .always("casesListedOnDate", listed)
                 .map();
@@ -1206,9 +1206,9 @@ public class ChatTools {
                 .put("virtualCourtLink", j.getVirtualCourtLink()).map();
     }
 
-    // True on Sundays and days the advocate blocked
+    // True on days the advocate blocked
     private boolean blocked(LocalDate date, ChatContext ctx) {
-        return HearingDayService.isSunday(date) || hearingDayService.list(ctx.userId()).contains(date);
+        return hearingDayService.list(ctx.userId()).contains(date);
     }
 
     // Task is done

@@ -226,9 +226,8 @@ class HearingDayServiceTest {
     }
 
     @Test
-    void sundaysAndCrossedDatesAreStillRefused() {
-        assertThatThrownBy(() -> service.assertAllowed(LocalDate.of(2026, 10, 18), USER, null))
-                .hasMessageContaining("Sunday");
+    void sundaysAreAllowedAndCrossedDatesAreStillRefused() {
+        assertThatCode(() -> service.assertAllowed(LocalDate.of(2026, 10, 18), USER, null)).doesNotThrowAnyException();
 
         when(noHearingRepo.existsByUserIdAndBlockedDate(USER, DAY)).thenReturn(true);
         assertThatThrownBy(() -> service.assertAllowed(DAY, USER, null))
