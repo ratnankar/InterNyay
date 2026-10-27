@@ -698,14 +698,14 @@ export default function AddCaseModal() {
     }
   }, [courtRows, formCourt, formDistrict, newCaseForm.courtNo, newCaseForm.building, newCaseForm.floor])
 
-  // Text shown for a court room in the Court No. / Judge field: the number, then the judge(s) sitting in that room
+  // Text shown for a court room in the Court No. / Judge field: "Court No." and the number, then the judge(s) sitting in that room
   function roomLabel(g, r) {
     const names = [...new Set(
       judgesForRoom(courtNumbers, { courtNo: r.courtNo, building: g.building, floor: r.floor })
         .map(j => (j.judgeName || '').trim())
         .filter(Boolean)
     )]
-    return names.length ? `${r.courtNo} — ${names.join(' / ')}` : `${r.courtNo}`
+    return names.length ? `Court No. ${r.courtNo} — ${names.join(' / ')}` : `Court No. ${r.courtNo}`
   }
 
   // Popup shown before a new case form: 0 = fresh/old question, 1 = the form itself

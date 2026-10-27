@@ -289,3 +289,28 @@
 @media (prefers-reduced-motion: reduce) {
   .card.case-card .case-detail { animation: none; }
 }
+/* Refresh symbol in the next-hearing box (hearing day after 5 PM, and after the old date is dropped at 12 AM) */
+.case-card__hearing-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #8a6a1c;
+  box-shadow: 0 0 0 1px #f0e3b4;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.case-card__hearing-refresh:hover:not(:disabled) { background: #8a6a1c; color: #fff; }
+.case-card__hearing-refresh:disabled { cursor: default; }
+.case-card__hearing-refresh svg { width: 18px; height: 18px; }
+.case-card__hearing-refresh--busy svg { animation: icon-spin 0.8s linear infinite; }
+/* Old date removed: the box holds only the refresh symbol */
+.case-card__hearing--expired { padding: 8px; }
+.case-card__hearing--expired .case-card__hearing-refresh { margin-left: 0; }

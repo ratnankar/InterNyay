@@ -5,13 +5,14 @@ import api from '../services/api'
 import { onLiveRefresh } from '../utils/liveRefresh'
 import { MISC_ALLOWED, MISC_APP_NAME, MISC_DISALLOWED, MISC_DISPOSED, MISC_PENDING } from '../constants/data'
 import { getErrorMessage } from '../utils/errorMessages'
-import { formatDisplayDate, hearingCountdown } from '../utils/dateUtils'
 import { statusText } from '../components/misc/miscUtils'
 import MiscSummaryFields from '../components/misc/MiscSummaryFields'
 import AddMiscApplicationModal from '../components/modals/AddMiscApplicationModal'
 import MiscApplicationDetailModal from '../components/modals/MiscApplicationDetailModal'
 import FitLabel from '../components/common/FitLabel'
 import Icon from '../components/common/Icon'
+import NextHearingBox from '../components/common/NextHearingBox'
+import MiscNextHearingModal from '../components/misc/MiscNextHearingModal'
 
 // Status filter buttons as [filter value, label]
 const FILTERS = [['', 'All'], [MISC_PENDING, 'Pending'], [MISC_DISPOSED, 'Disposed Off']]
@@ -37,6 +38,8 @@ export default function MiscApplications() {
   const [outcome, setOutcome] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [openId, setOpenId] = useState(null)
+  // Application whose Update Next Hearing window is open (from the refresh symbol on its card)
+  const [updateApp, setUpdateApp] = useState(null)
 
   // The connector under the status chips starts at the middle of the Disposed Off chip, wherever that chip sits
   const chipsRef = useRef(null)
@@ -210,7 +213,6 @@ export default function MiscApplications() {
       <div className="case-list">
         {items.map(a => {
           const disposed = a.status === MISC_DISPOSED
-          const cd = !disposed && a.hearingDate ? hearingCountdown(a.hearingDate) : null
           return (
             <div key={a.id} className="card case-card" role="button" tabIndex={0}
               style={{ '--case-accent': ACCENTS[disposed ? (a.disposalOutcome || 'Disposed') : 'Pending'] }}
@@ -231,14 +233,11 @@ export default function MiscApplications() {
                 </div>
 
                 {!disposed && a.hearingDate && (
-                  <div className="case-card__hearing">
-                    <span className="case-card__hearing-icon" aria-hidden="true"><Icon name="calendar" /></span>
-                    <div className="case-card__hearing-text">
-                      <p className="case-card__hearing-label">Next Hearing</p>
-                      <p className="case-card__hearing-date">{formatDisplayDate(a.hearingDate)}</p>
-                      {cd && <p className={`case-card__hearing-when case-card__hearing-when--${cd.tone}`}>{cd.text}</p>}
-                    </div>
-                  </div>
+                  <NextHearingBox
+                    date={a.hearingDate}
+                    refreshTitle="Update the next hearing date"
+                    onRefresh={() => setUpdateApp(a)}
+                  />
                 )}
               </div>
             </div>
@@ -263,6 +262,10 @@ export default function MiscApplications() {
             setOpenId(app.id)
           }}
         />
+      )}
+
+      {updateApp && (
+        <MiscNextHearingModal app={updateApp} onChange={replaceItem} onClose={() => setUpdateApp(null)} />
       )}
 
       {opened && (

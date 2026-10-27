@@ -4,7 +4,7 @@ import { STATUS_COLORS, isClosedCase } from '../constants/data'
 import { statusChangeQuestion } from '../utils/caseStatus'
 import { useCourts, caseCourtLabel } from '../constants/courts'
 import { caseClientNames } from '../utils/caseClients'
-import { formatDisplayDate, formatShortDate, hearingCountdown } from '../utils/dateUtils'
+import { formatDisplayDate, formatShortDate } from '../utils/dateUtils'
 import { caseNatureOf } from '../utils/caseClassification'
 import { CASE_NATURES, reliefOptions } from '../constants/caseCatalog'
 import useSeeMore from '../hooks/useSeeMore'
@@ -20,6 +20,9 @@ import CaseStatusSelect from '../components/common/CaseStatusSelect'
 import Dropdown from '../components/common/Dropdown'
 
 import Icon from '../components/common/Icon'
+import NextHearingBox from '../components/common/NextHearingBox'
+import api from '../services/api'
+import { getErrorMessage } from '../utils/errorMessages'
 import CnrScannerModal from '../components/modals/CnrScannerModal'
 import ImportCasesModal from '../components/modals/ImportCasesModal'
 import { fetchImported, forgetImported, loadImported, saveImported, uploadImported } from '../utils/myCasesImport'
@@ -160,8 +163,27 @@ export default function Cases() {
     setEvidenceTargetId,
     hearingCountsByCase,
     currentUser,
+    addToast,
+    syncCaseNextHearing,
+    bumpHearings,
   } = useApp()
   const [scannerOpen, setScannerOpen] = useState(false)
+
+  // Refresh symbol on a card's next-hearing box: reads the case from eCourts again, the same as the Refresh button in Hearing History
+  async function refreshCardHearing(c) {
+    try {
+      const res = await api.cases.refreshHearing(c.id)
+      const dateChanged = res && res.nextHearing !== undefined && (res.nextHearing || null) !== (c.nextHearing || null)
+      const statusChanged = res && res.status && res.status !== c.status
+      if (dateChanged || statusChanged) {
+        syncCaseNextHearing(c.id, res.nextHearing, statusChanged ? { status: res.status, decisionDate: res.decisionDate || null } : {})
+      }
+      bumpHearings(c.id)
+      addToast(res?.message || 'Refreshed from eCourts')
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not refresh from eCourts'), 'error')
+    }
+  }
 
   // Import from eCourts: the cases of the uploaded My Cases file, and whether the list is open.
   // A case is added from the list one at a time; when its form closes the list opens again
@@ -1295,27 +1317,14 @@ export default function Cases() {
                   {!expanded && <CaseSummaryFields caseItem={c} />}
                 </div>
 
-                {/* Next hearing date, only when the case has one (the fee is not shown on the card) */}
+                {/* Next hearing date, only when the case has one (the fee is not shown on the card).
+                    Refresh symbol: on the hearing day after 5 PM; from 12 AM an undated old date is dropped and only the symbol stays */}
                 {c.nextHearing && !isClosedCase(c) && (
-                  <div className="case-card__hearing">
-                    <span className="case-card__hearing-icon" aria-hidden="true"><Icon name="calendar" /></span>
-                    <div className="case-card__hearing-text">
-                      <p className="case-card__hearing-label">
-                        Next Hearing
-                      </p>
-
-                      <p className="case-card__hearing-date">
-                        {formatDisplayDate(c.nextHearing)}
-                      </p>
-
-                      {(() => {
-                        const cd = hearingCountdown(c.nextHearing)
-                        return cd && (
-                          <p className={`case-card__hearing-when case-card__hearing-when--${cd.tone}`}>{cd.text}</p>
-                        )
-                      })()}
-                    </div>
-                  </div>
+                  <NextHearingBox
+                    date={c.nextHearing}
+                    refreshTitle="Refresh the next hearing date from eCourts"
+                    onRefresh={() => refreshCardHearing(c)}
+                  />
                 )}
               </div>
 

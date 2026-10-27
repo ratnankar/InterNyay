@@ -297,7 +297,9 @@ export const cases = {
   updateNextHearing: (id, body) => put(`/cases/${id}/next-hearing`, { body }),
 
   // ===== NEW: read this case's latest next hearing date from the eCourts portal right now =====
-  // The server answers with { caseId, nextHearing, status, decisionDate, message }:
+  // It also adds the past hearing dates the case is missing and the order of each date eCourts lists
+  // (hearingsAdded / ordersFound say how many; the hearing list must be reloaded afterwards).
+  // The server answers with { caseId, nextHearing, status, decisionDate, message, hearingsAdded, ordersFound }:
   // a disposed case comes back with status "Decided" and nextHearing null; "message" is ready for a toast
   refreshHearing: (id)      => post(`/cases/${id}/refresh-hearing`),
 

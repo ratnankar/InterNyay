@@ -48,6 +48,20 @@ export function hearingCountdown(dateStr) {
   return { text: `In ${days} days`, tone: days <= 7 ? 'soon' : 'later' }
 }
 
+// What the next-hearing box on a card shows right now:
+//  'normal'  - the date and its countdown only
+//  'refresh' - it is the hearing day and 5 PM has passed: the date stays and a refresh symbol is added
+//  'expired' - the hearing day is over (from 12 AM) and nobody set a new date: the old date is dropped, only the refresh symbol stays
+export const HEARING_REFRESH_HOUR = 17
+export function hearingBoxPhase(dateStr, now = new Date()) {
+  const target = parseIsoDate(dateStr)
+  if (Number.isNaN(target.getTime())) return 'normal'
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  if (target < today) return 'expired'
+  if (target.getTime() === today.getTime() && now.getHours() >= HEARING_REFRESH_HOUR) return 'refresh'
+  return 'normal'
+}
+
 // True if the date falls on a Sunday
 export function isSunday(dateStr) {
   return !!dateStr && parseIsoDate(dateStr).getDay() === 0

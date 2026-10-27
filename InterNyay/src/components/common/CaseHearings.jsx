@@ -214,31 +214,35 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
           <p className="case-detail__docs-label">Hearing History</p>
         )}
 
-        {!closed && (
-          <div className="hearing-history__next">
-            <span className="hearing-history__next-label">Next Hearing</span>
-            <strong className="hearing-history__next-date">
-              {caseItem?.nextHearing ? formatDisplayDate(caseItem.nextHearing) : '—'}
-            </strong>
+        <div className="hearing-history__next">
+          {!closed && (
+            <>
+              <span className="hearing-history__next-label">Next Hearing</span>
+              <strong className="hearing-history__next-date">
+                {caseItem?.nextHearing ? formatDisplayDate(caseItem.nextHearing) : '—'}
+              </strong>
+            </>
+          )}
 
-            {/* ===== NEW: Refresh from eCourts ===== */}
-            <button type="button"
-              className="btn-outline btn-outline--sm"
-              title="Read the latest next hearing date from eCourts now"
-              disabled={busyId === 'refresh'}
-              onClick={refreshFromEcourts}
-            >
-              {busyId === 'refresh' ? 'Refreshing…' : 'Refresh'}
-            </button>
+          {/* Refresh from eCourts: shown for every case, also a closed one (it then only fills in missing hearing dates and orders) */}
+          <button type="button"
+            className="btn-outline btn-outline--sm"
+            title="Read the case from eCourts now: next hearing date, missing past hearing dates and their orders"
+            disabled={busyId === 'refresh'}
+            onClick={refreshFromEcourts}
+          >
+            {busyId === 'refresh' ? 'Refreshing…' : 'Refresh'}
+          </button>
 
+          {!closed && (
             <button type="button"
               className="btn-outline btn-outline--sm"
               onClick={() => openNextHearing(caseItem)}
             >
               <Icon name="edit" /> Update
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {expanded && (
