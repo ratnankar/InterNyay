@@ -29,7 +29,6 @@ import { confirmDialog } from '../utils/confirmDialog'
 import useSessionState from '../hooks/useSessionState'
 import ClearableDateInput from '../components/common/ClearableDateInput'
 import ScrollToTopButton from '../components/common/ScrollToTopButton'
-import SyncNextHearingButton from '../components/common/SyncNextHearingButton'
 // Status filter buttons
 const STATUSES = ['All', 'Pending', 'On Hold', 'Decided', 'Withdrawn']
 
@@ -1305,26 +1304,16 @@ export default function Cases() {
                         Next Hearing
                       </p>
 
-                      {/* Once the date is over the old date is hidden and a refresh button takes its place; it
-                          goes away and the new date shows when eCourts gives the case a later date */}
-                      <SyncNextHearingButton
-                        caseItem={c}
-                        hint="Not updated"
-                        fallback={
-                          <>
-                            <p className="case-card__hearing-date">
-                              {formatDisplayDate(c.nextHearing)}
-                            </p>
+                      <p className="case-card__hearing-date">
+                        {formatDisplayDate(c.nextHearing)}
+                      </p>
 
-                            {(() => {
-                              const cd = hearingCountdown(c.nextHearing)
-                              return cd && (
-                                <p className={`case-card__hearing-when case-card__hearing-when--${cd.tone}`}>{cd.text}</p>
-                              )
-                            })()}
-                          </>
-                        }
-                      />
+                      {(() => {
+                        const cd = hearingCountdown(c.nextHearing)
+                        return cd && (
+                          <p className={`case-card__hearing-when case-card__hearing-when--${cd.tone}`}>{cd.text}</p>
+                        )
+                      })()}
                     </div>
                   </div>
                 )}

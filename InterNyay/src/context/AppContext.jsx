@@ -2544,7 +2544,7 @@ export function AppProvider({ children }) {
 
   // Records how the last hearing went (notes, optional order) and sets the next hearing date
   async function handleSaveNextHearing({
-    caseId, closingDate, notes = '', nextHearing, orderFile, fetchOrderFromEcourts = false,
+    caseId, closingDate, notes = '', nextHearing, orderFile,
   }) {
 
     try {
@@ -2561,24 +2561,6 @@ export function AppProvider({ children }) {
           await hearingsApi.uploadOrder(res.recorded.id, orderFile)
         } else {
           addToast('Set the hearing date the order belongs to, then attach it', 'error')
-        }
-      }
-
-      // Or the order is fetched from eCourts for that hearing record
-      if (fetchOrderFromEcourts) {
-        if (res?.recorded?.id) {
-          try {
-            const got = await hearingsApi.fetchOrder(res.recorded.id)
-            if (got?.status === 'FETCHED' || got?.status === 'STORED') {
-              addToast('Order ready')
-            } else {
-              addToast(got?.message || 'The order is not available from eCourts yet', 'error')
-            }
-          } catch (e) {
-            addToast(getErrorMessage(e, 'Could not get the order from eCourts'), 'error')
-          }
-        } else {
-          addToast('Set the hearing date the order belongs to, then get the order', 'error')
         }
       }
 
@@ -2603,34 +2585,6 @@ export function AppProvider({ children }) {
 
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not update the hearing'), 'error')
-    }
-  }
-
-  // "Update next date" button: asks eCourts for the new date of a case whose hearing date is over. When it moves,
-  // the card shows the new date (and the button goes away); when eCourts has nothing new yet, the case is left as it is
-  async function syncNextHearing(caseId) {
-    try {
-      const res = await casesApi.syncNextHearing(caseId)
-
-      if (res?.status === 'UPDATED' || res?.status === 'CLOSED') {
-        setCases(prev =>
-          prev.map(c =>
-            c.id === caseId
-              ? { ...c, nextHearing: res.nextHearing ?? null, status: res.caseStatus || c.status, causeListNo: null, listingDate: null }
-              : c
-          )
-        )
-        bumpHearings(caseId)
-        addToast(res.message || 'Next hearing date updated')
-        return true
-      }
-
-      addToast(res?.message || 'eCourts has not given a new date yet', 'error')
-      return false
-
-    } catch (e) {
-      addToast(getErrorMessage(e, 'Could not check eCourts'), 'error')
-      return false
     }
   }
 
@@ -3717,7 +3671,6 @@ export function AppProvider({ children }) {
         openNextHearing,
         closeNextHearing,
         handleSaveNextHearing,
-        syncNextHearing,
 
         hearingsVersion,
         optionsVersion,
