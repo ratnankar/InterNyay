@@ -7,6 +7,7 @@ import com.internyay.util.CaseStatuses;                             // ===== NEW
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate; // ===== v2 =====
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -18,26 +19,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-// Moves cases on to their next hearing date once the court has put it on eCourts. A case is "due" when its next
-// hearing date is the hearing date being worked on and nobody has moved it on yet. For each one the eCourts portal's
-// case page is read (ScrapingService.lookUpOutlook) and, when it shows a later date, the case is moved to it.
-//
-// The court usually puts the new date up some time after the hearing, so the scheduler (NextHearingUpdateScheduler)
-// runs this again and again from 5 PM to 12 AM. Every run only looks at the cases that still have the old date, so
-// a case that is moved in one run is not asked about again, and one that could not be read is simply tried next time
 @Service
 @Slf4j
 public class NextHearingUpdateService {
 
     private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
-    // How a run went for one hearing date
-    //  due          - open cases that still had the date as their next hearing when the run started
-    //  updated      - cases moved to a new date
-    //  stillPending - eCourts has no later date yet, tried again next run
-    //  unreadable   - the portal or CAPTCHA reader failed for the case, tried again next run
-    //  disposed     - eCourts says the case is disposed: no new date to expect, left alone and not asked again today
-    //  skipped      - cases left for the next run because the run ran out of time
     public record Result(LocalDate date, int due, int updated, int stillPending, int unreadable, int disposed, int skipped) {
         public static Result none(LocalDate date) { return new Result(date, 0, 0, 0, 0, 0, 0); }
 
@@ -50,13 +37,10 @@ public class NextHearingUpdateService {
                     + (skipped > 0 ? ", " + skipped + " left for the next run" : "");
         }
 
-        // Cases the next run still has to try
         public int toRetry() { return stillPending + unreadable + skipped; }
     }
 
-    // ===== NEW: what the manual "Refresh" button gets back =====
-    // The case's state after the attempt (so the screen can update the next-hearing label and, if the case
-    // became Decided, notice the status change), plus a short sentence for the toast
+    // ===== NEW ===== What the manual "Refresh" button gets back
     public record RefreshResult(Long caseId,
                                 LocalDate nextHearing,
                                 String status,
@@ -66,6 +50,7 @@ public class NextHearingUpdateService {
     private final CaseRepository caseRepo;
     private final ScrapingService scraping;
     private final HearingService hearingService;
+    private final TransactionTemplate tx;   // ===== v2: atomic read-modify-write for the tiny status/date updates =====
 
     private final boolean enabled;
     private final long delayMs;
@@ -73,22 +58,22 @@ public class NextHearingUpdateService {
 
     private final AtomicBoolean running = new AtomicBoolean(false);
 
-    // Cases eCourts calls disposed, per hearing date: no new date is coming, so later runs of that day skip them
     private final Map<LocalDate, Set<Long>> disposedToday = new ConcurrentHashMap<>();
 
     public NextHearingUpdateService(
             CaseRepository caseRepo,
             ScrapingService scraping,
             HearingService hearingService,
+            TransactionTemplate tx,                                     // ===== v2 =====
             @Value("${nexthearing.update.enabled:true}") boolean enabled,
             @Value("${nexthearing.update.delay-ms:1500}") long delayMs,
             @Value("${nexthearing.update.max-minutes:50}") int maxMinutes) {
         this.caseRepo = caseRepo;
         this.scraping = scraping;
         this.hearingService = hearingService;
+        this.tx = tx;
         this.enabled = enabled;
         this.delayMs = Math.max(0, delayMs);
-        // A run must end before the next hourly one starts
         this.maxRunNanos = Math.max(5, Math.min(maxMinutes, 55)) * 60L * 1_000_000_000L;
     }
 
@@ -96,17 +81,14 @@ public class NextHearingUpdateService {
         return enabled;
     }
 
-    // The evening runs (5 PM to 11 PM): the hearing day is today
     public Result runForToday() {
         return runBlocking(LocalDate.now(IST));
     }
 
-    // The 12 AM run: the hearing day has just ended, this is the last chance to catch its new dates
     public Result runForYesterday() {
         return runBlocking(LocalDate.now(IST).minusDays(1));
     }
 
-    // Runs now and waits for it to finish. Empty result when switched off or another run is still going
     public Result runBlocking(LocalDate date) {
         if (!enabled) return Result.none(date);
 
@@ -126,7 +108,6 @@ public class NextHearingUpdateService {
     }
 
     private Result execute(LocalDate date) {
-        // Only today's skip list is worth keeping
         disposedToday.keySet().removeIf(d -> d.isBefore(date));
         Set<Long> settled = disposedToday.computeIfAbsent(date, d -> ConcurrentHashMap.newKeySet());
 
@@ -164,18 +145,13 @@ public class NextHearingUpdateService {
             if (outlook.isEmpty()) {
                 unreadable++;
 
+            // ===== v2: disposed is checked first on purpose =====
+            // A disposed case has no next hearing to move to, even if the portal still shows a
+            // stale date. So it is marked Decided and the run forgets about it for the day.
             } else if (outlook.get().disposed()) {
-                // ===== MODIFIED: mark the disposed case as Decided and clear its next hearing =====
                 settled.add(c.getId());
                 disposed++;
-                caseRepo.findById(c.getId()).ifPresent(caseEntity -> {
-                    caseEntity.setStatus(CaseStatuses.DECIDED);
-                    if (caseEntity.getDecisionDate() == null) caseEntity.setDecisionDate(date);
-                    caseEntity.setNextHearing(null);
-                    caseEntity.setCauseListNo(null);
-                    caseEntity.setListingDate(null);
-                    caseRepo.save(caseEntity);
-                });
+                markDecidedInTx(c.getId(), date);
 
             } else if (outlook.get().nextHearing() != null && outlook.get().nextHearing().isAfter(date)) {
                 boolean moved;
@@ -187,11 +163,9 @@ public class NextHearingUpdateService {
                     pause();
                     continue;
                 }
-                // False: the case moved on by itself meanwhile, nothing left to do for it
                 if (moved) updated++;
 
             } else {
-                // eCourts still shows this date (or an earlier one): the court has not put the new date up yet
                 pending++;
             }
 
@@ -203,10 +177,7 @@ public class NextHearingUpdateService {
         return result;
     }
 
-    // ===== NEW: on-demand refresh used by the manual "Refresh" button on the case page =====
-    // Same eCourts lookup as the scheduled run, but for a single case and for the user's own case only.
-    // Disposed cases get their status changed to Decided. Otherwise a later date on eCourts is applied
-    // through HearingService.applyEcourtsNextHearing (the date currently on the case is treated as "heard")
+    // ===== v2: single-case refresh used by the manual "Refresh" button =====
     public RefreshResult refreshSingleCase(Long caseId, Long userId) {
         Case c = caseRepo.findById(caseId).orElse(null);
         if (c == null || c.getUser() == null || !c.getUser().getId().equals(userId)) {
@@ -230,38 +201,45 @@ public class NextHearingUpdateService {
             return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
                     "Could not read the case page on eCourts, please try again later");
         }
-
         ScrapingService.CaseOutlook outlook = outlookOpt.get();
 
+        // ===== v2: disposed is checked first, same rule as execute() =====
         if (outlook.disposed()) {
-            if (!CaseStatuses.isClosed(c.getStatus())) {
-                c.setStatus(CaseStatuses.DECIDED);
-                if (c.getDecisionDate() == null) c.setDecisionDate(today);
-                c.setNextHearing(null);
-                c.setCauseListNo(null);
-                c.setListingDate(null);
-                caseRepo.save(c);
-                return new RefreshResult(caseId, null, c.getStatus(), c.getDecisionDate(),
-                        "eCourts shows the case as disposed — marked as Decided");
+            if (CaseStatuses.isClosed(c.getStatus())) {
+                return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
+                        "eCourts shows the case as disposed (already marked " + c.getStatus() + ")");
             }
-            return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
-                    "eCourts shows the case as disposed (already marked " + c.getStatus() + ")");
+            markDecidedInTx(caseId, today);
+            Case refreshed = caseRepo.findById(caseId).orElse(c);
+            return new RefreshResult(caseId, refreshed.getNextHearing(), refreshed.getStatus(),
+                    refreshed.getDecisionDate(),
+                    "eCourts shows the case as disposed — marked as Decided");
         }
 
         LocalDate currentNext = c.getNextHearing();
-        if (outlook.nextHearing() != null
-                && currentNext != null
-                && outlook.nextHearing().isAfter(currentNext)) {
-            boolean moved = hearingService.applyEcourtsNextHearing(caseId, currentNext, outlook.nextHearing());
+        LocalDate ecourtsNext  = outlook.nextHearing();
+
+        // ===== v2: adopt a date when the case has none yet =====
+        if (ecourtsNext != null && currentNext == null) {
+            adoptNextHearingInTx(caseId, ecourtsNext);
+            Case refreshed = caseRepo.findById(caseId).orElse(c);
+            return new RefreshResult(caseId, refreshed.getNextHearing(), refreshed.getStatus(),
+                    refreshed.getDecisionDate(),
+                    "Next hearing set from eCourts: " + ecourtsNext);
+        }
+
+        // A later date on eCourts is moved in, exactly like the scheduled run does
+        if (ecourtsNext != null && currentNext != null && ecourtsNext.isAfter(currentNext)) {
+            boolean moved = hearingService.applyEcourtsNextHearing(caseId, currentNext, ecourtsNext);
             Case refreshed = caseRepo.findById(caseId).orElse(c);
             return new RefreshResult(caseId, refreshed.getNextHearing(), refreshed.getStatus(),
                     refreshed.getDecisionDate(),
                     moved
-                        ? "Moved to the next hearing date on eCourts: " + outlook.nextHearing()
+                        ? "Moved to the next hearing date on eCourts: " + ecourtsNext
                         : "The case moved on meanwhile; the latest date is shown");
         }
 
-        if (outlook.nextHearing() != null && outlook.nextHearing().equals(currentNext)) {
+        if (ecourtsNext != null && ecourtsNext.equals(currentNext)) {
             return new RefreshResult(caseId, currentNext, c.getStatus(), c.getDecisionDate(),
                     "eCourts shows the same next hearing date");
         }
@@ -270,7 +248,33 @@ public class NextHearingUpdateService {
                 "No new hearing date on eCourts yet");
     }
 
-    // The portal is not hammered: a short pause between two cases
+    // ===== v2: tiny transactional helpers so a concurrent change is never lost =====
+    private void markDecidedInTx(Long caseId, LocalDate decisionDate) {
+        tx.executeWithoutResult(status -> {
+            Case fresh = caseRepo.findById(caseId).orElse(null);
+            if (fresh == null) return;
+            if (CaseStatuses.isClosed(fresh.getStatus())) return;
+            fresh.setStatus(CaseStatuses.DECIDED);
+            if (fresh.getDecisionDate() == null) fresh.setDecisionDate(decisionDate);
+            fresh.setNextHearing(null);
+            fresh.setCauseListNo(null);
+            fresh.setListingDate(null);
+            caseRepo.save(fresh);
+        });
+    }
+
+    private void adoptNextHearingInTx(Long caseId, LocalDate nextHearing) {
+        tx.executeWithoutResult(status -> {
+            Case fresh = caseRepo.findById(caseId).orElse(null);
+            if (fresh == null) return;
+            if (fresh.getNextHearing() != null) return;   // someone else set one meanwhile, keep theirs
+            fresh.setNextHearing(nextHearing);
+            fresh.setCauseListNo(null);
+            fresh.setListingDate(null);
+            caseRepo.save(fresh);
+        });
+    }
+
     private void pause() {
         if (delayMs <= 0) return;
         try {

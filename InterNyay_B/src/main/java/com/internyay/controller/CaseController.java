@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
-// Cases of the logged in advocate (associates see their advocate's cases)
 @RestController
 @RequestMapping("/api/cases")
 @RequiredArgsConstructor
@@ -29,17 +28,15 @@ public class CaseController {
     private final CnrLookupService cnrLookup;
     private final AuthHelper auth;
     private final com.internyay.service.PlanService planService;
-    // ===== NEW: the manual "Refresh" button calls this =====
+    // ===== NEW =====
     private final NextHearingUpdateService nextHearingUpdateService;
 
-    // Fees are hidden from associates and from plans without the transactions feature
     private boolean feesHidden() {
         if (auth.isAssociate()) return true;
         com.internyay.entity.User me = auth.currentAccount();
         return !me.isAdmin() && !planService.hasFeature(me, "transactions");
     }
 
-    // Paged, filterable case list
     @GetMapping
     public ResponseEntity<Page<CaseDto>> list(
             @RequestParam(required = false) String search,
@@ -52,23 +49,17 @@ public class CaseController {
         return ResponseEntity.ok(feesHidden() ? result.map(CaseDto::withoutFees) : result);
     }
 
-    // Summary of file numbers used so far, for the next-number suggestion
     @GetMapping("/file-numbers")
     public ResponseEntity<FileNumberSummaryDto> fileNumbers() {
         return ResponseEntity.ok(fileNumberService.summary(auth.currentUserId()));
     }
 
-    // Cases whose judge is on leave on the given date
     @GetMapping("/hearing-leave")
     public ResponseEntity<List<HearingLeaveDto>> hearingLeave(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(hearingLeaveService.onLeaveFor(auth.currentUserId(), date));
     }
 
-    // Case details from the eCourts portal by CNR, to fill the Add Case form. The portal asks for a CAPTCHA, so it is
-    // three calls: start (answers with the CAPTCHA image), answer (the typed CAPTCHA; answers with the case, or a new
-    // CAPTCHA when it was wrong) and refresh (a new CAPTCHA). 400 with a readable message when the case cannot be read,
-    // and the advocate then adds the case manually
     @PostMapping("/cnr/start")
     public ResponseEntity<CnrLookupService.Step> startCnr(@RequestParam String cnr) {
         return ResponseEntity.ok(cnrLookup.start(auth.currentUserId(), cnr));
@@ -85,71 +76,62 @@ public class CaseController {
         return ResponseEntity.ok(cnrLookup.refresh(auth.currentUserId(), sessionId));
     }
 
-    // Create a case
     @PostMapping
     public ResponseEntity<CaseDto> create(@Valid @RequestBody CaseRequest req) {
         if (feesHidden()) req.clearFees();
         return ResponseEntity.ok(feesFor(caseService.create(req, auth.currentUserId())));
     }
 
-    // Update a case
     @PutMapping("/{id}")
     public ResponseEntity<CaseDto> update(@PathVariable Long id, @RequestBody CaseRequest req) {
         if (feesHidden()) req.clearFees();
         return ResponseEntity.ok(feesFor(caseService.update(id, req, auth.currentUserId())));
     }
 
-    // Strips the fee fields when the user isn't allowed to see them
     private CaseDto feesFor(CaseDto dto) {
         return feesHidden() ? dto.withoutFees() : dto;
     }
 
-    // Delete a case along with its hearings
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         caseService.delete(id, auth.currentUserId());
         return ResponseEntity.noContent().build();
     }
 
-    // Hearing history of a case
     @GetMapping("/{id}/hearings")
     public ResponseEntity<List<HearingDto>> hearings(@PathVariable Long id) {
         return ResponseEntity.ok(hearingService.listForCase(id, auth.currentUserId()));
     }
 
-    // Set the next hearing date and log the one just heard
     @PutMapping("/{id}/next-hearing")
     public ResponseEntity<NextHearingResponse> updateNextHearing(
             @PathVariable Long id, @RequestBody NextHearingRequest req) {
-
         return ResponseEntity.ok(hearingService.moveNextHearing(id, req, auth.currentUserId()));
     }
 
-    // ===== NEW: the manual "Refresh" button on the case page reads the eCourts portal right now =====
-    // For a disposed case it marks the case as Decided; otherwise it applies any later next hearing date
-    // it finds. Same rule as the evening NextHearingUpdateScheduler run, but on demand
+    // ===== NEW: manual "Refresh" button — reads the eCourts portal right now =====
+    // Returns 404 when the case is not found or not owned by the caller (the service throws
+    // IllegalArgumentException for both cases; from the API's point of view they are the same).
     @PostMapping("/{id}/refresh-hearing")
     public ResponseEntity<NextHearingUpdateService.RefreshResult> refreshHearing(@PathVariable Long id) {
-        return ResponseEntity.ok(nextHearingUpdateService.refreshSingleCase(id, auth.currentUserId()));
+        try {
+            return ResponseEntity.ok(nextHearingUpdateService.refreshSingleCase(id, auth.currentUserId()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    // There is no eCourts "update next date" endpoint any more. When a hearing date is set or moved, the order number
-    // for that date is read from the eCourts portal in the background (HearingService -> ScrapingService).
-
-    // Documents attached to a case
     @GetMapping("/{id}/documents")
     public ResponseEntity<List<DocumentDto>> getDocs(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.listForCase(id, auth.currentUserId()));
     }
 
-    // Upload a document to a case
     @PostMapping(value = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentDto> uploadDoc(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String type) throws IOException {
-
         return ResponseEntity.ok(
                 documentService.uploadForCase(id, file, name, type, auth.currentUserId()));
     }
