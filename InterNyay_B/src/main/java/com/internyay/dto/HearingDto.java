@@ -22,6 +22,10 @@ public class HearingDto {
     public String orderDocName;
     public Integer orderSeq;
 
+    // Order file name (order-N.pdf) that the eCourts portal lists for this hearing date, null when it lists none.
+    // Filled in the background by HearingService (via ScrapingService) when the date is set or moved.
+    public String orderNumber;
+
     public boolean orderOnEcourts;
     public boolean orderDue;
     public boolean noOrderOnRecord;
@@ -53,6 +57,8 @@ public class HearingDto {
                 .orderDocId(h.getOrderDocId())
                 .orderDocName(h.getOrderDocName())
                 .orderSeq(h.getOrderSeq())
+                // Scraped eCourts filename for this date; null when the scraper has not found one
+                .orderNumber(h.getEcourtsOrderFile())
                 .orderOnEcourts(h.getOrderDocId() == null
                         && h.getEcourtsOrderFile() != null && !h.getEcourtsOrderFile().isBlank())
                 .orderDue(OrderCutoff.passed(h.getDate()))

@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
 
 // What the app knows about a case from eCourts: the shapes it is handed around in (CaseDetail for the Add Case form,
 // Snapshot for the hearing and order history) and the conversion from the case page read off the eCourts Services
-// portal (see CnrLookupService). The eCourts API is no longer called from here; it stays only in the 6 PM next-hearing
-// sync and in "Get order" for hearings that come after the case was added
+// portal (see CnrLookupService). The paid eCourts API is no longer used anywhere; orders for later hearing dates are
+// looked up on the portal by ScrapingService when a hearing date is set or moved
 @Service
 public class EcourtsCaseService {
 
@@ -161,23 +161,6 @@ public class EcourtsCaseService {
                 p.decisionDate(),
                 hearings,
                 orderFiles);
-    }
-
-    // order date to order-N.pdf for every interim order and judgment of an eCourts API courtCaseData node, the first
-    // order of a date wins (used by the 6 PM sync, which still reads the API)
-    public static Map<LocalDate, String> orderFilesOf(JsonNode data) {
-        Map<LocalDate, String> orderFiles = new TreeMap<>();
-        collectOrders(data.path("interimOrders"), orderFiles);
-        collectOrders(data.path("judgmentOrders"), orderFiles);
-        return orderFiles;
-    }
-
-    private static void collectOrders(JsonNode orders, Map<LocalDate, String> into) {
-        for (JsonNode o : orders) {
-            LocalDate d = parseDate(o.path("orderDate").asText(null));
-            String file = o.path("orderUrl").asText("").trim();
-            if (d != null && !file.isEmpty()) into.putIfAbsent(d, file);
-        }
     }
 
     // Words that put a case on the criminal side, and words that put it on the civil side

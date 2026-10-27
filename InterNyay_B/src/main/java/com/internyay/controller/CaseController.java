@@ -123,9 +123,8 @@ public class CaseController {
         return ResponseEntity.ok(hearingService.moveNextHearing(id, req, auth.currentUserId()));
     }
 
-    // "Update next date" endpoint removed: the eCourts-based NextHearingSyncService is gone.
-    // Order numbers for a hearing date are now populated automatically when the hearing is updated
-    // (see HearingService.update -> ScrapingService.findOrderForDate).
+    // There is no eCourts "update next date" endpoint any more. When a hearing date is set or moved, the order number
+    // for that date is read from the eCourts portal in the background (HearingService -> ScrapingService).
 
     // Documents attached to a case
     @GetMapping("/{id}/documents")

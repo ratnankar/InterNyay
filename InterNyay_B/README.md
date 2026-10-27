@@ -42,7 +42,6 @@ Everything is set through `.env` (see `.env.example` for the full list). The mai
 | File storage | `STORAGE_TYPE`, `STORAGE_LOCAL_DIR`, `S3_*` | `docs/STORAGE_SETUP.md` |
 | WhatsApp reminders | `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_TOKEN`, `WHATSAPP_DRY_RUN` | `docs/WHATSAPP_SETUP.md` |
 | AI assistant | `CHAT_BASE_URL`, `CHAT_MODEL`, `CHAT_API_KEY` | `docs/CHAT_SETUP.md` |
-| eCourts data | `ECOURTS_API_TOKEN`, `ECOURTS_ORDER_DOWNLOAD_PATH` | `application.properties` (`ecourts.api.*`) |
 | Automatic CAPTCHA reading | `CAPTCHA_SOLVER_ENABLED`, `CAPTCHA_SOLVER_URL`, `CAPTCHA_SOLVER_KEY` | `docs/CAPTCHA_SETUP.md` |
 | Logging | `LOG_LEVEL` | |
 
@@ -82,7 +81,6 @@ All times are India time (`Asia/Kolkata`). Each can be changed in `application.p
 | --- | --- | --- |
 | `JudgeLeaveScheduler` | every hour | Reads the district court leave pages (`judgeleave.scrape.cron`) |
 | `CauseListScheduler` | every hour 17:00-23:00, and 00:00 (IST) | Looks up cause list numbers for the next hearing date: Delhi High Court / Supreme Court PDFs and district courts (CAPTCHA read by the solver). Only cases still without a number are tried, so each run completes the last one. Runs are listed in Admin > Cause List (`causelist.auto.*`) |
-| `NextHearingSyncScheduler` | 18:00 daily | Updates next hearing dates from eCourts (`ecourts.api.next-hearing-cron`) |
 | `WhatsAppReminderScheduler` | 10:00 daily | Sends hearing and payment reminders (`whatsapp.reminder.cron`) |
 
 ## Database

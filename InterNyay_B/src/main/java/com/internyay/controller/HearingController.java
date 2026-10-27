@@ -55,8 +55,7 @@ public class HearingController {
         return ResponseEntity.ok(hearingService.attachOrder(id, file, name, auth.currentUserId()));
     }
 
-    // Order from eCourts endpoint removed: EcourtsOrderService (and the /{id}/order/ecourts route) is gone.
-    // The order number is populated automatically on hearing update via ScrapingService.
+    // No "get order from eCourts" route: the order number is filled in automatically when the hearing date changes.
 
     // Remove the attached order
     @DeleteMapping("/{id}/order")
