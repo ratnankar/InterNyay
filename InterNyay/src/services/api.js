@@ -296,9 +296,6 @@ export const cases = {
   // Set or change the next hearing date of a case
   updateNextHearing: (id, body) => put(`/cases/${id}/next-hearing`, { body }),
 
-  // "Update next date" button: eCourts is asked for the new date once the hearing date is over (from 6 PM on that day)
-  syncNextHearing: (id) => post(`/cases/${id}/sync-next-hearing`),
-
   // Case details from eCourts by CNR, used to fill the Add Case form. Fails with a readable message when eCourts
   // cannot give the case
   // Case details from the eCourts portal by CNR: start gives the CAPTCHA image, answer gives the case (or a new CAPTCHA)
@@ -340,10 +337,6 @@ export const hearings = {
   },
 
   removeOrder: (id) => del(`/hearings/${id}/order`),
-
-  // Order from eCourts: the first call fetches and stores it, later calls use the stored copy.
-  // Answers { status: STORED | FETCHED | NOT_DECLARED | UNAVAILABLE, message, hearing }
-  fetchOrder: (id) => post(`/hearings/${id}/order/ecourts`),
 }
 
 // To-do list tasks

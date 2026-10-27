@@ -9,7 +9,6 @@ import { isMiscOnlyHearing, joinHearingNotes, splitHearingNotes } from '../misc/
 import MiscHearingsSection from '../misc/MiscHearingsSection'
 
 import Icon from './Icon'
-import SyncNextHearingButton from './SyncNextHearingButton'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { isClosedCase } from '../../constants/data'
 import { confirmDialog } from '../../utils/confirmDialog'
@@ -77,14 +76,6 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
       .catch(e => { if (!silent) setError(getErrorMessage(e, 'Could not load the hearing history')) })
       .finally(() => { if (!silent) setLoading(false) })
   }, [caseId])
-
-  // Orders read from eCourts when the case was added are still downloading: look again every few seconds until they are in
-  const downloading = hearings.some(h => h.orderDownloading)
-  useEffect(() => {
-    if (!downloading) return undefined
-    const timer = setInterval(() => load(true), 4000)
-    return () => clearInterval(timer)
-  }, [downloading, load])
 
   // Reload whenever the case changes or a hearing is added or edited elsewhere (hearingsVersion bumps)
   useEffect(() => { load() }, [load, hearingsVersion])
@@ -164,25 +155,6 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     }
   }
 
-  // Get the order from eCourts: the first time it is fetched and stored, after that the stored copy is used
-  async function fetchOrder(h) {
-    if (!beginOrderTask(h.id)) return
-
-    try {
-      const res = await api.hearings.fetchOrder(h.id)
-      if (res?.status === 'FETCHED' || res?.status === 'STORED') {
-        bumpHearings(caseId)
-        addToast('Order ready')
-      } else {
-        addToast(res?.message || 'The order is not available', 'error')
-      }
-    } catch (e) {
-      addToast(getErrorMessage(e, 'Could not get the order from eCourts'), 'error')
-    } finally {
-      endOrderTask(h.id)
-    }
-  }
-
   // Detach the order PDF from a hearing after a confirm
   async function removeOrder(h) {
     if (!await confirmDialog(`Remove the order attached to ${formatDisplayDate(h.date)}?`)) return
@@ -245,8 +217,6 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
             <strong className="hearing-history__next-date">
               {caseItem?.nextHearing ? formatDisplayDate(caseItem.nextHearing) : '—'}
             </strong>
-            {/* Refresh from eCourts, shown while the date is over; Update stays for changing it by hand */}
-            <SyncNextHearingButton caseItem={caseItem} />
             <button type="button"
               className="btn-outline btn-outline--sm"
               onClick={() => openNextHearing(caseItem)}
@@ -334,6 +304,12 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
                     <p className={`hearing-entry__note${note ? '' : ' hearing-entry__note--empty'}`}>
                       {note || 'No note for this date'}
                     </p>
+                    {/* Order number scraped from eCourts and saved when this hearing's date was set/updated */}
+                    {h.orderNumber && (
+                      <p className="hearing-entry__order-number">
+                        <Icon name="file" /> Order No. {h.orderNumber}
+                      </p>
+                    )}
                   </>
                 )}
 
@@ -380,19 +356,7 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
                       <span className="hearing-entry__order-note" title={h.ordersNotDeclaredReason || undefined}>
                         {h.ordersNotDeclaredReason || 'Orders are not declared'}
                       </span>
-                    ) : h.orderDownloading ? (
-                      <span className="hearing-entry__order-note">Downloading order…</span>
-                    ) : h.orderOnEcourts && (
-                      <button type="button"
-                        className="btn-outline btn-outline--sm hearing-entry__attach"
-                        disabled={busy || !caseItem?.cnrNo}
-                        title={caseItem?.cnrNo ? 'Get this hearing\'s order from eCourts' : 'Add the CNR number to this case to fetch its orders'}
-                        onClick={() => fetchOrder(h)}
-                      >
-                        <Icon name="file" /> {busy ? 'Please wait…' : 'Get order from eCourts'}
-                      </button>
-                    )}
-                    {canManageOrders && (
+                    ) : canManageOrders && (
                       <button type="button"
                         className="btn-outline btn-outline--sm hearing-entry__attach"
                         disabled={busy}
