@@ -14,8 +14,8 @@ import { isClosedCase } from '../../constants/data'
 import { confirmDialog } from '../../utils/confirmDialog'
 import useSessionState from '../../hooks/useSessionState'
 import { beginOrderTask, endOrderTask, usePendingOrders } from '../../utils/pendingOrders'
-// Hearing history of a case with its documents, and the button to set the next hearing
-export default function CaseHearings({ caseItem, dashboard = false }) {
+
+export default function CaseHearings({ caseItem, dashboard = false, onCaseRefreshed }) {
   const {
     addToast,
     hearingsVersion,
@@ -26,48 +26,36 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     miscHearingCounts,
   } = useApp()
 
-  // Hearing history for this case, loaded from the API
   const [hearings, setHearings] = useState([])
-  // Loading and error state for the history fetch
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // Misc. applications filed in this case, each with its own hearing dates (the case page only)
   const [miscApps, setMiscApps] = useState([])
 
-  // On the dashboard the list starts collapsed; on the case page it starts open
-  const [expanded, setExpanded] = useSessionState(`hearings_open_${dashboard ? 'dash' : 'case'}_${caseItem?.id}`, !dashboard)
+  const [expanded, setExpanded] = useSessionState(
+    `hearings_open_${dashboard ? 'dash' : 'case'}_${caseItem?.id}`,
+    !dashboard
+  )
 
-  // Id of the hearing row being edited, plus its draft date and note
   const [editingId, setEditingId] = useState(null)
   const [draftDate, setDraftDate] = useState('')
   const [draftNote, setDraftNote] = useState('')
-  // Row currently saving, uploading or deleting, so its buttons can be disabled.
-  // The string 'refresh' is used by the eCourts refresh button (row ids are numbers, so no clash)
+  // 'refresh' is used by the eCourts refresh button (row ids are numbers, so no clash)
   const [busyId, setBusyId] = useState(null)
   const pendingOrders = usePendingOrders()
 
-  // Hidden file input used to attach an order PDF to a hearing
   const fileRef = useRef(null)
-  // Remembers which hearing the chosen order file belongs to
   const uploadForRef = useRef(null)
 
-  // The case's own hearings plus the hearing dates of its misc. applications
   const historyCount = hearings.length + (miscHearingCounts.get(caseItem?.id) || 0)
 
-  // A decided or withdrawn case has no next hearing, so it cannot be moved to one
   const closed = isClosedCase(caseItem)
-  // Orders are fetched, uploaded or shown only on the case page, never on the dashboard
   const canManageOrders = !dashboard
 
-  // Short alias for the case id used by the fetch and the handlers
   const caseId = caseItem?.id
 
-  // Fetch the hearing history for this case
-  // silent: a background reload, no spinner and no error flash
   const load = useCallback((silent = false) => {
     if (!caseId) return
-
     if (!silent) setLoading(true)
     api.cases.hearings(caseId)
       .then(rows => {
@@ -78,12 +66,9 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
       .finally(() => { if (!silent) setLoading(false) })
   }, [caseId])
 
-  // Reload whenever the case changes or a hearing is added or edited elsewhere (hearingsVersion bumps)
   useEffect(() => { load() }, [load, hearingsVersion])
-  // And quietly when the tab is back in view, for hearings changed on another device
   useEffect(() => onLiveRefresh(() => load(true)), [load])
 
-  // The case's pending applications, so their hearing dates can be updated here, apart from the case's own next hearing
   useEffect(() => {
     if (!caseId || dashboard) return undefined
     let cancelled = false
@@ -95,20 +80,28 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     return () => { cancelled = true; stopLive() }
   }, [caseId, dashboard, hearingsVersion])
 
-  // An application changed from here: keep its row current
-  const replaceMiscApp = updated => setMiscApps(prev => prev.map(a => (a.id === updated.id ? updated : a)))
+  const replaceMiscApp = updated =>
+    setMiscApps(prev => prev.map(a => (a.id === updated.id ? updated : a)))
 
-  // ===== NEW: ask the eCourts portal right now for this case's latest next hearing date =====
+  // ===== NEW: read the case again from eCourts right now =====
   async function refreshFromEcourts() {
     if (!caseId) return
     setBusyId('refresh')
     try {
       const res = await api.cases.refreshHearing(caseId)
-      // Server sends back the case's new state. Apply it in the UI without a full page reload
+
+      // The date moved (or got cleared) — sync it in the visible case object immediately
       if (res && res.nextHearing !== undefined) {
         syncCaseNextHearing(caseId, res.nextHearing)
       }
-      // A disposed case became Decided: reload the hearing list so the case page picks up the new state
+
+      // The status changed (e.g. Active → Decided) — ask the parent to reload the case so
+      // `closed` becomes true and the Update/Refresh buttons disappear
+      if (res && res.status && res.status !== caseItem?.status) {
+        onCaseRefreshed?.(caseId, res)
+      }
+
+      // Reload the hearing list so any auto-recorded hearing shows up
       bumpHearings(caseId)
       addToast(res?.message || 'Refreshed from eCourts')
     } catch (e) {
@@ -118,13 +111,11 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     }
   }
 
-  // Save the edited date and note; a date is required
   async function saveEntry(h) {
     if (!draftDate) {
       addToast('A hearing entry needs a date', 'error')
       return
     }
-
     setBusyId(h.id)
     try {
       await api.hearings.update(h.id, {
@@ -141,14 +132,12 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     }
   }
 
-  // Open a row for editing and copy its current values into the drafts
   function startEdit(h) {
     setEditingId(h.id)
     setDraftDate(h.date || '')
     setDraftNote(splitHearingNotes(h.notes).note)
   }
 
-  // Remember which hearing is being uploaded for, then open the file picker
   function pickOrderFile(hearingId) {
     uploadForRef.current = hearingId
     if (fileRef.current) {
@@ -157,13 +146,11 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     }
   }
 
-  // Upload the chosen order PDF to that hearing
   async function onOrderChosen(e) {
     const file = e.target.files?.[0]
     const hearingId = uploadForRef.current
     if (!file || !hearingId) return
     if (!beginOrderTask(hearingId)) return
-
     try {
       await api.hearings.uploadOrder(hearingId, file)
       bumpHearings(caseId)
@@ -176,11 +163,9 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     }
   }
 
-  // Detach the order PDF from a hearing after a confirm
   async function removeOrder(h) {
     if (!await confirmDialog(`Remove the order attached to ${formatDisplayDate(h.date)}?`)) return
     if (!beginOrderTask(h.id)) return
-
     try {
       await api.hearings.removeOrder(h.id)
       bumpHearings(caseId)
@@ -192,14 +177,11 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
     }
   }
 
-  // Delete the whole hearing entry (its order PDF goes with it) after a confirm
   async function removeHearing(h) {
     if (!await confirmDialog(`Delete the entry for ${formatDisplayDate(h.date)}? Its order PDF is deleted too.`)) return
-
     setBusyId(h.id)
     try {
       const res = await api.hearings.remove(h.id)
-      // The case's next hearing may have moved on or gone blank, so Next Hearing and Edit Case follow it
       if (res && res.nextHearing !== undefined) syncCaseNextHearing(caseId, res.nextHearing)
       bumpHearings(caseId)
       addToast('Hearing entry deleted')
@@ -213,7 +195,6 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
   return (
     <div className="hearing-history" onClick={e => e.stopPropagation()}>
 
-      {/* The applications filed in this case, each with its own hearings, apart from the case's own */}
       {!dashboard && <MiscHearingsSection caseId={caseId} apps={miscApps} onChange={replaceMiscApp} />}
 
       <div className="hearing-history__header">
@@ -231,7 +212,6 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
           <p className="case-detail__docs-label">Hearing History</p>
         )}
 
-        {/* No next hearing to set once the case is decided or withdrawn */}
         {!closed && (
           <div className="hearing-history__next">
             <span className="hearing-history__next-label">Next Hearing</span>
@@ -249,7 +229,6 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
               {busyId === 'refresh' ? 'Refreshing…' : 'Refresh'}
             </button>
 
-            {/* Existing Update button */}
             <button type="button"
               className="btn-outline btn-outline--sm"
               onClick={() => openNextHearing(caseItem)}
@@ -287,17 +266,14 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
 
           return (
             <div key={h.id} className="hearing-entry">
-
               <div className="hearing-entry__date">
                 <span className="hearing-entry__date-text">{formatDisplayDate(h.date)}</span>
-                {/* Read-only: shows old outcomes such as Withdrawn, but can no longer be filled in */}
                 {h.outcome && !editing && (
                   <span className="hearing-entry__outcome">{h.outcome}</span>
                 )}
               </div>
 
               <div className="hearing-entry__body">
-
                 {editing ? (
                   <>
                     <div className="hearing-entry__edit-row">
@@ -337,7 +313,6 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
                     <p className={`hearing-entry__note${note ? '' : ' hearing-entry__note--empty'}`}>
                       {note || 'No note for this date'}
                     </p>
-                    {/* Order number read from eCourts automatically when this hearing's date was set or moved */}
                     {h.orderNumber && !h.orderDocId && (
                       <p className="hearing-entry__order-number">
                         <Icon name="file" /> Order on eCourts: {h.orderNumber}
