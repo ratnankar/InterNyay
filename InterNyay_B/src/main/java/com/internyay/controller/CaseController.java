@@ -29,6 +29,8 @@ public class CaseController {
     private final CnrLookupService cnrLookup;
     private final AuthHelper auth;
     private final com.internyay.service.PlanService planService;
+    // ===== NEW: the manual "Refresh" button calls this =====
+    private final NextHearingUpdateService nextHearingUpdateService;
 
     // Fees are hidden from associates and from plans without the transactions feature
     private boolean feesHidden() {
@@ -121,6 +123,14 @@ public class CaseController {
             @PathVariable Long id, @RequestBody NextHearingRequest req) {
 
         return ResponseEntity.ok(hearingService.moveNextHearing(id, req, auth.currentUserId()));
+    }
+
+    // ===== NEW: the manual "Refresh" button on the case page reads the eCourts portal right now =====
+    // For a disposed case it marks the case as Decided; otherwise it applies any later next hearing date
+    // it finds. Same rule as the evening NextHearingUpdateScheduler run, but on demand
+    @PostMapping("/{id}/refresh-hearing")
+    public ResponseEntity<NextHearingUpdateService.RefreshResult> refreshHearing(@PathVariable Long id) {
+        return ResponseEntity.ok(nextHearingUpdateService.refreshSingleCase(id, auth.currentUserId()));
     }
 
     // There is no eCourts "update next date" endpoint any more. When a hearing date is set or moved, the order number
