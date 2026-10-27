@@ -3,6 +3,7 @@ package com.internyay.service;
 import com.internyay.dto.*;
 import com.internyay.entity.*;
 import com.internyay.repository.*;
+import com.internyay.util.CaseStatuses;
 import com.internyay.util.OrderCutoff;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -203,6 +204,35 @@ public class HearingService {
         }
 
         return new NextHearingResponse(c.getId(), c.getNextHearing(), recorded);
+    }
+
+    // The automatic next hearing date update (NextHearingUpdateService): eCourts shows a new date for a case that
+    // still has the hearing date just heard as its next hearing. Does what moveNextHearing does (the heard date goes
+    // into the history, the cause list number of the old date is kept on it, the new date becomes the next hearing),
+    // except that the daily limit and no-hearing days are not checked: the date is the court's and cannot be refused.
+    // Returns false and changes nothing when the case moved on meanwhile (the advocate set a date, closed the case)
+    @Transactional
+    public boolean applyEcourtsNextHearing(Long caseId, LocalDate heardDate, LocalDate newDate) {
+        if (heardDate == null || newDate == null || !newDate.isAfter(heardDate)) return false;
+
+        Case c = caseRepo.findById(caseId).orElse(null);
+        if (c == null || CaseStatuses.isClosed(c.getStatus()) || !heardDate.equals(c.getNextHearing())) return false;
+
+        Long userId = c.getUser().getId();
+
+        Hearing heard = upsert(caseId, heardDate, null, null, null, userId);
+        hearingRepo.flush();
+        renumberOrders(caseId, userId);
+        // The date just heard may already have its order on eCourts
+        if (heard.getOrderDocId() == null) lookUpOrderNumberAfterCommit(heard.getId(), userId);
+
+        keepCauseListNo(c, userId);
+        c.setCauseListNo(null);
+        c.setListingDate(null);
+        c.setNextHearing(newDate);
+        caseRepo.save(c);
+        recordHeard(c, newDate, userId);
+        return true;
     }
 
     // The date a case was moved away from (e.g. from the Edit Case form) is kept in the hearing history,

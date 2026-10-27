@@ -62,6 +62,25 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     // Cases on a date that have a CNR number, so eCourts can be checked
     List<Case> findByNextHearingAndCnrNoIsNotNull(LocalDate nextHearing);
 
+    // Just what the next hearing date update needs to know about a case
+    interface HearingDateDue {
+        Long getId();
+        Long getUserId();
+        String getCnrNo();
+    }
+
+    // Open cases of every advocate that still have this date as their next hearing and a CNR number: the hearing date
+    // has not been moved on yet, so eCourts is asked for the new one. Decided and withdrawn cases are over, and
+    // deleted ones are hidden by @SQLRestriction
+    @Query("""
+        SELECT c.id AS id, c.user.id AS userId, c.cnrNo AS cnrNo FROM Case c
+        WHERE c.nextHearing = :date
+        AND c.cnrNo IS NOT NULL AND TRIM(c.cnrNo) <> ''
+        AND (c.status IS NULL OR c.status NOT IN ('Decided', 'Withdrawn'))
+        ORDER BY c.id
+        """)
+    List<HearingDateDue> findOpenWithCnrListedOn(LocalDate date);
+
     // Saves the cause list number for many cases in one update
     @Transactional
     @Modifying

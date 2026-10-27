@@ -49,6 +49,11 @@ public class ScrapingService {
         this.stateCode = stateCode;
     }
 
+    // Whether the automatic CAPTCHA reader can be used right now (background lookups need it)
+    public boolean available() {
+        return solver.available();
+    }
+
     // The order of that hearing date as eCourts names its file (order-3.pdf, judgment-5.pdf). Empty when eCourts
     // lists no order for the date, or when the portal could not be read (never throws)
     public Optional<String> findOrderForDate(String rawCnr, LocalDate hearingDate) {
@@ -75,6 +80,36 @@ public class ScrapingService {
             return file;
         } catch (IOException | RuntimeException e) {
             log.warn("CNR {}: eCourts order lookup for {} failed: {}", cnr, hearingDate, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    // What the portal's case page says about where the case goes next
+    //  nextHearing - the "Next Hearing Date" of the page, null when it shows none
+    //  disposed    - the page says the case is disposed
+    public record CaseOutlook(boolean disposed, LocalDate nextHearing) {}
+
+    // The next hearing date eCourts shows for the case. Empty when it could not be read: no automatic CAPTCHA reader,
+    // the portal is down, or the page was not this case (never throws), so the caller simply tries again later
+    public Optional<CaseOutlook> lookUpOutlook(String rawCnr) {
+        String cnr = EcourtsCaseService.normalizeCnr(rawCnr);
+        if (cnr == null) return Optional.empty();
+
+        if (!solver.available()) {
+            log.info("CNR {}: next hearing date not looked up, the automatic CAPTCHA reader is not available", cnr);
+            return Optional.empty();
+        }
+
+        try {
+            ParsedCase parsed = readCase(cnr);
+            if (parsed == null) return Optional.empty();
+
+            log.info("CNR {}: eCourts shows next hearing {}{}", cnr,
+                    parsed.nextHearing() == null ? "none" : parsed.nextHearing(),
+                    parsed.disposed() ? " (disposed)" : "");
+            return Optional.of(new CaseOutlook(parsed.disposed(), parsed.nextHearing()));
+        } catch (IOException | RuntimeException e) {
+            log.warn("CNR {}: eCourts next hearing date lookup failed: {}", cnr, e.getMessage());
             return Optional.empty();
         }
     }
