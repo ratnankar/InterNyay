@@ -304,10 +304,10 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
                     <p className={`hearing-entry__note${note ? '' : ' hearing-entry__note--empty'}`}>
                       {note || 'No note for this date'}
                     </p>
-                    {/* Order number scraped from eCourts and saved when this hearing's date was set/updated */}
-                    {h.orderNumber && (
+                    {/* Order number read from eCourts automatically when this hearing's date was set or moved */}
+                    {h.orderNumber && !h.orderDocId && (
                       <p className="hearing-entry__order-number">
-                        <Icon name="file" /> Order No. {h.orderNumber}
+                        <Icon name="file" /> Order on eCourts: {h.orderNumber}
                       </p>
                     )}
                   </>
