@@ -296,6 +296,11 @@ export const cases = {
   // Set or change the next hearing date of a case
   updateNextHearing: (id, body) => put(`/cases/${id}/next-hearing`, { body }),
 
+  // ===== NEW: read this case's latest next hearing date from the eCourts portal right now =====
+  // The server answers with { caseId, nextHearing, status, decisionDate, message }:
+  // a disposed case comes back with status "Decided" and nextHearing null; "message" is ready for a toast
+  refreshHearing: (id)      => post(`/cases/${id}/refresh-hearing`),
+
   // Case details from eCourts by CNR, used to fill the Add Case form. Fails with a readable message when eCourts
   // cannot give the case
   // Case details from the eCourts portal by CNR: start gives the CAPTCHA image, answer gives the case (or a new CAPTCHA)

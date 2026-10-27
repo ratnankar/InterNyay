@@ -42,7 +42,8 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
   const [editingId, setEditingId] = useState(null)
   const [draftDate, setDraftDate] = useState('')
   const [draftNote, setDraftNote] = useState('')
-  // Row currently saving, uploading or deleting, so its buttons can be disabled
+  // Row currently saving, uploading or deleting, so its buttons can be disabled.
+  // The string 'refresh' is used by the eCourts refresh button (row ids are numbers, so no clash)
   const [busyId, setBusyId] = useState(null)
   const pendingOrders = usePendingOrders()
 
@@ -96,6 +97,26 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
 
   // An application changed from here: keep its row current
   const replaceMiscApp = updated => setMiscApps(prev => prev.map(a => (a.id === updated.id ? updated : a)))
+
+  // ===== NEW: ask the eCourts portal right now for this case's latest next hearing date =====
+  async function refreshFromEcourts() {
+    if (!caseId) return
+    setBusyId('refresh')
+    try {
+      const res = await api.cases.refreshHearing(caseId)
+      // Server sends back the case's new state. Apply it in the UI without a full page reload
+      if (res && res.nextHearing !== undefined) {
+        syncCaseNextHearing(caseId, res.nextHearing)
+      }
+      // A disposed case became Decided: reload the hearing list so the case page picks up the new state
+      bumpHearings(caseId)
+      addToast(res?.message || 'Refreshed from eCourts')
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not refresh from eCourts'), 'error')
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   // Save the edited date and note; a date is required
   async function saveEntry(h) {
@@ -217,6 +238,18 @@ export default function CaseHearings({ caseItem, dashboard = false }) {
             <strong className="hearing-history__next-date">
               {caseItem?.nextHearing ? formatDisplayDate(caseItem.nextHearing) : '—'}
             </strong>
+
+            {/* ===== NEW: Refresh from eCourts ===== */}
+            <button type="button"
+              className="btn-outline btn-outline--sm"
+              title="Read the latest next hearing date from eCourts now"
+              disabled={busyId === 'refresh'}
+              onClick={refreshFromEcourts}
+            >
+              {busyId === 'refresh' ? 'Refreshing…' : 'Refresh'}
+            </button>
+
+            {/* Existing Update button */}
             <button type="button"
               className="btn-outline btn-outline--sm"
               onClick={() => openNextHearing(caseItem)}
