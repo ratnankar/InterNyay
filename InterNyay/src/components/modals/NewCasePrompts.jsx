@@ -20,11 +20,12 @@ const cleanCnr = text => String(text || '').toUpperCase().replace(/[\s-]/g, '')
 const validCnr = text => /^[A-Z0-9]{16}$/.test(cleanCnr(text))
 
 // Step 1 popup: how is the case added? By CNR (the details come from eCourts) or manually.
-// By CNR: the CNR is typed (or comes from a scanned QR), eCourts shows a CAPTCHA, and the case is read once it is typed.
+// By CNR: the CNR is typed (or comes from a scanned QR) and the case is read at once when the CAPTCHA of eCourts could be
+// read automatically; otherwise eCourts shows the CAPTCHA and the case is read once it is typed.
 //  onFetched(detail, token) - the case was read; token ties the form to that lookup
 //  onFailed(cnr, message)   - eCourts could not give the case: the form opens empty to be filled by hand
 //  hasCnr(cnr)              - the advocate already has a case with this CNR
-//  initialCnr               - a CNR read from a scanned QR; the CAPTCHA is asked straight away
+//  initialCnr               - a CNR read from a scanned QR; the lookup starts straight away
 export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClose, initialCnr = '' }) {
   // 'choose': the two options. 'cnr': asking for the CNR number. 'captcha': asking for the CAPTCHA of eCourts
   const [step, setStep] = useState(initialCnr ? 'cnr' : 'choose')
@@ -33,6 +34,8 @@ export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClo
   const [problem, setProblem] = useState('')
   const [session, setSession] = useState({ id: '', image: '' })
   const [captcha, setCaptcha] = useState('')
+  // A CNR that came from a scanned QR: the CNR box is not shown for it, only a short "contacting" note while it is looked up
+  const [scanned, setScanned] = useState(!!initialCnr)
   const startedFor = useRef('')
   const closed = useRef(false)
 
@@ -56,7 +59,9 @@ export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClo
     setBusy(true)
     try {
       const answer = await api.cases.cnrStart(clean)
-      if (!closed.current) showCaptcha(answer)
+      if (closed.current) return
+      if (answer.status === 'DONE') onFetched(answer.detail, answer.sessionId)
+      else showCaptcha(answer)
     } catch (e) {
       const message = getErrorMessage(e, 'Could not reach eCourts')
       if (/already have a case/i.test(message)) { setProblem(message); setStep('cnr') }
@@ -133,7 +138,7 @@ export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClo
               </div>
 
               <p className="case-parties__hint u-mt-10">
-                By CNR, the case details, hearing dates and orders are taken from eCourts (you type the CAPTCHA eCourts shows),
+                By CNR, the case details, hearing dates and orders are taken from eCourts (the CAPTCHA of eCourts is read for you, and you type it only when it cannot be read),
                 and the order PDFs are downloaded in the background. Manually, you fill in the details yourself and no hearing dates
                 or orders are brought in.
                 A case of a Juvenile Justice Board has no CNR and its case number is optional: add it manually and choose the board as the court.
@@ -141,8 +146,15 @@ export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClo
             </>
           )}
 
-          {step === 'cnr' && (
-            <form onSubmit={e => { e.preventDefault(); if (!busy) startLookup(cnr) }}>
+          {step === 'cnr' && scanned && busy && (
+            <>
+              <p className="form-label">CNR {cleanCnr(cnr)}</p>
+              <p className="case-parties__hint u-mt-6">Contacting eCourts…</p>
+            </>
+          )}
+
+          {step === 'cnr' && !(scanned && busy) && (
+            <form onSubmit={e => { e.preventDefault(); if (!busy) { setScanned(false); startLookup(cnr) } }}>
               <label className="form-label" htmlFor="add-case-cnr">CNR Number</label>
               <input
                 id="add-case-cnr"
@@ -159,7 +171,7 @@ export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClo
               {problem && <p className="case-judge-hint case-judge-hint--none u-mt-6">{problem}</p>}
 
               <p className="case-parties__hint u-mt-10">
-                eCourts will show a CAPTCHA next. If the case cannot be fetched, the form opens for you to fill in by hand.
+                eCourts may ask for a CAPTCHA next. If the case cannot be fetched, the form opens for you to fill in by hand.
               </p>
 
               <div className="form-actions">

@@ -180,6 +180,11 @@
 
 .admin__toolbar .form-input { max-width: 260px; }
 
+/* A date field (ClearableDateInput) in a toolbar. Its .date-clear wrapper is width:100% everywhere else, which here
+   took a whole row: the buttons dropped underneath and the × sat at the far right edge. Give the wrapper the field's
+   own width so the field, its × and the buttons share one row, and the × stays inside the field. */
+.admin__toolbar > .date-clear { flex: 0 1 260px; width: auto; max-width: 260px; }
+
 .admin__count {
   margin-left: auto;
 }

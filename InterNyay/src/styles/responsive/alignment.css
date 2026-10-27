@@ -43,6 +43,7 @@
 
   /* Search / name boxes in toolbars use the full width */
   .admin__toolbar .form-input { max-width: none; flex: 1 1 100%; width: 100%; }
+  .admin__toolbar > .date-clear { flex: 1 1 100%; max-width: none; width: 100%; }
 
   /* Title row with actions: the actions drop below the title and line up with its left edge */
   .todo-main__category-bar > :last-child,

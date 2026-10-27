@@ -812,8 +812,12 @@ export const admin = {
     start:   (date)         => post('/admin/cause-list-relay/start', { params: { date } }),
     refreshDate: (date)     => post('/admin/cause-list-relay/refresh-date', { params: { date } }),
     answer:  (id, captcha)  => post(`/admin/cause-list-relay/${id}/answer`, { body: { captcha } }),
+    next:    ()             => post('/admin/cause-list-relay/continue'),
     skip:    (id)           => post(`/admin/cause-list-relay/${id}/skip`),
     refresh: (id)          => post(`/admin/cause-list-relay/${id}/refresh`),
+    schedule: ()           => get('/admin/cause-list-relay/schedule'),
+    runs:    (limit = 30)  => get('/admin/cause-list-relay/runs', { params: { limit } }),
+    runAuto: (date)        => post('/admin/cause-list-relay/run-auto', { params: { date } }),
   },
 
   // Messages sent through the Contact Us form
