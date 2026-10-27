@@ -25,7 +25,6 @@ public class CaseController {
     private final HearingLeaveService hearingLeaveService;
     private final DocumentService documentService;
     private final HearingService hearingService;
-    private final NextHearingSyncService nextHearingSync;
     private final FileNumberService fileNumberService;
     private final CnrLookupService cnrLookup;
     private final AuthHelper auth;
@@ -124,11 +123,9 @@ public class CaseController {
         return ResponseEntity.ok(hearingService.moveNextHearing(id, req, auth.currentUserId()));
     }
 
-    // "Update next date" button: reads the case from eCourts once its hearing date is over and moves it to the new date
-    @PostMapping("/{id}/sync-next-hearing")
-    public ResponseEntity<NextHearingSyncService.CaseSync> syncNextHearing(@PathVariable Long id) {
-        return ResponseEntity.ok(nextHearingSync.syncCase(id, auth.currentUserId()));
-    }
+    // "Update next date" endpoint removed: the eCourts-based NextHearingSyncService is gone.
+    // Order numbers for a hearing date are now populated automatically when the hearing is updated
+    // (see HearingService.update -> ScrapingService.findOrderForDate).
 
     // Documents attached to a case
     @GetMapping("/{id}/documents")

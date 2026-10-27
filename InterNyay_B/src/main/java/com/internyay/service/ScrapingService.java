@@ -1,4 +1,4 @@
-package com.interNyay.service;
+package com.internyay.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -18,9 +18,8 @@ import java.util.Optional;
  * Scrapes eCourts case-status pages directly.
  * Replaces EcourtsOrderService + NextHearingSyncService.
  *
- * NOTE: eCourts requires a CAPTCHA to reach case-status HTML. You must plug
- * in a CAPTCHA strategy (user-solved relay, Tesseract OCR, or a paid solver)
- * inside solveCaptcha(). Everything else here is ready.
+ * The CAPTCHA step is intentionally isolated in solveCaptcha() so you can swap in
+ * user-relay / OCR / 3rd-party solver without touching the parsing code.
  */
 @Slf4j
 @Service
@@ -41,10 +40,6 @@ public class ScrapingService {
                 .build();
     }
 
-    /**
-     * Returns the order number/filename for the given CNR + hearing date,
-     * or Optional.empty() if no order exists for that date.
-     */
     public Optional<String> findOrderForDate(String cnr, LocalDate hearingDate) {
         if (cnr == null || hearingDate == null) return Optional.empty();
         try {
@@ -56,17 +51,10 @@ public class ScrapingService {
         }
     }
 
-    /**
-     * Two-step eCourts flow:
-     *   1. GET case-status page → session cookie + CAPTCHA.
-     *   2. POST CNR + CAPTCHA answer → case-status HTML.
-     * RestClient keeps cookies automatically within the same instance.
-     */
     private String fetchCaseStatusHtml(String cnr) {
-        // Step 1: prime session
+        // Prime session cookie
         restClient.get().uri(CASE_STATUS_PATH).retrieve().body(String.class);
 
-        // Step 2: obtain + solve CAPTCHA (see TODO)
         String captchaAnswer = solveCaptcha(cnr);
 
         return restClient.post()
@@ -78,22 +66,20 @@ public class ScrapingService {
     }
 
     /**
-     * TODO: implement your CAPTCHA strategy. Options:
-     *   a) Relayed to the user in the UI (best compliance-wise).
-     *   b) Tesseract OCR on the CAPTCHA image URL.
-     *   c) 2Captcha / Anti-Captcha HTTP API.
-     *   d) A pre-authenticated session cookie (if your org has one).
+     * Plug your CAPTCHA strategy here. Options:
+     *   a) relay to the logged-in user in the UI (most compliant),
+     *   b) Tesseract OCR on the CAPTCHA image,
+     *   c) 2Captcha / Anti-Captcha API,
+     *   d) pre-authenticated session cookie.
+     * Until this is implemented, findOrderForDate() returns empty and no
+     * order numbers will be populated.
      */
     private String solveCaptcha(String cnr) {
-        throw new UnsupportedOperationException(
-                "CAPTCHA solving not implemented — plug in OCR / solver / user relay here");
+        throw new UnsupportedOperationException("CAPTCHA solver not configured");
     }
 
-    /** Parses the order/final-order table for a matching date. */
     private Optional<String> parseOrderForDate(String html, LocalDate targetDate) {
         Document doc = Jsoup.parse(html);
-
-        // eCourts order tables vary; cover common selectors.
         Elements rows = doc.select(
                 "table#order_data tr, table#final_order_data tr, table.order_table tr");
 
@@ -119,7 +105,7 @@ public class ScrapingService {
                 DateTimeFormatter.ofPattern("dd/MM/yyyy"),
                 DateTimeFormatter.ofPattern("yyyy-MM-dd"))) {
             try { return LocalDate.parse(text, f); }
-            catch (DateTimeParseException ignored) { /* try next */ }
+            catch (DateTimeParseException ignored) { }
         }
         return null;
     }
