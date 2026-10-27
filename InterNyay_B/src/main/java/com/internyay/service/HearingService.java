@@ -36,6 +36,7 @@ public class HearingService {
     private final OrdersPolicyService ordersPolicy;
     private final OrderDownloadTracker orderDownloads;
     private final ScrapingService scrapingService;
+    private final OldCaseImportService oldCaseImport;
     private final TransactionTemplate tx;
 
     // eCourts order lookups run one at a time in the background: reading a CAPTCHA takes seconds and must not hold
@@ -436,6 +437,21 @@ public class HearingService {
                 documentService.setOrderSeq(h.getOrderDocId(), number, h.getDate());
             }
         }
+    }
+
+    // The Refresh button: brings in every past hearing date eCourts lists that the case is missing, and the order file
+    // of every date that has one. Existing entries are only completed, notes and attached orders are never touched
+    public OldCaseImportService.Result syncEcourtsHistory(Long caseId, EcourtsCaseService.Snapshot snap, Long userId) {
+        if (snap == null || snap.hearings().isEmpty()) return new OldCaseImportService.Result(0, 0);
+        OldCaseImportService.Result r = tx.execute(status -> {
+            Case c = caseRepo.findById(caseId).orElse(null);
+            if (c == null || !c.getUser().getId().equals(userId)) return new OldCaseImportService.Result(0, 0);
+            OldCaseImportService.Result done = oldCaseImport.importHistoryDetailed(c, snap, userId);
+            hearingRepo.flush();
+            renumberOrders(caseId, userId);
+            return done;
+        });
+        return r == null ? new OldCaseImportService.Result(0, 0) : r;
     }
 
     // ---- order number from eCourts --------------------------------------------------------------------------------

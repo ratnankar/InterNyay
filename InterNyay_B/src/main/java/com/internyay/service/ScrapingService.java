@@ -87,7 +87,10 @@ public class ScrapingService {
     // What the portal's case page says about where the case goes next
     //  nextHearing - the "Next Hearing Date" of the page, null when it shows none
     //  disposed    - the page says the case is disposed
-    public record CaseOutlook(boolean disposed, LocalDate nextHearing) {}
+    //  history     - every past hearing date and order file on the page (null when not read)
+    public record CaseOutlook(boolean disposed, LocalDate nextHearing, EcourtsCaseService.Snapshot history) {
+        public CaseOutlook(boolean disposed, LocalDate nextHearing) { this(disposed, nextHearing, null); }
+    }
 
     // The next hearing date eCourts shows for the case. Empty when it could not be read: no automatic CAPTCHA reader,
     // the portal is down, or the page was not this case (never throws), so the caller simply tries again later
@@ -107,7 +110,8 @@ public class ScrapingService {
             log.info("CNR {}: eCourts shows next hearing {}{}", cnr,
                     parsed.nextHearing() == null ? "none" : parsed.nextHearing(),
                     parsed.disposed() ? " (disposed)" : "");
-            return Optional.of(new CaseOutlook(parsed.disposed(), parsed.nextHearing()));
+            return Optional.of(new CaseOutlook(parsed.disposed(), parsed.nextHearing(),
+                    EcourtsCaseService.snapshotOf(parsed)));
         } catch (IOException | RuntimeException e) {
             log.warn("CNR {}: eCourts next hearing date lookup failed: {}", cnr, e.getMessage());
             return Optional.empty();

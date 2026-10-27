@@ -203,4 +203,69 @@ class NextHearingUpdateServiceTest {
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.refreshSingleCase(7L, 2L));
     }
+
+    // ===== Refresh button: missing hearing dates and orders are brought in =====
+    @Test
+    void refreshAddsMissingHearingsAndOrders() {
+        User owner = new User();
+        owner.setId(1L);
+        Case c = new Case();
+        c.setId(7L);
+        c.setUser(owner);
+        c.setCnrNo("C1");
+        c.setNextHearing(NEW_DATE);
+        when(caseRepo.findById(7L)).thenReturn(Optional.of(c));
+
+        var snap = new EcourtsCaseService.Snapshot("PENDING", null, NEW_DATE, null,
+                new java.util.TreeMap<>(), java.util.Map.of());
+        when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(new CaseOutlook(false, NEW_DATE, snap)));
+        when(hearingService.syncEcourtsHistory(7L, snap, 1L)).thenReturn(new OldCaseImportService.Result(3, 2));
+
+        var res = service.refreshSingleCase(7L, 1L);
+
+        assertThat(res.hearingsAdded()).isEqualTo(3);
+        assertThat(res.ordersFound()).isEqualTo(2);
+        assertThat(res.message()).contains("3 missing hearing dates added").contains("2 orders found on eCourts");
+        assertThat(res.nextHearing()).isEqualTo(NEW_DATE);
+    }
+
+    @Test
+    void refreshStillWorksWhenTheHistorySyncFails() {
+        User owner = new User();
+        owner.setId(1L);
+        Case c = new Case();
+        c.setId(7L);
+        c.setUser(owner);
+        c.setCnrNo("C1");
+        c.setNextHearing(NEW_DATE);
+        when(caseRepo.findById(7L)).thenReturn(Optional.of(c));
+        when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(new CaseOutlook(false, NEW_DATE)));
+        when(hearingService.syncEcourtsHistory(any(), any(), any())).thenThrow(new RuntimeException("db down"));
+
+        var res = service.refreshSingleCase(7L, 1L);
+
+        assertThat(res.message()).contains("same next hearing date");
+        assertThat(res.hearingsAdded()).isZero();
+    }
+
+    @Test
+    void refreshOfAClosedCaseOnlyFillsHistoryAndKeepsTheDate() {
+        User owner = new User();
+        owner.setId(1L);
+        Case c = new Case();
+        c.setId(8L);
+        c.setUser(owner);
+        c.setCnrNo("C1");
+        c.setStatus("Decided");
+        c.setNextHearing(null);
+        when(caseRepo.findById(8L)).thenReturn(Optional.of(c));
+        when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(new CaseOutlook(false, NEW_DATE)));
+        when(hearingService.syncEcourtsHistory(any(), any(), any())).thenReturn(new OldCaseImportService.Result(2, 1));
+
+        var res = service.refreshSingleCase(8L, 1L);
+
+        assertThat(res.nextHearing()).isNull();
+        assertThat(res.message()).contains("left as it is").contains("2 missing hearing dates added");
+        verify(caseRepo, never()).save(any());
+    }
 }

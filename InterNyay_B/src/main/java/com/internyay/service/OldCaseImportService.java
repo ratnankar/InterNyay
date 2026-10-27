@@ -23,12 +23,23 @@ public class OldCaseImportService {
     private final HearingRepository hearingRepo;
     private final UserRepository userRepo;
 
+    // created: hearing entries that did not exist before; ordersLinked: hearings that now know their eCourts order
+    // file (new, or one that was missing or different before)
+    public record Result(int created, int ordersLinked) {}
+
     // Creates the missing hearing entries of the case, existing ones are only completed. Returns how many were new
     @Transactional
     public int importHistory(Case c, EcourtsCaseService.Snapshot snap, Long userId) {
+        return importHistoryDetailed(c, snap, userId).created();
+    }
+
+    // Same as importHistory, and also tells how many orders were newly found (used by the Refresh button)
+    @Transactional
+    public Result importHistoryDetailed(Case c, EcourtsCaseService.Snapshot snap, Long userId) {
 
         User user = userRepo.getReferenceById(userId);
         int created = 0;
+        int ordersLinked = 0;
 
         for (Map.Entry<LocalDate, String> day : snap.hearings().entrySet()) {
             LocalDate date = day.getKey();
@@ -45,6 +56,7 @@ public class OldCaseImportService {
 
             String orderFile = snap.orderFiles().get(date);
             if (orderFile != null) {
+                if (!orderFile.equals(h.getEcourtsOrderFile())) ordersLinked++;
                 h.setEcourtsOrderFile(orderFile);
                 h.setNoOrderOnRecord(false);
             } else if (h.getOrderDocId() == null && OrderCutoff.passed(date)) {
@@ -58,6 +70,6 @@ public class OldCaseImportService {
             hearingRepo.save(h);
         }
 
-        return created;
+        return new Result(created, ordersLinked);
     }
 }

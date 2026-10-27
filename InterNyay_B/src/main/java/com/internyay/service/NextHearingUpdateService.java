@@ -41,11 +41,31 @@ public class NextHearingUpdateService {
     }
 
     // ===== NEW ===== What the manual "Refresh" button gets back
+    // hearingsAdded / ordersFound: what the history sync brought in (past hearing dates the case was missing, and
+    // orders eCourts lists that the hearings did not know yet)
     public record RefreshResult(Long caseId,
                                 LocalDate nextHearing,
                                 String status,
                                 LocalDate decisionDate,
-                                String message) {}
+                                String message,
+                                int hearingsAdded,
+                                int ordersFound) {
+        public RefreshResult(Long caseId, LocalDate nextHearing, String status, LocalDate decisionDate, String message) {
+            this(caseId, nextHearing, status, decisionDate, message, 0, 0);
+        }
+
+        // The same answer, with what the history sync did added to the message
+        RefreshResult withHistory(int added, int orders) {
+            if (added == 0 && orders == 0) return this;
+            StringBuilder extra = new StringBuilder();
+            if (added > 0) extra.append(added).append(" missing hearing date").append(added == 1 ? "" : "s").append(" added");
+            if (orders > 0) {
+                if (extra.length() > 0) extra.append(", ");
+                extra.append(orders).append(" order").append(orders == 1 ? "" : "s").append(" found on eCourts");
+            }
+            return new RefreshResult(caseId, nextHearing, status, decisionDate, message + ". " + extra, added, orders);
+        }
+    }
 
     private final CaseRepository caseRepo;
     private final ScrapingService scraping;
@@ -202,6 +222,29 @@ public class NextHearingUpdateService {
                     "Could not read the case page on eCourts, please try again later");
         }
         ScrapingService.CaseOutlook outlook = outlookOpt.get();
+
+        // ===== v3: fill in what the case is missing: every past hearing date eCourts lists, and the order of each =====
+        // Done first and on its own, so a failure here never blocks the next hearing date logic below
+        int added = 0, orders = 0;
+        try {
+            var synced = hearingService.syncEcourtsHistory(caseId, outlook.history(), userId);
+            if (synced != null) { added = synced.created(); orders = synced.ordersLinked(); }
+        } catch (RuntimeException e) {
+            log.warn("[refresh] case {}: hearing history could not be synced: {}", caseId, e.getMessage());
+        }
+
+        return decideNextHearing(c, outlook, today).withHistory(added, orders);
+    }
+
+    // The next hearing date part of the Refresh button (unchanged rules, see the comments inside)
+    private RefreshResult decideNextHearing(Case c, ScrapingService.CaseOutlook outlook, LocalDate today) {
+        Long caseId = c.getId();
+
+        // ===== v3: a closed case (Decided, Withdrawn...) only gets its history filled in, never a new next hearing =====
+        if (CaseStatuses.isClosed(c.getStatus()) && !outlook.disposed()) {
+            return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
+                    "The case is " + c.getStatus() + ", its next hearing date was left as it is");
+        }
 
         // ===== v2: disposed is checked first, same rule as execute() =====
         if (outlook.disposed()) {
