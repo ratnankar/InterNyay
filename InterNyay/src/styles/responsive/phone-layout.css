@@ -121,6 +121,35 @@
   }
   :is(.app-main, .admin) .sort-control:not(:has(#expense-associate-filter)) .dropdown__chevron { right: 8px; font-size: 0.7rem; }
 
+  /* A sort that is the only control under the search box (Clients, Expenses and the like) looks like the Documents sort:
+     "Sort:" at the left and the dropdown filling the rest of the row, at the same height and text size.
+     A sort that shares its row with the Filter button (Cases) stays compact beside it. */
+  :is(.app-main, .admin) .list-toolbar:not(:has(.case-filter-menu)) > .sort-control:not(:has(#expense-associate-filter)) {
+    flex: 1 1 100%;
+    margin-left: 0;
+    gap: 6px;
+  }
+  :is(.app-main, .admin) .list-toolbar:not(:has(.case-filter-menu)) > .sort-control:not(:has(#expense-associate-filter)) .dropdown {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+  :is(.app-main, .admin) .list-toolbar:not(:has(.case-filter-menu)) > .sort-control:not(:has(#expense-associate-filter)) .dropdown__input.dropdown__input {
+    height: 36px;
+    min-height: 36px;
+    font-size: 0.875rem;
+    padding-left: 12px;
+    padding-right: 28px;
+    border-radius: 10px;
+  }
+  :is(.app-main, .admin) .list-toolbar:not(:has(.case-filter-menu)) > .sort-control:not(:has(#expense-associate-filter)) label {
+    font-size: 0.8125rem;
+  }
+  :is(.app-main, .admin) .list-toolbar:not(:has(.case-filter-menu)) > .sort-control:not(:has(#expense-associate-filter)) .dropdown__chevron {
+    right: 10px;
+    font-size: 0.75rem;
+  }
+
   /* The Filter button beside it matches the 34px height so the two sit level */
   .app-main .list-toolbar > .case-filter-menu > .btn-outline.btn-outline {
     height: 34px;

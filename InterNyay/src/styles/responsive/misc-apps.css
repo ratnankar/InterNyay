@@ -187,6 +187,9 @@
   /* Hearing history: header stacks, Update button sits beside the date; rows stack and the actions line up on the right */
   .hearing-history__header { flex-direction: column; align-items: stretch; }
   .hearing-history__next { justify-content: space-between; width: 100%; }
+  /* Closed case: Refresh is the only control, so it stays on the title's line at the right edge instead of dropping under it */
+  .hearing-history__header:has(> .hearing-history__next > :only-child) { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: nowrap; }
+  .hearing-history__header:has(> .hearing-history__next > :only-child) > .hearing-history__next { width: auto; flex: 0 0 auto; justify-content: flex-end; margin-left: auto; }
   .misc-hist__head { flex-direction: column; align-items: stretch; }
   .misc-history__row { flex-wrap: wrap; align-items: flex-start; }
   .misc-history__note { flex: 1 1 100%; }

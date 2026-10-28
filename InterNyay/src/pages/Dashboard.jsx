@@ -1,5 +1,7 @@
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { navToPath } from '../routes/paths'
 import Calendar from '../components/common/Calendar'
 import Notifications from '../components/common/Notifications'
 import CaseHearings from '../components/common/CaseHearings'
@@ -60,6 +62,10 @@ const DashboardHeader = memo(function DashboardHeader({ userName, onNewCase }) {
           {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
+      {/* Bell to the notifications page; shown on phones only, where the notifications panel sits far down the page */}
+      <Link to={navToPath('notifications')} className="dash-bell" aria-label="Notifications" title="Notifications">
+        <Icon name="bell" />
+      </Link>
       <button type="button" className="btn-gold" onClick={onNewCase}>+ New Case</button>
     </div>
   )

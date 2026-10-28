@@ -179,6 +179,13 @@
 .dashboard__side .notifications-panel__header .section-title {
   font-size: var(--fs-base); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* One-column layout (phones and tablets): the card is full width, so its title can be larger. Very narrow phones keep the smaller size */
+@media (max-width: 860px) {
+  .dashboard__side .notifications-panel__header .section-title { font-size: var(--fs-lg); }
+}
+@media (max-width: 380px) {
+  .dashboard__side .notifications-panel__header .section-title { font-size: var(--fs-md); }
+}
 
 /* Landing page: decorative orbs and the marquee never widen the page */
 .lx { overflow-x: clip; }
