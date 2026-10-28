@@ -429,6 +429,7 @@
 .invoice__totals {
   margin-left: auto;
   width: 260px;
+  max-width: 100%;
   margin-bottom: 1.5rem;
 }
 

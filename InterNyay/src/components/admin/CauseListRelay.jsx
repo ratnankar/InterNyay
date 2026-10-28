@@ -228,7 +228,7 @@ export default function CauseListRelay() {
               <dt>Runs</dt>
               <dd>
                 {schedule.enabled
-                  ? <>{hoursText(schedule.hours)}{schedule.midnightRun ? ', and 12 AM' : ''} (IST)</>
+                  ? <>{hoursText(schedule.hours)} (IST)</>
                   : 'Switched off in the server settings'}
               </dd>
             </div>

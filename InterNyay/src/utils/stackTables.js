@@ -3,6 +3,9 @@
 // CSS only (styles/responsive/small-screen-extra.css, tables up to 640px wide); on a wide screen nothing changes.
 const SELECTOR = 'table.txn-table, table.admin__table'
 
+// The cards only exist up to 640px wide, so nothing needs labelling on a bigger screen
+const PHONE = '(max-width: 640px)'
+
 function label(table) {
   const head = table.tHead?.rows[0]
   if (!head) return
@@ -23,11 +26,25 @@ function label(table) {
   table.classList.add('is-stackable')
 }
 
+// True when a change to the page touched a table (a table or row added or removed, or something inside one changed)
+function touchesTable(mutations) {
+  for (const m of mutations) {
+    if (m.target.closest?.(SELECTOR)) return true
+    for (const n of m.addedNodes) {
+      if (n.nodeType === 1 && (n.matches(SELECTOR) || n.querySelector(SELECTOR))) return true
+    }
+  }
+  return false
+}
+
 export function stackTables() {
   if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return
+  const phone = window.matchMedia(PHONE)
   let queued = false
-  const run = () => { queued = false; document.querySelectorAll(SELECTOR).forEach(label) }
+  const run = () => { queued = false; if (phone.matches) document.querySelectorAll(SELECTOR).forEach(label) }
   const schedule = () => { if (!queued) { queued = true; requestAnimationFrame(run) } }
-  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true })
+  new MutationObserver(mutations => { if (phone.matches && touchesTable(mutations)) schedule() }).observe(document.body, { childList: true, subtree: true })
+  // A window or tablet made narrower: label the tables that were already on the page
+  phone.addEventListener?.('change', schedule)
   schedule()
 }

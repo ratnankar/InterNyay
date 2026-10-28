@@ -33,6 +33,7 @@ import UserLoginLogsModal from '../components/admin/UserLoginLogsModal'
 import PlansAdmin from '../components/admin/PlansAdmin'
 import FeeCalculatorAdmin from '../components/admin/FeeCalculatorAdmin'
 import OptionsAdmin from '../components/admin/OptionsAdmin'
+import SchedulerAdmin from '../components/admin/SchedulerAdmin'
 
 import Icon from '../components/common/Icon'
 import NotificationArchive from '../components/admin/NotificationArchive'
@@ -85,6 +86,9 @@ const TAB_GROUPS = [
   ] },
   { id: 'causelist', icon: 'clipboard', label: 'Cause List', tabs: [
     { id: 'causelist', label: 'District Cause List' },
+  ] },
+  { id: 'schedulers', icon: 'calendar', label: 'Schedulers', tabs: [
+    { id: 'schedulers', label: 'Schedulers' },
   ] },
   { id: 'updates', icon: 'megaphone', label: 'Updates', tabs: [
     { id: 'notifications', label: 'Notifications' },
@@ -1474,6 +1478,8 @@ export default function Admin() {
 
       {/* Dropdown choices */}
       {tab === 'options' && <OptionsAdmin key={refreshKey} />}
+
+      {tab === 'schedulers' && <SchedulerAdmin key={refreshKey} />}
 
       {tab === 'contact' && <ContactMessagesAdmin key={refreshKey} onLoaded={list => { writeContactSeen(currentUser?.id, list); setNewMessages(0) }} />}
 

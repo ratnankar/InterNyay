@@ -111,6 +111,7 @@
 
 /* Admin > Courts tree hierarchy and add rows, and the Listing edit form correction block */
 @import './styles/admin/admin-courts.css';
+@import './styles/admin/admin-schedulers.css';
 
 /* Smooth colour blending for gradient buttons, tabs, active items and looping gradients */
 @import './styles/theme/blend.css';
@@ -125,3 +126,6 @@
 @import './styles/responsive/misc-apps.css';
 
 @import './styles/pages/hearing-cards.css';
+
+/* Phone fixes: page header wrap, search and sort size, Remind buttons, safety nets. Keep last */
+@import './styles/responsive/phone-layout.css';

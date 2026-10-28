@@ -8,7 +8,7 @@ const norm = (name) => String(name || '').trim().replace(/\s+/g, ' ').toLowerCas
 
 // Small photo, or a placeholder icon when there is none
 export function Thumb({ src, name }) {
-  if (src) return <img className="change-judge__thumb" src={src} alt={name} />
+  if (src) return <img className="change-judge__thumb" src={src} alt={name} loading="lazy" decoding="async" />
   return <span className="change-judge__thumb" aria-hidden="true"><Icon name="scale" /></span>
 }
 

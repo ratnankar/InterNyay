@@ -1,7 +1,7 @@
 /* ===== merged from landing.css ===== */
 
 /* Landing page: base and container widths */
-.lp { background: var(--color-bg); color: var(--color-text); min-height: 100vh; font-family: var(--font-body); }
+.lp { background: var(--color-bg); color: var(--color-text); min-height: 100vh; min-height: 100dvh; font-family: var(--font-body); }
 .lp-narrow { max-width: 640px; }
 
 /* Buttons */

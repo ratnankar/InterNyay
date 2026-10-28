@@ -1,7 +1,7 @@
 /* Legal forms grid and form cards */
 .form-template-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 1rem;
 }
 
@@ -307,6 +307,7 @@
 
 .legal-fill-page {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   padding: 6px;
   box-sizing: border-box;
@@ -315,6 +316,7 @@
 .legal-fill-page { justify-content: center; }
 .legal-fill-page .modal.pdf-modal.pdf-modal--fill {
   --fill-h: calc(100vh - 12px);
+  --fill-h: calc(100dvh - 12px);
   max-width: none;
 }
 

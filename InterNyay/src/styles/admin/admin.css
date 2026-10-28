@@ -58,7 +58,7 @@
 /* Analytics grid */
 .admin-analytics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: var(--space-lg);
 }
 
@@ -728,7 +728,7 @@ td.admin__actions > * + * { margin-left: 6px; }
 
 .courts-chips {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
   gap: var(--space-sm);
   padding: var(--space-xs) 0;
 }

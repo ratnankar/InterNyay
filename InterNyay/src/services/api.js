@@ -113,9 +113,15 @@ async function rawRequest(method, path, { body, params } = {}) {
     throw makeApiError(res.status, error.message, { signedIn: !!token && !path.startsWith('/auth/login') })
   }
 
-  // 204 means success with no body
-  if (res.status === 204) return null
-  return res.json().catch(() => { throw new ApiError(MESSAGES.server, { status: res.status }) })
+  // 204 (and 202 "accepted", used by Run now) mean success with no body
+  if (res.status === 204 || res.status === 202 || res.headers.get('Content-Length') === '0') return null
+  const text = await res.text()
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new ApiError(MESSAGES.server, { status: res.status })
+  }
 }
 
 // JSON calls: reads run normally, writes are protected against double submits
@@ -344,6 +350,9 @@ export const hearings = {
   },
 
   removeOrder: (id) => del(`/hearings/${id}/order`),
+
+  // Download the order eCourts lists for the hearing's date (the "Get order" button); orders are never downloaded by themselves
+  fetchOrder: (id) => post(`/hearings/${id}/order/fetch`),
 }
 
 // To-do list tasks
@@ -818,6 +827,13 @@ export const admin = {
     schedule: ()           => get('/admin/cause-list-relay/schedule'),
     runs:    (limit = 30)  => get('/admin/cause-list-relay/runs', { params: { limit } }),
     runAuto: (date)        => post('/admin/cause-list-relay/run-auto', { params: { date } }),
+  },
+
+  // When each background job runs (Admin > Schedulers)
+  schedulers: {
+    list:   ()          => get('/admin/schedulers'),
+    update: (key, body) => put(`/admin/schedulers/${key}`, { body }),
+    run:    (key, body) => post(`/admin/schedulers/${key}/run`, { body }),
   },
 
   // Messages sent through the Contact Us form

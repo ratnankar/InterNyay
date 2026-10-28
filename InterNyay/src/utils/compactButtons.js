@@ -47,13 +47,44 @@ function evaluate() {
   })
 }
 
+// True when a change to the page can change how a row of buttons fits: something inside a button changed, or a
+// button (or a row holding one) was added or removed. Changes of plain text elsewhere (a clock, a streaming chat reply) cannot
+function touchesButtons(mutations) {
+  for (const m of mutations) {
+    if (m.type === 'characterData') {
+      if (m.target.parentElement?.closest(BUTTONS)) return true
+      continue
+    }
+    if (m.target.closest?.(BUTTONS)) return true
+    for (const n of [...m.addedNodes, ...m.removedNodes]) {
+      if (n.nodeType === 1 && (n.matches(BUTTONS) || n.querySelector(BUTTONS))) return true
+    }
+  }
+  return false
+}
+
 export function compactButtons() {
   if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return
   let queued = false
-  const schedule = () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; evaluate() }) } }
-  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true })
+  let last = 0
+  // At most one check per animation frame and every 120 ms: the check reads the layout of every button row, which is
+  // expensive while a page is busy redrawing
+  const schedule = () => {
+    if (queued) return
+    queued = true
+    const wait = Math.max(0, 120 - (performance.now() - last))
+    setTimeout(() => requestAnimationFrame(() => {
+      queued = false
+      last = performance.now()
+      if (!document.hidden) evaluate()
+    }), wait)
+  }
+  new MutationObserver(mutations => { if (touchesButtons(mutations)) schedule() })
+    .observe(document.body, { childList: true, subtree: true, characterData: true })
   window.addEventListener('resize', schedule)
   window.addEventListener('orientationchange', schedule)
+  // Back on a tab that was in the background: it may have been resized meanwhile
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule() })
   document.fonts?.ready?.then(schedule)
   schedule()
 }

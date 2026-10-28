@@ -356,6 +356,7 @@ export default function Expenses({ embedded = false }) {
                   src={currentUser.qrImage}
                   alt="UPI QR"
                   className="qr-thumb"
+                  decoding="async"
                   title="Click to view full size"
                   role="button"
                   tabIndex={0}
@@ -408,6 +409,8 @@ export default function Expenses({ embedded = false }) {
                     {a.qrImage ? (
                       <img
                         className="payment-row__qr"
+                        loading="lazy"
+                        decoding="async"
                         src={a.qrImage}
                         alt={`${a.name}'s UPI QR`}
                         title="Click to view full size"

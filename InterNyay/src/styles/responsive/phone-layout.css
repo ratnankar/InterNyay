@@ -1,0 +1,202 @@
+/* Phone layout fixes, loaded last so nothing earlier overrides them. Desktop is not touched.
+   1. Page header: the title block can no longer be squeezed to one letter per line by the buttons beside it (Cases:
+      Import from eCourts, Scan QR, Add Case). The buttons drop under the title and share the width.
+   2. Search box and Sort dropdown on list pages (Cases, Clients, Documents, To Do...): 36px high, 14px text, tighter card.
+      late-fixes.css had made them 42px high on phones.
+   3. Hearing cards (Dashboard): Heard tag and Remind buttons sit on their own line under the details, full size, never clipped.
+   4. Safety nets: media never wider than its box, wide tables scroll inside their own box.
+   5. Sort dropdown: compact (34px, 13px text, fixed width, right-aligned) instead of stretching across the whole row. */
+
+/* ---------- 1. Page header ---------- */
+@media (max-width: 640px) {
+  .page-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .page-header > div:first-child {
+    flex: 1 1 11rem;
+    min-width: min(100%, 11rem);
+  }
+  .page-header > .page-header__actions {
+    flex: 1 1 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .page-header > .page-header__actions > :is(button, a) {
+    flex: 1 1 auto;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .page-title {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+}
+
+/* Dashboard greeting: once the header stacks (button under the title) the 11rem basis above turned into an 11rem HEIGHT,
+   leaving a big empty gap between the date and the New Case button. The title block takes only the height it needs. */
+@media (max-width: 560px) {
+  .page-header.page-header--hero > .page-header__main { flex: 0 0 auto; min-width: 0; }
+  .page-header.page-header--hero > .btn-gold { flex: 0 0 auto; }
+}
+
+/* ---------- 2. Search box and Sort dropdown ---------- */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  /* The white card around the search row */
+  :is(.app-main, .admin) :is(.search-card, .list-toolbar:has(.doc-search-wrap), .todo-filter-bar, .doc-filter-bar) {
+    padding: 0.625rem 0.75rem;
+    gap: 8px;
+    margin-bottom: 0.875rem;
+  }
+
+  /* Search input */
+  :is(.app-main, .admin) :is(.doc-search-wrap, .todo-search-wrap) .form-input:is(.doc-search-input, .todo-search-input).form-input {
+    height: 36px;
+    min-height: 36px;
+    font-size: 0.875rem;
+    padding-left: 36px;
+    padding-right: 32px;
+    border-radius: 10px;
+    text-overflow: ellipsis;
+  }
+  :is(.app-main, .admin) :is(.doc-search-wrap, .todo-search-wrap) .form-input:is(.doc-search-input, .todo-search-input)::placeholder {
+    font-size: 0.875rem;
+  }
+  :is(.app-main, .admin) .doc-search-wrap .doc-search-icon { left: 12px; font-size: 1rem; }
+  :is(.app-main, .admin) .doc-search-wrap .doc-search-icon .icon { width: 1em; height: 1em; }
+
+  /* Search boxes inside dialogs and pickers: same family, one step taller to match the dialog fields (38px) */
+  .modal :is(.picker__field input.form-input[type="search"], .client-search-row .form-input, .legal-fill__search > input.form-input, .qa-jur-search-row__input) {
+    height: 38px;
+    min-height: 38px;
+    font-size: 0.875rem;
+    padding-left: 36px;
+    padding-right: 32px;
+  }
+
+  /* Sort / filter dropdowns and their labels */
+  :is(.app-main, .admin) :is(.sort-control, .doc-filter-group, .todo-filters, .txn-timeline-filter, .admin__toolbar) .dropdown__input.dropdown__input {
+    height: 36px;
+    min-height: 36px;
+    font-size: 0.875rem;
+    padding-left: 12px;
+    padding-right: 28px;
+    border-radius: 10px;
+  }
+  :is(.app-main, .admin) :is(.sort-control, .doc-filter-group) :is(label, .doc-filter-label) {
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  :is(.app-main, .admin) :is(.sort-control, .doc-filter-group) { gap: 6px; }
+  :is(.app-main, .admin) .sort-control .dropdown__chevron { right: 10px; font-size: 0.75rem; }
+}
+
+/* ---------- 5. Sort dropdown: compact and right-aligned ---------- */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  :is(.app-main, .admin) .sort-control:not(:has(#expense-associate-filter)) {
+    flex: 0 1 auto;
+    margin-left: auto;
+    gap: 6px;
+  }
+  :is(.app-main, .admin) .sort-control:not(:has(#expense-associate-filter)) .dropdown {
+    flex: 0 1 auto;
+    width: 9.5rem;
+    min-width: 0;
+  }
+  :is(.app-main, .admin) .sort-control:not(:has(#expense-associate-filter)) .dropdown__input.dropdown__input {
+    height: 34px;
+    min-height: 34px;
+    font-size: 0.8125rem;
+    padding-left: 10px;
+    padding-right: 24px;
+    border-radius: 9px;
+    text-overflow: ellipsis;
+  }
+  :is(.app-main, .admin) .sort-control:not(:has(#expense-associate-filter)) label {
+    font-size: 0.75rem;
+  }
+  :is(.app-main, .admin) .sort-control:not(:has(#expense-associate-filter)) .dropdown__chevron { right: 8px; font-size: 0.7rem; }
+
+  /* The Filter button beside it matches the 34px height so the two sit level */
+  .app-main .list-toolbar > .case-filter-menu > .btn-outline.btn-outline {
+    height: 34px;
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* ---------- 3. Hearing cards: accent bar, title, badges, details and reminder buttons on one left edge ----------
+   The card is a two-column grid: the 4px accent bar runs the full height of the card, everything else sits in the second
+   column. The caret takes 16px, so the title text, the badges, the court details, the judge and the Remind buttons all
+   start 16px in, on the same line (before, a wrapped badge such as "Criminal" dropped back under the caret). */
+@media (max-width: 640px) {
+  .hearing-row {
+    display: grid;
+    grid-template-columns: 4px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 8px;
+    align-items: start;
+  }
+  .hearing-row__bar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    min-height: 0;
+  }
+  .hearing-row__body {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  /* Title on its own line (it starts at the caret); badges wrap underneath, indented to line up with the title text */
+  .hearing-row__heading { padding-left: 16px; }
+  .hearing-row__heading > .hearing-row__title {
+    flex: 1 1 calc(100% + 16px);
+    margin-left: -16px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .hearing-row__side {
+    grid-column: 2;
+    grid-row: 2;
+    box-sizing: border-box;
+    margin-left: 0;
+    padding-left: 16px;           /* caret width: lines up with the title text */
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .hearing-row__side:empty { display: none; }
+  .hearing-row__side .wa-icon-btn {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+  .hearing-row__side button.wa-remind-btn.wa-remind-btn {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 14px;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: visible;
+  }
+}
+
+/* ---------- 4. Safety nets ---------- */
+@media (max-width: 768px) {
+  img, video, canvas, iframe { max-width: 100%; }
+  img { height: auto; }
+
+  /* Wide tables scroll inside their own box instead of widening the page */
+  :is(.admin__table-wrap, .qa-table-wrap, .txn-table-wrap, .drawer__table-wrap) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}

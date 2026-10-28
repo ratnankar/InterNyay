@@ -13,7 +13,7 @@ function splitList(value) {
 
 // Judge's photo, or a placeholder icon when there is none
 function JudgePhoto({ src, name }) {
-  if (src) return <img className="judge-card__photo" src={src} alt={name} />
+  if (src) return <img className="judge-card__photo" src={src} alt={name} loading="lazy" decoding="async" />
   return <div className="judge-card__photo judge-card__photo--empty" aria-hidden="true"><Icon name="scale" /></div>
 }
 

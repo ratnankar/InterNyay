@@ -1,0 +1,56 @@
+/* ---------- Admin > Schedulers ---------- */
+.sched-admin { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.sched-row {
+  border: 1px solid var(--color-gold-border);
+  border-radius: 12px;
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.sched-row--off { opacity: .75; }
+
+.sched-row__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); }
+.sched-row__title { min-width: 0; }
+.sched-row__name { font-size: var(--fs-md); font-weight: 600; margin: 0; }
+
+.sched-row__fields { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: flex-end; }
+.sched-field { flex: 0 1 180px; min-width: 130px; }
+.sched-field--narrow { flex-basis: 110px; min-width: 90px; }
+.sched-field--wide { flex: 1 1 320px; }
+.sched-field--wide-ish { flex: 0 1 240px; min-width: 180px; }
+
+.sched-row__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; }
+.sched-row__foot .admin__hint { margin: 0; }
+.sched-row__info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 260px; }
+.sched-row__actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+.sched-row__fail { color: var(--lx-red); }
+.sched-row__dates { margin: 0; }
+.sched-row__note { opacity: .7; }
+
+/* Weekday picker */
+.sched-days { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sched-days__label { margin: 0 4px 0 0; }
+.sched-day, .sched-days__quick {
+  border: 1px solid var(--color-gold-border);
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: var(--fs-sm, .85rem);
+  cursor: pointer;
+}
+.sched-day--on { background: var(--color-gold); color: #1a1a1a; border-color: transparent; font-weight: 600; }
+.sched-days__quick { border-style: dashed; margin-left: 4px; }
+.sched-days__quick + .sched-days__quick { margin-left: 0; }
+.sched-day:disabled, .sched-days__quick:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .sched-row { padding: var(--space-md); }
+  .sched-field, .sched-field--narrow { flex: 1 1 calc(50% - var(--space-md)); }
+  .sched-field--wide { flex-basis: 100%; }
+  .sched-row__actions { width: 100%; }
+  .sched-row__actions button { flex: 1 1 0; }
+}

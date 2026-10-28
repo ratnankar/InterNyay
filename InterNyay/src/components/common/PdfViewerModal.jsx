@@ -28,8 +28,9 @@ function useIsImage(url, name) {
 }
 
 // The app's one PDF viewer popup: every PDF in the app opens here, with Print, Download and Open in new tab.
-// viewer is { url, title }. stacked shows it above other popups. fileName is the name used by Download.
-export default function PdfViewerModal({ viewer, onClose, stacked = false, fileName }) {
+// viewer is { url, title }. stacked shows it above other popups; top shows it above even the full-screen
+// important notification popup. fileName is the name used by Download.
+export default function PdfViewerModal({ viewer, onClose, stacked = false, top = false, fileName }) {
   // Closes the viewer when the dark backdrop is clicked
   const overlayHandlers = useOverlayClose(onClose)
 
@@ -40,7 +41,7 @@ export default function PdfViewerModal({ viewer, onClose, stacked = false, fileN
 
   return (
     <ModalPortal>
-      <div className={`overlay${stacked ? ' overlay--stacked' : ''}`} {...overlayHandlers}>
+      <div className={`overlay${stacked ? ' overlay--stacked' : ''}${top ? ' overlay--top' : ''}`} {...overlayHandlers}>
         <div className={`modal modal--lg pdf-modal${isImage ? ' pdf-modal--image' : ''}`} onClick={e => e.stopPropagation()}>
           <div className="modal__header">
             <h2 className="modal__title" title={viewer.title}>{viewer.title}</h2>

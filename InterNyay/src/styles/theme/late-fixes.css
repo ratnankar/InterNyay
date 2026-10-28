@@ -167,7 +167,7 @@
   .admin__tabs.admin__tabs { justify-content: flex-start; }
 
   /* Quick Access cards: fill each row, equal height, content centred the same way */
-  .qa-cards { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: stretch; }
+  .qa-cards { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); align-items: stretch; }
   .qa-card { min-height: 92px; }
   .qa-card__label { line-height: 1.25; }
 

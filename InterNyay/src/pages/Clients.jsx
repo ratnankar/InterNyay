@@ -160,7 +160,7 @@ export default function Clients() {
                     },
                   } : {})}
                 >
-                  {cl.profilePicture ? <img src={cl.profilePicture} alt={cl.name} /> : <Icon name="user" />}
+                  {cl.profilePicture ? <img src={cl.profilePicture} alt={cl.name} loading="lazy" decoding="async" /> : <Icon name="user" />}
                 </div>
                 <div>
                   {/* Client name and type badge */}

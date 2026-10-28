@@ -432,8 +432,6 @@
 .opposing-field:hover { border-color: var(--color-gold); }
 
 .opposing-field__placeholder { color: var(--color-text-faint); }
-.opposing-field__name { font-weight: 600; color: var(--color-navy); }
-.opposing-field__sub  { font-size: var(--fs-xs); color: var(--color-text-muted); }
 
 .opposing-field__edit {
   position: absolute;

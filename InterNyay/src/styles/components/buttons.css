@@ -335,6 +335,3 @@ textarea.form-input { min-height: 0; }
 @keyframes icon-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .icon--spin { animation: none; } }
 
-/* Refresh button with its small hint ("Not updated") on the case card */
-.sync-next { display: inline-flex; align-items: center; gap: 8px; }
-.sync-next__hint { font-size: var(--fs-xs); color: var(--color-text-muted); }

@@ -313,7 +313,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Heard tag and reminder buttons */}
-                  <div className="hearing-row__side">
+                  <div className="hearing-row__side" data-no-compact>
                     {heardTag}
                     {reminderControls}
                   </div>

@@ -131,6 +131,11 @@
   z-index: 130;
 }
 
+/* Above the important notification popup (z-index 500), so its PDF opens in front of it */
+.overlay--top {
+  z-index: 600;
+}
+
 .modal {
   padding: 2rem;
   width: 100%;

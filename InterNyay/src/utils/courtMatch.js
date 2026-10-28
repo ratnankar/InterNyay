@@ -62,25 +62,3 @@ export function judgesForRoom(courtNumbers, { courtNo, building, floor } = {}) {
     .filter(j => !building || !j.building || sameText(j.building, building))
     .filter(j => !floor || !j.floor || sameText(j.floor, floor))
 }
-
-// Court rooms a judge can be matched to, out of the rooms the court has (groups: [{ building, rooms: [{ courtNo, floor }] }]).
-// One result means the room is certain. Several (the number exists in more than one building or floor and the judge's
-// listing doesn't say which) or none (the room isn't in the court list) mean the advocate has to pick the room
-export function roomsForJudge(groups, judge) {
-  if (!judge) return []
-
-  const sameNumber = []
-  for (const g of groups || []) {
-    for (const r of g.rooms || []) {
-      if (sameCourtNo(r.courtNo, judge.courtRoomNo)) {
-        sameNumber.push({ courtNo: r.courtNo, building: g.building || '', floor: r.floor || '' })
-      }
-    }
-  }
-
-  if (sameNumber.length <= 1) return sameNumber
-
-  return sameNumber
-    .filter(r => !judge.building || sameText(r.building, judge.building))
-    .filter(r => !judge.floor || sameText(r.floor, judge.floor))
-}

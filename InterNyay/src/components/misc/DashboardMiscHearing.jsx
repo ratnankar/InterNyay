@@ -59,7 +59,7 @@ export default function DashboardMiscHearing({ app, dateKey, caseItem }) {
           {caseLine && <p className="hearing-row__meta">Filed in: <strong>{caseLine}</strong></p>}
         </div>
 
-        <div className="hearing-row__side">
+        <div className="hearing-row__side" data-no-compact>
           {heard && <span className="hearing-row__past" title="Heard on this date">Heard</span>}
         </div>
       </div>

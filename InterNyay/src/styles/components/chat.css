@@ -36,6 +36,7 @@
   max-width: calc(100vw - 32px);
   height: 600px;
   max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   display: flex;
   flex-direction: column;
   background: var(--color-surface);
@@ -308,7 +309,9 @@
 
   .chat__panel {
     height: 100vh;
+    height: 100dvh;
     max-height: 100vh;
+    max-height: 100dvh;
   }
 }
 

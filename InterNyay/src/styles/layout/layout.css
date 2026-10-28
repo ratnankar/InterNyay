@@ -2,6 +2,7 @@
 .app-shell {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   overflow: hidden;
 }
@@ -10,6 +11,7 @@
   flex: 1 1 auto;
   min-width: 0;
   height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -213,6 +215,7 @@
     display: block;
     height: auto;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow: visible;
   }
 

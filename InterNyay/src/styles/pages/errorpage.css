@@ -2,6 +2,7 @@
 .errpage {
   min-height: 100vh;
   min-height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   /* Original light page, with a faint wash of navy at the top so the header bar blends into the page */

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import { MISC_OUTCOMES, MISC_TYPE_MANUAL } from '../../constants/data'
@@ -6,8 +6,9 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { formatDate, formatDisplayDate } from '../../utils/dateUtils'
 import {
-  APPLICATION_CHOICES, docIcon, isDisposed, resolveApplicationType, splitApplicationType, statusSlug,
+  APPLICATION_CHOICES, docIcon, isDisposed, isValidCnr, resolveApplicationType, splitApplicationType, statusSlug,
 } from '../misc/miscUtils'
+import { useCourts, getDistricts, hasNamedDistricts, isHighCourt } from '../../constants/courts'
 import useOverlayClose from '../../hooks/useOverlayClose'
 import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
@@ -15,6 +16,7 @@ import Req from '../common/Req'
 import ModalPortal from '../common/ModalPortal'
 import MiscHearingPanel from '../misc/MiscHearingPanel'
 import ClearableDateInput from '../common/ClearableDateInput'
+import SearchPick from '../misc/SearchPick'
 
 // One document of the application with its Open, Download and Delete buttons
 function DocRow({ doc, onView, onDownload, onDelete }) {
@@ -74,7 +76,8 @@ function DocBlock({ title, hint, empty, uploadLabel, onPick, multiple = false, d
 
 // Window for one application: its case, details, status, order (only while disposing off and once disposed off) and documents
 export default function MiscApplicationDetailModal({ app, onChange, onDeleted, onClose }) {
-  const { addToast, bumpHearings, handleViewDocument, handleDownloadDocument } = useApp()
+  const { addToast, bumpHearings, handleViewDocument, handleDownloadDocument, cases, clients, setCases } = useApp()
+  const { courtNames, highCourts } = useCourts()
   const overlayHandlers = useOverlayClose(onClose)
 
   const [editing, setEditing] = useState(false)
@@ -103,12 +106,28 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
     }
   }
 
+  // Cases to move an application to: the open ones first, then the others
+  const caseChoices = useMemo(() => {
+    const isOpen = c => !['Decided', 'Withdrawn'].includes(c.status)
+    return [...cases].sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)))
+  }, [cases])
+
+  // An application added with a new case edits that case's details; one filed in an existing case can be moved to another case
+  const ownCase = !!app.caseCreatedHere
+
   function startEdit() {
     const { choice, custom } = splitApplicationType(app.applicationType)
     setDraft({
       applicationChoice: choice,
       applicationCustom: custom,
       filingDate: app.filingDate || '',
+      caseId: Number(app.caseId),
+      clientId: app.clientId ? Number(app.clientId) : null,
+      caseTitle: app.caseTitle || '',
+      caseNo: app.caseNo || '',
+      cnrNo: app.cnrNo || '',
+      court: app.court || '',
+      district: app.district || '',
     })
     setEditing(true)
   }
@@ -117,17 +136,52 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
     const applicationType = resolveApplicationType(draft.applicationChoice, draft.applicationCustom)
     if (!applicationType) { addToast('Choose or type the application', 'error'); return }
 
+    if (ownCase) {
+      if (!draft.clientId) { addToast('Choose the client', 'error'); return }
+      if (!draft.caseTitle.trim()) { addToast('Enter the case title', 'error'); return }
+      if (draft.cnrNo.trim() && !isValidCnr(draft.cnrNo)) { addToast('The CNR number must be 16 characters', 'error'); return }
+      if (!draft.court) { addToast('Choose the court', 'error'); return }
+      if (hasNamedDistricts(draft.court) && !draft.district) { addToast('Choose the district', 'error'); return }
+    } else if (!draft.caseId) {
+      addToast('Choose the case the application is filed in', 'error'); return
+    }
+
     const updated = await run('save', () => api.miscApplications.update(app.id, {
       applicationType,
       filingDate: draft.filingDate || null,
       // The hearing date has its own Update button, so it is sent back as it is
       hearingDate: app.hearingDate || null,
+      ...(ownCase
+        ? {
+            caseTitle: draft.caseTitle.trim(),
+            // Empty clears them: the case number and CNR are optional
+            caseNo: draft.caseNo.trim(),
+            cnrNo: draft.cnrNo.trim(),
+            clientId: draft.clientId,
+            court: draft.court,
+            district: draft.district,
+          }
+        : { caseId: draft.caseId }),
     }), 'Could not save the changes')
 
     if (updated) {
       setEditing(false)
+      if (ownCase) await refreshCase(updated)
+      // Hearing lists show the case, so they are read again when the case changed
+      if (Number(updated.caseId) !== Number(app.caseId) || ownCase) bumpHearings(updated.caseId)
       addToast('Application updated')
     }
+  }
+
+  // Reads the case again after its details were edited here, so the case list shows the new details
+  async function refreshCase(updated) {
+    try {
+      const res = await api.cases.list({ search: updated.caseNo || updated.caseTitle, size: 10 })
+      const found = (Array.isArray(res) ? res : res?.content || []).find(c => Number(c.id) === Number(updated.caseId))
+      if (found) {
+        setCases(prev => prev.map(c => (Number(c.id) === Number(found.id) ? { ...found, documents: found.documents || c.documents || [] } : c)))
+      }
+    } catch { /* the case shows its new details the next time the app loads its data */ }
   }
 
   // Disposes the application off, then stores the order when one was chosen (the order is optional and can come later)
@@ -260,6 +314,92 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                 <ClearableDateInput className="form-input"  value={draft.filingDate}
                   onChange={e => setDraft(d => ({ ...d, filingDate: e.target.value }))} />
               </div>
+
+              {/* Filed in an existing case: the case can be changed */}
+              {!ownCase && (
+                <div className="misc-grid__wide">
+                  <SearchPick
+                    label="Case"
+                    placeholder="Search by case title or number…"
+                    items={caseChoices}
+                    selectedId={draft.caseId}
+                    onSelect={c => setDraft(d => ({ ...d, caseId: Number(c.id) }))}
+                    onClear={() => setDraft(d => ({ ...d, caseId: null }))}
+                    matches={(c, q) => (c.title || '').toLowerCase().includes(q) || (c.caseNo || '').toLowerCase().includes(q)}
+                    renderMain={c => c.title}
+                    renderMeta={c => [c.caseNo, c.clientName].filter(Boolean).join(' • ')}
+                    emptyText="You have no cases."
+                  />
+                </div>
+              )}
+
+              {/* Added together with a new case: the details of that case can be edited */}
+              {ownCase && (
+                <>
+                  <div className="misc-grid__wide">
+                    <SearchPick
+                      label="Client"
+                      placeholder="Search client by name, email or phone…"
+                      items={[...clients].sort((a, b) => Number(b.id) - Number(a.id))}
+                      selectedId={draft.clientId}
+                      onSelect={c => setDraft(d => ({ ...d, clientId: Number(c.id) }))}
+                      onClear={() => setDraft(d => ({ ...d, clientId: null }))}
+                      matches={(c, q) => [c.name, c.email, c.whatsappPhone, c.additionalPhone].some(v => String(v || '').toLowerCase().includes(q))}
+                      renderMain={c => c.name}
+                      renderMeta={c => c.email || c.whatsappPhone || 'No contact details'}
+                      emptyText="No clients yet."
+                    />
+                  </div>
+                  <div className="misc-grid__wide">
+                    <label className="form-label">Case title<Req /></label>
+                    <input className="form-input" maxLength={500} value={draft.caseTitle}
+                      onChange={e => setDraft(d => ({ ...d, caseTitle: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="form-label">Case number</label>
+                    <input className="form-input" maxLength={255} placeholder="e.g. CC 1234/2026" value={draft.caseNo}
+                      onChange={e => setDraft(d => ({ ...d, caseNo: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="form-label">CNR number</label>
+                    <input className="form-input" maxLength={24} placeholder="16-character CNR" value={draft.cnrNo}
+                      onChange={e => setDraft(d => ({ ...d, cnrNo: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="form-label">Court<Req /></label>
+                    <Dropdown className="form-input" value={draft.court}
+                      onChange={e => {
+                        const court = e.target.value
+                        setDraft(d => ({ ...d, court, district: getDistricts(court)[0] || '' }))
+                      }}>
+                      <option value="">Select Court</option>
+                      {courtNames.length > 0 && (
+                        <optgroup label="District Courts">
+                          {courtNames.map(c => <option key={c} value={c}>{c}</option>)}
+                        </optgroup>
+                      )}
+                      {highCourts.length > 0 && (
+                        <optgroup label="High Courts">
+                          {highCourts.map(c => <option key={c} value={c}>{c}</option>)}
+                        </optgroup>
+                      )}
+                    </Dropdown>
+                  </div>
+                  <div>
+                    <label className="form-label">District{hasNamedDistricts(draft.court) && <Req />}</label>
+                    <Dropdown className="form-input" value={draft.district}
+                      disabled={!hasNamedDistricts(draft.court)}
+                      onChange={e => setDraft(d => ({ ...d, district: e.target.value }))}>
+                      {!hasNamedDistricts(draft.court) && (
+                        <option value={draft.district || ''}>
+                          {!draft.court ? 'Select a court first' : isHighCourt(draft.court) ? 'Not applicable' : 'No district'}
+                        </option>
+                      )}
+                      {hasNamedDistricts(draft.court) && getDistricts(draft.court).map(d => <option key={d} value={d}>{d}</option>)}
+                    </Dropdown>
+                  </div>
+                </>
+              )}
               <div className="misc-grid__wide form-actions">
                 <button type="button" className="btn-outline" onClick={() => setEditing(false)} disabled={busy === 'save'}>Cancel</button>
                 <button type="button" className="btn-gold" onClick={saveEdit} disabled={busy === 'save'}>{busy === 'save' ? 'Saving…' : 'Save changes'}</button>

@@ -98,7 +98,7 @@ export default function ImportantNotificationPopup() {
         </div>
       </div>
 
-      <NotificationPdfModal preview={preview} onClose={closePreview} />
+      <NotificationPdfModal preview={preview} onClose={closePreview} top />
     </div>
   )
 }

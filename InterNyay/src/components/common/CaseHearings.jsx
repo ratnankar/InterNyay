@@ -165,6 +165,20 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
     }
   }
 
+  // The "Get order" button: orders are only downloaded when asked for, never when a case is added, refreshed or auto updated
+  async function getOrder(h) {
+    if (!beginOrderTask(h.id)) return
+    try {
+      await api.hearings.fetchOrder(h.id)
+      bumpHearings(caseId)
+      addToast('Order downloaded')
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not download the order from eCourts'), 'error')
+    } finally {
+      endOrderTask(h.id)
+    }
+  }
+
   async function removeOrder(h) {
     if (!await confirmDialog(`Remove the order attached to ${formatDisplayDate(h.date)}?`)) return
     if (!beginOrderTask(h.id)) return
@@ -319,15 +333,10 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
                     <p className={`hearing-entry__note${note ? '' : ' hearing-entry__note--empty'}`}>
                       {note || 'No note for this date'}
                     </p>
-                    {h.orderNumber && !h.orderDocId && (
-                      <p className="hearing-entry__order-number">
-                        <Icon name="file" /> Order on eCourts: {h.orderNumber}
-                      </p>
-                    )}
                   </>
                 )}
 
-                {dashboard ? null : h.orderDocId ? (
+                {h.orderDocId ? (
                   <div className="hearing-entry__order">
                     <span className="hearing-entry__order-icon"><Icon name="file" /></span>
                     <span className="hearing-entry__order-name">
@@ -360,27 +369,30 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
                       </>
                     )}
                   </div>
+                ) : h.orderOnEcourts && !h.ordersNotDeclared ? (
+                  // Only dates on which eCourts lists an order get the button
+                  <div className="hearing-entry__order-actions">
+                    <button type="button"
+                      className="btn-outline btn-outline--sm"
+                      title="Download the order of this date from eCourts"
+                      disabled={busy}
+                      onClick={() => getOrder(h)}
+                    >
+                      <Icon name="download" /> {pendingOrders.has(h.id) ? 'Getting order…' : 'Get order'}
+                    </button>
+                  </div>
                 ) : !orderDue ? null : h.noOrderOnRecord ? (
                   <div className="hearing-entry__order-actions">
                     <span className="hearing-entry__order-note">No order for this date</span>
                   </div>
-                ) : (
+                ) : h.ordersNotDeclared ? (
+                  // No manual "Attach Order PDF" button: orders come from eCourts. Only the note shows when they are not declared
                   <div className="hearing-entry__order-actions">
-                    {h.ordersNotDeclared ? (
-                      <span className="hearing-entry__order-note" title={h.ordersNotDeclaredReason || undefined}>
-                        {h.ordersNotDeclaredReason || 'Orders are not declared'}
-                      </span>
-                    ) : canManageOrders && (
-                      <button type="button"
-                        className="btn-outline btn-outline--sm hearing-entry__attach"
-                        disabled={busy}
-                        onClick={() => pickOrderFile(h.id)}
-                      >
-                        + Attach Order PDF
-                      </button>
-                    )}
+                    <span className="hearing-entry__order-note" title={h.ordersNotDeclaredReason || undefined}>
+                      {h.ordersNotDeclaredReason || 'Orders are not declared'}
+                    </span>
                   </div>
-                )}
+                ) : null}
               </div>
 
               {!editing && !dashboard && (
