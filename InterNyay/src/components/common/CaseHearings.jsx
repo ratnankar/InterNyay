@@ -228,7 +228,7 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
           <p className="case-detail__docs-label">Hearing History</p>
         )}
 
-        <div className="hearing-history__next">
+        <div className={`hearing-history__next${closed ? ' hearing-history__next--actions' : ''}`}>
           {!closed && (
             <>
               <span className="hearing-history__next-label">Next Hearing</span>
@@ -252,14 +252,13 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
               : (busyId === 'refresh' ? 'Refreshing…' : 'Refresh')}
           </button>
 
-          {!closed && (
-            <button type="button"
-              className="btn-outline btn-outline--sm"
-              onClick={() => openNextHearing(caseItem)}
-            >
-              <Icon name="edit" /> Update
-            </button>
-          )}
+          {/* Update is shown for every case (a closed one has no "Next Hearing" date, only the buttons) */}
+          <button type="button"
+            className="btn-outline btn-outline--sm"
+            onClick={() => openNextHearing(caseItem)}
+          >
+            <Icon name="edit" /> Update
+          </button>
         </div>
       </div>
 

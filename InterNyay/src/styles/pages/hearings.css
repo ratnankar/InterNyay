@@ -225,7 +225,7 @@
 .hearing-history__refresh-btn {
   width: 36px; min-width: 36px; padding-left: 0; padding-right: 0;
 }
-.hearing-history__refresh-btn .hearing-history__refresh-icon { width: 18px; height: 18px; margin: 0; }
+.btn-outline.hearing-history__refresh-btn svg.icon.hearing-history__refresh-icon { width: 18px; height: 18px; margin: 0; flex: none; scale: 1.8; }
 .hearing-history__refresh-icon--spin { animation: hearing-refresh-spin 0.9s linear infinite; }
 @keyframes hearing-refresh-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .hearing-history__refresh-icon--spin { animation: none; } }
@@ -236,3 +236,10 @@
    after the Open button); it now takes the whole width */
 .hearing-entry__body { align-self: stretch; }
 .hearing-entry__order-name { flex: 1 1 0; }
+
+/* Closed case: only Refresh + Update at the right of the header, same height and spacing */
+.hearing-history__next--actions { margin-left: auto; }
+.hearing-history__header { min-width: 0; }
+.hearing-history__toggle { text-align: left; }
+.hearing-entry__order-actions { align-items: center; }
+.hearing-entry__note, .hearing-entry__order-note { margin: 0; line-height: var(--lh-base); }
