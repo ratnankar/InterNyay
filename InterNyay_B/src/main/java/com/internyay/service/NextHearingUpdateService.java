@@ -42,7 +42,7 @@ public class NextHearingUpdateService {
 
     // ===== NEW ===== What the manual "Refresh" button gets back
     // hearingsAdded / ordersFound: what the history sync brought in (past hearing dates the case was missing, and
-    // orders eCourts lists that the hearings did not know yet)
+    // order PDFs downloaded for hearings that had none)
     public record RefreshResult(Long caseId,
                                 LocalDate nextHearing,
                                 String status,
@@ -61,7 +61,7 @@ public class NextHearingUpdateService {
             if (added > 0) extra.append(added).append(" missing hearing date").append(added == 1 ? "" : "s").append(" added");
             if (orders > 0) {
                 if (extra.length() > 0) extra.append(", ");
-                extra.append(orders).append(" order").append(orders == 1 ? "" : "s").append(" found on eCourts");
+                extra.append(orders).append(" order").append(orders == 1 ? "" : "s").append(" downloaded from eCourts");
             }
             return new RefreshResult(caseId, nextHearing, status, decisionDate, message + ". " + extra, added, orders);
         }
@@ -103,10 +103,6 @@ public class NextHearingUpdateService {
 
     public Result runForToday() {
         return runBlocking(LocalDate.now(IST));
-    }
-
-    public Result runForYesterday() {
-        return runBlocking(LocalDate.now(IST).minusDays(1));
     }
 
     public Result runBlocking(LocalDate date) {
@@ -183,7 +179,15 @@ public class NextHearingUpdateService {
                     pause();
                     continue;
                 }
-                if (moved) updated++;
+                if (moved) {
+                    updated++;
+                    // Notes which dates have an order on eCourts (nothing is downloaded: "Get order" does that)
+                    try {
+                        hearingService.syncEcourtsHistory(c.getId(), outlook.get().history(), c.getUserId());
+                    } catch (RuntimeException e) {
+                        log.warn("[next-hearing] case {}: order dates could not be noted: {}", c.getId(), e.getMessage());
+                    }
+                }
 
             } else {
                 pending++;
@@ -216,6 +220,8 @@ public class NextHearingUpdateService {
                     "The automatic CAPTCHA reader is not available right now, please try again later");
         }
 
+        // Order PDFs are never downloaded here: the dates that have an order on eCourts are only noted, and the
+        // advocate gets each order with its "Get order" button
         Optional<ScrapingService.CaseOutlook> outlookOpt = scraping.lookUpOutlook(c.getCnrNo());
         if (outlookOpt.isEmpty()) {
             return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
@@ -228,7 +234,7 @@ public class NextHearingUpdateService {
         int added = 0, orders = 0;
         try {
             var synced = hearingService.syncEcourtsHistory(caseId, outlook.history(), userId);
-            if (synced != null) { added = synced.created(); orders = synced.ordersLinked(); }
+            if (synced != null) added = synced.created();
         } catch (RuntimeException e) {
             log.warn("[refresh] case {}: hearing history could not be synced: {}", caseId, e.getMessage());
         }

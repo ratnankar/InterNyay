@@ -106,7 +106,9 @@ public class CaseService {
         String cnr = null;
         EcourtsCaseService.Snapshot snap = null;
         CnrLookupService.Claim claim = null;
-        if (!juvenile) {
+        // (A case created with a misc. application may leave the CNR and the case number empty; a CNR that is typed is still checked)
+        boolean cnrWanted = !juvenile && (!req.idsOptional || trimmedOrNull(req.getCnrNo()) != null);
+        if (cnrWanted) {
             cnr = EcourtsCaseService.normalizeCnr(req.getCnrNo());
             if (cnr == null) throw new IllegalArgumentException(CNR_REQUIRED);
             assertCnrFree(cnr, userId);
@@ -117,9 +119,9 @@ public class CaseService {
             snap = claim == null ? null : claim.snapshot();
         }
 
-        // The case number is required, except for a Juvenile Justice Board case (stored as empty then)
+        // The case number is required, except for a Juvenile Justice Board case (stored as empty then) or a case created with a misc. application
         String caseNo = trimmedOrNull(req.getCaseNo());
-        if (caseNo == null && !juvenile) throw new IllegalArgumentException(CASE_NO_REQUIRED);
+        if (caseNo == null && !juvenile && !req.idsOptional) throw new IllegalArgumentException(CASE_NO_REQUIRED);
         if (caseNo != null && caseRepo.existsByUser_IdAndCaseNoIgnoreCase(userId, caseNo))
             throw new IllegalArgumentException("You already have a case with case number \"" + caseNo + "\"");
 
@@ -166,8 +168,8 @@ public class CaseService {
 
         if (snap != null) oldCaseImport.importHistory(saved, snap, userId);
 
-        // The orders of the case are downloaded in the background and attached to their hearings when they are in
-        cnrLookup.attachOrdersAfterSave(saved.getId(), userId, claim);
+        // Orders are not downloaded here: the hearings only remember which dates have an order on eCourts, and the
+        // advocate gets each one with its "Get order" button
 
         if (saved.getNextHearing() != null) {
             hearingService.recordHeard(saved, saved.getNextHearing(), userId);
@@ -196,9 +198,16 @@ public class CaseService {
         // A Juvenile Justice Board case has no CNR and no cause list number. A case moved out of a board court needs a CNR now
         boolean juvenile = courtService.isJuvenileJusticeBoard(c);
 
-        // The case number can only be left empty in a Juvenile Justice Board court
-        if (req.getCaseNo() != null) c.setCaseNo(trimmedOrNull(req.getCaseNo()));
-        if (!juvenile && (c.getCaseNo() == null || c.getCaseNo().isBlank())) {
+        // The case number can only be left empty in a Juvenile Justice Board court (or in a case edited from its misc. application)
+        if (req.getCaseNo() != null) {
+            String newNo = trimmedOrNull(req.getCaseNo());
+            if (newNo != null && !newNo.equalsIgnoreCase(c.getCaseNo() == null ? "" : c.getCaseNo())
+                    && caseRepo.existsByUser_IdAndCaseNoIgnoreCase(userId, newNo)) {
+                throw new IllegalArgumentException("You already have a case with case number \"" + newNo + "\"");
+            }
+            c.setCaseNo(newNo);
+        }
+        if (!juvenile && !req.idsOptional && (c.getCaseNo() == null || c.getCaseNo().isBlank())) {
             throw new IllegalArgumentException(CASE_NO_REQUIRED);
         }
 
@@ -207,7 +216,13 @@ public class CaseService {
             c.setCauseListNo(null);
             c.setListingDate(null);
         } else if (req.getCnrNo() != null) {
-            c.setCnrNo(requireCnr(req.getCnrNo()));
+            if (req.idsOptional && trimmedOrNull(req.getCnrNo()) == null) {
+                c.setCnrNo(null);
+            } else {
+                String newCnr = requireCnr(req.getCnrNo());
+                if (!newCnr.equalsIgnoreCase(c.getCnrNo() == null ? "" : c.getCnrNo())) assertCnrFree(newCnr, userId);
+                c.setCnrNo(newCnr);
+            }
         } else if (wasJuvenile) {
             throw new IllegalArgumentException(CNR_REQUIRED);
         }

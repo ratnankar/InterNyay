@@ -206,7 +206,7 @@ class NextHearingUpdateServiceTest {
 
     // ===== Refresh button: missing hearing dates and orders are brought in =====
     @Test
-    void refreshAddsMissingHearingsAndOrders() {
+    void refreshAddsMissingHearingsWithoutDownloadingOrders() {
         User owner = new User();
         owner.setId(1L);
         Case c = new Case();
@@ -219,13 +219,14 @@ class NextHearingUpdateServiceTest {
         var snap = new EcourtsCaseService.Snapshot("PENDING", null, NEW_DATE, null,
                 new java.util.TreeMap<>(), java.util.Map.of());
         when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(new CaseOutlook(false, NEW_DATE, snap)));
-        when(hearingService.syncEcourtsHistory(7L, snap, 1L)).thenReturn(new OldCaseImportService.Result(3, 2));
+        when(hearingService.syncEcourtsHistory(7L, snap, 1L)).thenReturn(new OldCaseImportService.Result(3));
 
         var res = service.refreshSingleCase(7L, 1L);
 
         assertThat(res.hearingsAdded()).isEqualTo(3);
-        assertThat(res.ordersFound()).isEqualTo(2);
-        assertThat(res.message()).contains("3 missing hearing dates added").contains("2 orders found on eCourts");
+        // Orders are never downloaded by a refresh, only the "Get order" button does that
+        assertThat(res.ordersFound()).isZero();
+        assertThat(res.message()).contains("3 missing hearing dates added").doesNotContain("downloaded");
         assertThat(res.nextHearing()).isEqualTo(NEW_DATE);
     }
 
@@ -260,7 +261,7 @@ class NextHearingUpdateServiceTest {
         c.setNextHearing(null);
         when(caseRepo.findById(8L)).thenReturn(Optional.of(c));
         when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(new CaseOutlook(false, NEW_DATE)));
-        when(hearingService.syncEcourtsHistory(any(), any(), any())).thenReturn(new OldCaseImportService.Result(2, 1));
+        when(hearingService.syncEcourtsHistory(any(), any(), any())).thenReturn(new OldCaseImportService.Result(2));
 
         var res = service.refreshSingleCase(8L, 1L);
 

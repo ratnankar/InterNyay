@@ -5,8 +5,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import jakarta.annotation.PostConstruct;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -17,12 +19,19 @@ import java.util.concurrent.CompletableFuture;
 public class JudgeLeaveScheduler {
 
     private final DailyJudgeLeaveService service;
+    private final SchedulerRegistry registry;
 
-    // Every hour, on the hour, by default. The times come from judgeleave.scrape.cron in application.properties
-    @Scheduled(
-            cron = "${judgeleave.scrape.cron:0 0 * * * *}",
-            zone = "Asia/Kolkata"
-    )
+    // Starting times (changed in Admin > Schedulers; these are only used until the admin saves one)
+    @Value("${judgeleave.scrape.cron:0 0 * * * *}")
+    private String cron;
+
+    @PostConstruct
+    void register() {
+        registry.register("judge_leave_scrape", "Judges on Leave",
+                "Reads the judges on leave from the district court websites.", cron, this::scrapeJudgesOnLeave);
+    }
+
+    // Every hour, on the hour, until the admin sets other times
     public void scrapeJudgesOnLeave() {
 
         log.info("Starting scheduled Judges On Leave scraping...");

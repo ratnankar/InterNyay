@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
@@ -121,11 +120,6 @@ public class JudgeService {
                 .collect(Collectors.toSet());
 
         return codes.size() == 1 ? codes.iterator().next() : null;
-    }
-
-    // True when the name contains every token
-    private boolean containsAll(String name, List<String> tokens) {
-        return tokens.stream().allMatch(name::contains);
     }
 
     // Listing by id (removed ones too) or 404

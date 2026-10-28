@@ -14,13 +14,16 @@ public class MiscApplicationRequest {
     // EXISTING: the case
     public Long caseId;
 
-    // NEW: the case that is created. Title is typed by hand; case no. and CNR are needed because every case has them
+    // NEW: the case that is created. Title is typed by hand; case no. and CNR are optional (a CNR that is typed must be valid)
     public Long clientId;
     @Size(max = 500) public String caseTitle;
     @Size(max = 255) public String caseNo;
     public String cnrNo;
     public String court;
     public String district;
+
+    // Edit only: for an application filed in an existing case, caseId moves it to another case. For one added together with
+    // a new case, caseTitle / caseNo / cnrNo / clientId / court / district edit that case (an empty caseNo or cnrNo clears it)
 
     // Chosen from the document types or typed by hand
     @NotBlank @Size(max = 255) public String applicationType;

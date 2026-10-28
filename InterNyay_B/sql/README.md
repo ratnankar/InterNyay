@@ -40,12 +40,28 @@ and refuses to start if they do not. It never changes the database.
 | `V31__app_notes.sql` | `app_notes`: private notes of the Calendar app, one row per note per account; a deleted note stays as a row with `deleted_at` set so the deletion reaches the other phones |
 | `V32__app_preferences.sql` | `app_preferences`: court colours, court filter and view settings of the Calendar app, one row per account (a small JSON object plus the time of the last change) |
 | `V33__case_opponents_and_non_clients.sql` | `case_opposing_parties` (a case can have several opposite parties) and `case_non_clients` (people on our side who are not saved as clients, with their role). The single opposite party of each existing case is copied into the first table, then `cases.opposing_party`, `opposing_father_name`, `opposing_address` and `opposing_phone` are dropped |
+| `V34__case_client_optional.sql` | `cases.client_id` may be empty: a case added by CNR can be saved without a client and get one later |
+| `V35__case_no_unique_per_user.sql` | A case number is unique per advocate (`uk_cases_user_case_no`), not across all advocates |
 | `V36__juvenile_justice_board.sql` | `courts.juvenile_justice_board`: the mark for a Juvenile Justice Board. Its cases have no CNR and nothing is fetched from eCourts for them (cause list number, next-hearing sync, orders) |
 | `V37__juvenile_justice_board_whole_court.sql` | The mark belongs to a whole court (Admin > Courts, every row of the court), not a court no.; marks set on single court numbers are cleared |
 | `V38__case_no_optional.sql` | `cases.case_no` may be empty: a Juvenile Justice Board case needs neither a CNR nor a case number (every other case still needs one) |
+| `V39__clear_saved_cause_list_numbers.sql` | One-time cleanup: clears every cause list number saved by the old eCourts API fetch, so the new cause list scraping starts empty |
+| `V40__hearing_cause_list_no.sql` | `hearings.listing_no`: a hearing keeps its own cause list number once the case moves to its next date |
+| `V41__judge_court_code.sql` | `judges.court_code`: optional eCourts portal court code of a listing (`CL_court_no`, e.g. `1^4`) |
+| `V42__fill_court_codes.sql` | Fills the court codes of existing listings from the eCourts Court Name dropdown (same matching as V30) |
+| `V43__fill_court_codes_by_name.sql` | Fills the court codes V42 could not match, using the judge's name inside the district |
+| `V44__case_ecourts_details.sql` | Case details the eCourts page gives: case stage, acts and sections, registration and first hearing dates, e-Filing no., decision date, nature of disposal |
 | `V45__ecourts_import_list.sql` | `ecourts_imports`: the "Import from eCourts" list (cases of the uploaded My Cases file), one row per account (JSON list plus time of the upload), so the list is there on every device |
+| `V46__cause_list_run_log.sql` | `cause_list_run_log`: one row per cause list run (automatic and from Admin > Cause List), kept for good |
+| `V47__clear_order_marks_without_file.sql` | Clears the eCourts order mark of hearings that have no order file |
+| `V48__maintenance_runs.sql` | Run log of a one-off eCourts order backfill (dropped again in V49) |
+| `V49__drop_maintenance_runs.sql` | Drops `maintenance_runs`; the backfill has run and its code is gone |
+| `V50__scheduler_settings.sql` | `scheduler_settings`: run time and on/off of each background job, edited in Admin > Schedulers |
+| `V51__misc_application_case_created_here.sql` | `misc_applications.case_created_here`: the application was added together with a new case, so its case details can be edited from it |
+| `V52__remove_midnight_and_cleanup_jobs.sql` | Removes the saved settings of the 12 AM runs and the run log cleanup job, which no longer exist |
+| `V53__scheduler_target_date.sql` | `scheduler_settings.target`: which hearing date(s) a job looks up (today, tomorrow ...), chosen in Admin > Schedulers |
 
-This folder keeps only the two scripts that run outside the app: `create_database.sql` and `check_links.sql`.
+This folder keeps only the scripts that run outside the app: `create_database.sql`, `check_links.sql` and `check_court_codes.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).
 
 ## Fresh install (new, empty database)

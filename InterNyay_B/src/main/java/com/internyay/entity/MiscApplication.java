@@ -42,6 +42,11 @@ public class MiscApplication {
     @Column(name = "application_type", nullable = false)
     private String applicationType;
 
+    // True when the application was added together with a new case, so the case details can be edited from here
+    @Column(name = "case_created_here", nullable = false)
+    @Builder.Default
+    private boolean caseCreatedHere = false;
+
     private LocalDate filingDate;
 
     // Next date the application is listed for

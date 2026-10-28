@@ -1,6 +1,5 @@
 package com.internyay.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.internyay.scraper.PortalCaseParser.HistoryRow;
 import com.internyay.scraper.PortalCaseParser.OrderRow;
 import com.internyay.scraper.PortalCaseParser.ParsedCase;

@@ -65,7 +65,7 @@ public final class PortalCaseParser {
     private static final Pattern DATE = Pattern.compile("\\b(\\d{2})-(\\d{2})-(\\d{4})\\b");
     private static final Pattern LONG_DATE = Pattern.compile("(\\d{1,2})(?:st|nd|rd|th)?\\s+([A-Za-z]+)\\s+(\\d{4})");
     private static final Pattern CNR = Pattern.compile("\\b[A-Z]{4}\\d{12}\\b");
-    private static final Pattern DISPLAY_PDF = Pattern.compile("displayPdf\\(([^)]*)\\)");
+    private static final Pattern DISPLAY_PDF = Pattern.compile("displayPdf\\(((?:'[^']*'|\"[^\"]*\"|[^)'\"])*)\\)");
     private static final Pattern QUOTED = Pattern.compile("'([^']*)'|\"([^\"]*)\"");
     // The portal's displayPdf(normal_v, case_val, court_code, filename, appFlag) fields, in call order
     private static final String[] PDF_FIELDS = {"normal_v", "case_val", "court_code", "filename", "appFlag"};

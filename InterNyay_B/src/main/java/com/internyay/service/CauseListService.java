@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,8 +27,6 @@ import java.util.function.Supplier;
 @Service
 @Slf4j
 public class CauseListService {
-
-    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
     private final CaseRepository caseRepo;
     private final CourtService courtService;
@@ -61,18 +58,6 @@ public class CauseListService {
     }
 
     public record Result(LocalDate hearingDate, int casesChecked, int causeListNosSaved) {}
-
-    public Result fetchForTomorrow() {
-        return fetchFor(LocalDate.now(IST).plusDays(1));
-    }
-
-    public Result fetchMissingForTomorrow() {
-        return fetchFor(LocalDate.now(IST).plusDays(1), true);
-    }
-
-    public Result fetchMissingForToday() {
-        return fetchFor(LocalDate.now(IST), true);
-    }
 
     public Result fetchFor(LocalDate hearingDate) {
         return fetchFor(hearingDate, false);

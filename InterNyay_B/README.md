@@ -75,13 +75,17 @@ docs/                           setup guides
 
 ## Scheduled jobs
 
-All times are India time (`Asia/Kolkata`). Each can be changed in `application.properties`.
+All times are India time (`Asia/Kolkata`). The values in `application.properties` are only the starting values: the run
+time, the days of the week, the on/off switch and (for the two jobs that look up hearing dates) the hearing date
+(today, tomorrow, day after tomorrow, today and tomorrow, next 3 days, next 7 days) are changed in **Admin > Schedulers**
+and apply straight away, without a restart. Each job also has a Run now button there. Runs must be at least 5 minutes apart.
 
 | Job | Default | Purpose |
 | --- | --- | --- |
 | `JudgeLeaveScheduler` | every hour | Reads the district court leave pages (`judgeleave.scrape.cron`) |
-| `CauseListScheduler` | every hour 17:00-23:00, and 00:00 (IST) | Looks up cause list numbers for the next hearing date: Delhi High Court / Supreme Court PDFs and district courts (CAPTCHA read by the solver). Only cases still without a number are tried, so each run completes the last one. Runs are listed in Admin > Cause List (`causelist.auto.*`) |
-| `WhatsAppReminderScheduler` | 10:00 daily | Sends hearing and payment reminders (`whatsapp.reminder.cron`) |
+| `CauseListScheduler` | every hour 17:00-23:00, for tomorrow | Looks up cause list numbers for the chosen hearing date: Delhi High Court / Supreme Court PDFs and district courts (CAPTCHA read by the solver). Only cases still without a number are tried, so each run completes the last one. Runs are listed in Admin > Cause List (`causelist.auto.*`) |
+| `NextHearingUpdateScheduler` | every hour 17:00-23:00, for today | Asks eCourts for the new next hearing date of cases still on the chosen date (`nexthearing.update.*`) |
+| `WhatsAppReminderScheduler` | 10:00 daily | Sends hearing and payment reminders; each case uses its own "days before" (`whatsapp.reminder.cron`) |
 
 ## Database
 

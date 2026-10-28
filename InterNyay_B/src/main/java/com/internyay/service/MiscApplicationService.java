@@ -103,8 +103,8 @@ public class MiscApplicationService {
         return toDto(findOwned(id, userId));
     }
 
-    // Adds an application. For a NEW case the case is created first (same rules as Add Case: client, case no., CNR and
-    // court are needed), so nothing is saved when either part is refused
+    // Adds an application. For a NEW case the case is created first (same rules as Add Case, except that the case no. and
+    // the CNR are optional: client and court are needed), so nothing is saved when either part is refused
     @Transactional
     public MiscApplicationDto create(MiscApplicationRequest req, Long userId) {
 
@@ -127,6 +127,7 @@ public class MiscApplicationService {
                 .filingDate(filing)
                 .hearingDate(hearing)
                 .status(MiscApplication.PENDING)
+                .caseCreatedHere(req.isNewCase())
                 .build());
 
         recordHearing(saved);
@@ -149,6 +150,13 @@ public class MiscApplicationService {
         if (req.getFilingDate() != null) {
             LocalDate filing = parseDate("Filing date", req.getFilingDate());
             if (filing != null) a.setFilingDate(filing);
+        }
+
+        // The case: another case for an application filed in an existing one, or the details of the case that was created with it
+        if (a.isCaseCreatedHere()) {
+            editOwnCase(a, req, userId);
+        } else if (req.getCaseId() != null && !req.getCaseId().equals(a.getLegalCase().getId())) {
+            moveToCase(a, req.getCaseId(), userId);
         }
 
         // An empty next hearing date clears it; a changed one must be an open day
@@ -314,18 +322,18 @@ public class MiscApplicationService {
         return toDto(a);
     }
 
-    // A new case for the application: the same checks and numbering as Add Case, as a fresh case with no hearing date yet
+    // A new case for the application: the same checks and numbering as Add Case (case no. and CNR optional), as a fresh case with no hearing date yet
     private Case createCase(MiscApplicationRequest req, Long userId) {
 
         if (req.getClientId() == null) throw new IllegalArgumentException("Choose the client");
         if (clean(req.getCaseTitle()) == null) throw new IllegalArgumentException("Enter the case title");
-        if (clean(req.getCaseNo()) == null) throw new IllegalArgumentException("Enter the case number");
         if (clean(req.getCourt()) == null) throw new IllegalArgumentException("Choose the court");
 
         CaseRequest cr = new CaseRequest();
         cr.setTitle(clean(req.getCaseTitle()));
         cr.setCaseNo(clean(req.getCaseNo()));
-        cr.setCnrNo(req.getCnrNo());
+        cr.setCnrNo(clean(req.getCnrNo()));
+        cr.setIdsOptional(true);
         cr.setCourt(clean(req.getCourt()));
         cr.setDistrict(req.getDistrict());
         cr.setClientId(req.getClientId());
@@ -334,6 +342,31 @@ public class MiscApplicationService {
 
         CaseDto created = caseService.create(cr, userId);
         return ownedCase(created.getId(), userId);
+    }
+
+    // Files the application in another case of the same advocate; its documents follow it
+    private void moveToCase(MiscApplication a, Long caseId, Long userId) {
+        Case target = ownedCase(caseId, userId);
+        if (a.getHearingDate() != null) hearingDays.assertAllowed(a.getHearingDate(), userId, target.getId());
+        a.setLegalCase(target);
+        documentService.moveMiscDocumentsToCase(a.getId(), target.getId());
+    }
+
+    // Edits the case that was created together with the application: title, case no., CNR, client and court.
+    // Only what is sent is changed; an empty case no. or CNR clears it (they are optional here)
+    private void editOwnCase(MiscApplication a, MiscApplicationRequest req, Long userId) {
+        if (req.getCaseTitle() != null && clean(req.getCaseTitle()) == null) throw new IllegalArgumentException("Enter the case title");
+        if (req.getCourt() != null && clean(req.getCourt()) == null) throw new IllegalArgumentException("Choose the court");
+
+        CaseRequest cr = new CaseRequest();
+        cr.setTitle(clean(req.getCaseTitle()));
+        cr.setCaseNo(req.getCaseNo());
+        cr.setCnrNo(req.getCnrNo() == null ? null : clean(req.getCnrNo()) == null ? "" : clean(req.getCnrNo()));
+        cr.setClientId(req.getClientId());
+        cr.setCourt(clean(req.getCourt()));
+        cr.setDistrict(req.getDistrict());
+        cr.setIdsOptional(true);
+        caseService.update(a.getLegalCase().getId(), cr, userId);
     }
 
     // Adds the application's next hearing date to its own hearing history (a date already there is not added twice).

@@ -14,8 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Map;
 
-// Fills an old case with what eCourts already has: one hearing entry for every past date, with the file name
-// of its order, so each order can be fetched with one click
+// Fills an old case with what eCourts already has: one hearing entry for every past date
 @Service
 @RequiredArgsConstructor
 public class OldCaseImportService {
@@ -23,9 +22,7 @@ public class OldCaseImportService {
     private final HearingRepository hearingRepo;
     private final UserRepository userRepo;
 
-    // created: hearing entries that did not exist before; ordersLinked: hearings that now know their eCourts order
-    // file (new, or one that was missing or different before)
-    public record Result(int created, int ordersLinked) {}
+    public record Result(int created) {}
 
     // Creates the missing hearing entries of the case, existing ones are only completed. Returns how many were new
     @Transactional
@@ -33,13 +30,12 @@ public class OldCaseImportService {
         return importHistoryDetailed(c, snap, userId).created();
     }
 
-    // Same as importHistory, and also tells how many orders were newly found (used by the Refresh button)
+    // Same as importHistory, with the result as a record (used by the Refresh button)
     @Transactional
     public Result importHistoryDetailed(Case c, EcourtsCaseService.Snapshot snap, Long userId) {
 
         User user = userRepo.getReferenceById(userId);
         int created = 0;
-        int ordersLinked = 0;
 
         for (Map.Entry<LocalDate, String> day : snap.hearings().entrySet()) {
             LocalDate date = day.getKey();
@@ -56,9 +52,9 @@ public class OldCaseImportService {
 
             String orderFile = snap.orderFiles().get(date);
             if (orderFile != null) {
-                if (!orderFile.equals(h.getEcourtsOrderFile())) ordersLinked++;
-                h.setEcourtsOrderFile(orderFile);
                 h.setNoOrderOnRecord(false);
+                // Only remembered, never downloaded: the "Get order" button is shown for this date
+                if (h.getOrderDocId() == null) h.setEcourtsOrderFile(orderFile);
             } else if (h.getOrderDocId() == null && OrderCutoff.passed(date)) {
                 h.setNoOrderOnRecord(true);
             }
@@ -70,6 +66,6 @@ public class OldCaseImportService {
             hearingRepo.save(h);
         }
 
-        return new Result(created, ordersLinked);
+        return new Result(created);
     }
 }

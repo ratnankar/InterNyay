@@ -4,23 +4,17 @@ import com.internyay.dto.*;
 import com.internyay.entity.*;
 import com.internyay.repository.*;
 import com.internyay.util.CaseStatuses;
-import com.internyay.util.OrderCutoff;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 // Hearing history of cases
 @Service
@@ -34,23 +28,9 @@ public class HearingService {
     private final DocumentService documentService;
     private final HearingDayService hearingDays;
     private final OrdersPolicyService ordersPolicy;
-    private final OrderDownloadTracker orderDownloads;
     private final ScrapingService scrapingService;
     private final OldCaseImportService oldCaseImport;
     private final TransactionTemplate tx;
-
-    // eCourts order lookups run one at a time in the background: reading a CAPTCHA takes seconds and must not hold
-    // up (or sit inside) the transaction of the save that asked for it
-    private final ExecutorService orderLookups = Executors.newSingleThreadExecutor(r -> {
-        Thread t = new Thread(r, "order-number-lookup");
-        t.setDaemon(true);
-        return t;
-    });
-
-    @jakarta.annotation.PreDestroy
-    void shutdown() {
-        orderLookups.shutdownNow();
-    }
 
     // Hearings in a date range, oldest first. Read inside a transaction because each hearing's case is
     // loaded lazily and open-in-view is off, so the DTO could not read the case title outside one
@@ -67,11 +47,6 @@ public class HearingService {
 
         List<HearingDto> rows = hearingRepo.findByLegalCase_IdAndUser_IdOrderByDateDesc(caseId, userId)
                 .stream().map(HearingDto::from).toList();
-
-        // Orders read from eCourts when the case was added are still on their way: no fetch button until they are in
-        if (orderDownloads.isRunning(caseId)) {
-            rows.forEach(r -> { if (r.isOrderOnEcourts()) r.setOrderDownloading(true); });
-        }
 
         // Mahila courts and family disputes do not declare orders, the screen then offers no eCourts fetch
         OrdersPolicyService.Verdict orders = ordersPolicy.forCase(c);
@@ -106,7 +81,7 @@ public class HearingService {
             h.setDate(req.getDate());
             dateChanged = true;
 
-            // What was learned about orders belonged to the old date
+            // What was learned about orders belonged to the old date (a Refresh learns it again for the new one)
             if (h.getOrderDocId() == null) {
                 h.setEcourtsOrderFile(null);
                 h.setNoOrderOnRecord(null);
@@ -119,11 +94,7 @@ public class HearingService {
 
         Hearing saved = hearingRepo.saveAndFlush(h);
         // A moved date changes the order of the dates, so the order numbers follow it
-        if (dateChanged) {
-            renumberOrders(saved.getLegalCase().getId(), userId);
-            // eCourts is asked, once this save is committed, whether it lists an order for the new date
-            lookUpOrderNumberAfterCommit(saved.getId(), userId);
-        }
+        if (dateChanged) renumberOrders(saved.getLegalCase().getId(), userId);
         return HearingDto.from(saved);
     }
 
@@ -190,8 +161,6 @@ public class HearingService {
                     upsert(caseId, closing, req.getNotes(), req.getOutcome(), null, userId));
             hearingRepo.flush();
             renumberOrders(caseId, userId);
-            // The date just heard may already have its order on eCourts
-            if (dateIsMoving && recorded.getOrderDocId() == null) lookUpOrderNumberAfterCommit(recorded.getId(), userId);
         }
 
         if (req.getNextHearing() != null && !req.getNextHearing().equals(c.getNextHearing())) {
@@ -224,8 +193,6 @@ public class HearingService {
         Hearing heard = upsert(caseId, heardDate, null, null, null, userId);
         hearingRepo.flush();
         renumberOrders(caseId, userId);
-        // The date just heard may already have its order on eCourts
-        if (heard.getOrderDocId() == null) lookUpOrderNumberAfterCommit(heard.getId(), userId);
 
         keepCauseListNo(c, userId);
         c.setCauseListNo(null);
@@ -360,6 +327,34 @@ public class HearingService {
         return saveAndNumber(h, userId);
     }
 
+    // The "Get order" button: downloads the order eCourts lists for the hearing's date and keeps it as the hearing's
+    // order, so it can be opened, replaced and removed like one uploaded by hand. Not transactional on purpose: the
+    // portal download can take a while and must not hold a database connection
+    public HearingDto fetchOrder(Long hearingId, Long userId) {
+        record Target(String cnr, java.time.LocalDate date, boolean declared) {}
+
+        Target target = tx.execute(status -> {
+            Hearing h = findOwned(hearingId, userId);
+            return new Target(h.getLegalCase().getCnrNo(), h.getDate(),
+                    ordersPolicy.forCase(h.getLegalCase()).declared());
+        });
+        if (target == null) throw new IllegalArgumentException("Hearing not found");
+
+        HearingDto current = tx.execute(status -> HearingDto.from(findOwned(hearingId, userId)));
+        if (current != null && current.getOrderDocId() != null) return current;
+
+        if (!target.declared()) throw new IllegalArgumentException("Orders are not declared for this case");
+        if (target.cnr() == null || target.cnr().isBlank()) {
+            throw new IllegalArgumentException("This case has no CNR number, so its order cannot be read from eCourts");
+        }
+
+        ScrapingService.FetchedOrder order = scrapingService.fetchOrderForDate(target.cnr(), target.date())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Could not download the order from eCourts right now, please try again in a moment"));
+
+        return tx.execute(status -> attachFetchedOrder(hearingId, order.pdf(), order.fileName(), userId));
+    }
+
     // One hearing as the frontend sees it
     @Transactional(readOnly = true)
     public HearingDto toDto(Long hearingId, Long userId) {
@@ -424,12 +419,27 @@ public class HearingService {
     public void renumberOrders(Long caseId, Long userId) {
         int number = 0;
         for (Hearing h : hearingRepo.findWithOrdersInDateOrder(caseId, userId)) {
+
+            // The link points to a document that no longer exists (an order of the older order system, or a file
+            // removed by hand): the link is dropped, so the hearing is free again to get its order from eCourts.
+            // Without this, one such hearing made every later upload / remove / delete on the case fail
+            DocumentMeta meta;
+            try {
+                meta = documentService.getMeta(h.getOrderDocId());
+            } catch (java.util.NoSuchElementException e) {
+                log.warn("Hearing {} points to order document {} that does not exist, link removed", h.getId(), h.getOrderDocId());
+                h.setOrderDocId(null);
+                h.setOrderDocName(null);
+                h.setOrderSeq(null);
+                hearingRepo.save(h);
+                continue;
+            }
+
             number++;
 
             // The order date follows the hearing date, so a moved date updates the order title too
             boolean numberChanged = !java.util.Objects.equals(h.getOrderSeq(), number);
-            boolean dateChanged = h.getOrderDocId() != null
-                    && !h.getDate().equals(documentService.getMeta(h.getOrderDocId()).getOrderDate());
+            boolean dateChanged = !h.getDate().equals(meta.getOrderDate());
 
             if (numberChanged || dateChanged) {
                 h.setOrderSeq(number);
@@ -442,64 +452,16 @@ public class HearingService {
     // The Refresh button: brings in every past hearing date eCourts lists that the case is missing, and the order file
     // of every date that has one. Existing entries are only completed, notes and attached orders are never touched
     public OldCaseImportService.Result syncEcourtsHistory(Long caseId, EcourtsCaseService.Snapshot snap, Long userId) {
-        if (snap == null || snap.hearings().isEmpty()) return new OldCaseImportService.Result(0, 0);
+        if (snap == null || snap.hearings().isEmpty()) return new OldCaseImportService.Result(0);
         OldCaseImportService.Result r = tx.execute(status -> {
             Case c = caseRepo.findById(caseId).orElse(null);
-            if (c == null || !c.getUser().getId().equals(userId)) return new OldCaseImportService.Result(0, 0);
+            if (c == null || !c.getUser().getId().equals(userId)) return new OldCaseImportService.Result(0);
             OldCaseImportService.Result done = oldCaseImport.importHistoryDetailed(c, snap, userId);
             hearingRepo.flush();
             renumberOrders(caseId, userId);
             return done;
         });
-        return r == null ? new OldCaseImportService.Result(0, 0) : r;
-    }
-
-    // ---- order number from eCourts --------------------------------------------------------------------------------
-
-    // When a hearing's date is set or moved: asks the eCourts portal, in the background and after the save is
-    // committed, whether an order is listed for that date, and keeps its number (order-N.pdf) on the hearing.
-    // A failed or empty lookup changes nothing
-    private void lookUpOrderNumberAfterCommit(Long hearingId, Long userId) {
-        Runnable start = () -> orderLookups.submit(() -> {
-            try {
-                lookUpOrderNumber(hearingId, userId);
-            } catch (RuntimeException e) {
-                log.warn("Order number lookup for hearing {} failed: {}", hearingId, e.getMessage());
-            }
-        });
-
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override public void afterCommit() { start.run(); }
-            });
-        } else {
-            start.run();
-        }
-    }
-
-    private record OrderTarget(String cnr, LocalDate date) {}
-
-    private void lookUpOrderNumber(Long hearingId, Long userId) {
-
-        // Only a date whose order can already be out, on a hearing that has no order attached by hand
-        OrderTarget target = tx.execute(status -> hearingRepo.findById(hearingId)
-                .filter(h -> h.getUser().getId().equals(userId))
-                .filter(h -> h.getOrderDocId() == null && OrderCutoff.passed(h.getDate()))
-                .filter(h -> ordersPolicy.forCase(h.getLegalCase()).declared())
-                .map(h -> new OrderTarget(h.getLegalCase().getCnrNo(), h.getDate()))
-                .orElse(null));
-        if (target == null || target.cnr() == null || target.cnr().isBlank()) return;
-
-        Optional<String> file = scrapingService.findOrderForDate(target.cnr(), target.date());
-        if (file.isEmpty()) return;
-
-        // Saved only if the hearing is still on that date (it may have been moved again meanwhile)
-        tx.executeWithoutResult(status -> hearingRepo.findById(hearingId).ifPresent(h -> {
-            if (h.getOrderDocId() == null && target.date().equals(h.getDate())) {
-                h.setEcourtsOrderFile(file.get());
-                hearingRepo.save(h);
-            }
-        }));
+        return r == null ? new OldCaseImportService.Result(0) : r;
     }
 
     // Case must belong to the user

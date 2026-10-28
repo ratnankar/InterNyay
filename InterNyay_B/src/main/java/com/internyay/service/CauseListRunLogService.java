@@ -7,7 +7,6 @@ import com.internyay.entity.CauseListRunLog.Status;
 import com.internyay.repository.CauseListRunLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,8 +35,6 @@ public class CauseListRunLogService {
 
     private final CauseListRunLogRepository repo;
 
-    @Value("${causelist.log.keep-days:45}")
-    private int keepDays;
 
     public CauseListRunLog begin(LocalDate hearingDate, Origin origin, String label) {
         CauseListRunLog row = new CauseListRunLog();
@@ -108,12 +105,6 @@ public class CauseListRunLogService {
             row.setSummary("The run never finished (the server restarted or the session was left open)");
             repo.save(row);
         }
-    }
-
-    @Transactional
-    public void purgeOld() {
-        long removed = repo.deleteByStartedAtBefore(LocalDateTime.now().minusDays(Math.max(7, keepDays)));
-        if (removed > 0) log.info("Cause-list run log: removed {} entries older than {} days", removed, keepDays);
     }
 
     private static String join(List<String> lines) {

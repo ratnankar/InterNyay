@@ -78,6 +78,11 @@ public class CaseRequest {
     // orders of that lookup are saved with the case; without it (or when it has expired) the case is saved as typed
     public String lookupToken;
 
+    // Set by the server (never read from the request) when the case is created together with a misc. application:
+    // the case number and the CNR number are then optional
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public boolean idsOptional;
+
     // True when the case is added by CNR
     public boolean isCnrMode() { return "CNR".equalsIgnoreCase(addMode == null ? "" : addMode.trim()); }
 

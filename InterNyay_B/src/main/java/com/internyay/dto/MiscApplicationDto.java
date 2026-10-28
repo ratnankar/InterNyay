@@ -30,6 +30,9 @@ public class MiscApplicationDto {
     public Long clientId;
     public String clientName;
 
+    // True when the case was created together with the application (its details can be edited from the application)
+    public boolean caseCreatedHere;
+    public String cnrNo;
     public String applicationType;
 
     // Dates as yyyy-MM-dd
@@ -73,6 +76,8 @@ public class MiscApplicationDto {
                 .caseStatus(c.getStatus())
                 .clientId(c.getClient() == null ? null : c.getClient().getId())
                 .clientName(c.getClient() == null ? null : c.getClient().getName())
+                .caseCreatedHere(a.isCaseCreatedHere())
+                .cnrNo(c.getCnrNo())
                 .applicationType(a.getApplicationType())
                 .filingDate(a.getFilingDate() == null ? null : a.getFilingDate().toString())
                 .hearingDate(a.getHearingDate() == null ? null : a.getHearingDate().toString())

@@ -35,18 +35,21 @@ public class ScrapingService {
     private final List<String> pages;
     private final String searchPath;
     private final String stateCode;
+    private final String displayPdfPath;
 
     public ScrapingService(
             DistrictPortalClient portal,
             CaptchaSolverClient solver,
             @Value("${cnr.portal.page:casestatus/index,cnr_status/index}") String pages,
             @Value("${cnr.portal.path.search:cnr_status/searchByCNR/}") String searchPath,
-            @Value("${causelist.district.state-code:26}") String stateCode) {
+            @Value("${causelist.district.state-code:26}") String stateCode,
+            @Value("${cnr.portal.path.display-pdf:home/display_pdf}") String displayPdfPath) {
         this.portal = portal;
         this.solver = solver;
         this.pages = Arrays.stream(pages.split(",")).map(String::trim).filter(v -> !v.isEmpty()).toList();
         this.searchPath = searchPath;
         this.stateCode = stateCode;
+        this.displayPdfPath = displayPdfPath;
     }
 
     // Whether the automatic CAPTCHA reader can be used right now (background lookups need it)
@@ -54,32 +57,42 @@ public class ScrapingService {
         return solver.available();
     }
 
-    // The order of that hearing date as eCourts names its file (order-3.pdf, judgment-5.pdf). Empty when eCourts
-    // lists no order for the date, or when the portal could not be read (never throws)
-    public Optional<String> findOrderForDate(String rawCnr, LocalDate hearingDate) {
+    // An order PDF downloaded from the portal, with the file name eCourts gives it (order-3.pdf)
+    public record FetchedOrder(String fileName, byte[] pdf) {}
+
+    // Downloads the order of one hearing date. Empty when eCourts lists no downloadable order for the date, or when the
+    // portal could not be read (never throws); the caller then tells the advocate to try again
+    public Optional<FetchedOrder> fetchOrderForDate(String rawCnr, LocalDate hearingDate) {
         String cnr = EcourtsCaseService.normalizeCnr(rawCnr);
         if (cnr == null || hearingDate == null) return Optional.empty();
 
         if (!solver.available()) {
-            log.info("CNR {}: order for {} not looked up, the automatic CAPTCHA reader is not available", cnr, hearingDate);
+            log.info("CNR {}: order for {} not fetched, the automatic CAPTCHA reader is not available", cnr, hearingDate);
             return Optional.empty();
         }
 
         try {
-            ParsedCase parsed = readCase(cnr);
-            if (parsed == null) return Optional.empty();
+            Read read = readCaseWithSession(cnr);
+            if (read == null) return Optional.empty();
 
-            // Interim orders come before the final judgment on the page; the first order of a date wins,
-            // as it does when the orders are read while a case is added
-            Optional<String> file = parsed.orders().stream()
-                    .filter(o -> hearingDate.equals(o.date()))
+            OrderRow row = read.parsed().orders().stream()
+                    .filter(o -> hearingDate.equals(o.date()) && o.link() != null)
                     .findFirst()
-                    .map(OrderRow::fileName);
+                    .orElse(null);
+            if (row == null) return Optional.empty();
 
-            log.info("CNR {}: {} for {}", cnr, file.map(f -> "order " + f).orElse("no order"), hearingDate);
-            return file;
+            byte[] pdf = read.session() == null ? null : portal.orderPdf(read.session(), displayPdfPath, row.link());
+            if (pdf == null) {
+                // The portal sometimes answers an order request with a page instead of the file: ask once more
+                try { Thread.sleep(1500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); return Optional.empty(); }
+                pdf = portal.orderPdf(read.session(), displayPdfPath, row.link());
+            }
+            if (pdf == null || pdf.length == 0) return Optional.empty();
+
+            log.info("CNR {}: order {} for {} downloaded ({} bytes)", cnr, row.fileName(), hearingDate, pdf.length);
+            return Optional.of(new FetchedOrder(row.fileName(), pdf));
         } catch (IOException | RuntimeException e) {
-            log.warn("CNR {}: eCourts order lookup for {} failed: {}", cnr, hearingDate, e.getMessage());
+            log.warn("CNR {}: eCourts order download for {} failed: {}", cnr, hearingDate, e.getMessage());
             return Optional.empty();
         }
     }
@@ -104,12 +117,14 @@ public class ScrapingService {
         }
 
         try {
-            ParsedCase parsed = readCase(cnr);
-            if (parsed == null) return Optional.empty();
+            Read read = readCaseWithSession(cnr);
+            if (read == null) return Optional.empty();
+            ParsedCase parsed = read.parsed();
 
             log.info("CNR {}: eCourts shows next hearing {}{}", cnr,
                     parsed.nextHearing() == null ? "none" : parsed.nextHearing(),
                     parsed.disposed() ? " (disposed)" : "");
+
             return Optional.of(new CaseOutlook(parsed.disposed(), parsed.nextHearing(),
                     EcourtsCaseService.snapshotOf(parsed)));
         } catch (IOException | RuntimeException e) {
@@ -118,8 +133,11 @@ public class ScrapingService {
         }
     }
 
-    // Opens a portal session, reads the CAPTCHA automatically and returns the parsed case page, or null
-    private ParsedCase readCase(String cnr) throws IOException {
+    // The parsed case page together with the portal session it was read on (an order download needs that session)
+    private record Read(PortalSession session, ParsedCase parsed) {}
+
+    // Opens a portal session, reads the CAPTCHA automatically and returns the parsed case page with its session, or null
+    private Read readCaseWithSession(String cnr) throws IOException {
         PortalSession session = openUsableSession(cnr);
 
         for (int attempt = 1; attempt <= solver.maxAttempts(); attempt++) {
@@ -138,7 +156,7 @@ public class ScrapingService {
                     log.warn("CNR {}: the portal's case page could not be read or was another case", cnr);
                     return null;
                 }
-                return parsed;
+                return new Read(session, parsed);
             }
             if (!result.captchaRejected()) {
                 log.info("CNR {}: portal has no case page ({})", cnr, result.message());

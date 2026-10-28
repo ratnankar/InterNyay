@@ -55,7 +55,11 @@ public class HearingController {
         return ResponseEntity.ok(hearingService.attachOrder(id, file, name, auth.currentUserId()));
     }
 
-    // No "get order from eCourts" route: the order number is filled in automatically when the hearing date changes.
+    // Download the order eCourts lists for this hearing's date and keep it as the hearing's order
+    @PostMapping("/{id}/order/fetch")
+    public ResponseEntity<HearingDto> fetchOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(hearingService.fetchOrder(id, auth.currentUserId()));
+    }
 
     // Remove the attached order
     @DeleteMapping("/{id}/order")

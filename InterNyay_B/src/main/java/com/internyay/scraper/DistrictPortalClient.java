@@ -430,7 +430,8 @@ public class DistrictPortalClient {
         byte[] pdf = response.body();
         boolean isPdf = response.statusCode() == 200 && pdf.length > 4 && pdf[0] == '%' && pdf[1] == 'P' && pdf[2] == 'D' && pdf[3] == 'F';
         if (!isPdf) {
-            log.warn("Order file {} was not a PDF (HTTP {}, {} bytes)", target, response.statusCode(), pdf.length);
+            log.warn("Order file {} was not a PDF (HTTP {}, {} bytes): {}", target, response.statusCode(), pdf.length,
+                    abbreviate(new String(pdf, StandardCharsets.UTF_8).replaceAll("(?s)<(script|style).*?</\\1>", " ").replaceAll("<[^>]*>", " ").replaceAll("\\s+", " ").trim()));
             return null;
         }
         return pdf;

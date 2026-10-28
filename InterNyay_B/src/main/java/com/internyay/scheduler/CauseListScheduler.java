@@ -2,22 +2,22 @@ package com.internyay.scheduler;
 
 import com.internyay.entity.CauseListRunLog.Origin;
 import com.internyay.service.CauseListAutoRunService;
-import com.internyay.service.CauseListRunLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import jakarta.annotation.PostConstruct;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-// Looks up cause list numbers for the next hearing date every hour in the evening (5 PM to 11 PM), and once more at
-// 12 AM for the day that has just begun. Delhi High Court and Supreme Court numbers come from the published PDFs, district
+// Looks up cause list numbers for the chosen hearing date(s), by default tomorrow, every hour in the evening (5 PM to 11 PM). Delhi High Court and Supreme Court numbers come from the published PDFs, district
 // court numbers from the eCourts portal with the CAPTCHA read by the solver. Every run only looks up the cases that
 // still have no number, so a later run picks up whatever an earlier one could not get (the Supreme Court publishes its
 // list late in the evening, and a CAPTCHA can fail). Each run is recorded in Admin > Cause List.
@@ -29,31 +29,28 @@ public class CauseListScheduler {
     private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
     private final CauseListAutoRunService autoRun;
-    private final CauseListRunLogService runLog;
+    private final SchedulerRegistry registry;
+
+    // Starting times (changed in Admin > Schedulers; these are only used until the admin saves one)
+    @Value("${causelist.auto.cron:0 0 17-23 * * *}")
+    private String cron;
 
     // Also fetch missing numbers when the app starts
     @Value("${ecourts.api.startup-catchup:true}")
     private boolean startupCatchUp;
 
-    // 5 PM, 6 PM ... 11 PM: gets tomorrow's cause list numbers (change with causelist.auto.cron, "-" switches it off)
-    @Scheduled(cron = "${causelist.auto.cron:0 0 17-23 * * *}", zone = "Asia/Kolkata")
-    public void hourlyEveningRun() {
-        autoRun.runForTomorrow(clock(ZonedDateTime.now(IST)) + " run");
+    @PostConstruct
+    void register() {
+        registry.register("causelist_evening", "Cause list numbers",
+                "Looks up the cause list numbers of the chosen hearing date(s) for cases that still have none.", cron,
+                "TOMORROW", this::run);
     }
 
-    // 12 AM: the hearing day has just started, last chance to fill what the evening runs could not
-    @Scheduled(cron = "${causelist.auto.midnight.cron:0 0 0 * * *}", zone = "Asia/Kolkata")
-    public void midnightRun() {
-        autoRun.runForToday("12 AM run");
-    }
-
-    // Old run log entries are removed once a day
-    @Scheduled(cron = "0 30 3 * * *", zone = "Asia/Kolkata")
-    public void purgeOldRuns() {
-        try {
-            runLog.purgeOld();
-        } catch (RuntimeException e) {
-            log.warn("Cause-list run log cleanup failed: {}", e.getMessage());
+    // 5 PM, 6 PM ... 11 PM by default, for the hearing date(s) chosen in Admin > Schedulers (tomorrow until changed)
+    public void run(List<LocalDate> dates) {
+        String label = clock(ZonedDateTime.now(IST)) + " run";
+        for (LocalDate date : dates) {
+            autoRun.runForDate(date, dates.size() > 1 ? label + " (" + date + ")" : label);
         }
     }
 

@@ -315,6 +315,15 @@ public class DocumentService {
         }
     }
 
+    // The application was filed in another case: its documents belong to that case now
+    @org.springframework.transaction.annotation.Transactional
+    public void moveMiscDocumentsToCase(Long miscApplicationId, Long caseId) {
+        for (DocumentMeta d : docRepo.findByMiscApplicationIdOrderByUploadedAtAsc(miscApplicationId)) {
+            d.setCaseId(caseId);
+            docRepo.save(d);
+        }
+    }
+
     // Remove all documents of a misc. application
     @org.springframework.transaction.annotation.Transactional
     public void deleteAllForMiscApplication(Long miscApplicationId) {

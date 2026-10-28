@@ -11,6 +11,7 @@ import com.internyay.service.DistrictCauseListRelayService.UnattendedResult;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import com.internyay.scheduler.SchedulerRegistry;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 
@@ -43,9 +44,7 @@ public class CauseListAutoRunService {
     private final CaptchaSolverClient solver;
 
     private final boolean enabled;
-    private final String cron;
-    private final boolean midnightEnabled;
-    private final String midnightCron;
+    private final SchedulerRegistry registry;
     private final long maxRunNanos;
 
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -60,19 +59,15 @@ public class CauseListAutoRunService {
             DistrictCauseListRelayService district,
             CauseListRunLogService logs,
             CaptchaSolverClient solver,
+            SchedulerRegistry registry,
             @Value("${causelist.auto.enabled:true}") boolean enabled,
-            @Value("${causelist.auto.cron:0 0 17-23 * * *}") String cron,
-            @Value("${causelist.auto.midnight.enabled:true}") boolean midnightEnabled,
-            @Value("${causelist.auto.midnight.cron:0 0 0 * * *}") String midnightCron,
             @Value("${causelist.auto.max-minutes:50}") int maxMinutes) {
         this.causeListService = causeListService;
         this.district = district;
         this.logs = logs;
         this.solver = solver;
         this.enabled = enabled;
-        this.cron = cron;
-        this.midnightEnabled = midnightEnabled;
-        this.midnightCron = midnightCron;
+        this.registry = registry;
         // A run must end before the next hourly one starts
         this.maxRunNanos = Math.max(5, Math.min(maxMinutes, 55)) * 60L * 1_000_000_000L;
     }
@@ -81,16 +76,10 @@ public class CauseListAutoRunService {
         return enabled;
     }
 
-    // The evening run: looks up tomorrow's hearing date
-    public void runForTomorrow(String label) {
+    // A scheduled run for one hearing date (the date choice is made in Admin > Schedulers)
+    public void runForDate(LocalDate date, String label) {
         if (!enabled) return;
-        runBlocking(LocalDate.now(IST).plusDays(1), Origin.AUTO, label);
-    }
-
-    // The 12 AM run: the hearing day has just begun, so it looks up today's date
-    public void runForToday(String label) {
-        if (!enabled || !midnightEnabled) return;
-        runBlocking(LocalDate.now(IST), Origin.AUTO, label);
+        runBlocking(date, Origin.AUTO, label);
     }
 
     // Runs now and waits for it to finish (used by the scheduler thread)
@@ -214,21 +203,18 @@ public class CauseListAutoRunService {
         ZonedDateTime next = null;
         LocalDate nextFor = null;
 
-        ZonedDateTime evening = nextOf(cron, now);
+        // The times are the ones saved in Admin > Schedulers (null when that job is switched off)
+        String cron = registry.cronOf("causelist_evening");
+        ZonedDateTime evening = cron == null ? null : nextOf(cron, now);
 
         if (enabled && evening != null) {
             next = evening;
-            nextFor = evening.toLocalDate().plusDays(1);
+            // The first hearing date the next run looks up (the date choice is set in Admin > Schedulers)
+            List<LocalDate> dates = SchedulerRegistry.datesFor(registry.targetOf("causelist_evening"), evening.toLocalDate());
+            nextFor = dates.isEmpty() ? evening.toLocalDate().plusDays(1) : dates.get(0);
         }
 
-        ZonedDateTime midnight = enabled && midnightEnabled ? nextOf(midnightCron, now) : null;
-
-        if (midnight != null && (next == null || midnight.isBefore(next))) {
-            next = midnight;
-            nextFor = midnight.toLocalDate();
-        }
-
-        return new CauseListScheduleDto(enabled, hoursOf(cron), midnightEnabled, solver.available(), running.get(),
+        return new CauseListScheduleDto(enabled, cron == null ? List.of() : hoursOf(cron), solver.available(), running.get(),
                 next == null ? null : next.toOffsetDateTime(), nextFor, logs.lastFinished().orElse(null));
     }
 

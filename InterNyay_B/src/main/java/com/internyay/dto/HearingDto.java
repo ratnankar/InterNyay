@@ -23,7 +23,7 @@ public class HearingDto {
     public Integer orderSeq;
 
     // Order file name (order-N.pdf) that the eCourts portal lists for this hearing date, null when it lists none.
-    // Filled in the background by HearingService (via ScrapingService) when the date is set or moved.
+    // Filled in when the case is added, refreshed or auto updated; the PDF itself is only downloaded by "Get order".
     public String orderNumber;
 
     public boolean orderOnEcourts;
@@ -36,9 +36,6 @@ public class HearingDto {
     public Integer causeListNo;
 
     // True when orders are not declared for this hearing's court or case type, so none can be fetched from eCourts
-    // True while the order of this hearing is still being downloaded from eCourts after the case was added
-    public boolean orderDownloading;
-
     public boolean ordersNotDeclared;
     public String ordersNotDeclaredReason;
 
