@@ -2,7 +2,7 @@
 /* Dashboard layout: main column and side column */
 .dashboard__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) clamp(260px, 30vw, 320px);
   gap: 1.5rem;
   align-items: start;
 }

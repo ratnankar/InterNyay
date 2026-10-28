@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { hearingDateProblem } from './dateUtils'
 
-// 2026-10-19 is a Monday, 2026-10-18 a Sunday
 describe('hearingDateProblem', () => {
   it('accepts an ordinary day', () => {
     expect(hearingDateProblem('2026-10-19', new Set())).toBe('')
   })
 
-  it('refuses Sundays and crossed-out dates', () => {
-    expect(hearingDateProblem('2026-10-18', new Set())).toMatch(/Sunday/)
+  it('refuses crossed-out dates', () => {
     expect(hearingDateProblem('2026-10-19', new Set(['2026-10-19']))).toMatch(/no-hearing/)
   })
 

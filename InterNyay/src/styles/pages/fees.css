@@ -404,6 +404,11 @@
 }
 .invoice__case-info p { margin-bottom: 3px; }
 
+.invoice__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .invoice__table {
   width: 100%;
   border-collapse: collapse;
@@ -776,4 +781,7 @@
   .client-case-row { flex-direction: column; }
   .client-case-row__actions { justify-content: flex-start; }
   .client-detail__header { padding: 14px; }
+}
+@media print {
+  .invoice__table-wrap { overflow: visible; }
 }

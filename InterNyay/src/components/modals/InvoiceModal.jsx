@@ -88,33 +88,35 @@ export default function InvoiceModal() {
               <p>{c.caseNo && <><strong>Case No:</strong> {c.caseNo} • </>}{caseCourtLabel(c)}</p>
             </div>
 
-            <table className="invoice__table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th className="no-print">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {feeSummary.items.map(item => (
-                  <tr key={item.key}>
-                    <td>{item.label}</td>
-                    <td>{item.date ? formatDisplayDate(item.date) : '—'}</td>
-                    <td>{formatCurrency(item.amount)}</td>
-                    <td className="no-print">
-                      <button
-                        className={`badge fee-status-btn ${item.paid ? 'badge--paid' : 'badge--due'}`}
-                        onClick={() => toggleFeePaid(c.id, item.key)}
-                      >
-                        {item.paid ? <>Paid <Icon name="check" /></> : 'Mark Paid'}
-                      </button>
-                    </td>
+            <div className="invoice__table-wrap">
+              <table className="invoice__table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th className="no-print">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {feeSummary.items.map(item => (
+                    <tr key={item.key}>
+                      <td>{item.label}</td>
+                      <td>{item.date ? formatDisplayDate(item.date) : '—'}</td>
+                      <td>{formatCurrency(item.amount)}</td>
+                      <td className="no-print">
+                        <button
+                          className={`badge fee-status-btn ${item.paid ? 'badge--paid' : 'badge--due'}`}
+                          onClick={() => toggleFeePaid(c.id, item.key)}
+                        >
+                          {item.paid ? <>Paid <Icon name="check" /></> : 'Mark Paid'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <div className="invoice__totals">
               <div className="invoice__totals-row">
