@@ -306,29 +306,35 @@
 
 
 
-/* Notifications bell in the greeting header: phones and tablets only, at the top right corner */
-.dash-bell { display: none; }
+/* Notifications bell in the greeting header.
+   Desktop: a round button in the header row, after the New Case button.
+   Phones and tablets: pinned to the top right corner of the greeting (see the media query below). */
+.dash-bell {
+  order: 2;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-gold-border);
+  background: #fff;
+  color: var(--color-navy);
+  font-size: 1.15rem;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s, border-color 0.15s;
+}
+.dash-bell:hover, .dash-bell:focus-visible { background: var(--color-bg); border-color: var(--color-gold); }
+.dash-bell .icon { width: 1.15em; height: 1.15em; vertical-align: 0; }
+@media (min-width: 769px) {
+  /* New Case and the bell sit together at the right edge */
+  .page-header--hero > .btn-gold { margin-left: auto; }
+  .page-header--hero > .dash-bell { margin-left: 12px; }
+}
 @media (max-width: 768px) {
   .page-header--hero { position: relative; }
   .page-header--hero > .page-header__main { padding-right: 52px; }
-  .dash-bell {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1.5px solid var(--color-gold-border);
-    background: #fff;
-    color: var(--color-navy);
-    font-size: 1.15rem;
-    box-shadow: var(--shadow-sm);
-    transition: background 0.15s, border-color 0.15s;
-  }
-  .dash-bell:hover, .dash-bell:focus-visible { background: var(--color-bg); border-color: var(--color-gold); }
-  .dash-bell .icon { width: 1.15em; height: 1.15em; vertical-align: 0; }
+  .dash-bell { position: absolute; top: 0; right: 0; }
 }

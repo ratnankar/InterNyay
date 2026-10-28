@@ -62,7 +62,7 @@ const DashboardHeader = memo(function DashboardHeader({ userName, onNewCase }) {
           {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
-      {/* Bell to the notifications page; shown on phones only, where the notifications panel sits far down the page */}
+      {/* Bell to the notifications page (top right corner on phones, after the New Case button on desktop) */}
       <Link to={navToPath('notifications')} className="dash-bell" aria-label="Notifications" title="Notifications">
         <Icon name="bell" />
       </Link>

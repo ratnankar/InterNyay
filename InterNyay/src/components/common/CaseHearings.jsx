@@ -240,12 +240,16 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
 
           {/* Refresh from eCourts: shown for every case, also a closed one (it then only fills in missing hearing dates and orders) */}
           <button type="button"
-            className="btn-outline btn-outline--sm"
+            className={`btn-outline btn-outline--sm${dashboard ? ' hearing-history__refresh-btn' : ''}`}
             title="Read the case from eCourts now: next hearing date, missing past hearing dates and their orders"
             disabled={busyId === 'refresh'}
             onClick={refreshFromEcourts}
+            {...(dashboard ? { 'aria-label': busyId === 'refresh' ? 'Refreshing…' : 'Refresh' } : {})}
           >
-            {busyId === 'refresh' ? 'Refreshing…' : 'Refresh'}
+            {dashboard
+              // Dashboard: the refresh symbol alone (it spins while the case is being read from eCourts)
+              ? <Icon name="refresh" className={`hearing-history__refresh-icon${busyId === 'refresh' ? ' hearing-history__refresh-icon--spin' : ''}`} />
+              : (busyId === 'refresh' ? 'Refreshing…' : 'Refresh')}
           </button>
 
           {!closed && (

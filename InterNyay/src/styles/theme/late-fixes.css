@@ -175,14 +175,13 @@
   .admin .plans-layout__side .plans-layout__add { width: auto; min-width: max-content; flex: none; white-space: nowrap; overflow: visible; }
 }
 
-/* Dashboard side card title stays on one line next to its badge */
+/* Dashboard side card title: larger on every screen. It stays on one line; when the badge does not fit beside it
+   (the narrow desktop column, very small phones) the badge drops to the next line at the right instead of squeezing or cutting the title */
+.dashboard__side .notifications-panel__header { flex-wrap: wrap; row-gap: 6px; }
 .dashboard__side .notifications-panel__header .section-title {
-  font-size: var(--fs-base); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: var(--fs-lg); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
-/* One-column layout (phones and tablets): the card is full width, so its title can be larger. Very narrow phones keep the smaller size */
-@media (max-width: 860px) {
-  .dashboard__side .notifications-panel__header .section-title { font-size: var(--fs-lg); }
-}
+.dashboard__side .notifications-panel__header .notifications-panel__count { margin-left: auto; }
 @media (max-width: 380px) {
   .dashboard__side .notifications-panel__header .section-title { font-size: var(--fs-md); }
 }

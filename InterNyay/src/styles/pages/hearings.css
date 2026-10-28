@@ -219,3 +219,20 @@
   font-size: var(--fs-xs);
   color: var(--color-text-muted);
 }
+
+
+/* Dashboard: Refresh is just the symbol, a square button the height of its neighbours */
+.hearing-history__refresh-btn {
+  width: 36px; min-width: 36px; padding-left: 0; padding-right: 0;
+}
+.hearing-history__refresh-btn .hearing-history__refresh-icon { width: 18px; height: 18px; margin: 0; }
+.hearing-history__refresh-icon--spin { animation: hearing-refresh-spin 0.9s linear infinite; }
+@keyframes hearing-refresh-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .hearing-history__refresh-icon--spin { animation: none; } }
+
+/* The order box (file name, Open, Replace, remove) spans the full width of the hearing entry, with the buttons at its right end */
+.hearing-entry__order { align-self: stretch; width: 100%; box-sizing: border-box; }
+/* On narrow screens an entry stacks its date above its body, and the body was only as wide as its content (so the order box ended
+   after the Open button); it now takes the whole width */
+.hearing-entry__body { align-self: stretch; }
+.hearing-entry__order-name { flex: 1 1 0; }
