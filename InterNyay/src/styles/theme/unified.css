@@ -69,11 +69,26 @@
 /* ==========================================================================
    Icon-only buttons: a row of buttons that runs out of room (see utils/compactButtons.js) shows icons without words
    ========================================================================== */
-[data-compact] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):has(> svg.icon) {
-  font-size: 0; gap: 0; padding-left: 0; padding-right: 0; min-width: 36px; width: 36px; flex: 0 0 auto;
+/* Step 2 (data-compact="icon"): buttons with an icon show the icon only. The size rules are !important so no later, more
+   specific button rule can bring the words back into the narrow box (that made the text overlap the icon). */
+[data-compact="icon"] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):has(> svg.icon) {
+  font-size: 0 !important; gap: 0 !important; padding-left: 0 !important; padding-right: 0 !important;
+  min-width: 36px !important; width: 36px !important; flex: 0 0 auto !important;
 }
-[data-compact] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):has(> svg.icon) > svg.icon {
-  width: 18px; height: 18px; margin: 0;
+[data-compact="icon"] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):has(> svg.icon)::after { content: none !important; }
+[data-compact="icon"] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary):has(> svg.icon) > svg.icon {
+  width: 18px !important; height: 18px !important; margin: 0 !important;
+}
+
+/* Step 1 (data-compact="short"): a button with a data-short label shows that label instead of its full words (its icon stays).
+   A short-label button without an icon keeps the short label in step 2 as well, since it has no icon to fall back to. */
+[data-compact="short"] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary)[data-short],
+[data-compact="icon"] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary)[data-short]:not(:has(> svg.icon)) {
+  font-size: 0 !important;
+}
+[data-compact="short"] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary)[data-short]::after,
+[data-compact="icon"] > :is(.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary)[data-short]:not(:has(> svg.icon))::after {
+  content: attr(data-short); font-size: var(--fs-xs, 0.8125rem); font-weight: 600; line-height: 1.2;
 }
 
 /* ==========================================================================

@@ -886,6 +886,7 @@ export default function Cases() {
 
             <button
               className="btn-outline btn-outline--sm"
+              data-short="Remind"
               disabled={!c.nextHearing || !!whatsappBusy[`hearing-${c.id}`]}
               title={c.nextHearing
                 ? 'Send the client a WhatsApp reminder now'

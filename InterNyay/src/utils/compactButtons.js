@@ -1,5 +1,7 @@
-// When a row of buttons runs out of room (it would wrap or spill over), the buttons that have an icon drop their words and
-// show the icon only. The words stay available to screen readers (aria-label) and as a hover tooltip.
+// When a row of buttons runs out of room (it would wrap or spill over) it shrinks in two steps, stopping as soon as it fits:
+//   1. data-compact="short": buttons that carry a data-short attribute show that shorter label (e.g. "Open in Cases" -> "Cases")
+//   2. data-compact="icon":  every button that has an icon drops its words and shows the icon only
+// The full words stay available to screen readers (aria-label) and as a hover tooltip.
 // A group can opt out with a data-no-compact attribute (its buttons then wrap onto their own rows and keep their words).
 // Nothing is moved in the page: the group just gets a data-compact attribute that the CSS in styles/theme/unified.css reacts to.
 const BUTTONS = '.btn-gold, .btn-outline, .btn-danger, .btn-gold-secondary'
@@ -9,9 +11,9 @@ function words(el) {
   return [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').replace(/\s+/g, ' ').trim()
 }
 
-// A button that has an icon and words next to it
+// A button that has an icon and words next to it, or that has a shorter label to fall back on
 function isIconButton(el) {
-  return !!el.querySelector(':scope > svg.icon') && words(el) !== ''
+  return words(el) !== '' && (!!el.querySelector(':scope > svg.icon') || el.hasAttribute('data-short'))
 }
 
 // True when the children of a row-direction flex box no longer fit on one line (a child dropped to a second row)
@@ -25,9 +27,15 @@ function wrapped(box) {
   return kids.some(c => c.offsetTop >= firstRowBottom - 1)
 }
 
-// True when the group no longer fits: it spills sideways, or it or the row it sits in wrapped
+// True when the group no longer fits: it spills sideways, a button's words are cut off, or it or the row it sits in wrapped.
+// A lone button (such as the Filter button in its own wrapper) is only compacted when it really spills sideways: a parent row
+// that wrapped (the search box taking a full line on a phone) says nothing about it, and shrinking one button cannot help
 function overflows(box) {
-  return box.scrollWidth > box.clientWidth + 1 || wrapped(box) || wrapped(box.parentElement)
+  const kids = [...box.children].filter(c => c.matches(BUTTONS) && isIconButton(c))
+  if (box.scrollWidth > box.clientWidth + 1 || wrapped(box)) return true
+  // A button whose own words are cut off
+  if (kids.some(k => k.scrollWidth > k.clientWidth + 1)) return true
+  return kids.length > 1 && wrapped(box.parentElement)
 }
 
 function evaluate() {
@@ -39,7 +47,12 @@ function evaluate() {
   })
   groups.forEach(g => {
     g.removeAttribute('data-compact')
-    if (overflows(g)) g.setAttribute('data-compact', '')
+    if (overflows(g)) {
+      // Step 1: shorter labels, when the group has any; step 2: icons only
+      const hasShort = !!g.querySelector(':scope > [data-short]')
+      g.setAttribute('data-compact', hasShort ? 'short' : 'icon')
+      if (hasShort && overflows(g)) g.setAttribute('data-compact', 'icon')
+    }
     g.querySelectorAll(':scope > [data-auto-label]').forEach(b => {
       if (g.hasAttribute('data-compact')) { if (!b.title) { b.title = b.getAttribute('aria-label'); b.dataset.autoTitle = '1' } }
       else if (b.dataset.autoTitle) { b.removeAttribute('title'); delete b.dataset.autoTitle }

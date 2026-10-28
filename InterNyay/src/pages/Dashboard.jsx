@@ -335,6 +335,7 @@ export default function Dashboard() {
                       {(!isClosedCase(c) || c.feeType === 'STAGEWISE') && (
                       <button type="button"
                         className="btn-outline btn-outline--sm"
+                        data-short="Fee"
                         onClick={e => {
                           e.stopPropagation()
                           openEditFee(
@@ -350,6 +351,7 @@ export default function Dashboard() {
                       )}
                       <button type="button"
                         className="btn-outline btn-outline--sm hearing-card__open"
+                        data-short="Cases"
                         onClick={e => openInCases(e, c)}
                       >
                         Open in Cases <Icon name="arrow-right" />

@@ -222,6 +222,13 @@
     position: static;
     top: auto;
   }
+
+  /* One column: the calendar comes first (pick the date), then that day's hearings, then the notifications.
+     The side column's wrapper steps out of the way so its two panels can be ordered separately. */
+  .dashboard__side { display: contents; }
+  .dashboard__side > .calendar { order: 1; }
+  .dashboard__main { order: 2; }
+  .dashboard__side > :not(.calendar) { order: 3; }
 }
 
 @media (max-width: 640px) {

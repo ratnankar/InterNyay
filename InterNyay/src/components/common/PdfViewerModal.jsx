@@ -57,6 +57,7 @@ export default function PdfViewerModal({ viewer, onClose, stacked = false, top =
                 <button type="button"
                   className="btn-outline btn-outline--sm"
                   title="Open in a new tab"
+                  data-short="New tab"
                   onClick={() => window.open(viewer.url, '_blank', 'noopener,noreferrer')}
                 >
                   <Icon name="copy" /> Open in new tab
