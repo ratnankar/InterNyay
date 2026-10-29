@@ -189,7 +189,6 @@ public class CaseService {
         boolean wasWithdrawn = CaseStatuses.isWithdrawn(c.getStatus());
 
         if (req.getTitle()       != null) c.setTitle(req.getTitle());
-        if (req.getFileNo()      != null) c.setFileNo(req.getFileNo());
         boolean wasJuvenile = courtService.isJuvenileJusticeBoard(c);
         Court previousPlace = c.getCourtPlace();
         if (req.getCourt()       != null) applyCourt(c, req.getCourt(), req.getDistrict());
@@ -285,6 +284,7 @@ public class CaseService {
         applyClientSubTypes(c, req.getClientSubTypes());
 
         syncFileNumber(c, req, userId, wasCorporatePanel, wasClosed);
+        applyEditedFileNo(c, req, userId, wasCorporatePanel);
 
         FeeMapper.applyFeeFields(c, req);
 
@@ -356,6 +356,28 @@ public class CaseService {
         if (!t.matches("[1-9][0-9]{0,8}")) return null;
 
         return Integer.valueOf(t);
+    }
+
+    // The advocate can change the file number of a saved case. Corporate panel cases keep whatever is typed; for the others
+    // a plain number moves the case to that place in the running sequence (refused when another open case holds it) and
+    // any other text is kept as typed and leaves the sequence. A blank field leaves the number as it is
+    private void applyEditedFileNo(Case c, CaseRequest req, Long userId, boolean wasCorporatePanel) {
+
+        if (req.getFileNo() == null) return;
+
+        String typed = trimmedOrNull(req.getFileNo());
+
+        if (isCorporatePanel(c)) {
+            c.setFileNo(typed);
+            c.setFileSeq(null);
+            return;
+        }
+
+        // A case that has just left corporate panel was given a fresh sequence number by syncFileNumber
+        if (wasCorporatePanel || typed == null) return;
+        if (typed.equals(c.getFileNo())) return;
+
+        applyTypedFileNo(c, typed, userId);
     }
 
     // Re-number only when needed: left corporate panel, or a reopened case clashing with an open one
