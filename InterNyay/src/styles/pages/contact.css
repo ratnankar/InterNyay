@@ -161,6 +161,7 @@
 
 .contact-thread--admin {
   max-height: 34vh;
+  max-height: 34dvh;
   overflow-y: auto;
   padding: 0 4px var(--space-md) 0;
 }

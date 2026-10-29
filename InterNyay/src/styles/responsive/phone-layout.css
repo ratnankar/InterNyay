@@ -37,11 +37,9 @@
   }
 }
 
-/* Dashboard greeting: once the header stacks (button under the title) the 11rem basis above turned into an 11rem HEIGHT,
-   leaving a big empty gap between the date and the New Case button. The title block takes only the height it needs. */
+/* Dashboard greeting (phones): the title block fills the row beside the bell and may shrink below its text width */
 @media (max-width: 560px) {
-  .page-header.page-header--hero > .page-header__main { flex: 0 0 auto; min-width: 0; }
-  .page-header.page-header--hero > .btn-gold { flex: 0 0 auto; }
+  .page-header.page-header--hero > .page-header__main { flex: 1 1 0; min-width: 0; }
 }
 
 /* ---------- 2. Search box and Sort dropdown ---------- */
@@ -228,4 +226,9 @@
 
   /* Wide tables scroll inside their own box instead of widening the page */
   :is(.admin__table-wrap, .qa-table-wrap, .txn-table-wrap, .drawer__table-wrap) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
+  .topbar__brand { display: inline-flex; align-items: center; min-height: 40px; }
+  .notif-page__back,
+  .profile-reset-link { display: inline-flex; align-items: center; min-height: 40px; }
 }

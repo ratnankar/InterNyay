@@ -250,11 +250,9 @@
    Third pass (phone audit at 360 / 390px): greeting, profile e-mail, Expenses filter, To-do empty state
    ------------------------------------------------------------------------------------------------ */
 @media (max-width: 560px) {
-  /* Dashboard: a long advocate name wrapped onto four lines beside the New Case button.
-     The greeting now takes the full width and the button sits underneath it */
-  .page-header--hero { flex-direction: column; align-items: stretch; gap: 12px; }
+  /* Dashboard: the greeting takes the remaining width and the bell stays beside it on the right */
+  .page-header--hero { flex-direction: row; align-items: center; gap: 12px; }
   .page-header--hero .page-title { font-size: clamp(1.35rem, 6vw, 1.7rem); overflow-wrap: anywhere; }
-  .page-header--hero > .btn-gold { width: 100%; min-height: 44px; }
 }
 
 @media (max-width: 480px) {

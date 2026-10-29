@@ -1037,6 +1037,53 @@ export default function Admin() {
     return () => cleanups.forEach(fn => fn())
   }, [activeGroup.id, tab])
 
+  // Mouse users can slide the tab bars too: drag with the mouse, or turn the wheel while pointing at the bar.
+  // (Touch and trackpad scroll natively; the bar has no scrollbar on narrow screens.)
+  useEffect(() => {
+    const bars = [tabBarRef.current, subTabBarRef.current].filter(Boolean)
+    const cleanups = bars.map(bar => {
+      let down = false, moved = false, startX = 0, startLeft = 0
+      const onDown = e => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return
+        down = true; moved = false; startX = e.clientX; startLeft = bar.scrollLeft
+      }
+      const onMove = e => {
+        if (!down) return
+        const dx = e.clientX - startX
+        if (!moved && Math.abs(dx) > 5) { moved = true; bar.classList.add('is-dragging') }
+        if (moved) bar.scrollLeft = startLeft - dx
+      }
+      const onUp = () => { down = false; bar.classList.remove('is-dragging') }
+      // A drag must not also click the tab it ended on
+      const onClick = e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false } }
+      // Vertical wheel slides the bar sideways, until it reaches an end (then the page scrolls as usual)
+      const onWheel = e => {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
+        const max = bar.scrollWidth - bar.clientWidth
+        if (max <= 0) return
+        const next = Math.min(max, Math.max(0, bar.scrollLeft + e.deltaY))
+        if (next === bar.scrollLeft) return
+        bar.scrollLeft = next
+        e.preventDefault()
+      }
+      bar.addEventListener('pointerdown', onDown)
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
+      window.addEventListener('pointercancel', onUp)
+      bar.addEventListener('click', onClick, true)
+      bar.addEventListener('wheel', onWheel, { passive: false })
+      return () => {
+        bar.removeEventListener('pointerdown', onDown)
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+        window.removeEventListener('pointercancel', onUp)
+        bar.removeEventListener('click', onClick, true)
+        bar.removeEventListener('wheel', onWheel)
+      }
+    })
+    return () => cleanups.forEach(fn => fn())
+  }, [activeGroup.id, tab])
+
   // Block anyone who isn't an admin
   if (!isAdmin) {
     return (

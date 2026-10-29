@@ -32,7 +32,7 @@
 .misc-more { display: flex; justify-content: center; margin-top: 1.25rem; }
 
 /* Windows */
-.misc-modal { max-height: calc(100vh - 32px); overflow-y: auto; }
+.misc-modal { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; }
 
 .misc-modes { display: flex; gap: 8px; margin-bottom: 14px; }
 .misc-modes > button { flex: 1; }

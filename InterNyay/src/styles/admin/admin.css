@@ -236,6 +236,7 @@ td.admin__actions > * + * { margin-left: 6px; }
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-md);
   max-height: 60vh;
+  max-height: 60dvh;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -798,6 +799,7 @@ td.admin__actions > * + * { margin-left: 6px; }
   width: 96vw;
   max-width: 1280px;
   height: 92vh;
+  height: 92dvh;
   display: flex;
   flex-direction: column;
   padding: 0;

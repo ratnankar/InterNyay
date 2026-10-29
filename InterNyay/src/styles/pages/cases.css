@@ -519,3 +519,7 @@
 /* CAPTCHA picture of the CNR lookup */
 .cnr-captcha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .cnr-captcha__img { height: 56px; max-width: 100%; border: 1px solid var(--border, #d9d9d9); border-radius: 8px; background: #fff; }
+
+@media (max-width: 480px) {
+  .case-fields__value--mono { font-size: 0.8125rem; letter-spacing: 0; overflow-wrap: normal; word-break: normal; }
+}

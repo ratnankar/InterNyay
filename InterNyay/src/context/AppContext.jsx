@@ -568,6 +568,8 @@ export function AppProvider({ children }) {
     fileSeq: null,
     fileNoOrigin: 'new',
     fileNoManual: false,
+    // The number a saved case had when it was opened, restored when the field is left empty
+    fileNoOriginal: '',
 
     // CNR: the form was filled from eCourts using the CNR, so the next date and status come from the court; the hearing
     // dates and orders of that lookup are saved with the case.
@@ -1996,6 +1998,7 @@ export function AppProvider({ children }) {
       fileSeq:        c.fileSeq        ?? null,
       fileNoOrigin,
       fileNoManual:   false,
+      fileNoOriginal: c.fileNo         || '',
       cnrNo:          c.cnrNo          || '',
       filingDate:     c.filingDate     || '',
       caseStage: c.caseStage || '',
@@ -2259,7 +2262,8 @@ export function AppProvider({ children }) {
     const typedFileNo = (newCaseForm.fileNo || '').trim()
     if (hasCorporatePanelClient(caseClients)) {
       payload.fileSeq = null
-    } else if (newCaseForm.fileNoOrigin === 'new' && newCaseForm.fileNoManual && typedFileNo) {
+    } else if (newCaseForm.fileNoManual && typedFileNo && ['new', 'auto', 'legacy'].includes(newCaseForm.fileNoOrigin)) {
+      // Typed for a new case, or a changed number on a saved case: a plain number joins the sequence, other text stays as typed
       payload.fileNo = typedFileNo
       payload.fileSeq = /^[1-9]\d{0,8}$/.test(typedFileNo) ? Number(typedFileNo) : null
     } else {
@@ -2269,6 +2273,7 @@ export function AppProvider({ children }) {
     }
     delete payload.fileNoOrigin
     delete payload.fileNoManual
+    delete payload.fileNoOriginal
 
     // FIR details only apply to police challan cases
     if (!isPoliceChallan(newCaseForm.reliefSought)) {

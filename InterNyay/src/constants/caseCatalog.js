@@ -308,7 +308,8 @@ export function renameInCaseTitle(title, oldName, newName) {
   if (!title || !oldName || !newName || oldName === newName) return title
 
   const escaped = oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return title.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'gu'), () => newName)
+  // The character before the name is captured instead of using a lookbehind, which iOS Safari older than 16.4 cannot parse
+  return title.replace(new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'gu'), (_m, before) => before + newName)
 }
 
 // Reads an existing "A vs B" title and returns the opposing party's name

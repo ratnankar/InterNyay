@@ -506,20 +506,31 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 .admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs {
   flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
   scrollbar-width: none; cursor: grab;
+  touch-action: pan-x pan-y; /* a swipe along the bar always scrolls the bar */
+}
+@media (hover: none), (pointer: coarse) {
+  /* iPhone / iPad: plain native scrolling. No grab cursor, and no edge-chaining lock (WebKit can swallow the swipe) */
+  .admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs { cursor: auto; overscroll-behavior-x: auto; }
 }
 /* No scrollbar: swipe, drag, trackpad or Shift + wheel to slide. A soft fade at an edge shows there are more tabs that way */
 .admin__tabs.admin__tabs::-webkit-scrollbar, .admin__subtabs.admin__subtabs::-webkit-scrollbar { display: none; }
-.admin__tabs[data-fade-right="true"], .admin__subtabs[data-fade-right="true"] {
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
-          mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
-}
-.admin__tabs[data-fade-left="true"], .admin__subtabs[data-fade-left="true"] {
-  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
-          mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
-}
-.admin__tabs[data-fade-left="true"][data-fade-right="true"], .admin__subtabs[data-fade-left="true"][data-fade-right="true"] {
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
-          mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
+/* Edge fade: mouse devices only (never on a touch screen), and not in Safari. WebKit (desktop and iPhone/iPad) stops a scrolling element from scrolling, or makes it jump,
+   when a mask-image is on that same element. `hanging-punctuation` is supported by Safari only, so everyone else keeps the fade. */
+@supports not (hanging-punctuation: first) {
+ @media (hover: hover) and (pointer: fine) {
+  .admin__tabs[data-fade-right="true"], .admin__subtabs[data-fade-right="true"] {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+            mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+  }
+  .admin__tabs[data-fade-left="true"], .admin__subtabs[data-fade-left="true"] {
+    -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
+            mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
+  }
+  .admin__tabs[data-fade-left="true"][data-fade-right="true"], .admin__subtabs[data-fade-left="true"][data-fade-right="true"] {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
+            mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
+  }
+ }
 }
 /* Tabs share spare width evenly on a wide screen but never shrink below their own text */
 .admin__tab.admin__tab { flex: 1 0 auto; }

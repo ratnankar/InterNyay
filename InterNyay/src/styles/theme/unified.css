@@ -36,7 +36,7 @@
 /* Image preview: the popup is only as big as the picture (never bigger than the window) */
 .modal.pdf-modal.pdf-modal--image { width: auto; min-width: min(560px, 94vw); max-width: 94vw; }
 .pdf-modal__image-box { display: flex; justify-content: center; align-items: center; background: var(--color-bg); border-radius: var(--border-radius-md); overflow: hidden; }
-.pdf-modal__image { display: block; max-width: 100%; max-height: 75vh; width: auto; height: auto; object-fit: contain; }
+.pdf-modal__image { display: block; max-width: 100%; max-height: 75vh; max-height: 75dvh; width: auto; height: auto; object-fit: contain; }
 
 /* Profile row in the sidebar: the arrow sits right after the name */
 .sidebar__user-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -289,12 +289,10 @@ html.kb-open .chat__launcher { display: none; }
   }
 }
 
-/* Dashboard greeting (phones): the title and date sit on the left edge, level with the button underneath
-   (appskin.css centred them), and the New Case button is the normal 38px page-button size, not 44px */
+/* Dashboard greeting (phones): the title and date sit on the left edge (appskin.css centred them), the bell on the right */
 @media (max-width: 560px) {
-  .page-header.page-header--hero { align-items: stretch; }
-  .page-header.page-header--hero > .page-header__main { align-self: stretch; text-align: left; }
-  .page-header.page-header--hero > .btn-gold { min-height: 38px; height: 38px; font-size: 0.875rem; }
+  .page-header.page-header--hero { align-items: center; }
+  .page-header.page-header--hero > .page-header__main { align-self: center; text-align: left; }
 }
 
 /* Option chips (court and district filters, case filters, court preferences, contact and fee filters), phones and tablets:

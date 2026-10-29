@@ -8,9 +8,9 @@ import useLastHearingDate from '../../hooks/useLastHearingDate'
 import { formatCurrency } from '../../utils/formatUtils'
 
 // Detail rows of a case, with an optional hearing
-export default function CaseFields({ caseItem: c, clients = [], hearing = null, showParties = true, withLastHearing = false }) {
+export default function CaseFields({ caseItem: c, clients = [], hearing = null, showParties = true, withLastHearing = false, hearingDate = '' }) {
   useCourts()
-  const lastHearingDate = useLastHearingDate(c.id, withLastHearing && !hearing)
+  const lastHearingDate = useLastHearingDate(c.id, withLastHearing, hearingDate)
   // Split the case's court into district and court name
   const { district, court } = caseCourtParts(c)
   // Building and floor of the court room

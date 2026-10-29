@@ -1,4 +1,4 @@
-import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { navToPath } from '../routes/paths'
@@ -33,9 +33,9 @@ function dayWord(date) {
   return ''
 }
 
-// Greeting, today's date and the New Case button. Kept in its own memoised component so that hearing and reminder
-// updates elsewhere on the dashboard never re-render or re-measure it (that made the New Case button flicker)
-const DashboardHeader = memo(function DashboardHeader({ userName, onNewCase }) {
+// Greeting, today's date and the notifications bell. Kept in its own memoised component so that hearing and reminder
+// updates elsewhere on the dashboard never re-render or re-measure it
+const DashboardHeader = memo(function DashboardHeader({ userName }) {
   // Greeting name: first name (with title). When even that does not fit on one line, "Counsel" is shown instead
   const titleRef = useRef(null)
   const [tooLong, setTooLong] = useState(false)
@@ -62,11 +62,11 @@ const DashboardHeader = memo(function DashboardHeader({ userName, onNewCase }) {
           {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
-      {/* Bell to the notifications page (top right corner on phones, after the New Case button on desktop) */}
-      <Link to={navToPath('notifications')} className="dash-bell" aria-label="Notifications" title="Notifications">
-        <Icon name="bell" />
-      </Link>
-      <button type="button" className="btn-gold" onClick={onNewCase}>+ New Case</button>
+      <div className="dash-actions">
+        <Link to={navToPath('notifications')} className="dash-bell" aria-label="Notifications" title="Notifications">
+          <Icon name="bell" />
+        </Link>
+      </div>
     </div>
   )
 })
@@ -75,7 +75,7 @@ const DashboardHeader = memo(function DashboardHeader({ userName, onNewCase }) {
 export default function Dashboard() {
   const {
     cases, clients, calendarDate, calendarDateKey, todayCases,
-    openCase, setShowAddCase,
+    openCase,
     expandedHearingCaseId, setExpandedHearingCaseId,
     whatsappBusy, sendHearingReminder, toggleCaseReminders, caseRemindersOn, caseHasReminderNumber,
     openEditFee, currentUser,
@@ -103,8 +103,6 @@ export default function Dashboard() {
   // Court headings only help when the day has hearings at more than one court
   const showCourtHeadings = new Set(sortedRows.map(r => r.court)).size > 1
 
-  const openNewCase = useCallback(() => setShowAddCase(true), [setShowAddCase])
-
   const hearingTotal = todayCases.length + miscToday.length
 
   // Judge, cause list number and leave details for each hearing on the selected date
@@ -130,7 +128,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <DashboardHeader userName={currentUser?.name} onNewCase={openNewCase} />
+      <DashboardHeader userName={currentUser?.name} />
 
       {/* Main column with hearings, side column with calendar and notifications */}
       <div className="dashboard__grid">
@@ -332,6 +330,8 @@ export default function Dashboard() {
                       caseItem={c}
                       clients={clients}
                       hearing={{ causeListNo, judgeName: info?.judgeName }}
+                      withLastHearing
+                      hearingDate={calendarDateKey}
                     />
 
                     <CaseHearings caseItem={c} dashboard />

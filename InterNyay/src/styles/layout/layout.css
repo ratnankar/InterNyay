@@ -394,7 +394,7 @@
 .sidebar__account-name { font-weight: 600; color: #fff; }
 .sidebar__account-sub { font-size: 0.72rem; color: rgba(255, 255, 255, 0.55); }
 
-.sidebar__user-menu { max-height: 70vh; overflow-y: auto; overflow-x: hidden; }
+.sidebar__user-menu { max-height: 70vh; max-height: 70dvh; overflow-y: auto; overflow-x: hidden; }
 /* Menu labels stay on one line next to a fixed-size icon tile, so every row lines up the same way */
 .sidebar__user-menu-item .nav-item__icon { flex: none; }
 .sidebar__user-menu-text { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

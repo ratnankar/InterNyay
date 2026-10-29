@@ -181,7 +181,8 @@
 .dashboard__side .notifications-panel__header .section-title {
   font-size: var(--fs-lg); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
-.dashboard__side .notifications-panel__header .notifications-panel__count { margin-left: auto; }
+/* No auto margin: beside the title the space-between pushes the badge right; once it wraps it sits flush-left under the title, on the card's left edge */
+.dashboard__side .notifications-panel__header .notifications-panel__count { margin-left: 0; }
 @media (max-width: 380px) {
   .dashboard__side .notifications-panel__header .section-title { font-size: var(--fs-md); }
 }
@@ -463,3 +464,7 @@ html { scrollbar-gutter: stable; }
   .chat__voicebar { padding-left: calc(14px + env(safe-area-inset-left, 0px)); padding-right: calc(14px + env(safe-area-inset-right, 0px)); }
 }
 @media (max-height: 480px) and (orientation: landscape) { .chat__voicebar { padding-top: 3px; padding-bottom: 3px; } }
+
+/* Admin tab bars while being dragged with the mouse */
+.admin__tabs.admin__tabs.is-dragging, .admin__subtabs.admin__subtabs.is-dragging { cursor: grabbing; user-select: none; scroll-behavior: auto; }
+.admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs { overscroll-behavior-x: contain; }
