@@ -179,6 +179,7 @@ public class JudgeLeaveScraperService {
                 return LocalDate.parse(value, formatter);
 
             } catch (Exception ignored) {
+                // not this date format: try the next one
             }
         }
 

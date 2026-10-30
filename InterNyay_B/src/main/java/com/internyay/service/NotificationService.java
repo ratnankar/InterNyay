@@ -150,6 +150,7 @@ public class NotificationService {
         try {
             dismissalRepo.save(new NotificationDismissal(accountId, notificationId));
         } catch (DataIntegrityViolationException alreadyDismissed) {
+            // dismissed twice at the same moment: the first one counts
         }
     }
 

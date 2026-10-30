@@ -233,10 +233,6 @@ public class DistrictPortalClient {
         return out.toString().replaceAll("\\s+", " ").trim();
     }
 
-    public String guardNote(PortalSession session) {
-        return session.guardNote;
-    }
-
     private HttpRequest.Builder browserHeaders(HttpRequest.Builder builder) {
         return builder
                 .header("User-Agent", USER_AGENT)

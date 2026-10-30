@@ -9,7 +9,7 @@ the text is refused or the service is down. Setup and deployment: `../docs/CAPTC
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-dev.txt
+pip install -r requirements.txt
 uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
@@ -25,9 +25,3 @@ uvicorn app.main:app --host 127.0.0.1 --port 8001
 When `CAPTCHA_SOLVER_KEY` is set the request must carry it in the `X-Solver-Key` header.
 
 `GET /health` answers `{"status": "ok"}`.
-
-## Tests
-
-```bash
-python -m pytest
-```

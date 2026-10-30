@@ -70,6 +70,7 @@ public class BailRosterDto {
             try {
                 out.add(Long.parseLong(t));
             } catch (NumberFormatException ignored) {
+                // not a number: skip this entry
             }
         }
         return out;

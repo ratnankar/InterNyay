@@ -156,6 +156,7 @@ public class WhatsAppSender {
             String msg = ex.getResponseBodyAs(JsonNode.class).path("error").path("message").asText("");
             if (!msg.isBlank()) return msg.length() > 400 ? msg.substring(0, 400) : msg;
         } catch (Exception ignored) {
+            // body is not the expected JSON: use the generic message below
         }
         return "WhatsApp rejected the message (HTTP " + ex.getStatusCode().value() + ")";
     }

@@ -20,19 +20,6 @@ public final class JudgeNameMatch {
 
     public record Hit<T>(T item, double score) {}
 
-    // Best option for the name, or null when none is close enough or two are equally close
-    public static <T> T best(List<T> items, java.util.function.Function<T, String> text, String judgeName) {
-        List<Hit<T>> hits = ranked(items, text, judgeName);
-
-        if (hits.isEmpty()) {
-            return null;
-        }
-        if (hits.size() > 1 && hits.get(0).score() - hits.get(1).score() < 0.01) {
-            return null;
-        }
-        return hits.get(0).item();
-    }
-
     public static <T> List<Hit<T>> ranked(List<T> items, java.util.function.Function<T, String> text, String judgeName) {
         List<String> wanted = tokens(judgeName);
         List<Hit<T>> hits = new ArrayList<>();

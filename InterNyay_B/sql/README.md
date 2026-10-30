@@ -62,11 +62,11 @@ and refuses to start if they do not. It never changes the database.
 | `V53__scheduler_target_date.sql` | `scheduler_settings.target`: which hearing date(s) a job looks up (today, tomorrow ...), chosen in Admin > Schedulers |
 | `V54`-`V56` | Misc. portal applications, the case an application is linked to, contact attachments |
 | `V57__case_data_quality.sql` | `created_at` / `updated_at` filled for old cases; `live_case_no` / `live_cnr_no` (empty for a deleted case) carry the unique keys, so a deleted case keeps its number; wider `fir_section`; junk text and `&amp;` removed from acts; `deleted` NOT NULL; `ecourts_judge` dropped |
-| `sql/remove_test_cases.sql`, `sql/fix_state_cases_client_side.sql`, `sql/review_case_data.sql` | Optional scripts to run by hand after a backup: soft-delete the four test cases; set the client side of "State v." challan cases to Accused (roll-back first); read-only data checks |
 | `V58__case_text_tidy.sql` | Case numbers in one form (`CR Cases 6871/2025`; a row that would collide is left), case stage capitals and spacing, FIR number spacing, FIR section / acts typed by hand changed to the portal form (`IPC - Section 457,380`) |
 | `V59__cnr_unique_key_retry.sql` | Makes the CNR key unique once the live duplicates V57 found are gone (does nothing while any remain) |
+| `V60__normalize_building_floor_spelling.sql` | Building and floor written one way everywhere (`Main Building`, `Main Court Building`, `3rd Floor`) in courts, cases, judges and court number records; safe to run twice |
 
-This folder keeps only the scripts that run outside the app: `create_database.sql`, `check_links.sql` and `check_court_codes.sql`.
+This folder keeps the scripts that run outside the app: `create_database.sql` (run once), the read-only reports `check_links.sql`, `check_court_codes.sql` and `review_case_data.sql`, and `fix_state_cases_client_side.sql` (an optional one-off data fix that rolls back until you change its last line to COMMIT; take a backup first).
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).
 
 ## Fresh install (new, empty database)
@@ -74,10 +74,10 @@ Fee calculator rules still need no file: the backend saves them itself on the fi
 Use MySQL 8.0.19 or newer (`V6__plans.sql` uses a row alias in its upsert; MySQL 5.7 and MariaDB do not support it).
 
 1. In MySQL run `create_database.sql`. It creates an empty `internyay` database as `utf8mb4_unicode_ci` and never deletes anything.
-2. Start the backend. Flyway runs V1 to V38, Hibernate validates, and the app is up. That is the whole setup.
+2. Start the backend. Flyway runs V1 to V60, Hibernate validates, and the app is up. That is the whole setup.
 3. Sign out in the browser, register your account, then make it the first administrator (see `docs/ADMIN_SETUP.md`).
 
-Expected: the log shows `Successfully applied 38 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
+Expected: the log shows `Successfully applied 60 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
 
 | Table | Rows |
 | --- | --- |

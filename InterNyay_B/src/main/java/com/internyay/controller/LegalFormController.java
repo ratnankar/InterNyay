@@ -298,7 +298,7 @@ public class LegalFormController {
             List<Map<String, String>> rows = mapper.readValue(form.getFieldConfig(),
                     new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, String>>>() {});
             for (Map<String, String> r : rows) if (r.get("name") != null) out.put(r.get("name"), r);
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) { /* unreadable field config: no per-field settings */ }
         return out;
     }
 

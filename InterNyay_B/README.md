@@ -60,16 +60,16 @@ src/main/java/com/internyay/
 ├── security/                   JWT filter and utilities, login-attempt lock
 ├── config/                     security, CORS, rate limiting, duplicate-submit guard, plan-feature interceptor
 ├── scheduler/                  timed jobs (see below)
-├── scraper/                    district court leave-page addresses
+├── scraper/                    eCourts portal, cause list (High Court, Supreme Court, district) and leave-page readers, CAPTCHA solver client
 ├── storage/                    FileStorage with local and S3 implementations, cleanup of orphaned files
 ├── exception/                  error types and the global error handler
 └── util/                       small helpers (case catalogue, court matching, password policy, ...)
 src/main/resources/
 ├── application.properties      settings, with defaults and environment-variable names
 ├── fee-calculator-defaults.json
-└── db/migration/               Flyway migrations V1 ... V33
+└── db/migration/               Flyway migrations V1 ... V60
 captcha-service/                small Python service that reads the eCourts CAPTCHA (see docs/CAPTCHA_SETUP.md)
-sql/                            create_database.sql and check_links.sql (the only SQL run by hand)
+sql/                            create_database.sql plus optional check / fix scripts run by hand, and the migration guide
 docs/                           setup guides
 ```
 

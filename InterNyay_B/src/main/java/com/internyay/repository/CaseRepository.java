@@ -60,9 +60,6 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     @EntityGraph(attributePaths = {"client", "additionalClients", "user", "courtPlace"})
     List<Case> findByNextHearing(LocalDate nextHearing);
 
-    // Cases on a date that have a CNR number, so eCourts can be checked
-    List<Case> findByNextHearingAndCnrNoIsNotNull(LocalDate nextHearing);
-
     // Just what the next hearing date update needs to know about a case
     interface HearingDateDue {
         Long getId();
