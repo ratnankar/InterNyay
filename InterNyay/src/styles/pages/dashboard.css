@@ -207,7 +207,6 @@
 .hearing-card__detail .hearing-entry__date-text    { font-size: var(--fs-base); }
 .hearing-card__detail .hearing-entry__outcome      { font-size: var(--fs-xs); padding: 3px 10px; }
 .hearing-card__detail .hearing-entry__note         { font-size: var(--fs-base); line-height: var(--lh-base); }
-.hearing-card__detail .hearing-entry__misc         { font-size: var(--fs-base); line-height: var(--lh-base); }
 .hearing-card__detail .hearing-entry__order-icon   { font-size: var(--fs-md); }
 .hearing-card__detail .hearing-entry__order-name   { font-size: var(--fs-base); }
 .hearing-card__detail .hearing-entry__edit-row .form-label { font-size: var(--fs-sm); }
@@ -303,8 +302,6 @@
   .hearing-row__judge { margin-top: 6px; }
   .hearing-row__leave { margin-top: 6px; }
 }
-
-
 
 .dash-actions {
   display: flex;

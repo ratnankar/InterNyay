@@ -70,8 +70,14 @@
 /* The Add Application window keeps a readable width on desktop (it used to stretch across the whole screen); phones go full width below */
 .misc-modal { min-width: 0; max-width: min(100%, 640px); }
 /* Text containers may shrink below their content so long names wrap; buttons and icons keep their size */
-.misc-pick__info, .misc-casebox > *, .misc-details > *, .misc-grid > *, .misc-docblock__head > *, .misc-hearings__app > *,
-.misc-history__row > *, .case-summary-fields__row, .case-card__left { min-width: 0; }
+.misc-pick__info,
+.misc-casebox > *,
+.misc-details > *,
+.misc-grid > *,
+.misc-docblock__head > *,
+.misc-hearings__app > *,
+.case-summary-fields__row,
+.case-card__left { min-width: 0; }
 
 /* Windows: wide detail window gets a real width on tablets and desktops, height follows the visible screen (dvh, not 100vh,
    so the browser's address bar never hides the footer buttons) */
@@ -99,7 +105,7 @@
 .hearing-history__header > * { min-width: 0; }
 .hearing-history__next { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
 .hearing-history__next .btn-outline { flex: 0 0 auto; white-space: nowrap; }
-.misc-hearings__head, .misc-hist__head, .misc-hearing__row { row-gap: 6px; }
+.misc-hearings__head { row-gap: 6px; }
 
 /* Dashboard card heading: application name, status, outcome and "Misc. Application" tag wrap neatly */
 .hearing-card--misc .hearing-row__heading { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
@@ -196,13 +202,6 @@
   .hearing-card__detail .hearing-entry__body,
   .hearing-card__detail .hearing-entry__note,
   .hearing-card__detail .hearing-entry__order-actions { margin-left: 0; padding-left: 0; text-align: left; }
-  .misc-hist__head { flex-direction: column; align-items: stretch; }
-  .misc-history__row { flex-wrap: wrap; align-items: flex-start; }
-  .misc-history__note { flex: 1 1 100%; }
-  .misc-hearing__edit { flex-direction: column; align-items: stretch; }
-  .misc-hearing__edit .form-input, .misc-hearing__edit .hdi { max-width: none; width: 100%; flex: 1 1 auto; }
-  .misc-hearing__btn { width: 100%; justify-content: center; }
-
   /* Footer of the detail window: Close on top of Delete would hide Delete under a thumb, so they sit as equal halves */
   .misc-footer { flex-direction: row-reverse; flex-wrap: nowrap; align-items: stretch; gap: 10px; }
   .misc-footer > button { flex: 1 1 0; justify-content: center; }

@@ -890,7 +890,6 @@ pre, code {
 
   .hearing-card__detail .hearing-entry__date-text,
   .hearing-card__detail .hearing-entry__note,
-  .hearing-card__detail .hearing-entry__misc,
   .hearing-card__detail .hearing-entry__order-name,
   .hearing-card__detail .form-input {
     font-size: var(--fs-sm);
