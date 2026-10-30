@@ -75,7 +75,7 @@ export default function CourtNoAdder({ court, district = '', askDistrict = false
         <Dropdown className="form-input courts-adder__select" wrapperClassName="courts-adder__field" value={building}
                   onChange={e => { setBuilding(e.target.value); setNewBuilding(''); setFloor(''); setNewFloor('') }}>
           <option value="">No building</option>
-          {buildings.map(b => <option key={b} value={b}>Building {b}</option>)}
+          {buildings.map(b => <option key={b} value={b}>{b}</option>)}
           <option value={NEW_BUILDING}>+ Add new building</option>
         </Dropdown>
       )}

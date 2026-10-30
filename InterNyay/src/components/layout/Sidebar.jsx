@@ -279,6 +279,16 @@ export default function Sidebar() {
                 <span className="sidebar__user-menu-text">Contact Us</span>
                 {unreadBadge}
               </Link>
+              {/* Opens the Contact Us form with the Feedback topic chosen; the admin reads it in the Contact inbox */}
+              <Link
+                to={`${pathFor('contact')}?topic=feedback`}
+                role="menuitem"
+                className="sidebar__user-menu-item"
+                onClick={closeMenus}
+              >
+                <span className="nav-item__icon"><Icon name="megaphone" /></span>
+                <span className="sidebar__user-menu-text">Give Feedback</span>
+              </Link>
 
               {/* Accounts that are already signed in: one tap to switch, no password needed */}
               <div className="sidebar__user-menu-sep" role="separator" />

@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import api from '../services/api'
 import Dropdown from '../components/common/Dropdown'
 import Icon from '../components/common/Icon'
 import SeeMoreList from '../components/common/SeeMoreList'
+import AttachmentPicker from '../components/common/AttachmentPicker'
+import ContactAttachments from '../components/common/ContactAttachments'
 import { starLabel } from '../components/common/Req'
 import {
   CONTACT_CATEGORIES,
@@ -20,12 +23,18 @@ import useSessionState from '../hooks/useSessionState'
 export default function ContactUs() {
   const { addToast } = useApp()
 
+  // "Give Feedback" in the sidebar opens this page as /contact?topic=feedback
+  const location = useLocation()
+  const feedbackMode = new URLSearchParams(location.search).get('topic') === 'feedback'
+
   // Message form values and their validation errors
   const [form, setForm] = useState({
-    category: CONTACT_CATEGORIES[0],
+    category: feedbackMode ? 'Feedback' : CONTACT_CATEGORIES[0],
     subject:  '',
     message:  '',
   })
+  // Photos, videos or PDFs chosen to go with the message
+  const [files, setFiles]     = useState([])
   // Validation errors per field and whether a message is being sent
   const [errors, setErrors]   = useState({})
   const [sending, setSending] = useState(false)
@@ -35,6 +44,11 @@ export default function ContactUs() {
   const [historyLoading, setHistoryLoading] = useState(true)
   const [historyError, setHistoryError]     = useState('')
   const [openId, setOpenId]   = useSessionState('contact_open', null)
+
+  // Choosing Give Feedback while already on this page selects the Feedback topic too
+  useEffect(() => {
+    if (feedbackMode) setForm(f => (f.category === 'Feedback' ? f : { ...f, category: 'Feedback' }))
+  }, [feedbackMode, location.key])
 
   // Update one form field and clear that field's error
   const set = (key, value) => {
@@ -70,7 +84,6 @@ export default function ContactUs() {
   // Check the subject and the message length; returns the errors found
   function validate() {
     const found = {}
-    if (!form.subject.trim()) found.subject = 'Enter a subject'
     const len = form.message.trim().length
     if (len < CONTACT_MESSAGE_MIN) {
       found.message = `Write at least ${CONTACT_MESSAGE_MIN} characters`
@@ -94,13 +107,16 @@ export default function ContactUs() {
 
     setSending(true)
     try {
-      await api.contact.send({
+      const data = {
         category: form.category,
-        subject:  form.subject.trim(),
+        subject:  form.subject.trim() || form.category,
         message:  form.message.trim(),
-      })
+      }
+      if (files.length > 0) await api.contact.sendWithFiles(data, files)
+      else await api.contact.send(data)
       addToast('Message sent — we will reply here or by email')
       setForm(f => ({ ...f, subject: '', message: '' }))
+      setFiles([])
       setErrors({})
       loadHistory()
     } catch (err) {
@@ -118,7 +134,7 @@ export default function ContactUs() {
       {/* Page title */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Contact Us</h1>
+          <h1 className="page-title">{feedbackMode ? 'Give Feedback' : 'Contact Us'}</h1>
         </div>
       </div>
 
@@ -126,7 +142,7 @@ export default function ContactUs() {
       <div className="contact-layout">
         {/* Send message form */}
         <form className="card contact-card" onSubmit={handleSubmit} noValidate>
-          <h3 className="section-title">Send a message</h3>
+          <h3 className="section-title">{feedbackMode ? 'Tell us what to improve' : 'Send a message'}</h3>
 
           <div className="form-group">
             {/* Topic dropdown */}
@@ -142,12 +158,12 @@ export default function ContactUs() {
 
           <div className="form-group">
             {/* Subject input */}
-            <label className="form-label">{starLabel('Subject')}</label>
+            <label className="form-label">Subject</label>
             <input
               className={`form-input${errors.subject ? ' form-input--error' : ''}`}
               value={form.subject}
               maxLength={CONTACT_SUBJECT_MAX}
-              placeholder="A short summary"
+              placeholder="A short summary (optional)"
               onChange={e => set('subject', e.target.value)}
             />
             {errors.subject && <p className="contact-error">{errors.subject}</p>}
@@ -170,6 +186,17 @@ export default function ContactUs() {
                 : <span />}
               <span className="contact-counter">{remaining} characters left</span>
             </div>
+          </div>
+
+          {/* Optional photos, videos or a PDF */}
+          <div className="form-group">
+            <label className="form-label">Attachments</label>
+            <AttachmentPicker
+              files={files}
+              onChange={setFiles}
+              onProblem={msg => addToast(msg, 'error')}
+              disabled={sending}
+            />
           </div>
 
           {/* Submit button */}
@@ -237,6 +264,7 @@ export default function ContactUs() {
                         <div className="contact-bubble contact-bubble--me">
                           <div className="contact-bubble__who">You · {formatContactDate(m.createdAt)}</div>
                           <div className="contact-bubble__text">{m.message}</div>
+                          <ContactAttachments attachments={m.attachments} loadBlob={api.contact.attachmentBlob} />
                         </div>
                         {replies.length === 0 && (
                           <p className="contact-muted">No reply here yet. We may also answer by email.</p>

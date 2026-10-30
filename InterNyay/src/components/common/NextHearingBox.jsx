@@ -34,6 +34,18 @@ export default function NextHearingBox({ date, onRefresh, refreshTitle = 'Refres
     </button>
   )
 
+  if (phase !== 'normal' && onRefresh) {
+    return (
+      <div className="case-card__hearing case-card__hearing--update">
+        <span className="case-card__hearing-icon" aria-hidden="true"><Icon name="calendar" /></span>
+        <div className="case-card__hearing-text">
+          <p className="case-card__hearing-label">Next Hearing</p>
+          <div className="case-card__hearing-update">{refreshButton}</div>
+        </div>
+      </div>
+    )
+  }
+
   if (phase === 'expired') {
     return (
       <div className="case-card__hearing case-card__hearing--expired">

@@ -17,6 +17,23 @@ export const PARTY_SIDES = [
   { value: SIDE_ACCUSED,     label: 'Accused/Respondent/Defendant' },
 ]
 
+// The same two sides worded for the nature of the case: a civil case has no complainant or accused
+export function partySides(nature) {
+  if (nature === 'Civil') {
+    return [
+      { value: SIDE_COMPLAINANT, label: 'Petitioner/Plaintiff' },
+      { value: SIDE_ACCUSED,     label: 'Respondent/Defendant' },
+    ]
+  }
+  if (nature === 'Criminal') {
+    return [
+      { value: SIDE_COMPLAINANT, label: 'Complainant/Petitioner' },
+      { value: SIDE_ACCUSED,     label: 'Accused/Respondent' },
+    ]
+  }
+  return PARTY_SIDES
+}
+
 // Case catalogue: nature -> relief/category -> list of case types, used for the cascading dropdowns
 const CASE_CATALOG = {
 

@@ -45,6 +45,8 @@ export function splitApplicationType(type) {
 // CNR numbers are 16 letters and digits, written with or without spaces and dashes
 export const isValidCnr = value => /^[A-Za-z0-9]{16}$/.test(String(value || '').replace(/[\s-]/g, ''))
 
+export const isMiscCaseNo = caseNo => /(^|[^A-Za-z])MISC([^A-Za-z]|$)/i.test(String(caseNo || ''))
+
 export const isDisposed = app => app?.status === MISC_DISPOSED
 
 // "Disposed Off - Allowed" for a disposed application, plain "Pending" otherwise

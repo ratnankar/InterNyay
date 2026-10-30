@@ -412,6 +412,7 @@ export const miscApplications = {
   // Mark as disposed off as Allowed or Disallowed (the date is optional, today is used) or take it back to pending
   dispose: (id, disposedOn, outcome) => put(`/misc-applications/${id}/dispose`, { body: { outcome, ...(disposedOn ? { disposedOn } : {}) } }),
   reopen:  (id)       => put(`/misc-applications/${id}/reopen`),
+  linkCase: (id, caseId) => put(`/misc-applications/${id}/link-case`, { body: { caseId } }),
 
   // Edit the date of one hearing history entry, or delete it (both return the updated application)
   updateHearing: (id, hearingId, date, note) => put(`/misc-applications/${id}/hearings/${hearingId}`, { body: { date, note: note || '' } }),
@@ -842,6 +843,7 @@ export const admin = {
     setStatus:   (id, status)  => put(`/admin/contact-messages/${id}/status`, { body: { status } }),
     reply:       (id, body, channel = 'BOTH') => post(`/admin/contact-messages/${id}/replies`, { body: { body, channel } }),
     remove:      (id)          => del(`/admin/contact-messages/${id}`),
+    attachmentBlob: (id)       => blobUrl(`/admin/contact-messages/attachments/${id}`),
   },
 
   // Subscription plans
@@ -909,6 +911,15 @@ export const plansApi = {
 // Contact Us for logged-in users, including admin replies
 export const contact = {
   send: (body) => post('/contact', { body }),
+  // Message with photos, videos or PDFs: data is the message, files is a list of File objects
+  sendWithFiles: (data, files) => {
+    const form = new FormData()
+    form.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+    files.forEach(f => form.append('files', f))
+    return postForm('/contact', form)
+  },
+  // Blob URL of an attached file, for the viewer
+  attachmentBlob: (id) => blobUrl(`/contact/attachments/${id}`),
   mine: ()     => get('/contact/mine'),
   unreadReplies: () => get('/contact/unread-replies'),
   markSeen: (id)    => post(`/contact/${id}/seen`),

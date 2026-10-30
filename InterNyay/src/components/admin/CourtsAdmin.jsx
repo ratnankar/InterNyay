@@ -261,7 +261,7 @@ export default function CourtsAdmin() {
           <>
             <Dropdown className="form-input" value={form.building} onChange={e => set({ building: e.target.value })}>
               <option value="">No building</option>
-              {buildings.map(b => <option key={b} value={b}>Building {b}</option>)}
+              {buildings.map(b => <option key={b} value={b}>{b}</option>)}
             </Dropdown>
             <input className="form-input" placeholder="Floor" value={form.floor}
                    onChange={e => set({ floor: e.target.value })} />
@@ -272,7 +272,7 @@ export default function CourtsAdmin() {
           <>
             <Dropdown className="form-input" value={form.building} onChange={e => set({ building: e.target.value, newBuilding: '', floor: '', newFloor: '' })}>
               <option value="">No building</option>
-              {buildings.map(b => <option key={b} value={b}>Building {b}</option>)}
+              {buildings.map(b => <option key={b} value={b}>{b}</option>)}
               <option value={NEW_BUILDING}>+ Add new building</option>
             </Dropdown>
             {addingBuilding && (
@@ -332,7 +332,7 @@ export default function CourtsAdmin() {
                       return (
                         <div key={bKey} className="archive__day">
                           <div className="courts-row courts-row--day">
-                            <Head level="day" open={!!open[bKey]} label={b.building ? `Building ${b.building}` : 'No building'}
+                            <Head level="day" open={!!open[bKey]} label={b.building ? b.building : 'No building'}
                                   count={total} onToggle={() => toggle(bKey)} />
                             {b.building && (
                               <RemoveBtn label="Remove building"

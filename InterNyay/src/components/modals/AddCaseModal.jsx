@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import {
   CASE_NATURES,
-  PARTY_SIDES,
+  partySides,
   SIDE_ACCUSED,
   SIDE_COMPLAINANT,
   caseTypeOptions,
@@ -19,6 +19,7 @@ import { judgesForRoom } from '../../utils/courtMatch'
 import { hasCorporatePanelClient } from '../../utils/caseClients'
 import { partySubText, toFormParty } from '../../utils/caseParties'
 import { cnrCaseTitle, cnrDetailToForm } from '../../utils/cnrPrefill'
+import { isMiscCaseNo } from '../misc/miscUtils'
 import { useCourts, useDefaultCourt, getDistricts, getCourtNosByBuilding, caseRoom, buildingWithFloor, hasNamedDistricts, isHighCourt, isJuvenileBoard } from '../../constants/courts'
 import { CHEQUE_BOUNCE_REASONS, WITHDRAWN_STATUS } from '../../constants/data'
 import CaseFeeSection from './CaseFeeSection'
@@ -252,8 +253,8 @@ function ClientPicker({ ourLabel, allowNonClient }) {
         </div>
       )}
 
-      {/* The search bar shows only until the first client is added; more clients come through the Add button */}
-      {caseClients.length === 0 && (
+      {/* The search bar shows only until the first client or non-client is added; more come through the Add button */}
+      {caseClients.length === 0 && nonClients.length === 0 && (
         <button
           type="button"
           className="form-input opposing-field client-search-field"
@@ -402,7 +403,8 @@ function PartiesSection() {
 
   // Side our client is on (complainant or accused)
   const side = newCaseForm.clientSide
-  const [complainantSide, accusedSide] = PARTY_SIDES
+  const sides = partySides(newCaseForm.caseNature)
+  const [complainantSide, accusedSide] = sides
 
   // A case added by CNR: the title starts as the one eCourts has; client is optional; the opposite parties are filled
   // from eCourts and can be edited like in a case added by hand
@@ -437,7 +439,7 @@ function PartiesSection() {
       <div className="case-parties__side">
         <span className="case-parties__side-label">Our client is the</span>
         <div className="fee-type-toggle case-parties__toggle">
-          {PARTY_SIDES.map(p => (
+          {sides.map(p => (
             <button
               key={p.value}
               type="button"
@@ -798,7 +800,7 @@ export default function AddCaseModal() {
         caseType: types.length === 1 ? types[0] : '',
         ...(isPoliceChallan(reliefSought)
           // Section and Acts & Sections are the same text: whichever is empty takes the other's
-          ? (f.firSection ? (f.actsSections ? {} : { actsSections: f.firSection }) : { firSection: (f.actsSections || '').slice(0, 255) })
+          ? (f.firSection ? (f.actsSections ? {} : { actsSections: f.firSection }) : { firSection: (f.actsSections || '').slice(0, 1000) })
           : { firNo: '', firSection: '', policeStation: '' }),
       }
     })
@@ -844,6 +846,9 @@ export default function AddCaseModal() {
                       Respondent: {newCaseForm.cnrDetail.respondents.join(', ') || '—'}
                       {newCaseForm.cnrDetail.respondentAdvocates.length > 0 && ` (Advocate: ${newCaseForm.cnrDetail.respondentAdvocates.join(', ')})`}
                     </p>
+                  )}
+                  {isMiscCaseNo(newCaseForm.cnrDetail.caseNo) && (
+                    <p className="form-hint">This is a misc. application with its own CNR. It will be added to Misc. Applications, not to Cases, and updates from eCourts like a case.</p>
                   )}
                   {newCaseForm.cnrDetail.status !== 'Pending' && (
                     <p className="case-parties__hint u-mt-6">
@@ -1040,7 +1045,7 @@ export default function AddCaseModal() {
                 onChange={e => setNewCaseForm(f => ({
                   ...f,
                   actsSections: e.target.value,
-                  ...(isPoliceChallan(f.reliefSought) ? { firSection: e.target.value.slice(0, 255) } : {}),
+                  ...(isPoliceChallan(f.reliefSought) ? { firSection: e.target.value.slice(0, 1000) } : {}),
                 }))} />
             </div>
             {(newCaseForm.decisionDate || newCaseForm.disposalNature) && (

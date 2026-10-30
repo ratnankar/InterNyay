@@ -88,6 +88,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
   // Allowed or Disallowed, chosen when the application is disposed off
   const [outcome, setOutcome] = useState('')
   const [orderFile, setOrderFile] = useState(null)
+  const [linkOpen, setLinkOpen] = useState(false)
 
   const disposed = isDisposed(app)
 
@@ -114,6 +115,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
 
   // An application added with a new case edits that case's details; one filed in an existing case can be moved to another case
   const ownCase = !!app.caseCreatedHere
+  const portal = !!app.portalSynced
 
   function startEdit() {
     const { choice, custom } = splitApplicationType(app.applicationType)
@@ -139,9 +141,9 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
     if (ownCase) {
       if (!draft.clientId) { addToast('Choose the client', 'error'); return }
       if (!draft.caseTitle.trim()) { addToast('Enter the case title', 'error'); return }
-      if (draft.cnrNo.trim() && !isValidCnr(draft.cnrNo)) { addToast('The CNR number must be 16 characters', 'error'); return }
-      if (!draft.court) { addToast('Choose the court', 'error'); return }
-      if (hasNamedDistricts(draft.court) && !draft.district) { addToast('Choose the district', 'error'); return }
+      if (!portal && draft.cnrNo.trim() && !isValidCnr(draft.cnrNo)) { addToast('The CNR number must be 16 characters', 'error'); return }
+      if (!portal && !draft.court) { addToast('Choose the court', 'error'); return }
+      if (!portal && hasNamedDistricts(draft.court) && !draft.district) { addToast('Choose the district', 'error'); return }
     } else if (!draft.caseId) {
       addToast('Choose the case the application is filed in', 'error'); return
     }
@@ -151,7 +153,9 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
       filingDate: draft.filingDate || null,
       // The hearing date has its own Update button, so it is sent back as it is
       hearingDate: app.hearingDate || null,
-      ...(ownCase
+      ...(portal
+        ? { caseTitle: draft.caseTitle.trim(), clientId: draft.clientId }
+        : ownCase
         ? {
             caseTitle: draft.caseTitle.trim(),
             // Empty clears them: the case number and CNR are optional
@@ -171,6 +175,14 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
       if (Number(updated.caseId) !== Number(app.caseId) || ownCase) bumpHearings(updated.caseId)
       addToast('Application updated')
     }
+  }
+
+  async function linkTo(caseId) {
+    const updated = await run('link', () => api.miscApplications.linkCase(app.id, caseId), 'Could not link the application')
+    if (!updated) return
+    setLinkOpen(false)
+    bumpHearings(caseId || app.linkedCaseId)
+    addToast(caseId ? 'Linked to the case' : 'Link removed')
   }
 
   // Reads the case again after its details were edited here, so the case list shows the new details
@@ -287,9 +299,56 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
           {!editing && (
             <div className="misc-details">
               <div><p className="misc-details__label">Filing date</p><p>{app.filingDate ? formatDisplayDate(app.filingDate) : '—'}</p></div>
+              {portal && <div><p className="misc-details__label">CNR number</p><p>{app.cnrNo || '—'}</p></div>}
+              {portal && app.causeListNo != null && app.listingDate === app.hearingDate && (
+                <div><p className="misc-details__label">Cause list no.</p><p>{app.causeListNo}</p></div>
+              )}
               <div className="misc-details__action">
                 <button type="button" className="btn-outline btn-outline--sm" onClick={startEdit}><Icon name="edit" /> Edit details</button>
               </div>
+            </div>
+          )}
+
+          {portal && !editing && (
+            <div className="misc-link">
+              <p className="misc-details__label">Linked case</p>
+              {linkOpen ? (
+                <>
+                  <SearchPick
+                    label="Case"
+                    placeholder="Search by case title or number…"
+                    items={caseChoices}
+                    selectedId={null}
+                    onSelect={c => linkTo(Number(c.id))}
+                    onClear={() => {}}
+                    matches={(c, q) => (c.title || '').toLowerCase().includes(q) || (c.caseNo || '').toLowerCase().includes(q)}
+                    renderMain={c => c.title}
+                    renderMeta={c => [c.caseNo, c.clientName].filter(Boolean).join(' • ')}
+                    emptyText="You have no cases."
+                  />
+                  <div className="misc-link__actions">
+                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => setLinkOpen(false)} disabled={busy === 'link'}>Cancel</button>
+                  </div>
+                </>
+              ) : app.linkedCaseId ? (
+                <div className="misc-link__row">
+                  <div className="misc-link__info">
+                    <p className="misc-link__name">{app.linkedCaseTitle}</p>
+                    <p className="misc-link__meta">{app.linkedCaseNo || '—'}</p>
+                  </div>
+                  <div className="misc-link__actions">
+                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => setLinkOpen(true)} disabled={busy === 'link'}>Change</button>
+                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => linkTo(null)} disabled={busy === 'link'}>Unlink</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="misc-link__row">
+                  <p className="misc-link__meta">Not linked to a case yet.</p>
+                  <div className="misc-link__actions">
+                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => setLinkOpen(true)}>Link to a case</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -355,6 +414,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                     <input className="form-input" maxLength={500} value={draft.caseTitle}
                       onChange={e => setDraft(d => ({ ...d, caseTitle: e.target.value }))} />
                   </div>
+                  {!portal && (<>
                   <div>
                     <label className="form-label">Case number</label>
                     <input className="form-input" maxLength={255} placeholder="e.g. CC 1234/2026" value={draft.caseNo}
@@ -398,6 +458,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                       {hasNamedDistricts(draft.court) && getDistricts(draft.court).map(d => <option key={d} value={d}>{d}</option>)}
                     </Dropdown>
                   </div>
+                  </>)}
                 </>
               )}
               <div className="misc-grid__wide form-actions">
@@ -462,7 +523,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
             {disposed && orderBlock}
 
             {disposed && (
-              <button type="button" className="btn-outline" onClick={reopen} disabled={!!busy}>Reopen (back to pending)</button>
+              <div className="misc-reopen"><button type="button" className="btn-outline btn-outline--sm" onClick={reopen} disabled={!!busy}>Reopen (back to pending)</button></div>
             )}
           </div>
 

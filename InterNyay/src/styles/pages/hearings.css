@@ -150,7 +150,6 @@
 .hearing-entry__edit-row .form-label { margin: 0; white-space: nowrap; }
 .hearing-entry__edit-row .form-input { max-width: 190px; }
 .hearing-entry__note-input {
-  resize: vertical;
   font-family: var(--font-body);
 }
 

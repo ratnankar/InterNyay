@@ -46,6 +46,11 @@ textarea {
   font-size: inherit;
 }
 
+/* Text boxes keep the size they are given: no stretch handle in the corner, long text scrolls inside the box */
+textarea {
+  resize: none;
+}
+
 /* Responsive images */
 img {
   display: block;

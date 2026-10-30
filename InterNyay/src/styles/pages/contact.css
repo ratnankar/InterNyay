@@ -20,7 +20,6 @@
 .contact-card .form-actions  { margin-top: 0; }
 
 .contact-textarea {
-  resize: vertical;
   min-height: 140px;
   font-family: inherit;
   line-height: var(--lh-base);
@@ -194,4 +193,44 @@
 @media (max-width: 600px) {
   .contact-card .form-grid-2 { grid-template-columns: minmax(0, 1fr); }
   .contact-bubble { max-width: 100%; }
+}
+
+/* Attach photos, videos or a PDF to a message */
+.attach-picker { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); }
+.attach-picker__hint { color: var(--color-text-muted); font-size: var(--fs-xs); }
+
+.attach-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.attach-picker .attach-list { flex-basis: 100%; }
+.attach-list--sent { margin-top: var(--space-sm); }
+
+.attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: var(--border-default);
+  border-radius: var(--border-radius-md);
+  background: var(--color-surface-alt);
+  color: var(--color-navy);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+.attach-chip--open { cursor: pointer; }
+.attach-chip--open:hover:not(:disabled) { border-color: var(--color-gold); }
+.attach-chip__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.attach-chip__size { color: var(--color-text-muted); font-size: var(--fs-xs); white-space: nowrap; }
+.attach-chip__remove { padding: 2px; }
+
+.attach-video { display: block; width: 100%; max-height: 70vh; max-height: 70dvh; background: #000; border-radius: var(--border-radius-md); }
+
+@media (max-width: 600px) {
+  .attach-chip__name { max-width: 150px; }
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { STATUS_COLORS, isClosedCase } from '../constants/data'
+import { caseWarnings } from '../utils/caseWarnings'
 import { statusChangeQuestion } from '../utils/caseStatus'
 import { useCourts, caseCourtLabel } from '../constants/courts'
 import { caseClientNames } from '../utils/caseClients'
@@ -690,6 +691,18 @@ export default function Cases() {
             </button>
           </div>
         </div>
+
+        {/* A case without a client has no one to send WhatsApp reminders to */}
+        {!c.clientId && !(c.additionalClients?.length) && !isClosedCase(c) && (
+          <p className="case-detail__note">
+            No client is linked to this case, so hearing reminders cannot be sent. Use Edit Case to add one.
+          </p>
+        )}
+
+        {/* Data that looks wrong or out of date (hearing date passed, filing year that does not fit the case number) */}
+        {caseWarnings(c).map(n => (
+          <p key={n.key} className="case-detail__note">{n.text}</p>
+        ))}
 
         {/* Case details */}
         <CaseFields caseItem={c} clients={clients} showParties={false} withLastHearing />

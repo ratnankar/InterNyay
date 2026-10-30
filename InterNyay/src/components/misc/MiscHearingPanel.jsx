@@ -20,9 +20,11 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
   const [draft, setDraft] = useState('')
   const [draftNote, setDraftNote] = useState('')
   const [busyId, setBusyId] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
 
   const rows = app.hearings || []
   const pending = !isDisposed(app)
+  const portal = !!app.portalSynced
 
   // Hands the changed application to the page and refreshes the counts and the dashboard
   function applied(updated) {
@@ -43,6 +45,19 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
       addToast(getErrorMessage(e, 'Could not update the hearing date'), 'error')
     } finally {
       setBusyId(null)
+    }
+  }
+
+  async function refresh() {
+    setRefreshing(true)
+    try {
+      const res = await api.cases.refreshHearing(app.caseId)
+      applied(await api.miscApplications.get(app.id))
+      addToast(res?.message || 'Updated from eCourts')
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not read the application from eCourts'), 'error')
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -72,12 +87,20 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
           <span className={`hearing-history__caret${open ? ' hearing-history__caret--open' : ''}`}>▸</span>
           Hearing History{rows.length > 0 ? ` (${rows.length})` : ''}
         </button>
-        {pending && <MiscHearingUpdate app={app} onChange={onChange} />}
+        <div className="hearing-history__actions">
+          {portal && (
+            <button type="button" className="btn-outline btn-outline--sm" disabled={refreshing} onClick={refresh}
+              title="Read the next hearing date, history and status from eCourts again">
+              <Icon name="refresh" /> {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+          )}
+          {(pending || portal) && <MiscHearingUpdate app={app} onChange={onChange} />}
+        </div>
       </div>
 
       {open && (rows.length === 0 ? (
         <p className="hearing-history__empty">
-          No hearing dates recorded yet.{pending && <> Use <strong>Update</strong> above to set the next hearing date.</>}
+          No hearing dates recorded yet.{(pending || portal) && <> Use <strong>Update</strong> above to set the next hearing date.</>}
         </p>
       ) : (
         <SeeMoreList items={rows} step={10} resetKey={app.id}>
@@ -120,7 +143,7 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
                   )}
                 </div>
 
-                {!editing && (
+                {!editing && !portal && (
                   <div className="hearing-entry__actions">
                     <button type="button" className="btn-outline btn-outline--sm" title="Edit this hearing's date and note" disabled={busy}
                       onClick={() => { setDraft(h.date); setDraftNote(h.note || ''); setEditingId(h.id) }}>

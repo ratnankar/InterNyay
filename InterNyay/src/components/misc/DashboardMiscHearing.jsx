@@ -23,6 +23,7 @@ export default function DashboardMiscHearing({ app, dateKey, caseItem }) {
     ['Status', disposed && app.disposalOutcome ? `${app.status} - ${app.disposalOutcome}` : app.status],
     ['Case', app.caseTitle],
     ['Case No', app.caseNo],
+    ...(app.portalSynced ? [['CNR No', app.cnrNo], ['Cause List No', app.causeListNo != null && app.listingDate === dateKey ? app.causeListNo : '']] : []),
     ['Client', app.clientName],
     ['Court', court],
     ['District', district],
@@ -51,7 +52,8 @@ export default function DashboardMiscHearing({ app, dateKey, caseItem }) {
           </div>
           {!open && (
             <div className="hearing-row__chips">
-              {caseItem?.courtNo && <span className="hearing-row__court-no" title="Court number">Court No. {caseItem.courtNo}</span>}
+              {(caseItem?.courtNo || app.courtNo) && <span className="hearing-row__court-no" title="Court number">Court No. {caseItem?.courtNo || app.courtNo}</span>}
+              {app.portalSynced && app.causeListNo != null && app.listingDate === dateKey && <span className="hearing-row__file-no" title="Cause list number">Cause List No. {app.causeListNo}</span>}
               {caseItem && roomLabel(caseItem) && <span className="hearing-row__file-no" title="Building and floor">{roomLabel(caseItem)}</span>}
               {caseItem?.fileNo && <span className="hearing-row__file-no" title="File number">File No. {caseItem.fileNo}</span>}
             </div>

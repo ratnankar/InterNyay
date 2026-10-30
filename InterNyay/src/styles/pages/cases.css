@@ -523,3 +523,14 @@
 @media (max-width: 480px) {
   .case-fields__value--mono { font-size: 0.8125rem; letter-spacing: 0; overflow-wrap: normal; word-break: normal; }
 }
+
+/* Note on a case card that has no client (no one to remind) */
+.case-detail__note {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--color-gold);
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.08);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}

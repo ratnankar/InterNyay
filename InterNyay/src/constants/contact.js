@@ -19,6 +19,28 @@ export const CONTACT_SUBJECT_MAX = 150
 export const CONTACT_MESSAGE_MIN = 10
 export const CONTACT_MESSAGE_MAX = 3000
 
+// Photos, videos and PDFs that can be attached to a message; kept in sync with ContactService in the backend
+export const CONTACT_ATTACH_MAX = 5
+export const CONTACT_ATTACH_MAX_BYTES = 10 * 1024 * 1024
+export const CONTACT_ATTACH_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'webm', 'pdf']
+export const CONTACT_ATTACH_ACCEPT = CONTACT_ATTACH_EXT.map(e => `.${e}`).join(',')
+
+// File size as "850 KB" or "2.4 MB"
+export function formatFileSize(bytes) {
+  const n = Number(bytes) || 0
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`
+}
+
+// Kind of an attached file from its file name or content type: 'image', 'video' or 'pdf'
+export function attachmentKind(name = '', mime = '') {
+  const ext = String(name).split('.').pop().toLowerCase()
+  if (mime.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image'
+  if (mime.startsWith('video/') || ['mp4', 'mov', 'webm'].includes(ext)) return 'video'
+  return 'pdf'
+}
+
 // Display names for the status of a contact message
 export const CONTACT_STATUS_LABELS = {
   NEW:      'New',

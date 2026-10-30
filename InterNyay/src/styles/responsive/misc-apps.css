@@ -234,11 +234,6 @@
   .misc-modal .form-actions { position: static; margin: 12px 0 0; padding: 0; border-top: 0; background: none; }
 }
 
-/* ---------- Wide desktops: keep the cards readable ---------- */
-@media (min-width: 1280px) {
-  .misc-page .case-list { max-width: 1100px; }
-}
-
 /* ==========================================================================
    Fixes from the phone screenshot: date clear (×) over the calendar icon, Application block, Mark as Disposed Off
    ========================================================================== */

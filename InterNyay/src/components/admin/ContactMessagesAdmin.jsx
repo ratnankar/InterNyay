@@ -16,6 +16,7 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
+import ContactAttachments from '../common/ContactAttachments'
 
 // Status filters for the message list
 const FILTERS = [
@@ -303,6 +304,7 @@ export default function ContactMessagesAdmin({ onLoaded }) {
                 <div className="contact-bubble contact-bubble--them">
                   <div className="contact-bubble__who">{open.name} · {formatContactDate(open.createdAt)}</div>
                   <div className="contact-bubble__text">{open.message}</div>
+                  <ContactAttachments attachments={open.attachments} loadBlob={api.admin.contactMessages.attachmentBlob} />
                 </div>
                 {(open.replies || []).map(r => (
                   <div key={r.id} className="contact-bubble contact-bubble--team">

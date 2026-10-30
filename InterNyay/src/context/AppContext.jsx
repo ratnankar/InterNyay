@@ -12,6 +12,7 @@ import { statusChangeQuestion } from '../utils/caseStatus'
 import {
   AUTO_SUBTYPES,
   SIDE_ACCUSED,
+  partySides,
   SIDE_COMPLAINANT,
   composeCaseTitle,
   renameInCaseTitle,
@@ -346,14 +347,32 @@ export function AppProvider({ children }) {
     }
   }
 
-  // Load hearing history (up to 1000 records) for the calendar and dashboard
+  // Every hearing record, read page by page. The server lists oldest first, so one capped request used to cut off the
+  // newest records once there were many, leaving recent past dates without their hearings on the calendar
+  async function loadAllHearings() {
+    const PAGE_SIZE = 1000
+    const MAX_PAGES = 50
+    const all = []
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const res = await hearingsApi.list({ size: PAGE_SIZE, page })
+      if (Array.isArray(res)) return res
+      const rows = res?.content || []
+      all.push(...rows)
+      if (res?.last !== false || rows.length === 0) break
+    }
+    return all
+  }
+
+  // Load the whole hearing history for the calendar and dashboard
   async function fetchHearingRecords() {
     try {
-      const res = await hearingsApi.list({ size: 1000 })
-      setHearingRecords(Array.isArray(res) ? res : res?.content || [])
+      setHearingRecords(await loadAllHearings())
     } catch (e) {
-      setHearingRecords([])
+      // Keep what is already shown: blanking it would also wipe the month the calendar loaded by itself
+      console.error('Could not load hearing history for the calendar', e)
     }
+    // The viewed month is read again after every full load, so a full load that comes back short never leaves it empty
+    setHearingsVersion(v => v + 1)
 
     await fetchMiscHearingData()
   }
@@ -440,6 +459,8 @@ export function AppProvider({ children }) {
 
   // Counter bumped after hearing changes so hearing lists reload
   const [hearingsVersion, setHearingsVersion] = useState(0)
+  // Hearings of the month on the calendar (and the selected day), kept apart so a full history load can never wipe them
+  const [monthHearings, setMonthHearings] = useState([])
 
   // Case whose hearing history is expanded
   const [expandedHearingCaseId, setExpandedHearingCaseId] = useState(null)
@@ -916,7 +937,7 @@ export function AppProvider({ children }) {
         documentsApi.list().catch(() => null),
         holidaysApi.list().catch(() => null),
         noHearingDatesApi.list().catch(() => null),
-        hearingsApi.list({ size: 1000 }).catch(() => null),
+        loadAllHearings().catch(() => null),
         authApi.me().catch(() => null),
         hearingLimitsApi.get().catch(() => null),
       ])
@@ -925,7 +946,7 @@ export function AppProvider({ children }) {
       if (Array.isArray(holidayList)) setHolidays(holidayList)
       if (Array.isArray(noHearingList)) setNoHearingDates(new Set(noHearingList))
       if (limitsRes) applyHearingLimits(limitsRes)
-      if (hearingRes) setHearingRecords(Array.isArray(hearingRes) ? hearingRes : hearingRes?.content || [])
+      if (hearingRes) { setHearingRecords(hearingRes); setHearingsVersion(v => v + 1) }
       // Application hearing dates too, so the calendar and the history counts stay right when they change elsewhere
       fetchMiscHearingData(true).catch(() => {})
       if (me) {
@@ -1403,6 +1424,7 @@ export function AppProvider({ children }) {
     setNextHearingCaseId(null)
     setExpandedHearingCaseId(null)
     setHearingRecords([])
+    setMonthHearings([])
     setMiscHearingCounts(new Map())
     setMiscHearingCaseIdsByDate(new Map())
     setTransactionCaseId(null)
@@ -2162,9 +2184,8 @@ export function AppProvider({ children }) {
     }
 
     if (newCaseForm.opponents.length === 0 && !optional) {
-      return newCaseForm.clientSide === SIDE_ACCUSED
-        ? 'Please enter the Complainant/Petitioner/Plaintiff'
-        : 'Please enter the Accused/Respondent/Defendant'
+      const [first, second] = partySides(newCaseForm.caseNature)
+      return `Please enter the ${(newCaseForm.clientSide === SIDE_ACCUSED ? first : second).label}`
     }
 
     // A party's phone is optional but must be valid if entered
@@ -2324,6 +2345,13 @@ export function AppProvider({ children }) {
 
       const created =
         await casesApi.create({ ...buildCasePayload(), status: 'Pending' })
+
+      if (created?.miscApplication) {
+        setShowAddCase(false)
+        resetCaseModal()
+        addToast('Added to Misc. Applications with its own CNR. It updates from eCourts like a case')
+        return
+      }
 
       setCases(prev => [
         ...prev,
@@ -2537,6 +2565,45 @@ export function AppProvider({ children }) {
     setCases(prev => prev.map(apply))
     setSelectedCase(prev => apply(prev))
   }
+
+  // The month on the calendar (and the selected day) is asked for from the server directly, so past dates always show the
+  // cases heard on them, whatever the full history load did. Records are merged by id. A failure is shown, not hidden
+  const viewedMonthKey = `${calendarViewDate.getFullYear()}-${calendarViewDate.getMonth()}`
+  const selectedDayKey = formatDate(calendarDate)
+  // The month being asked for now; an answer for another month (the person moved on) is dropped, any other answer is kept,
+  // so the repeated reloads while the app starts up can no longer cancel the one that would have filled the calendar
+  const monthKeyRef = useRef('')
+  useEffect(() => {
+    if (!loggedIn) return undefined
+    const key = `${viewedMonthKey}|${selectedDayKey}`
+    monthKeyRef.current = key
+    const first = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth(), 1)
+    const last  = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 0)
+    // A week either side covers the greyed days around the month
+    const from = formatDate(new Date(first.getFullYear(), first.getMonth(), first.getDate() - 7))
+    const to   = formatDate(new Date(last.getFullYear(), last.getMonth(), last.getDate() + 7))
+    const ranges = [{ from, to }]
+    if (selectedDayKey < from || selectedDayKey > to) ranges.push({ from: selectedDayKey, to: selectedDayKey })
+
+    let timer = null
+    // Reads the month; when the answer is empty or fails (sign-in may still be settling) it tries again shortly
+    function load(attempt) {
+      Promise.all(ranges.map(r => hearingsApi.list({ from: r.from, to: r.to, size: 1000 })))
+        .then(results => {
+          if (monthKeyRef.current !== key) return
+          const fetched = results.flatMap(res => (Array.isArray(res) ? res : res?.content || []))
+          setMonthHearings(fetched)
+          if (fetched.length === 0 && attempt < 3) timer = setTimeout(() => load(attempt + 1), 1500 * (attempt + 1))
+        })
+        .catch(e => {
+          console.error('Could not load hearings for the calendar month', e)
+          if (attempt < 3) timer = setTimeout(() => load(attempt + 1), 1500 * (attempt + 1))
+          else if (monthKeyRef.current === key) addToast(`Could not load past hearings for the calendar: ${e?.message || 'server error'}`, 'error')
+        })
+    }
+    load(0)
+    return () => { if (timer) clearTimeout(timer) }
+  }, [loggedIn, viewedMonthKey, selectedDayKey, hearingsVersion, cases.length > 0])
 
   // Open the "next hearing" modal for a case
   function openNextHearing(c) {
@@ -3425,7 +3492,12 @@ export function AppProvider({ children }) {
   const calendarDateKey = formatDate(calendarDate)
 
   // Hearing records that count on the calendar (withdrawn ones are ignored)
-  const calendarHearingRecords = hearingRecords.filter(h => h.outcome !== WITHDRAWN_OUTCOME && !isMiscOnlyHearing(h))
+  const calendarHearingRecords = (() => {
+    const byId = new Map()
+    hearingRecords.forEach(h => byId.set(h.id, h))
+    monthHearings.forEach(h => byId.set(h.id, h))
+    return [...byId.values()].filter(h => h.outcome !== WITHDRAWN_OUTCOME && !isMiscOnlyHearing(h))
+  })()
 
   // The different cases that have a hearing on each date (upcoming + past)
   const hearingCaseIdsByDate = (() => {
@@ -3443,7 +3515,7 @@ export function AppProvider({ children }) {
       if (caseIds.has(h.caseId)) add(h.date, h.caseId)
     })
     // Misc. application hearings count for their case too (once, even when the case itself is listed that day)
-    miscHearingCaseIdsByDate.forEach((ids, date) => ids.forEach(id => { if (caseIds.has(id)) add(date, id) }))
+    miscHearingCaseIdsByDate.forEach((ids, date) => ids.forEach(id => add(date, id)))
 
     return caseIdsByDate
   })()

@@ -165,8 +165,10 @@ export function cnrDetailToForm(detail, { advocateName = '' } = {}) {
   const catalog = matchCatalog(nature, detail.caseType, !!detail.firNo)
 
   // Our side: the logged-in advocate is listed on one side. When he is not listed, the side is worked out later
-  // from the client chosen for the case, and until then it is the petitioner side
-  const side = detectSide(detail, advocateName, { advocates: true }) || SIDE_COMPLAINANT
+  // from the client chosen for the case, and until then it is the accused side for a police challan case (the State is
+  // the petitioner there, and it is never our client) and the petitioner side for any other case
+  const side = detectSide(detail, advocateName, { advocates: true })
+    || (isPoliceChallan(catalog.reliefSought) ? SIDE_ACCUSED : SIDE_COMPLAINANT)
 
   return {
     cnrNo: detail.cnr || '',
@@ -193,7 +195,7 @@ export function cnrDetailToForm(detail, { advocateName = '' } = {}) {
     } : {}),
 
     // FIR details only show for a police challan case, where they are kept
-    ...(isPoliceChallan(catalog.reliefSought) ? { firNo: detail.firNo || '', firSection: String(detail.actsSections || '').slice(0, 255), policeStation: detail.policeStation || '' } : {}),
+    ...(isPoliceChallan(catalog.reliefSought) ? { firNo: detail.firNo || '', firSection: String(detail.actsSections || '').slice(0, 1000), policeStation: detail.policeStation || '' } : {}),
 
     // Which side our client is on. The opposite parties start as the names eCourts lists on the other side;
     // the advocate can edit, remove or add parties like in a case added by hand

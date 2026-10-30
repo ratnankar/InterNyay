@@ -12,6 +12,8 @@ import MiscApplicationDetailModal from '../components/modals/MiscApplicationDeta
 import FitLabel from '../components/common/FitLabel'
 import Icon from '../components/common/Icon'
 import NextHearingBox from '../components/common/NextHearingBox'
+import useClockTick from '../hooks/useClockTick'
+import { hearingBoxPhase } from '../utils/dateUtils'
 import MiscNextHearingModal from '../components/misc/MiscNextHearingModal'
 
 // Status filter buttons as [filter value, label]
@@ -232,13 +234,15 @@ export default function MiscApplications() {
                   <MiscSummaryFields app={a} />
                 </div>
 
-                {!disposed && a.hearingDate && (
+                {!disposed && a.hearingDate && (a.portalSynced ? (
                   <NextHearingBox
                     date={a.hearingDate}
                     refreshTitle="Update the next hearing date"
                     onRefresh={() => setUpdateApp(a)}
                   />
-                )}
+                ) : (
+                  <UpcomingHearingBox date={a.hearingDate} />
+                ))}
               </div>
             </div>
           )
@@ -278,4 +282,10 @@ export default function MiscApplications() {
       )}
     </div>
   )
+}
+
+function UpcomingHearingBox({ date }) {
+  const now = useClockTick()
+  if (hearingBoxPhase(date, now) === 'expired') return null
+  return <NextHearingBox date={date} />
 }

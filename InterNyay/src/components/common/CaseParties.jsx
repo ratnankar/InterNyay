@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { PARTY_SIDES, SIDE_ACCUSED, SIDE_COMPLAINANT } from '../../constants/caseCatalog'
+import { partySides, SIDE_ACCUSED, SIDE_COMPLAINANT } from '../../constants/caseCatalog'
 import { caseClientEntries } from '../../utils/caseClients'
 import { nonClientsOf, opponentsOf, partySubText } from '../../utils/caseParties'
 
 import Icon from './Icon'
 
-const sideLabel = side => PARTY_SIDES.find(s => s.value === side)?.label || ''
+const sideLabel = (side, nature) => partySides(nature).find(s => s.value === side)?.label || ''
 
 function countText(clientCount, nonClientCount, opponentCount, ours) {
   if (!ours) return `${opponentCount} ${opponentCount === 1 ? 'party' : 'parties'}`
@@ -57,7 +57,7 @@ export default function CaseParties({ caseItem: c, clients = [] }) {
     <div className="case-parties">
       {(clientEntries.length > 0 || nonClients.length > 0) && (
         <PartySection
-          label={sideLabel(ourSide)}
+          label={sideLabel(ourSide, c.caseNature)}
           summary={countText(clientEntries.length, nonClients.length, 0, true)}
           open={openSide.ours}
           onToggle={toggle('ours')}
@@ -103,7 +103,7 @@ export default function CaseParties({ caseItem: c, clients = [] }) {
 
       {opponents.length > 0 && (
         <PartySection
-          label={sideLabel(theirSide)}
+          label={sideLabel(theirSide, c.caseNature)}
           summary={countText(0, 0, opponents.length, false)}
           open={openSide.theirs}
           onToggle={toggle('theirs')}

@@ -314,3 +314,6 @@
 /* Old date removed: the box holds only the refresh symbol */
 .case-card__hearing--expired { padding: 8px; }
 .case-card__hearing--expired .case-card__hearing-refresh { margin-left: 0; }
+
+.case-card__hearing-update { display: flex; align-items: center; margin-top: 4px; }
+.case-card__hearing--update .case-card__hearing-refresh { margin-left: 0; }

@@ -306,3 +306,26 @@
 
 /* Note saved with a hearing: fills the space between the date and the Edit / Delete buttons */
 .misc-history__note { flex: 1 1 0; min-width: 0; color: var(--color-text-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.hearing-history__actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px 12px; margin-left: auto; }
+.hearing-history__actions .btn-outline { flex: 0 0 auto; white-space: nowrap; }
+
+.form-hint { margin: 8px 0 0; font-size: 12.5px; color: var(--text-secondary, #64748b); line-height: 1.45; }
+
+.misc-details { align-items: start; }
+.misc-details__action { grid-column: 1 / -1; align-self: start; justify-content: flex-end; }
+.misc-link { margin-top: 14px; padding-top: 12px; border-top: var(--border-default); }
+.misc-link__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.misc-link__info { min-width: 0; flex: 1 1 200px; }
+.misc-link__name { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.misc-link__meta { margin: 0; font-size: var(--fs-sm); color: var(--color-text-muted); overflow-wrap: anywhere; }
+.misc-link__actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.misc-reopen { display: flex; justify-content: flex-end; margin-top: 12px; }
+.misc-section { margin-top: 12px; padding-top: 12px; }
+.misc-details + .misc-section, .misc-link + .misc-section { border-top: var(--border-default); }
+.misc-section > .misc-docblock:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.misc-section:empty { display: none; }
+
+@media (min-width: 1200px) {
+  .misc-page .case-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
