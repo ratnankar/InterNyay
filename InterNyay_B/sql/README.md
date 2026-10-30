@@ -60,6 +60,11 @@ and refuses to start if they do not. It never changes the database.
 | `V51__misc_application_case_created_here.sql` | `misc_applications.case_created_here`: the application was added together with a new case, so its case details can be edited from it |
 | `V52__remove_midnight_and_cleanup_jobs.sql` | Removes the saved settings of the 12 AM runs and the run log cleanup job, which no longer exist |
 | `V53__scheduler_target_date.sql` | `scheduler_settings.target`: which hearing date(s) a job looks up (today, tomorrow ...), chosen in Admin > Schedulers |
+| `V54`-`V56` | Misc. portal applications, the case an application is linked to, contact attachments |
+| `V57__case_data_quality.sql` | `created_at` / `updated_at` filled for old cases; `live_case_no` / `live_cnr_no` (empty for a deleted case) carry the unique keys, so a deleted case keeps its number; wider `fir_section`; junk text and `&amp;` removed from acts; `deleted` NOT NULL; `ecourts_judge` dropped |
+| `sql/remove_test_cases.sql`, `sql/fix_state_cases_client_side.sql`, `sql/review_case_data.sql` | Optional scripts to run by hand after a backup: soft-delete the four test cases; set the client side of "State v." challan cases to Accused (roll-back first); read-only data checks |
+| `V58__case_text_tidy.sql` | Case numbers in one form (`CR Cases 6871/2025`; a row that would collide is left), case stage capitals and spacing, FIR number spacing, FIR section / acts typed by hand changed to the portal form (`IPC - Section 457,380`) |
+| `V59__cnr_unique_key_retry.sql` | Makes the CNR key unique once the live duplicates V57 found are gone (does nothing while any remain) |
 
 This folder keeps only the scripts that run outside the app: `create_database.sql`, `check_links.sql` and `check_court_codes.sql`.
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).

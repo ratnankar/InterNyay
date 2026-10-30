@@ -111,4 +111,31 @@ class PortalCaseParserTest {
     void keepsAQueryStringLinkAsIs() {
         assertEquals("a=1&b=%2Fx.pdf", PortalCaseParser.pdfLink("'a=1&b=%2Fx.pdf'"));
     }
+    @Test
+    void readsAFilingStageCasePage() {
+        String html = "<button id=\"main_back_cnr\">Back</button><div id=\"history_cnr\"><h2>Case Details</h2>"
+                + "<table><tr><th>Case Code</th><td>203600358752026</td></tr>"
+                + "<tr><th> Filing Number</th><td>Misc Crl/35875/2026</td></tr>"
+                + "<tr><th>Filing Date</th><td><b>14-08-2026</b></td></tr>"
+                + "<tr><th>CNR Number</th><td><b>DLCT020358762026</b></td></tr></table>"
+                + "<table><tr><th>Petitioner</th><td>State</td></tr><tr><th></th><td>versus</td></tr>"
+                + "<tr><th>Respondent</th><td>Pawan Kumar</td></tr></table>Order not Uploded"
+                + "<h2>Acts</h2><table><tr><th>Under Act(s)</th><th>Under Section(s)</th></tr>"
+                + "<tr><td>Bharatiya Nagarik Suraksha Sanhita</td><td>497</td></tr></table></div>";
+
+        ParsedCase p = PortalCaseParser.parse(html);
+
+        assertTrue(p.found());
+        assertEquals("DLCT020358762026", p.cnr());
+        assertEquals("Misc Crl", p.caseType());
+        assertEquals("Misc Crl/35875/2026", p.filingNumber());
+        assertEquals(LocalDate.of(2026, 8, 14), p.filingDate());
+        assertEquals("", p.establishment());
+        assertEquals(List.of("State"), p.petitioners());
+        assertEquals(List.of("Pawan Kumar"), p.respondents());
+        assertEquals(List.of("Bharatiya Nagarik Suraksha Sanhita - Section 497"), p.acts());
+        assertNull(p.nextHearing());
+        assertFalse(p.disposed());
+        assertEquals("Misc Crl/35875/2026", EcourtsCaseService.detailOf(p).caseNo());
+    }
 }

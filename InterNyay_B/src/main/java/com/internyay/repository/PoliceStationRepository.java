@@ -22,6 +22,17 @@ public interface PoliceStationRepository extends JpaRepository<PoliceStation, Lo
         """)
     List<Long> idsByNameAndCourt(String name, String court);
 
+    // Same, comparing names without spaces, dots and dashes; the key is already lower case letters and digits only
+    @Query("SELECT s.id FROM PoliceStation s WHERE REPLACE(REPLACE(REPLACE(LOWER(s.name), ' ', ''), '.', ''), '-', '') = :key")
+    List<Long> idsByNameKey(String key);
+
+    @Query("""
+        SELECT s.id FROM PoliceStation s
+        WHERE REPLACE(REPLACE(REPLACE(LOWER(s.name), ' ', ''), '.', ''), '-', '') = :key
+        AND LOWER(s.subDivision.district.court) = LOWER(:court)
+        """)
+    List<Long> idsByNameKeyAndCourt(String key, String court);
+
     // All stations in display order
     List<PoliceStation> findAllByOrderBySortOrderAscIdAsc();
 

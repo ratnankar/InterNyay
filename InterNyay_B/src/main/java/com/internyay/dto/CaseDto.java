@@ -24,6 +24,7 @@ public class CaseDto {
     public String fileNo;
     public Integer fileSeq;
     public String cnrNo;
+    public boolean miscApplication;
     public LocalDate filingDate;
 
     // eCourts case page details
@@ -165,6 +166,7 @@ public class CaseDto {
                 .fileNo(c.getFileNo())
                 .fileSeq(c.getFileSeq())
                 .cnrNo(c.getCnrNo())
+                .miscApplication(c.isMiscPortal())
                 .filingDate(c.getFilingDate())
                 .caseStage(c.getCaseStage())
                 .actsSections(c.getActsSections())

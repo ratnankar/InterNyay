@@ -37,7 +37,10 @@ public class HearingService {
     @Transactional(readOnly = true)
     public Page<HearingDto> list(Long userId, Long caseId, LocalDate from, LocalDate to, int page, int size) {
         Pageable p = PageRequest.of(page, size, Sort.by("date").ascending());
-        return hearingRepo.findByFilters(userId, caseId, from, to, p).map(HearingDto::from);
+        // Open-ended range instead of null dates, so the query never has to compare against a null date parameter
+        LocalDate start = from != null ? from : LocalDate.of(1900, 1, 1);
+        LocalDate end   = to   != null ? to   : LocalDate.of(2999, 12, 31);
+        return hearingRepo.findByFilters(userId, caseId, start, end, p).map(HearingDto::from);
     }
 
     // History of one case, newest first (transaction needed for the lazily loaded case, see list above)

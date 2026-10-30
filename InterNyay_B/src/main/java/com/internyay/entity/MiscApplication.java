@@ -47,6 +47,13 @@ public class MiscApplication {
     @Builder.Default
     private boolean caseCreatedHere = false;
 
+    @Column(name = "linked_case_id")
+    private Long linkedCaseId;
+
+    @Column(name = "portal_synced", nullable = false)
+    @Builder.Default
+    private boolean portalSynced = false;
+
     private LocalDate filingDate;
 
     // Next date the application is listed for

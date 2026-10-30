@@ -34,6 +34,27 @@ public final class FeeMapper {
 
     // Applies only the fields that came in the request
     public static void applyFeeFields(Case c, CaseRequest req) {
+        applyFeeFieldsFromRequest(c, req);
+        dropUnusedFeeFields(c);
+    }
+
+    // After a fee type is switched, the amount of the type no longer used is cleared, unless money was already received on it
+    // (a total fee marked paid, or hearing fees that exist), so that no stale amount stays on the case
+    static void dropUnusedFeeFields(Case c) {
+        String type = c.getFeeType();
+        if (type == null) return;
+        boolean total = "TOTAL".equalsIgnoreCase(type);
+        if (!total && !c.isTotalFeePaid()) {
+            c.setTotalFeeAmount(null);
+            c.setTotalFeeAmountDate(null);
+        }
+        boolean dateWise = "DATEWISE".equalsIgnoreCase(type);
+        if (!dateWise && (c.getHearingFees() == null || c.getHearingFees().isEmpty())) {
+            c.setDateWiseAmount(null);
+        }
+    }
+
+    private static void applyFeeFieldsFromRequest(Case c, CaseRequest req) {
 
         // Fee type
         if (req.getFeeType() != null && !req.getFeeType().isBlank()) {

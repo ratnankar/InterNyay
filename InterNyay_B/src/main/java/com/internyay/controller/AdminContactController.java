@@ -6,6 +6,7 @@ import com.internyay.dto.ContactStatusRequest;
 import com.internyay.service.ContactService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,12 @@ public class AdminContactController {
     @GetMapping
     public List<ContactMessageDto> list(@RequestParam(required = false) String status) {
         return contactService.list(status);
+    }
+
+    // Open any attached file
+    @GetMapping("/attachments/{id}")
+    public ResponseEntity<InputStreamResource> attachment(@PathVariable Long id) {
+        return ContactController.serve(contactService.openAttachment(id, null));
     }
 
     // Change a message's status (new / read / resolved)

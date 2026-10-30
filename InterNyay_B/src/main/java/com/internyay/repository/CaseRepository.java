@@ -26,6 +26,7 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     @Query("""
         SELECT c FROM Case c
         WHERE c.user.id = :userId
+        AND c.miscPortal = false
         AND (:search IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%',:search,'%'))
              OR LOWER(c.caseNo) LIKE LOWER(CONCAT('%',:search,'%')))
         AND (:status IS NULL OR c.status = :status)

@@ -75,7 +75,13 @@ public final class PortalCaseParser {
     private static final Pattern SECTION = Pattern.compile(
             "^(Case Details|Case Status|Petitioner and Advocate|Respondent and Advocate|Acts|FIR Details|Case History|"
           + "Interim Orders|Final Orders(?: and Judgements?)?|Orders?|Process Details|Case Transfer Details|"
-          + "Subordinate Court Information|Objections|Link Cases|IA Details)\\s*$", Pattern.CASE_INSENSITIVE);
+          + "Subordinate Court Information|Objections|Link Cases|IA Details|Processes|IA Status|Main Matters|Documents?)\\s*$", Pattern.CASE_INSENSITIVE);
+
+    // A cell that is only a field name ("e-Filing Date"), which a field with no value picks up as its value
+    private static final Pattern LABEL_ONLY = Pattern.compile(
+            "^(?:e-?filing (?:number|date)|filing (?:number|date)|registration (?:number|date)|cnr number|case type|"
+          + "first hearing date|next hearing date|case stage|court number and judge|decision date|nature of disposal)\\s*:?$",
+            Pattern.CASE_INSENSITIVE);
 
     public static ParsedCase parse(String html) {
         org.jsoup.nodes.Document doc = Jsoup.parse(html == null ? "" : html);
@@ -98,9 +104,11 @@ public final class PortalCaseParser {
                 break;
             }
         }
+        if (establishment.equalsIgnoreCase("Back")) establishment = "";
 
         String caseType = value(text, "Case Type");
         String filingNumber = value(text, "Filing Number");
+        if (caseType.isEmpty()) caseType = typeOfFilingNumber(filingNumber);
         LocalDate filingDate = shortDate(value(text, "Filing Date"));
         String registrationNumber = value(text, "Registration Number");
         LocalDate registrationDate = shortDate(value(text, "Registration Date"));
@@ -141,12 +149,18 @@ public final class PortalCaseParser {
         List<String> respondentAdvocates = new ArrayList<>();
         parties(section(lines, "Respondent and Advocate"), respondents, respondentAdvocates);
 
+        if (petitioners.isEmpty()) petitioners.addAll(labelledNames(lines, "Petitioner"));
+        if (respondents.isEmpty()) respondents.addAll(labelledNames(lines, "Respondent"));
+
         // Acts: "Negotiable Instruments Act <tab> 138" under the header row
         List<String> acts = new ArrayList<>();
         for (String row : section(lines, "Acts")) {
             String[] cells = cells(row);
             if (cells.length == 0 || cells[0].toLowerCase(Locale.ROOT).startsWith("under act")) continue;
-            acts.add(cells.length > 1 ? cells[0] + " - Section " + cells[1] : cells[0]);
+            // A row that is not an act: a process id, an IA row or a CNR number from a table that follows the acts
+            if (cells[0].matches("(?i)^(?:P?DL[A-Z]{2}\\d{8,}.*|process.*|ia .*|main .*)$")) continue;
+            String section = cells.length > 1 ? cells[1].replaceAll("[,;\\s]+$", "") : "";
+            acts.add(section.isEmpty() ? cells[0] : cells[0] + " - Section " + section);
         }
 
         List<String> fir = section(lines, "FIR Details");
@@ -310,9 +324,23 @@ public final class PortalCaseParser {
         Matcher m = p.matcher(text);
         while (m.find()) {
             String v = m.group(1).strip().replaceFirst("^:\\s*", "");
-            if (!v.isEmpty()) return v;
+            if (!v.isEmpty() && !LABEL_ONLY.matcher(v).matches()) return v;
         }
         return "";
+    }
+
+    private static String typeOfFilingNumber(String filingNumber) {
+        int slash = filingNumber == null ? -1 : filingNumber.indexOf('/');
+        return slash > 0 ? filingNumber.substring(0, slash).trim() : "";
+    }
+
+    private static List<String> labelledNames(List<String> lines, String label) {
+        List<String> out = new ArrayList<>();
+        for (String line : lines) {
+            String[] c = cells(line);
+            if (c.length == 2 && c[0].equalsIgnoreCase(label)) addUnique(out, c[1]);
+        }
+        return out;
     }
 
     // "1) NAME" lines are the parties, "Advocate- NAME" lines the advocates

@@ -5,10 +5,12 @@ import com.internyay.entity.Case;
 import com.internyay.entity.DocumentMeta;
 import com.internyay.entity.MiscApplication;
 import com.internyay.entity.MiscApplicationHearing;
+import com.internyay.repository.HearingRepository;
 import com.internyay.repository.MiscApplicationHearingRepository;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.MiscApplicationRepository;
 import com.internyay.repository.UserRepository;
+import com.internyay.util.CaseStatuses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +41,7 @@ public class MiscApplicationService {
     private final DocumentService documentService;
     private final HearingDayService hearingDays;
     private final MiscApplicationHearingRepository hearingRepo;
+    private final HearingRepository caseHearingRepo;
 
     // Document type shown in the Documents page for the order and the additional documents of an application
     static final String ORDER_TYPE = "Misc. Application Order";
@@ -79,6 +82,12 @@ public class MiscApplicationService {
         for (Object[] row : hearingRepo.caseIdsByDate(userId)) {
             byDate.computeIfAbsent(String.valueOf(row[0]), k -> new java.util.ArrayList<>()).add((Long) row[1]);
         }
+        for (Object[] row : repo.portalNextHearings(userId)) {
+            byDate.computeIfAbsent(String.valueOf(row[0]), k -> new java.util.ArrayList<>()).add((Long) row[1]);
+        }
+        for (Object[] row : repo.portalHearingDates(userId)) {
+            byDate.computeIfAbsent(String.valueOf(row[0]), k -> new java.util.ArrayList<>()).add((Long) row[1]);
+        }
         return byDate;
     }
 
@@ -87,7 +96,45 @@ public class MiscApplicationService {
         List<Long> ids = rows.stream().map(MiscApplication::getId).toList();
         Map<Long, List<DocumentDto>> docs = documentService.mapByMiscApplicationIds(ids);
         Map<Long, List<MiscHearingDto>> hearings = hearingsOf(ids);
-        return a -> MiscApplicationDto.from(a, docs.getOrDefault(a.getId(), List.of()), hearings.getOrDefault(a.getId(), List.of()));
+        Map<Long, Case> linked = linkedCases(rows);
+        return a -> withLink(MiscApplicationDto.from(a, docs.getOrDefault(a.getId(), List.of()),
+                a.isPortalSynced() ? portalHearingsOf(a) : hearings.getOrDefault(a.getId(), List.of())), a, linked);
+    }
+
+    private Map<Long, Case> linkedCases(List<MiscApplication> rows) {
+        List<Long> ids = rows.stream().map(MiscApplication::getLinkedCaseId).filter(java.util.Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) return Map.of();
+        return caseRepo.findAllById(ids).stream().collect(Collectors.toMap(Case::getId, c -> c));
+    }
+
+    private MiscApplicationDto withLink(MiscApplicationDto dto, MiscApplication a, Map<Long, Case> linked) {
+        Case c = a.getLinkedCaseId() == null ? null : linked.get(a.getLinkedCaseId());
+        if (c != null) {
+            dto.linkedCaseId = c.getId();
+            dto.linkedCaseTitle = c.getTitle();
+            dto.linkedCaseNo = c.getCaseNo();
+        }
+        return dto;
+    }
+
+    @Transactional
+    public MiscApplicationDto linkCase(Long id, Long caseId, Long userId) {
+        MiscApplication a = findOwned(id, userId);
+        if (!a.isPortalSynced()) throw new IllegalArgumentException("Only an application with its own CNR can be linked to a case");
+        if (caseId == null) {
+            a.setLinkedCaseId(null);
+        } else {
+            Case c = ownedCase(caseId, userId);
+            if (c.isMiscPortal() || c.getId().equals(a.getLegalCase().getId())) throw new IllegalArgumentException("Choose a case");
+            a.setLinkedCaseId(c.getId());
+        }
+        return toDto(repo.save(a));
+    }
+
+    private List<MiscHearingDto> portalHearingsOf(MiscApplication a) {
+        return caseHearingRepo.findByLegalCase_IdAndUser_IdOrderByDateDesc(a.getLegalCase().getId(), a.getUser().getId()).stream()
+                .map(h -> MiscHearingDto.builder().id(h.getId()).date(h.getDate().toString()).note(h.getNotes()).build())
+                .toList();
     }
 
     private Map<Long, List<MiscHearingDto>> hearingsOf(List<Long> ids) {
@@ -152,6 +199,16 @@ public class MiscApplicationService {
             if (filing != null) a.setFilingDate(filing);
         }
 
+        if (a.isPortalSynced()) {
+            CaseRequest portal = new CaseRequest();
+            portal.setIdsOptional(true);
+            portal.setTitle(clean(req.getCaseTitle()));
+            portal.setClientId(req.getClientId());
+            portal.setNextHearing(req.getHearingDate());
+            caseService.update(a.getLegalCase().getId(), portal, userId);
+            return toDto(repo.save(a));
+        }
+
         // The case: another case for an application filed in an existing one, or the details of the case that was created with it
         if (a.isCaseCreatedHere()) {
             editOwnCase(a, req, userId);
@@ -183,6 +240,7 @@ public class MiscApplicationService {
     @Transactional
     public MiscApplicationDto updateHearing(Long id, Long hearingId, String date, String note, Long userId) {
         MiscApplication a = findOwned(id, userId);
+        assertManualHistory(a);
         MiscApplicationHearing h = ownedHearing(a, hearingId);
 
         LocalDate day = parseDate("Hearing date", date);
@@ -214,6 +272,7 @@ public class MiscApplicationService {
     @Transactional
     public MiscApplicationDto deleteHearing(Long id, Long hearingId, Long userId) {
         MiscApplication a = findOwned(id, userId);
+        assertManualHistory(a);
         MiscApplicationHearing h = ownedHearing(a, hearingId);
 
         boolean wasNext = h.getHearingDate().equals(a.getHearingDate());
@@ -223,6 +282,10 @@ public class MiscApplicationService {
             repo.save(a);
         }
         return toDto(a);
+    }
+
+    private static void assertManualHistory(MiscApplication a) {
+        if (a.isPortalSynced()) throw new IllegalArgumentException("The hearing history of this application is updated from eCourts");
     }
 
     // The hearing entry, only when it belongs to the application
@@ -244,6 +307,18 @@ public class MiscApplicationService {
         if (result == null) throw new IllegalArgumentException("Choose whether the application was allowed or disallowed");
 
         LocalDate day = parseDate("Disposal date", disposedOn);
+
+        if (a.isPortalSynced()) {
+            CaseRequest portal = new CaseRequest();
+            portal.setIdsOptional(true);
+            portal.setStatus(CaseStatuses.DECIDED);
+            if (day != null) portal.setDecisionDate(day.toString());
+            caseService.update(a.getLegalCase().getId(), portal, userId);
+            a.setDisposalOutcome(result);
+            repo.save(a);
+            return toDto(a);
+        }
+
         a.setStatus(MiscApplication.DISPOSED_OFF);
         a.setDisposedOn(day);
         a.setDisposalOutcome(result);
@@ -256,6 +331,17 @@ public class MiscApplicationService {
     public MiscApplicationDto reopen(Long id, Long userId) {
 
         MiscApplication a = findOwned(id, userId);
+
+        if (a.isPortalSynced()) {
+            CaseRequest portal = new CaseRequest();
+            portal.setIdsOptional(true);
+            portal.setStatus(MiscApplication.PENDING);
+            caseService.update(a.getLegalCase().getId(), portal, userId);
+            a.setDisposalOutcome(null);
+            repo.save(a);
+            return toDto(a);
+        }
+
         a.setStatus(MiscApplication.PENDING);
         a.setDisposedOn(null);
         a.setDisposalOutcome(null);
@@ -268,6 +354,10 @@ public class MiscApplicationService {
     public void delete(Long id, Long userId) {
         MiscApplication a = findOwned(id, userId);
         documentService.deleteAllForMiscApplication(a.getId());
+        if (a.isPortalSynced()) {
+            caseService.delete(a.getLegalCase().getId(), userId);
+            return;
+        }
         repo.delete(a);
     }
 
@@ -384,8 +474,11 @@ public class MiscApplicationService {
     private MiscApplicationDto toDto(MiscApplication a) {
         // Reloaded with the case, court and client so the DTO never reads a lazy relation
         MiscApplication full = repo.findWithCaseById(a.getId()).orElse(a);
-        return MiscApplicationDto.from(full, documentService.listForOwnedMiscApplication(full.getId()),
-                hearingsOf(List.of(full.getId())).getOrDefault(full.getId(), List.of()));
+        List<MiscHearingDto> hearings = full.isPortalSynced()
+                ? portalHearingsOf(full)
+                : hearingsOf(List.of(full.getId())).getOrDefault(full.getId(), List.of());
+        return withLink(MiscApplicationDto.from(full, documentService.listForOwnedMiscApplication(full.getId()), hearings),
+                full, linkedCases(List.of(full)));
     }
 
     // Name shown for a file when none is typed

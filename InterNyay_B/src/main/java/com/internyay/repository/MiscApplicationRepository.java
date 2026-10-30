@@ -20,30 +20,32 @@ public interface MiscApplicationRepository extends JpaRepository<MiscApplication
         SELECT a FROM MiscApplication a
         JOIN FETCH a.legalCase c
         JOIN FETCH c.courtPlace
-        JOIN FETCH c.client cl
+        LEFT JOIN FETCH c.client cl
         WHERE a.user.id = :userId
         AND (:status IS NULL OR a.status = :status)
-        AND (:caseId IS NULL OR c.id = :caseId)
+        AND (:caseId IS NULL OR c.id = :caseId OR a.linkedCaseId = :caseId)
         AND (:outcome IS NULL OR a.disposalOutcome = :outcome)
         AND (:search IS NULL
              OR LOWER(a.applicationType) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(c.caseNo) LIKE LOWER(CONCAT('%', :search, '%'))
+             OR LOWER(c.cnrNo) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(cl.name) LIKE LOWER(CONCAT('%', :search, '%')))
         """,
         countQuery = """
         SELECT COUNT(a) FROM MiscApplication a
         JOIN a.legalCase c
         JOIN c.courtPlace
-        JOIN c.client cl
+        LEFT JOIN c.client cl
         WHERE a.user.id = :userId
         AND (:status IS NULL OR a.status = :status)
-        AND (:caseId IS NULL OR c.id = :caseId)
+        AND (:caseId IS NULL OR c.id = :caseId OR a.linkedCaseId = :caseId)
         AND (:outcome IS NULL OR a.disposalOutcome = :outcome)
         AND (:search IS NULL
              OR LOWER(a.applicationType) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(c.caseNo) LIKE LOWER(CONCAT('%', :search, '%'))
+             OR LOWER(c.cnrNo) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(cl.name) LIKE LOWER(CONCAT('%', :search, '%')))
         """)
     Page<MiscApplication> findByFilters(Long userId, String status, String outcome, Long caseId, String search, Pageable pageable);
@@ -53,9 +55,12 @@ public interface MiscApplicationRepository extends JpaRepository<MiscApplication
         SELECT a FROM MiscApplication a
         JOIN FETCH a.legalCase c
         JOIN FETCH c.courtPlace
-        JOIN FETCH c.client
+        LEFT JOIN FETCH c.client
         WHERE a.user.id = :userId
-        AND a.id IN (SELECT h.miscApplicationId FROM MiscApplicationHearing h WHERE h.hearingDate = :date)
+        AND (a.id IN (SELECT h.miscApplicationId FROM MiscApplicationHearing h WHERE h.hearingDate = :date)
+             OR (a.portalSynced = true
+                 AND (c.nextHearing = :date
+                      OR EXISTS (SELECT 1 FROM Hearing ch WHERE ch.legalCase.id = c.id AND ch.date = :date))))
         ORDER BY a.id
         """)
     List<MiscApplication> findOnDate(Long userId, java.time.LocalDate date);
@@ -65,8 +70,20 @@ public interface MiscApplicationRepository extends JpaRepository<MiscApplication
         SELECT a FROM MiscApplication a
         JOIN FETCH a.legalCase c
         JOIN FETCH c.courtPlace
-        JOIN FETCH c.client
+        LEFT JOIN FETCH c.client
         WHERE a.id = :id
         """)
     java.util.Optional<MiscApplication> findWithCaseById(Long id);
+
+    @Query("""
+        SELECT DISTINCT a.legalCase.nextHearing, a.legalCase.id FROM MiscApplication a
+        WHERE a.user.id = :userId AND a.portalSynced = true AND a.legalCase.nextHearing IS NOT NULL
+        """)
+    List<Object[]> portalNextHearings(Long userId);
+
+    @Query("""
+        SELECT DISTINCT h.date, a.legalCase.id FROM Hearing h, MiscApplication a
+        WHERE h.legalCase.id = a.legalCase.id AND a.user.id = :userId AND a.portalSynced = true
+        """)
+    List<Object[]> portalHearingDates(Long userId);
 }

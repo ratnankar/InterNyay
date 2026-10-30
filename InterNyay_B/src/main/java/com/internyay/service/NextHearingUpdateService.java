@@ -318,6 +318,10 @@ public class NextHearingUpdateService {
             Case fresh = caseRepo.findById(caseId).orElse(null);
             if (fresh == null) return;
             if (CaseStatuses.isClosed(fresh.getStatus())) return;
+            // The date the case was listed for stays in the hearing history, otherwise it drops off the calendar
+            if (fresh.getNextHearing() != null && fresh.getUser() != null) {
+                hearingService.recordHeard(fresh, fresh.getNextHearing(), fresh.getUser().getId());
+            }
             fresh.setStatus(CaseStatuses.DECIDED);
             if (fresh.getDecisionDate() == null) fresh.setDecisionDate(decisionDate);
             fresh.setNextHearing(null);

@@ -16,9 +16,9 @@ import java.util.Map;
 // A court case of an advocate, with its fees, client links and next hearing. Deleted cases are hidden by @SQLRestriction
 @SQLRestriction("(deleted IS NULL OR deleted = 0)")
 @Entity
-@Table(name = "cases", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_cases_user_case_no", columnNames = {"user_id", "case_no"})
-}, indexes = {
+// The database also keeps a unique key on (user_id, live_case_no) and on (user_id, live_cnr_no) (V57): two generated columns that
+// copy case_no and cnr_no while the case is not deleted and are empty after, so a deleted case no longer blocks its own number
+@Table(name = "cases", indexes = {
         @Index(name = "idx_cases_next_hearing", columnList = "next_hearing"),
         @Index(name = "idx_cases_cnr_no", columnList = "cnr_no"),
         @Index(name = "idx_cases_user_status", columnList = "user_id, status")
@@ -43,6 +43,7 @@ public class Case {
     private Integer fileSeq;
 
     // Soft delete, the row stays and can be restored
+    @Column(nullable = false)
     @Builder.Default
     private Boolean deleted = false;
 
@@ -50,6 +51,10 @@ public class Case {
 
     // CNR number used to look the case up on eCourts
     private String cnrNo;
+
+    @Column(name = "misc_portal", nullable = false)
+    @Builder.Default
+    private boolean miscPortal = false;
 
     private LocalDate filingDate;
 
@@ -247,11 +252,20 @@ public class Case {
         return (reminderDaysBefore == null || reminderDaysBefore != 2) ? 1 : 2;
     }
 
-    // Created and updated times
+    // Created and updated times. They are set in @PrePersist because a field initializer is skipped by the builder
+    // (which is how cases are made), and that left created_at empty on every row
     @Column(updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
+
+    // Fills both times when the case is first saved
+    @PrePersist
+    void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (this.createdAt == null) this.createdAt = now;
+        if (this.updatedAt == null) this.updatedAt = this.createdAt;
+    }
 
     // Refreshes the updated time on every save
     @PreUpdate

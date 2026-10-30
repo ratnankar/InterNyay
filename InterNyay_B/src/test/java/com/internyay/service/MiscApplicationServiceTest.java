@@ -44,13 +44,14 @@ class MiscApplicationServiceTest {
     @Mock DocumentService documentService;
     @Mock HearingDayService hearingDays;
     @Mock MiscApplicationHearingRepository hearingRepo;
+    @Mock com.internyay.repository.HearingRepository caseHearingRepo;
 
     private MiscApplicationService service;
     private MiscApplication app;
 
     @BeforeEach
     void setUp() {
-        service = new MiscApplicationService(repo, caseRepo, userRepo, caseService, documentService, hearingDays, hearingRepo);
+        service = new MiscApplicationService(repo, caseRepo, userRepo, caseService, documentService, hearingDays, hearingRepo, caseHearingRepo);
 
         User owner = new User();
         owner.setId(OWNER);

@@ -1,5 +1,6 @@
 package com.internyay.dto;
 
+import com.internyay.entity.ContactAttachment;
 import com.internyay.entity.ContactMessage;
 import com.internyay.entity.ContactReply;
 import lombok.*;
@@ -25,11 +26,19 @@ public class ContactMessageDto {
 
     public List<ContactReplyDto> replies;
 
+    // Photos, videos and PDFs attached to the message
+    public List<ContactAttachmentDto> attachments;
+
     // True when there is an admin reply the user has not read
     public Boolean unreadReply;
 
     // Builds the DTO from the message and its replies
     public static ContactMessageDto from(ContactMessage m, List<ContactReply> replies) {
+        return from(m, replies, List.of());
+    }
+
+    // Same, with the attached files
+    public static ContactMessageDto from(ContactMessage m, List<ContactReply> replies, List<ContactAttachment> files) {
         return ContactMessageDto.builder()
                 .id(m.getId())
                 .accountId(m.getAccountId())
@@ -43,6 +52,7 @@ public class ContactMessageDto {
                 .status(m.getStatus())
                 .createdAt(m.getCreatedAt())
                 .replies(replies.stream().map(ContactReplyDto::from).toList())
+                .attachments(files.stream().map(ContactAttachmentDto::from).toList())
                 .unreadReply(Boolean.TRUE.equals(m.getUserUnread()))
                 .build();
     }

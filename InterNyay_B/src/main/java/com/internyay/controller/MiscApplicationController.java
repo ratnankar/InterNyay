@@ -80,6 +80,13 @@ public class MiscApplicationController {
         return ResponseEntity.ok(service.dispose(id, day, outcome, auth.currentUserId()));
     }
 
+    @PutMapping("/{id}/link-case")
+    public ResponseEntity<MiscApplicationDto> linkCase(@PathVariable Long id,
+                                                       @RequestBody(required = false) Map<String, Long> body) {
+        Long caseId = body == null ? null : body.get("caseId");
+        return ResponseEntity.ok(service.linkCase(id, caseId, auth.currentUserId()));
+    }
+
     // Back to pending
     @PutMapping("/{id}/reopen")
     public ResponseEntity<MiscApplicationDto> reopen(@PathVariable Long id) {

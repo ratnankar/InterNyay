@@ -10,7 +10,7 @@ public class ContactRequest {
     @NotBlank(message = "Choose what your message is about")
     public String category;
 
-    @NotBlank(message = "Enter a subject")
+    // Optional: when left empty the topic is used as the subject
     @Size(max = 150, message = "Subject must be 150 characters or fewer")
     public String subject;
 

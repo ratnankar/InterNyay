@@ -1,6 +1,7 @@
 package com.internyay.service;
 
 import com.internyay.scraper.PortalCaseParser.HistoryRow;
+import com.internyay.util.CaseText;
 import com.internyay.scraper.PortalCaseParser.OrderRow;
 import com.internyay.scraper.PortalCaseParser.ParsedCase;
 import org.springframework.stereotype.Service;
@@ -98,6 +99,9 @@ public class EcourtsCaseService {
 
         boolean hasFir = !p.firNo().isEmpty() || !p.policeStation().isEmpty();
 
+        // A case that is over has no stage: the portal keeps the last one, which would only mislead
+        boolean disposed = p.decisionDate() != null || !nz(p.natureOfDisposal()).isEmpty();
+
         return new CaseDetail(
                 p.cnr(),
                 caseNo,
@@ -119,8 +123,8 @@ public class EcourtsCaseService {
                 p.policeStation(),
                 snap.hearings().size(),
                 snap.orderFiles().size(),
-                nz(p.stage()),
-                String.join("; ", p.acts()),
+                disposed ? "" : CaseText.normalizeStage(nz(p.stage())),
+                CaseText.cleanActs(String.join("; ", p.acts())),
                 iso(p.registrationDate()),
                 iso(p.firstHearing()),
                 nz(p.efilingNumber()),

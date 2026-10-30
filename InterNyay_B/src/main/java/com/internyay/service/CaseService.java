@@ -5,7 +5,9 @@ import com.internyay.entity.*;
 import com.internyay.repository.*;
 import com.internyay.util.CaseCatalog;
 import com.internyay.util.CaseStatuses;
+import com.internyay.util.CaseText;
 import com.internyay.util.FeeMapper;
+import com.internyay.util.MiscTag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -120,7 +122,7 @@ public class CaseService {
         }
 
         // The case number is required, except for a Juvenile Justice Board case (stored as empty then) or a case created with a misc. application
-        String caseNo = trimmedOrNull(req.getCaseNo());
+        String caseNo = CaseText.normalizeCaseNo(trimmedOrNull(req.getCaseNo()));
         if (caseNo == null && !juvenile && !req.idsOptional) throw new IllegalArgumentException(CASE_NO_REQUIRED);
         if (caseNo != null && caseRepo.existsByUser_IdAndCaseNoIgnoreCase(userId, caseNo))
             throw new IllegalArgumentException("You already have a case with case number \"" + caseNo + "\"");
@@ -142,7 +144,7 @@ public class CaseService {
         }
 
         Case c = Case.builder()
-                .title(req.getTitle())
+                .title(CaseText.normalizeTitle(req.getTitle()))
                 .caseNo(caseNo)
                 .cnrNo(cnr)
                 .status(status)
@@ -150,6 +152,7 @@ public class CaseService {
                 .nextHearing(nextHearing)
                 .client(client)
                 .user(user)
+                .miscPortal(byCnr && MiscTag.in(caseNo))
                 .build();
 
         applyCourt(c, req.getCourt(), req.getDistrict());
@@ -160,13 +163,27 @@ public class CaseService {
         applyOpponents(c, req.getOpponents());
         applyNonClients(c, req.getNonClients());
         applyClientSubTypes(c, req.getClientSubTypes());
-        numberNewCase(c, req, userId);
+        if (!c.isMiscPortal()) numberNewCase(c, req, userId);
 
         FeeMapper.applyFeeFields(c, req);
+        clearStageWhenClosed(c);
 
         Case saved = caseRepo.save(c);
 
         if (snap != null) oldCaseImport.importHistory(saved, snap, userId);
+
+        if (saved.isMiscPortal()) {
+            miscApplicationRepo.save(MiscApplication.builder()
+                    .legalCase(saved)
+                    .user(user)
+                    .applicationType(miscApplicationType(saved))
+                    .filingDate(saved.getFilingDate())
+                    .hearingDate(saved.getNextHearing())
+                    .status(CaseStatuses.isClosed(saved.getStatus()) ? MiscApplication.DISPOSED_OFF : MiscApplication.PENDING)
+                    .caseCreatedHere(true)
+                    .portalSynced(true)
+                    .build());
+        }
 
         // Orders are not downloaded here: the hearings only remember which dates have an order on eCourts, and the
         // advocate gets each one with its "Get order" button
@@ -176,6 +193,19 @@ public class CaseService {
         }
 
         return toDto(saved);
+    }
+
+    // A case that is over has no stage any more (the portal keeps the last one, which then only misleads)
+    private static void clearStageWhenClosed(Case c) {
+        if (CaseStatuses.isClosed(c.getStatus())) c.setCaseStage(null);
+    }
+
+    private String miscApplicationType(Case c) {
+        String type = trimmedOrNull(c.getCaseType());
+        if (type == null && c.getCaseNo() != null) {
+            type = trimmedOrNull(c.getCaseNo().replaceAll("\\s*\\d+\\s*/\\s*\\d+\\s*$", ""));
+        }
+        return type == null ? "Misc. Application" : type;
     }
 
     // Partial update, also keeps the file number in step when the status or client changes
@@ -188,7 +218,7 @@ public class CaseService {
         boolean wasClosed = CaseStatuses.isClosed(c.getStatus());
         boolean wasWithdrawn = CaseStatuses.isWithdrawn(c.getStatus());
 
-        if (req.getTitle()       != null) c.setTitle(req.getTitle());
+        if (req.getTitle()       != null) c.setTitle(CaseText.normalizeTitle(req.getTitle()));
         boolean wasJuvenile = courtService.isJuvenileJusticeBoard(c);
         Court previousPlace = c.getCourtPlace();
         if (req.getCourt()       != null) applyCourt(c, req.getCourt(), req.getDistrict());
@@ -199,7 +229,7 @@ public class CaseService {
 
         // The case number can only be left empty in a Juvenile Justice Board court (or in a case edited from its misc. application)
         if (req.getCaseNo() != null) {
-            String newNo = trimmedOrNull(req.getCaseNo());
+            String newNo = CaseText.normalizeCaseNo(trimmedOrNull(req.getCaseNo()));
             if (newNo != null && !newNo.equalsIgnoreCase(c.getCaseNo() == null ? "" : c.getCaseNo())
                     && caseRepo.existsByUser_IdAndCaseNoIgnoreCase(userId, newNo)) {
                 throw new IllegalArgumentException("You already have a case with case number \"" + newNo + "\"");
@@ -287,6 +317,7 @@ public class CaseService {
         applyEditedFileNo(c, req, userId, wasCorporatePanel);
 
         FeeMapper.applyFeeFields(c, req);
+        clearStageWhenClosed(c);
 
         Case saved = caseRepo.save(c);
         return toDto(saved);
@@ -305,8 +336,8 @@ public class CaseService {
         c.setNextHearing(null);
         c.setCauseListNo(null);
         c.setListingDate(null);
-        // Case number is tagged so it can be reused for a new case
-        if (c.getCaseNo() != null) c.setCaseNo(c.getCaseNo() + "#deleted-" + c.getId());
+        // The case number stays as it was: the database keys on live_case_no / live_cnr_no (V57), which are empty for a deleted
+        // case, so the number can be used again for a new case without the old row being renamed
         c.setDeleted(true);
         c.setDeletedAt(LocalDateTime.now());
         caseRepo.save(c);
@@ -470,6 +501,18 @@ public class CaseService {
             List<Long> inCourt = policeStationRepo.idsByNameAndCourt(name.trim(), c.getCourtPlace().getCourt());
             if (inCourt.size() == 1) return inCourt.get(0);
         }
+
+        // Not found as typed: try again ignoring spaces, dots and dashes, so "Govind Puri" finds "Govindpuri"
+        if (ids.isEmpty()) {
+            String key = CaseText.nameKey(name);
+            if (key.isEmpty()) return null;
+            List<Long> byKey = policeStationRepo.idsByNameKey(key);
+            if (byKey.size() == 1) return byKey.get(0);
+            if (byKey.size() > 1 && c.getCourtPlace() != null) {
+                List<Long> inCourt = policeStationRepo.idsByNameKeyAndCourt(key, c.getCourtPlace().getCourt());
+                if (inCourt.size() == 1) return inCourt.get(0);
+            }
+        }
         return null;
     }
 
@@ -480,8 +523,8 @@ public class CaseService {
         if (req.getReliefSought() != null) c.setReliefSought(trimmedOrNull(req.getReliefSought()));
         if (req.getCaseType()     != null) c.setCaseType(trimmedOrNull(req.getCaseType()));
 
-        if (req.getFirNo()         != null) c.setFirNo(trimmedOrNull(req.getFirNo()));
-        if (req.getFirSection()    != null) c.setFirSection(trimmedOrNull(req.getFirSection()));
+        if (req.getFirNo()         != null) c.setFirNo(trimmedOrNull(CaseText.normalizeFirNo(req.getFirNo())));
+        if (req.getFirSection()    != null) c.setFirSection(trimmedOrNull(CaseText.cleanActs(req.getFirSection())));
         if (req.getPoliceStation() != null) c.setPoliceStation(trimmedOrNull(req.getPoliceStation()));
 
         if (!CaseCatalog.isPoliceChallan(c.getReliefSought())) {
@@ -515,8 +558,8 @@ public class CaseService {
         if (req.getClientSide() != null) c.setClientSide(CaseCatalog.canonicalSide(req.getClientSide()));
 
         // What the eCourts case page gives. Null leaves a value as it is, an empty text clears it
-        if (req.getCaseStage()      != null) c.setCaseStage(trimmedOrNull(req.getCaseStage()));
-        if (req.getActsSections()   != null) c.setActsSections(trimmedOrNull(req.getActsSections()));
+        if (req.getCaseStage()      != null) c.setCaseStage(trimmedOrNull(CaseText.normalizeStage(req.getCaseStage())));
+        if (req.getActsSections()   != null) c.setActsSections(trimmedOrNull(CaseText.cleanActs(req.getActsSections())));
         if (req.getDisposalNature() != null) c.setDisposalNature(trimmedOrNull(req.getDisposalNature()));
         if (req.getRegistrationDate()  != null) c.setRegistrationDate(optionalDate("Registration date", req.getRegistrationDate()));
         if (req.getFirstHearingDate()  != null) c.setFirstHearingDate(optionalDate("First hearing date", req.getFirstHearingDate()));
