@@ -6,6 +6,7 @@ import { loadOptions } from './constants/optionsStore'
 import { AppProvider, useApp } from './context/AppContext'
 import ToastContainer from './components/common/ToastContainer'
 import ConfirmHost from './components/common/ConfirmHost'
+import CaptchaHost from './components/common/CaptchaHost'
 import { HomeClass, RouteTitle, ScrollToTop } from './routes/RouteEffects'
 import { useDisableAutofill } from './utils/noAutofill'
 import { useFullTextOnHover } from './utils/fullTextOnHover'
@@ -55,6 +56,8 @@ export default function App() {
       <ToastContainer />
       {/* Styled confirmation dialogs (confirmDialog) can be opened from any screen */}
       <ConfirmHost />
+      {/* The CAPTCHA window of the buttons that read eCourts */}
+      <CaptchaHost />
     </AppProvider>
   )
 }

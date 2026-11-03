@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import api from '../services/api'
 import { formatDate } from '../utils/dateUtils'
 
@@ -9,6 +9,10 @@ const REFRESH_MS = 10 * 60 * 1000
 export default function useHearingLeave(date, hearings) {
   // Hearing details keyed by case id
   const [infoByCase, setInfoByCase] = useState({})
+
+  // Re-fetches the details now (set by the effect below), used after a manual cause list refresh
+  const loadRef = useRef(null)
+  const reload = useCallback(() => loadRef.current?.(), [])
 
   // The date as a string, used as a stable dependency for the effect below
   const dateKey = formatDate(date)
@@ -48,6 +52,7 @@ export default function useHearingLeave(date, hearings) {
       if (document.visibilityState === 'visible') load()
     }
 
+    loadRef.current = load
     load()
     // Keep the data fresh while the page stays open
     const timer = setInterval(load, REFRESH_MS)
@@ -56,11 +61,12 @@ export default function useHearingLeave(date, hearings) {
     // Cleanup: stop the timer and listener so nothing leaks
     return () => {
       alive = false
+      loadRef.current = null
       clearInterval(timer)
       document.removeEventListener('visibilitychange', onVisible)
     }
   }, [dateKey, signature, needed])
 
-  // Components read this map to show judge / leave / court-no. next to each case
-  return infoByCase
+  // Components read this map to show judge / leave / court-no. next to each case; reload fetches it again on demand
+  return [infoByCase, reload]
 }

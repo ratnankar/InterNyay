@@ -57,7 +57,7 @@ public class HearingController {
 
     // Download the order eCourts lists for this hearing's date and keep it as the hearing's order
     @PostMapping("/{id}/order/fetch")
-    public ResponseEntity<HearingDto> fetchOrder(@PathVariable Long id) {
+    public ResponseEntity<Object> fetchOrder(@PathVariable Long id) {
         return ResponseEntity.ok(hearingService.fetchOrder(id, auth.currentUserId()));
     }
 

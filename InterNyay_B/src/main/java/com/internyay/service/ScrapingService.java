@@ -75,26 +75,31 @@ public class ScrapingService {
             Read read = readCaseWithSession(cnr);
             if (read == null) return Optional.empty();
 
-            OrderRow row = read.parsed().orders().stream()
-                    .filter(o -> hearingDate.equals(o.date()) && o.link() != null)
-                    .findFirst()
-                    .orElse(null);
-            if (row == null) return Optional.empty();
-
-            byte[] pdf = read.session() == null ? null : portal.orderPdf(read.session(), displayPdfPath, row.link());
-            if (pdf == null) {
-                // The portal sometimes answers an order request with a page instead of the file: ask once more
-                try { Thread.sleep(1500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); return Optional.empty(); }
-                pdf = portal.orderPdf(read.session(), displayPdfPath, row.link());
-            }
-            if (pdf == null || pdf.length == 0) return Optional.empty();
-
-            log.info("CNR {}: order {} for {} downloaded ({} bytes)", cnr, row.fileName(), hearingDate, pdf.length);
-            return Optional.of(new FetchedOrder(row.fileName(), pdf));
+            return downloadOrder(cnr, read, hearingDate);
         } catch (IOException | RuntimeException e) {
             log.warn("CNR {}: eCourts order download for {} failed: {}", cnr, hearingDate, e.getMessage());
             return Optional.empty();
         }
+    }
+
+    // Downloads the order of the date from a case page that was read on a portal session
+    private Optional<FetchedOrder> downloadOrder(String cnr, Read read, LocalDate hearingDate) throws IOException {
+        OrderRow row = read.parsed().orders().stream()
+                .filter(o -> hearingDate.equals(o.date()) && o.link() != null)
+                .findFirst()
+                .orElse(null);
+        if (row == null) return Optional.empty();
+
+        byte[] pdf = read.session() == null ? null : portal.orderPdf(read.session(), displayPdfPath, row.link());
+        if (pdf == null) {
+            // The portal sometimes answers an order request with a page instead of the file: ask once more
+            try { Thread.sleep(1500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); return Optional.empty(); }
+            pdf = portal.orderPdf(read.session(), displayPdfPath, row.link());
+        }
+        if (pdf == null || pdf.length == 0) return Optional.empty();
+
+        log.info("CNR {}: order {} for {} downloaded ({} bytes)", cnr, row.fileName(), hearingDate, pdf.length);
+        return Optional.of(new FetchedOrder(row.fileName(), pdf));
     }
 
     // What the portal's case page says about where the case goes next
@@ -136,11 +141,27 @@ public class ScrapingService {
     // The parsed case page together with the portal session it was read on (an order download needs that session)
     private record Read(PortalSession session, ParsedCase parsed) {}
 
-    // Opens a portal session, reads the CAPTCHA automatically and returns the parsed case page with its session, or null
+    // A portal session that is ready for a CAPTCHA the user types (the automatic reader could not read it)
+    public record Manual(PortalSession session, String cnr) {}
+
+    // What a lookup gave: the case page (read), or a session waiting for a typed CAPTCHA (manual), or neither (it failed)
+    private record Attempt(Read read, Manual manual) {}
+
+    // The result of a lookup that can ask the user for the CAPTCHA: value when it was read, manual when the user has to type
+    // the CAPTCHA, both null when the portal could not be read at all
+    public record Outcome<T>(T value, Manual manual) {}
+
     private Read readCaseWithSession(String cnr) throws IOException {
+        Attempt attempt = attemptCase(cnr, false);
+        return attempt == null ? null : attempt.read();
+    }
+
+    // Opens a portal session, reads the CAPTCHA automatically and returns the parsed case page with its session. When the
+    // CAPTCHA cannot be read (or there is no reader) and askUser is set, the session is handed back for the user to type it
+    private Attempt attemptCase(String cnr, boolean askUser) throws IOException {
         PortalSession session = openUsableSession(cnr);
 
-        for (int attempt = 1; attempt <= solver.maxAttempts(); attempt++) {
+        for (int attempt = 1; solver.available() && attempt <= solver.maxAttempts(); attempt++) {
             byte[] image = portal.captcha(session);
 
             var text = solver.solve(image);
@@ -151,12 +172,8 @@ public class ScrapingService {
 
             SubmitResult result = portal.searchCnr(session, searchPath, cnr, text.get());
             if (result.html() != null) {
-                ParsedCase parsed = PortalCaseParser.parse(result.html());
-                if (!parsed.found() || !cnr.equalsIgnoreCase(parsed.cnr())) {
-                    log.warn("CNR {}: the portal's case page could not be read or was another case", cnr);
-                    return null;
-                }
-                return new Read(session, parsed);
+                Read read = readOf(session, cnr, result);
+                return read == null ? null : new Attempt(read, null);
             }
             if (!result.captchaRejected()) {
                 log.info("CNR {}: portal has no case page ({})", cnr, result.message());
@@ -165,8 +182,88 @@ public class ScrapingService {
             // CAPTCHA refused: a new picture is fetched on the next round
         }
 
+        if (askUser) {
+            log.info("CNR {}: the CAPTCHA could not be read automatically, asking the user", cnr);
+            return new Attempt(null, new Manual(session, cnr));
+        }
+
         log.info("CNR {}: the CAPTCHA could not be read automatically, order not looked up", cnr);
         return null;
+    }
+
+    // The case page of a portal answer, or null when it is not this case
+    private Read readOf(PortalSession session, String cnr, SubmitResult result) {
+        ParsedCase parsed = PortalCaseParser.parse(result.html());
+        if (!parsed.found() || !cnr.equalsIgnoreCase(parsed.cnr())) {
+            log.warn("CNR {}: the portal's case page could not be read or was another case", cnr);
+            return null;
+        }
+        return new Read(session, parsed);
+    }
+
+    // ---- the same lookups, asking the user for the CAPTCHA when the reader cannot read it ------------------------
+
+    // Sends the CAPTCHA the user typed
+    public SubmitResult submitManual(Manual manual, String captcha) throws IOException {
+        return portal.searchCnr(manual.session(), searchPath, manual.cnr(), captcha);
+    }
+
+    // The next hearing outlook, or the session to ask the user's CAPTCHA on. value and manual are both null when it failed
+    public Outcome<CaseOutlook> outlookOrManual(String rawCnr) {
+        String cnr = EcourtsCaseService.normalizeCnr(rawCnr);
+        if (cnr == null) return new Outcome<>(null, null);
+
+        try {
+            Attempt attempt = attemptCase(cnr, true);
+            if (attempt == null) return new Outcome<>(null, null);
+            if (attempt.manual() != null) return new Outcome<>(null, attempt.manual());
+            return new Outcome<>(outlookOf(attempt.read()), null);
+        } catch (IOException | RuntimeException e) {
+            log.warn("CNR {}: eCourts next hearing date lookup failed: {}", cnr, e.getMessage());
+            return new Outcome<>(null, null);
+        }
+    }
+
+    // The outlook from the portal's answer to a CAPTCHA the user typed. Null when the page was not this case
+    public CaseOutlook outlookFrom(Manual manual, SubmitResult result) {
+        if (result.html() == null) return null;
+        Read read = readOf(manual.session(), manual.cnr(), result);
+        return read == null ? null : outlookOf(read);
+    }
+
+    private CaseOutlook outlookOf(Read read) {
+        ParsedCase parsed = read.parsed();
+        return new CaseOutlook(parsed.disposed(), parsed.nextHearing(), EcourtsCaseService.snapshotOf(parsed));
+    }
+
+    // The order of one hearing date, or the session to ask the user's CAPTCHA on. value and manual are both null when it failed
+    public Outcome<FetchedOrder> orderOrManual(String rawCnr, LocalDate hearingDate) {
+        String cnr = EcourtsCaseService.normalizeCnr(rawCnr);
+        if (cnr == null || hearingDate == null) return new Outcome<>(null, null);
+
+        try {
+            Attempt attempt = attemptCase(cnr, true);
+            if (attempt == null) return new Outcome<>(null, null);
+            if (attempt.manual() != null) return new Outcome<>(null, attempt.manual());
+            return new Outcome<>(downloadOrder(cnr, attempt.read(), hearingDate).orElse(null), null);
+        } catch (IOException | RuntimeException e) {
+            log.warn("CNR {}: eCourts order download for {} failed: {}", cnr, hearingDate, e.getMessage());
+            return new Outcome<>(null, null);
+        }
+    }
+
+    // The order from the portal's answer to a CAPTCHA the user typed. Empty when the date has no downloadable order
+    public Optional<FetchedOrder> orderFrom(Manual manual, SubmitResult result, LocalDate hearingDate) {
+        if (result.html() == null) return Optional.empty();
+        Read read = readOf(manual.session(), manual.cnr(), result);
+        if (read == null) return Optional.empty();
+
+        try {
+            return downloadOrder(manual.cnr(), read, hearingDate);
+        } catch (IOException | RuntimeException e) {
+            log.warn("CNR {}: eCourts order download for {} failed: {}", manual.cnr(), hearingDate, e.getMessage());
+            return Optional.empty();
+        }
     }
 
     // A session whose warm-up gives no districts is one the portal refuses every CAPTCHA on, so another is opened

@@ -10,6 +10,7 @@ import { formatDisplayDate } from '../utils/dateUtils'
 import CaseFields from '../components/common/CaseFields'
 import { caseNatureOf } from '../utils/caseClassification'
 import useHearingLeave from '../hooks/useHearingLeave'
+import CauseListRefreshButton from '../components/common/CauseListRefreshButton'
 import useMiscHearingsOn from '../hooks/useMiscHearingsOn'
 import DashboardMiscHearing from '../components/misc/DashboardMiscHearing'
 import { useMyCourts, roomLabel } from '../constants/courts'
@@ -106,7 +107,7 @@ export default function Dashboard() {
   const hearingTotal = todayCases.length + miscToday.length
 
   // Judge, cause list number and leave details for each hearing on the selected date
-  const hearingInfo = useHearingLeave(calendarDate, todayCases)
+  const [hearingInfo, reloadHearingInfo] = useHearingLeave(calendarDate, todayCases)
 
   // Scroll the expanded hearing card into view
   useEffect(() => {
@@ -281,6 +282,9 @@ export default function Dashboard() {
                               Cause List No. {causeListNo}
                             </span>
                           )}
+                          {!isClosedCase(c) && (
+                            <CauseListRefreshButton caseId={c.id} dateKey={calendarDateKey} onDone={reloadHearingInfo} hasNumber={hasCauseListNo} />
+                          )}
                         </div>
                         {info?.judgeName && (
                           <p className="hearing-row__judge">
@@ -322,6 +326,9 @@ export default function Dashboard() {
 
                     {/* Fee button (not for closed cases unless stagewise) and Open in Cases button */}
                     <div className="hearing-card__footer">
+                      {!isClosedCase(c) && (
+                        <CauseListRefreshButton caseId={c.id} dateKey={calendarDateKey} onDone={reloadHearingInfo} withLabel />
+                      )}
                       {(!isClosedCase(c) || c.feeType === 'STAGEWISE') && (
                       <button type="button"
                         className="btn-outline btn-outline--sm"

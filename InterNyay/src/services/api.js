@@ -5,6 +5,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'ht
 import { makeApiError, makeNetworkError, ApiError, MESSAGES } from '../utils/errorMessages'
 import { forgetAccountByToken, replaceToken } from '../utils/accounts'
 import { canEmbedPdf } from '../utils/pdfSupport'
+import { askCaptcha, isCaptchaChallenge } from '../utils/captchaDesk'
 
 // fetch that reports "server unreachable" as a friendly error instead of the browser's "Failed to fetch"
 async function http(url, options) {
@@ -129,6 +130,13 @@ function request(method, path, opts = {}) {
   if (method === 'GET') return rawRequest(method, path, opts)
   const key = `${method} ${path} ${JSON.stringify(opts.params || {})} ${JSON.stringify(opts.body ?? null)}`
   return dedupe(key, () => rawRequest(method, path, opts))
+}
+
+// For buttons that read eCourts: when the server could not read the CAPTCHA itself it answers with a challenge, the CAPTCHA
+// window opens, and the result is what the button would have returned once the typed CAPTCHA was accepted
+async function withCaptcha(call) {
+  const res = await call
+  return isCaptchaChallenge(res) ? askCaptcha(res) : res
 }
 
 // Short helpers for each HTTP method
@@ -292,6 +300,8 @@ export const cases = {
   list:      (params)       => get('/cases', { params }),
   // Judge / leave / court number details for the hearings on a date
   hearingLeave: (params)    => get('/cases/hearing-leave', { params }),
+  // Looks one case up in the court's cause list for a hearing date again (the dashboard's refresh button)
+  refreshCauseList: (id, date) => withCaptcha(post(`/cases/${id}/cause-list/refresh`, { params: { date } })),
 
   // File numbers already in use, so new cases can pick a free one
   fileNumbers: ()           => get('/cases/file-numbers'),
@@ -307,7 +317,7 @@ export const cases = {
   // (hearingsAdded / ordersFound say how many; the hearing list must be reloaded afterwards).
   // The server answers with { caseId, nextHearing, status, decisionDate, message, hearingsAdded, ordersFound }:
   // a disposed case comes back with status "Decided" and nextHearing null; "message" is ready for a toast
-  refreshHearing: (id)      => post(`/cases/${id}/refresh-hearing`),
+  refreshHearing: (id)      => withCaptcha(post(`/cases/${id}/refresh-hearing`)),
 
   // Case details from eCourts by CNR, used to fill the Add Case form. Fails with a readable message when eCourts
   // cannot give the case
@@ -352,7 +362,7 @@ export const hearings = {
   removeOrder: (id) => del(`/hearings/${id}/order`),
 
   // Download the order eCourts lists for the hearing's date (the "Get order" button); orders are never downloaded by themselves
-  fetchOrder: (id) => post(`/hearings/${id}/order/fetch`),
+  fetchOrder: (id) => withCaptcha(post(`/hearings/${id}/order/fetch`)),
 }
 
 // To-do list tasks
@@ -1041,5 +1051,12 @@ export const chat = {
 }
 
 // Everything grouped into one object so components can call api.cases.list() etc.
-const api = { publicApi, contact, chat, courts, courtPreferences, quickAccess, police, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
+// The CAPTCHA window of the buttons that read eCourts (see utils/captchaDesk.js)
+const captcha = {
+  answer:  (id, text) => post(`/captcha/${id}/answer`, { body: { captcha: text } }),
+  refresh: (id)       => post(`/captcha/${id}/refresh`),
+  cancel:  (id)       => post(`/captcha/${id}/cancel`),
+}
+
+const api = { captcha, publicApi, contact, chat, courts, courtPreferences, quickAccess, police, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
 export default api

@@ -86,6 +86,38 @@ public class CauseListService {
         return new Result(hearingDate, delhiHcCases.size() + supremeCourtCases.size(), saved);
     }
 
+    // What a single-case lookup found: whether the court has published a list for the date, and the case's item number in it
+    public record CaseLookup(boolean listPublished, Integer itemNo) {}
+
+    // True when this case's cause list is read from a High Court / Supreme Court PDF (no CAPTCHA involved)
+    public boolean readsFromPdf(Case c) {
+        return isDelhiHighCourt(c) || isSupremeCourt(c);
+    }
+
+    // Looks one case up in the court's published PDF for the date. Only reads, saving is left to the caller
+    public CaseLookup lookUpCase(Case c, LocalDate hearingDate) {
+        List<CauseListDocument> documents;
+        Function<List<String>, ? extends ItemNoFinder> matcherFor;
+
+        if (isDelhiHighCourt(c)) {
+            documents = delhiHighCourt.fetch(hearingDate);
+            matcherFor = CauseListMatcher::new;
+        } else if (isSupremeCourt(c)) {
+            documents = supremeCourt.fetch(hearingDate);
+            matcherFor = SupremeCourtCauseListMatcher::new;
+        } else {
+            return new CaseLookup(false, null);
+        }
+
+        if (documents.isEmpty()) return new CaseLookup(false, null);
+
+        for (CauseListDocument document : documents) {
+            Optional<Integer> itemNo = matcherFor.apply(document.lines()).findItemNo(c.getCaseNo());
+            if (itemNo.isPresent()) return new CaseLookup(true, itemNo.get());
+        }
+        return new CaseLookup(true, null);
+    }
+
     private boolean isDelhiHighCourt(Case c) {
         return delhiHighCourtEnabled && isCourt(c, delhiHighCourtName);
     }

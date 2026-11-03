@@ -78,6 +78,10 @@ public class NextHearingUpdateService {
 
     private final AtomicBoolean running = new AtomicBoolean(false);
 
+    // Window for the CAPTCHA when the automatic reader cannot read it (null in unit tests: they get the old message)
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ManualCaptchaDesk captchaDesk;
+
     private final Map<LocalDate, Set<Long>> disposedToday = new ConcurrentHashMap<>();
 
     public NextHearingUpdateService(
@@ -201,33 +205,70 @@ public class NextHearingUpdateService {
         return result;
     }
 
-    // single-case refresh used by the manual "Refresh" button
+    // single-case refresh used by the manual "Refresh" button: the automatic CAPTCHA reader only, always a RefreshResult
     public RefreshResult refreshSingleCase(Long caseId, Long userId) {
-        Case c = caseRepo.findById(caseId).orElse(null);
-        if (c == null || c.getUser() == null || !c.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("Case not found");
-        }
+        Case c = ownedCase(caseId, userId);
 
-        LocalDate today = LocalDate.now(IST);
-
-        if (c.getCnrNo() == null || c.getCnrNo().isBlank()) {
-            return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
-                    "The case has no CNR number, so eCourts cannot be checked");
-        }
+        if (c.getCnrNo() == null || c.getCnrNo().isBlank()) return noCnr(c);
 
         if (!scraping.available()) {
             return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
                     "The automatic CAPTCHA reader is not available right now, please try again later");
         }
 
+        Optional<ScrapingService.CaseOutlook> outlookOpt = scraping.lookUpOutlook(c.getCnrNo());
+        return outlookOpt.isEmpty() ? couldNotRead(c) : applyOutlook(caseId, userId, outlookOpt.get());
+    }
+
+    // The same refresh for the app's button: answers with a RefreshResult, or with a ManualCaptchaDesk.Challenge when the
+    // CAPTCHA could not be read automatically and has to be typed (the typed CAPTCHA finishes this same refresh)
+    public Object refreshOrAskCaptcha(Long caseId, Long userId) {
+        if (captchaDesk == null) return refreshSingleCase(caseId, userId);
+
+        Case c = ownedCase(caseId, userId);
+
+        if (c.getCnrNo() == null || c.getCnrNo().isBlank()) return noCnr(c);
+
         // Order PDFs are never downloaded here: the dates that have an order on eCourts are only noted, and the
         // advocate gets each order with its "Get order" button
-        Optional<ScrapingService.CaseOutlook> outlookOpt = scraping.lookUpOutlook(c.getCnrNo());
-        if (outlookOpt.isEmpty()) {
-            return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
-                    "Could not read the case page on eCourts, please try again later");
+        ScrapingService.Outcome<ScrapingService.CaseOutlook> outcome = scraping.outlookOrManual(c.getCnrNo());
+
+        if (outcome.value() != null) return applyOutlook(caseId, userId, outcome.value());
+        if (outcome.manual() == null) return couldNotRead(c);
+
+        ScrapingService.Manual manual = outcome.manual();
+        return captchaDesk.open(userId, manual.session(),
+                captcha -> scraping.submitManual(manual, captcha),
+                result -> {
+                    ScrapingService.CaseOutlook outlook = scraping.outlookFrom(manual, result);
+                    Case fresh = caseRepo.findById(caseId).orElse(c);
+                    return outlook == null ? couldNotRead(fresh) : applyOutlook(caseId, userId, outlook);
+                },
+                "");
+    }
+
+    private Case ownedCase(Long caseId, Long userId) {
+        Case c = caseRepo.findById(caseId).orElse(null);
+        if (c == null || c.getUser() == null || !c.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Case not found");
         }
-        ScrapingService.CaseOutlook outlook = outlookOpt.get();
+        return c;
+    }
+
+    private RefreshResult noCnr(Case c) {
+        return new RefreshResult(c.getId(), c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
+                "The case has no CNR number, so eCourts cannot be checked");
+    }
+
+    private RefreshResult couldNotRead(Case c) {
+        return new RefreshResult(c.getId(), c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
+                "Could not read the case page on eCourts, please try again later");
+    }
+
+    // Fills in what the case is missing from the eCourts page, then the next hearing date part of the Refresh button
+    private RefreshResult applyOutlook(Long caseId, Long userId, ScrapingService.CaseOutlook outlook) {
+        Case c = caseRepo.findById(caseId).orElseThrow(() -> new IllegalArgumentException("Case not found"));
+        LocalDate today = LocalDate.now(IST);
 
         // fill in what the case is missing: every past hearing date eCourts lists, and the order of each
         // Done first and on its own, so a failure here never blocks the next hearing date logic below

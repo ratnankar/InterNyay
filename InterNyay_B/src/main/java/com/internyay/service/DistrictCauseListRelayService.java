@@ -428,6 +428,86 @@ public class DistrictCauseListRelayService {
         return new UnattendedResult(tasks.size(), done, needCaptcha, failed, run.saved);
     }
 
+    // What a single-case district lookup gave. NEEDS_CAPTCHA carries a ticket when the court room is ready for the user's CAPTCHA
+    public enum CaseOutcome { FOUND, NOT_LISTED, NEEDS_CAPTCHA, UNSUPPORTED, FAILED }
+
+    // The portal session of a court room waiting for a typed CAPTCHA: its session, how to send the CAPTCHA, and how to turn the
+    // portal's answer into the lookup's result
+    public record Ticket(PortalSession session, ManualCaptchaDesk.Submit submit, java.util.function.Function<SubmitResult, CaseRefresh> finish) {}
+
+    public record CaseRefresh(CaseOutcome outcome, Integer serial, String message, Ticket ticket) {
+        public CaseRefresh(CaseOutcome outcome, Integer serial, String message) {
+            this(outcome, serial, message, null);
+        }
+    }
+
+    // Looks up one district court case in its court room's cause list for the date and saves the number found. Used by the
+    // dashboard's refresh button, so only that case's court room is asked of the portal. The CAPTCHA is read by the solver;
+    // when it cannot be read the result carries a ticket, so the caller can ask the user to type it (an admin's relay is not
+    // involved and is left untouched)
+    public CaseRefresh refreshOne(Case c, java.time.LocalDate date) {
+        if (c.getCourtPlace() == null || c.getCourtPlace().isHighCourt()) {
+            return new CaseRefresh(CaseOutcome.UNSUPPORTED, null, "This case is not in a district court");
+        }
+
+        if (blank(c.getCourtNo()) || blank(c.getCaseNo())) {
+            return new CaseRefresh(CaseOutcome.UNSUPPORTED, null, "Add the court number and case number to look up the cause list");
+        }
+
+        if (CaseKey.parse(c.getCaseNo()).isEmpty()) {
+            return new CaseRefresh(CaseOutcome.UNSUPPORTED, null, "The case number needs its type and year (like CR Cases/5837/2018) "
+                    + "to be found in the cause list");
+        }
+
+        if (courtService.juvenileBoardCases().test(c)) {
+            return new CaseRefresh(CaseOutcome.UNSUPPORTED, null, "Juvenile Justice Board cases are not in the published cause list");
+        }
+
+        Task task = new Task(c.getCourtPlace().getCourt(), c.getCourtPlace().getDistrict(), c.getCourtNo(), kind(c), List.of(c.getId()));
+        Run run = new Run(date, List.of());
+
+        try {
+            Pending held = prepare(run, task);
+            Auto auto = solver.available() ? readAutomatically(held) : null;
+
+            if (auto == null) {
+                // The reader could not read the CAPTCHA (or there is none): the user types it on this same portal session
+                Ticket ticket = new Ticket(held.session,
+                        captcha -> portal.submit(held.session, held.selection, date, captcha),
+                        result -> finishOne(held, c, result));
+                return new CaseRefresh(CaseOutcome.NEEDS_CAPTCHA, null, "The CAPTCHA could not be read automatically", ticket);
+            }
+
+            if (auto.error() != null) {
+                return new CaseRefresh(CaseOutcome.FAILED, null, auto.error());
+            }
+
+            return finishOne(held, c, auto.result());
+
+        } catch (IOException | RuntimeException e) {
+            log.warn("District cause list refresh for case {} failed: {}", c.getId(), e.getMessage());
+            return new CaseRefresh(CaseOutcome.FAILED, null, e.getMessage());
+        }
+    }
+
+    // The portal's answer for one case: its serial in the list is saved, or the reason there is none is given
+    private CaseRefresh finishOne(Pending held, Case c, SubmitResult result) {
+        String html = result.html();
+
+        if (html == null) {
+            String why = result.message() == null || result.message().isBlank()
+                    ? "No cause list is published for this court on that date yet" : result.message();
+            return new CaseRefresh(CaseOutcome.NOT_LISTED, null, why);
+        }
+
+        Integer serial = serialOf(c.getCaseNo(), DistrictCauseListParser.serialNumbers(html));
+        save(held, html);
+
+        return serial == null
+                ? new CaseRefresh(CaseOutcome.NOT_LISTED, null, "This case is not in the court's cause list for that date")
+                : new CaseRefresh(CaseOutcome.FOUND, serial, null);
+    }
+
     private Pending prepare(Run run, Task task) throws IOException {
         PortalSession session = portal.open();
 

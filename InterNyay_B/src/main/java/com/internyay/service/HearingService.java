@@ -31,6 +31,7 @@ public class HearingService {
     private final ScrapingService scrapingService;
     private final OldCaseImportService oldCaseImport;
     private final TransactionTemplate tx;
+    private final ManualCaptchaDesk captchaDesk;
 
     // Hearings in a date range, oldest first. Read inside a transaction because each hearing's case is
     // loaded lazily and open-in-view is off, so the DTO could not read the case title outside one
@@ -333,7 +334,9 @@ public class HearingService {
     // The "Get order" button: downloads the order eCourts lists for the hearing's date and keeps it as the hearing's
     // order, so it can be opened, replaced and removed like one uploaded by hand. Not transactional on purpose: the
     // portal download can take a while and must not hold a database connection
-    public HearingDto fetchOrder(Long hearingId, Long userId) {
+    // Answers with the hearing, or with a ManualCaptchaDesk.Challenge when the CAPTCHA has to be typed (the typed CAPTCHA
+    // finishes this same download)
+    public Object fetchOrder(Long hearingId, Long userId) {
         record Target(String cnr, java.time.LocalDate date, boolean declared) {}
 
         Target target = tx.execute(status -> {
@@ -351,11 +354,29 @@ public class HearingService {
             throw new IllegalArgumentException("This case has no CNR number, so its order cannot be read from eCourts");
         }
 
-        ScrapingService.FetchedOrder order = scrapingService.fetchOrderForDate(target.cnr(), target.date())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Could not download the order from eCourts right now, please try again in a moment"));
+        ScrapingService.Outcome<ScrapingService.FetchedOrder> outcome =
+                scrapingService.orderOrManual(target.cnr(), target.date());
 
-        return tx.execute(status -> attachFetchedOrder(hearingId, order.pdf(), order.fileName(), userId));
+        if (outcome.value() != null) {
+            ScrapingService.FetchedOrder order = outcome.value();
+            return tx.execute(status -> attachFetchedOrder(hearingId, order.pdf(), order.fileName(), userId));
+        }
+
+        if (outcome.manual() == null) {
+            throw new IllegalArgumentException(
+                    "Could not download the order from eCourts right now, please try again in a moment");
+        }
+
+        ScrapingService.Manual manual = outcome.manual();
+        return captchaDesk.open(userId, manual.session(),
+                captcha -> scrapingService.submitManual(manual, captcha),
+                result -> {
+                    ScrapingService.FetchedOrder order = scrapingService.orderFrom(manual, result, target.date())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "eCourts has no order to download for this date yet"));
+                    return tx.execute(status -> attachFetchedOrder(hearingId, order.pdf(), order.fileName(), userId));
+                },
+                "");
     }
 
     // One hearing as the frontend sees it

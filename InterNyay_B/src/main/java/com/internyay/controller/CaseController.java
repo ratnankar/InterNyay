@@ -29,6 +29,7 @@ public class CaseController {
     private final AuthHelper auth;
     private final com.internyay.service.PlanService planService;
     private final NextHearingUpdateService nextHearingUpdateService;
+    private final com.internyay.service.CaseCauseListRefreshService causeListRefresh;
 
     private boolean feesHidden() {
         if (auth.isAssociate()) return true;
@@ -57,6 +58,14 @@ public class CaseController {
     public ResponseEntity<List<HearingLeaveDto>> hearingLeave(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(hearingLeaveService.onLeaveFor(auth.currentUserId(), date));
+    }
+
+    // Manual cause list refresh of one case for a hearing date (the dashboard's refresh button)
+    @PostMapping("/{id}/cause-list/refresh")
+    public ResponseEntity<Object> refreshCauseList(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(causeListRefresh.refresh(id, auth.currentUserId(), date));
     }
 
     @PostMapping("/cnr/start")
@@ -112,9 +121,9 @@ public class CaseController {
     // Returns 404 when the case is not found or not owned by the caller (the service throws
     // IllegalArgumentException for both cases; from the API's point of view they are the same).
     @PostMapping("/{id}/refresh-hearing")
-    public ResponseEntity<NextHearingUpdateService.RefreshResult> refreshHearing(@PathVariable Long id) {
+    public ResponseEntity<Object> refreshHearing(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(nextHearingUpdateService.refreshSingleCase(id, auth.currentUserId()));
+            return ResponseEntity.ok(nextHearingUpdateService.refreshOrAskCaptcha(id, auth.currentUserId()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.notFound().build();
         }

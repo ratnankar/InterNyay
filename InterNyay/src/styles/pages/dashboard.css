@@ -427,3 +427,38 @@
 @media (min-width: 769px) {
   .dash-actions { display: none; }
 }
+
+/* Manual cause list refresh: small round icon beside the hearing's chips */
+.cause-list-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--color-gold-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cause-list-refresh:hover:not(:disabled) { background: var(--color-navy); color: #fff; }
+.cause-list-refresh:disabled { cursor: default; }
+.cause-list-refresh svg { width: 15px; height: 15px; }
+.cause-list-refresh--busy svg { animation: icon-spin 0.8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .cause-list-refresh--busy svg { animation: none; } }
+/* Labelled form, shown when the hearing has no cause list number yet */
+.cause-list-refresh--labelled {
+  width: auto;
+  height: auto;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  border-style: dashed;
+  font-size: var(--fs-base);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
