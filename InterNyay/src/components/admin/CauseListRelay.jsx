@@ -5,9 +5,11 @@ import { formatDate, formatDisplayDate, formatTimestamp } from '../../utils/date
 import { getErrorMessage } from '../../utils/errorMessages'
 import ClearableDateInput from '../common/ClearableDateInput'
 import '../../styles/admin/cause-relay.css'
-import SeeMoreList from '../common/SeeMoreList'
 import Icon from '../common/Icon'
 import ToggleSwitch from '../common/ToggleSwitch'
+
+const RUNS_STEP = 30
+const RUNS_MAX = 300
 
 function tomorrow() {
   const d = new Date()
@@ -84,6 +86,8 @@ export default function CauseListRelay() {
   const [schedule, setSchedule] = useState(null)
   const [runs, setRuns] = useState([])
   const [loadingRuns, setLoadingRuns] = useState(true)
+  const [runLimit, setRunLimit] = useState(RUNS_STEP)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [startingAuto, setStartingAuto] = useState(false)
   const closed = useRef(false)
 
@@ -99,16 +103,24 @@ export default function CauseListRelay() {
   // Scheduler card and run history
   const loadRuns = useCallback(async () => {
     try {
-      const [sched, list] = await Promise.all([api.admin.causeListRelay.schedule(), api.admin.causeListRelay.runs(30)])
+      const [sched, list] = await Promise.all([api.admin.causeListRelay.schedule(), api.admin.causeListRelay.runs(runLimit)])
       if (closed.current) return
       setSchedule(sched)
       setRuns(Array.isArray(list) ? list : [])
     } catch (e) {
       if (!closed.current) addToast(getErrorMessage(e, 'Could not load the cause list runs'), 'error')
     } finally {
-      if (!closed.current) setLoadingRuns(false)
+      if (!closed.current) {
+        setLoadingRuns(false)
+        setLoadingMore(false)
+      }
     }
-  }, [addToast])
+  }, [addToast, runLimit])
+
+  const showMoreRuns = () => {
+    setLoadingMore(true)
+    setRunLimit(prev => Math.min(prev + RUNS_STEP, RUNS_MAX))
+  }
 
   useEffect(() => { loadRuns() }, [loadRuns])
 
@@ -410,8 +422,7 @@ export default function CauseListRelay() {
         {runs.length === 0 ? (
           <div className="admin__empty">{loadingRuns ? 'Loading…' : 'No runs recorded yet'}</div>
         ) : (
-          <SeeMoreList items={runs} step={10}>
-            {visibleRuns => (
+          <>
           <div className="admin__table-wrap">
             <table className="admin__table relay__table">
               <thead>
@@ -425,7 +436,7 @@ export default function CauseListRelay() {
                 </tr>
               </thead>
               <tbody>
-                {visibleRuns.map(r => {
+                {runs.map(r => {
                   const left = (r.districtCaptcha || 0) + (r.districtFailed || 0)
                   return (
                     <tr key={r.id}>
@@ -455,8 +466,14 @@ export default function CauseListRelay() {
               </tbody>
             </table>
           </div>
-            )}
-          </SeeMoreList>
+          {runs.length >= runLimit && runLimit < RUNS_MAX && (
+            <div className="see-more">
+              <button type="button" className="btn-outline see-more__btn" onClick={showMoreRuns} disabled={loadingMore}>
+                {loadingMore ? 'Loading…' : 'See more'}
+              </button>
+            </div>
+          )}
+          </>
         )}
       </section>
     </div>
