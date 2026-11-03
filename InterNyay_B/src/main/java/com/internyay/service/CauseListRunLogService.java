@@ -83,7 +83,7 @@ public class CauseListRunLogService {
     @Transactional
     public List<CauseListRunDto> recent(int limit) {
         closeStale();
-        return repo.findAllByOrderByStartedAtDesc(PageRequest.of(0, Math.max(1, Math.min(limit, 100))))
+        return repo.findAllByOrderByStartedAtDesc(PageRequest.of(0, Math.max(1, Math.min(limit, 300))))
                 .stream().map(CauseListRunDto::of).toList();
     }
 
