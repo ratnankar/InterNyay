@@ -5,6 +5,7 @@ import { formatDate, formatDisplayDate, formatTimestamp } from '../../utils/date
 import { getErrorMessage } from '../../utils/errorMessages'
 import ClearableDateInput from '../common/ClearableDateInput'
 import '../../styles/admin/cause-relay.css'
+import SeeMoreList from '../common/SeeMoreList'
 import Icon from '../common/Icon'
 import ToggleSwitch from '../common/ToggleSwitch'
 
@@ -51,7 +52,7 @@ function levelOf(text) {
   // A zero count ("0 failed", "0 need a CAPTCHA typed") is good news and must not turn the line red
   const t = text.toLowerCase().replace(/\b0 (?:court room\(s\) )?(?:failed|need a captcha typed|not found)/g, '')
   if (/failed|error|not found|no judge|not matched|portal returned no|stopped/.test(t)) return 'bad'
-  if (/skipped|not accepted|expired|not in the list|could not|cannot/.test(t)) return 'warn'
+  if (/skipped|not accepted|expired|not in the list|not in a published list|need a captcha typed|not tried|left for|could not|cannot/.test(t)) return 'warn'
   if (/saved|refreshed|finished/.test(t)) return 'ok'
   return 'info'
 }
@@ -409,6 +410,8 @@ export default function CauseListRelay() {
         {runs.length === 0 ? (
           <div className="admin__empty">{loadingRuns ? 'Loading…' : 'No runs recorded yet'}</div>
         ) : (
+          <SeeMoreList items={runs} step={10}>
+            {visibleRuns => (
           <div className="admin__table-wrap">
             <table className="admin__table relay__table">
               <thead>
@@ -422,7 +425,7 @@ export default function CauseListRelay() {
                 </tr>
               </thead>
               <tbody>
-                {runs.map(r => {
+                {visibleRuns.map(r => {
                   const left = (r.districtCaptcha || 0) + (r.districtFailed || 0)
                   return (
                     <tr key={r.id}>
@@ -452,6 +455,8 @@ export default function CauseListRelay() {
               </tbody>
             </table>
           </div>
+            )}
+          </SeeMoreList>
         )}
       </section>
     </div>
