@@ -1,13 +1,13 @@
 package com.internyay.service;
 
-import com.internyay.entity.Case;                                    // ===== NEW =====
+import com.internyay.entity.Case;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.CaseRepository.HearingDateDue;
-import com.internyay.util.CaseStatuses;                             // ===== NEW =====
+import com.internyay.util.CaseStatuses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate; // ===== v2 =====
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -40,7 +40,7 @@ public class NextHearingUpdateService {
         public int toRetry() { return stillPending + unreadable + skipped; }
     }
 
-    // ===== NEW ===== What the manual "Refresh" button gets back
+    // What the manual "Refresh" button gets back
     // hearingsAdded / ordersFound: what the history sync brought in (past hearing dates the case was missing, and
     // order PDFs downloaded for hearings that had none)
     public record RefreshResult(Long caseId,
@@ -70,7 +70,7 @@ public class NextHearingUpdateService {
     private final CaseRepository caseRepo;
     private final ScrapingService scraping;
     private final HearingService hearingService;
-    private final TransactionTemplate tx;   // ===== v2: atomic read-modify-write for the tiny status/date updates =====
+    private final TransactionTemplate tx;   // atomic read-modify-write for the tiny status/date updates
 
     private final boolean enabled;
     private final long delayMs;
@@ -84,7 +84,7 @@ public class NextHearingUpdateService {
             CaseRepository caseRepo,
             ScrapingService scraping,
             HearingService hearingService,
-            TransactionTemplate tx,                                     // ===== v2 =====
+            TransactionTemplate tx,
             @Value("${nexthearing.update.enabled:true}") boolean enabled,
             @Value("${nexthearing.update.delay-ms:1500}") long delayMs,
             @Value("${nexthearing.update.max-minutes:50}") int maxMinutes) {
@@ -161,7 +161,7 @@ public class NextHearingUpdateService {
             if (outlook.isEmpty()) {
                 unreadable++;
 
-            // ===== v2: disposed is checked first on purpose =====
+            // disposed is checked first on purpose
             // A disposed case has no next hearing to move to, even if the portal still shows a
             // stale date. So it is marked Decided and the run forgets about it for the day.
             } else if (outlook.get().disposed()) {
@@ -201,7 +201,7 @@ public class NextHearingUpdateService {
         return result;
     }
 
-    // ===== v2: single-case refresh used by the manual "Refresh" button =====
+    // single-case refresh used by the manual "Refresh" button
     public RefreshResult refreshSingleCase(Long caseId, Long userId) {
         Case c = caseRepo.findById(caseId).orElse(null);
         if (c == null || c.getUser() == null || !c.getUser().getId().equals(userId)) {
@@ -229,7 +229,7 @@ public class NextHearingUpdateService {
         }
         ScrapingService.CaseOutlook outlook = outlookOpt.get();
 
-        // ===== v3: fill in what the case is missing: every past hearing date eCourts lists, and the order of each =====
+        // fill in what the case is missing: every past hearing date eCourts lists, and the order of each
         // Done first and on its own, so a failure here never blocks the next hearing date logic below
         int added = 0, orders = 0;
         try {
@@ -246,13 +246,13 @@ public class NextHearingUpdateService {
     private RefreshResult decideNextHearing(Case c, ScrapingService.CaseOutlook outlook, LocalDate today) {
         Long caseId = c.getId();
 
-        // ===== v3: a closed case (Decided, Withdrawn...) only gets its history filled in, never a new next hearing =====
+        // a closed case (Decided, Withdrawn...) only gets its history filled in, never a new next hearing
         if (CaseStatuses.isClosed(c.getStatus()) && !outlook.disposed()) {
             return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
                     "The case is " + c.getStatus() + ", its next hearing date was left as it is");
         }
 
-        // ===== v2: disposed is checked first, same rule as execute() =====
+        // disposed is checked first, same rule as execute()
         if (outlook.disposed()) {
             if (CaseStatuses.isClosed(c.getStatus())) {
                 return new RefreshResult(caseId, c.getNextHearing(), c.getStatus(), c.getDecisionDate(),
@@ -268,7 +268,7 @@ public class NextHearingUpdateService {
         LocalDate currentNext = c.getNextHearing();
         LocalDate ecourtsNext  = outlook.nextHearing();
 
-        // ===== v2: adopt a date when the case has none yet =====
+        // adopt a date when the case has none yet
         if (ecourtsNext != null && currentNext == null) {
             adoptNextHearingInTx(caseId, ecourtsNext);
             Case refreshed = caseRepo.findById(caseId).orElse(c);
@@ -312,7 +312,7 @@ public class NextHearingUpdateService {
                 "No new hearing date on eCourts yet");
     }
 
-    // ===== v2: tiny transactional helpers so a concurrent change is never lost =====
+    // tiny transactional helpers so a concurrent change is never lost
     private void markDecidedInTx(Long caseId, LocalDate decisionDate) {
         tx.executeWithoutResult(status -> {
             Case fresh = caseRepo.findById(caseId).orElse(null);

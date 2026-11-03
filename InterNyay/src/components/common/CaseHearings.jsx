@@ -83,7 +83,7 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
   const replaceMiscApp = updated =>
     setMiscApps(prev => prev.map(a => (a.id === updated.id ? updated : a)))
 
-  // ===== NEW: read the case again from eCourts right now =====
+  // read the case again from eCourts right now
   async function refreshFromEcourts() {
     if (!caseId) return
     setBusyId('refresh')

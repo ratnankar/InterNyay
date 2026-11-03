@@ -13,6 +13,7 @@ let nextId = 1
 // Turns saved messages from the server into chat bubbles
 const toBubbles = saved => (Array.isArray(saved) ? saved : []).map(m => ({
   id: nextId++, role: m.role, content: m.content, ...(m.action ? { action: m.action } : {}),
+  ...(m.role === 'assistant' ? { serverId: m.id, rating: m.rating ?? 0 } : {}),
 }))
 
 // Hook that powers the chat assistant: the open chat, the list of saved chats, and talking to the backend.
@@ -40,6 +41,8 @@ export default function useChat() {
   const mounted = useRef(true)
   // Bumped whenever another chat is opened or a new one is started; a reply that arrives for an older number is thrown away
   const generation = useRef(0)
+  const streams = useRef(new Set())
+  const [briefLoading, setBriefLoading] = useState(false)
 
   // Where the open chat is remembered for this browser tab: a chat id, or "new" for an empty new chat
   const storageKey = `internyay_chat_active_${currentUser?.id ?? 'guest'}`
@@ -49,7 +52,11 @@ export default function useChat() {
   // Flip the mounted flag on mount and off on unmount
   useEffect(() => {
     mounted.current = true
-    return () => { mounted.current = false }
+    const open = streams.current
+    return () => {
+      mounted.current = false
+      open.forEach(c => c.abort())
+    }
   }, [])
 
   // Keep the refs in sync with the latest state
@@ -123,7 +130,7 @@ export default function useChat() {
     // Previous messages in the format the API expects, leaving out failed (error) bubbles
     // (only the latest ones: a saved chat can be much longer than the assistant needs)
     const history = messagesRef.current
-      .filter(m => !m.error)
+      .filter(m => !m.error && !m.local && !m.streaming)
       .slice(-HISTORY_SENT)
       .map(m => ({ role: m.role, content: m.content }))
 
@@ -146,30 +153,132 @@ export default function useChat() {
       return
     }
 
-    // Show the question right away, then wait for the reply
-    setMessages(prev => [...prev, asked])
+    const botId = nextId++
+    setMessages(prev => [...prev, asked, { id: botId, role: 'assistant', content: '', streaming: true, status: '' }])
     setLoading(true)
 
-    try {
-      const res = await api.chat.send([...history, { role: 'user', content: question }], activeIdRef.current)
-      if (!mounted.current) return
-      // The reply was saved in a chat of its own even if another chat was opened meanwhile, so the list is refreshed either way
-      refreshList()
-      if (generation.current !== myGeneration) return
-      if (res.conversationId && res.conversationId !== activeIdRef.current) setActive(res.conversationId)
-      setMessages(prev => [...prev, { id: nextId++, role: 'assistant', content: res.reply }])
-    } catch (err) {
+    const live = patch => {
       if (!mounted.current || generation.current !== myGeneration) return
-      setMessages(prev => [...prev, {
-        id: nextId++,
-        role: 'assistant',
-        error: true,
-        content: getErrorMessage(err, 'Something went wrong. Please try again.'),
-      }])
+      setMessages(prev => prev.map(m => (m.id === botId ? { ...m, ...(typeof patch === 'function' ? patch(m) : patch) } : m)))
+    }
+
+    const controller = new AbortController()
+    streams.current.add(controller)
+
+    const onEvent = (event, data) => {
+      if (event === 'status') {
+        live({ status: data.text })
+      } else if (event === 'delta') {
+        live(m => ({ content: m.content + data.text, status: '' }))
+      } else if (event === 'reset') {
+        live({ content: '' })
+      } else if (event === 'action') {
+        if (data.type === 'contact') live({ action: 'contact' })
+        else if (data.type === 'confirm') live({ card: { ...data, state: 'pending' } })
+      } else if (event === 'done') {
+        if (!mounted.current) return
+        refreshList()
+        if (generation.current !== myGeneration) return
+        if (data.conversationId && data.conversationId !== activeIdRef.current) setActive(data.conversationId)
+        live({
+          content: data.reply, streaming: false, status: '', rating: 0,
+          ...(data.messageId ? { serverId: data.messageId } : {}),
+          ...(data.action ? { action: data.action } : {}),
+        })
+      } else if (event === 'error') {
+        live({ content: data.message || 'Something went wrong. Please try again.', error: true, streaming: false, status: '', card: undefined })
+      }
+    }
+
+    try {
+      await api.chat.stream([...history, { role: 'user', content: question }], activeIdRef.current, onEvent, controller.signal)
+    } catch (err) {
+      live({ content: getErrorMessage(err, 'Something went wrong. Please try again.'), error: true, streaming: false, status: '', card: undefined })
     } finally {
+      streams.current.delete(controller)
       if (mounted.current && generation.current === myGeneration) setLoading(false)
     }
   }, [loading, refreshList, setActive])
+
+  const rate = useCallback(async (id, rating) => {
+    const target = messagesRef.current.find(m => m.id === id)
+    if (!target?.serverId) return
+    const before = target.rating ?? 0
+    const next = before === rating ? 0 : rating
+    setMessages(prev => prev.map(m => (m.id === id ? { ...m, rating: next } : m)))
+    try {
+      await api.chat.feedback(target.serverId, next)
+    } catch {
+      if (mounted.current) setMessages(prev => prev.map(m => (m.id === id ? { ...m, rating: before } : m)))
+    }
+  }, [])
+
+  const patchCard = useCallback((id, patch) => {
+    if (!mounted.current) return
+    setMessages(prev => prev.map(m => (m.id === id && m.card ? { ...m, card: { ...m.card, ...patch } } : m)))
+  }, [])
+
+  const confirmCard = useCallback(async id => {
+    const target = messagesRef.current.find(m => m.id === id)
+    if (!target?.card || target.card.state !== 'pending') return
+    patchCard(id, { state: 'working' })
+    try {
+      const res = await api.chat.confirmAction(target.card.id)
+      patchCard(id, { state: 'done', result: res?.message || 'Done.' })
+    } catch (err) {
+      patchCard(id, { state: 'error', result: getErrorMessage(err, 'Could not apply the change. Please ask again.') })
+    }
+  }, [patchCard])
+
+  const cancelCard = useCallback(id => {
+    const target = messagesRef.current.find(m => m.id === id)
+    if (!target?.card || target.card.state !== 'pending') return
+    patchCard(id, { state: 'cancelled' })
+    api.chat.cancelAction(target.card.id).catch(() => { /* the card expires by itself */ })
+  }, [patchCard])
+
+  const showBrief = useCallback(async () => {
+    if (briefLoading) return
+    setBriefLoading(true)
+    try {
+      const data = await api.chat.brief()
+      if (mounted.current) setMessages(prev => [...prev, { id: nextId++, role: 'assistant', local: true, content: '', brief: data }])
+    } catch (err) {
+      if (mounted.current) {
+        setMessages(prev => [...prev, {
+          id: nextId++, role: 'assistant', local: true, error: true,
+          content: getErrorMessage(err, 'Could not load your daily brief. Please try again.'),
+        }])
+      }
+    } finally {
+      if (mounted.current) setBriefLoading(false)
+    }
+  }, [briefLoading])
+
+  // Asks again after a failed answer (the "Try again" button): the failed question and its error bubble are taken out
+  // and the same question is sent as a fresh one, with the earlier messages as context. A failed daily brief is just reloaded
+  const retry = useCallback(id => {
+    if (loading) return
+    const list = messagesRef.current
+    const at = list.findIndex(m => m.id === id)
+    if (at < 0 || !list[at].error) return
+
+    if (list[at].local) {
+      const next = list.filter(m => m.id !== id)
+      messagesRef.current = next
+      setMessages(next)
+      showBrief()
+      return
+    }
+
+    const asked = list[at - 1]
+    if (!asked || asked.role !== 'user') return
+    const next = list.filter((_, k) => k !== at && k !== at - 1)
+    // The ref is updated now (not after the next render) so send() builds its context without the failed question
+    messagesRef.current = next
+    setMessages(next)
+    send(asked.content)
+  }, [loading, send, showBrief])
 
   // Closes the open chat (it stays saved in the list) and starts a new, empty one.
   // A question still waiting for its reply keeps going and is saved in the chat it was asked in
@@ -238,5 +347,6 @@ export default function useChat() {
   return {
     messages, loading, historyLoading, historyError, enabled, conversations, activeId,
     loadStatus, loadHistory, send, newChat, openConversation, removeConversation, removeAllConversations,
+    rate, confirmCard, cancelCard, showBrief, briefLoading, retry,
   }
 }

@@ -1,13 +1,12 @@
 /* Floating back-to-top button.
-   Sits in the middle of the page area (the sidebar is not counted). When a "See more" button is on screen
-   it glides up and rests just above it, so the two never overlap.
-   ScrollToTopButton.jsx sets: --st-x (page centre), --st-clear (space needed above See more). */
+   Sits in the middle of the page area (the sidebar is not counted).
+   ScrollToTopButton.jsx sets: --st-x (page centre). */
 .scroll-top-btn {
   --st-size: 46px;
   --st-base: 24px;
   position: fixed;
   left: var(--st-x, 50%);
-  bottom: max(var(--st-base), var(--st-clear, 0px));
+  bottom: var(--st-base);
   z-index: 80;
   width: var(--st-size);
   height: var(--st-size);

@@ -258,7 +258,8 @@
 .legal-fill__clear:hover { color: var(--color-critical); }
 
 .modal.pdf-modal.pdf-modal--fill {
-  --fill-h: 96vh;            
+  --fill-h: 96vh;
+  --fill-h: 96dvh;           
   --fill-chrome: 125px;      
   --viewer-bar: 56px;        
   --page-zoom: 1.1;

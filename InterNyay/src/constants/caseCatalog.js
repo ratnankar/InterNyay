@@ -12,7 +12,7 @@ export const SIDE_COMPLAINANT = 'COMPLAINANT'
 export const SIDE_ACCUSED = 'ACCUSED'
 
 // Options for the "client side" dropdown in the case form
-export const PARTY_SIDES = [
+const PARTY_SIDES = [
   { value: SIDE_COMPLAINANT, label: 'Complainant/Petitioner/Plaintiff' },
   { value: SIDE_ACCUSED,     label: 'Accused/Respondent/Defendant' },
 ]

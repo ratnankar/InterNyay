@@ -302,7 +302,7 @@ export const cases = {
   // Set or change the next hearing date of a case
   updateNextHearing: (id, body) => put(`/cases/${id}/next-hearing`, { body }),
 
-  // ===== NEW: read this case's latest next hearing date from the eCourts portal right now =====
+  // read this case's latest next hearing date from the eCourts portal right now
   // It also adds the past hearing dates the case is missing and the order of each date eCourts lists
   // (hearingsAdded / ordersFound say how many; the hearing list must be reloaded afterwards).
   // The server answers with { caseId, nextHearing, status, decisionDate, message, hearingsAdded, ordersFound }:
@@ -398,6 +398,8 @@ export const documents = {
 // Misc. applications filed in cases: list, add (in an existing case or a new one), edit, dispose off and their documents
 export const miscApplications = {
   list:    (params)   => get('/misc-applications', { params }),
+  // Totals for the filter chips: { all, pending, disposed, allowed, disallowed }
+  counts:  ()         => get('/misc-applications/counts'),
   get:     (id)       => get(`/misc-applications/${id}`),
   // Applications that have a hearing on a date (yyyy-MM-dd), for the dashboard
   onDate:  (date)     => get('/misc-applications/on', { params: { date } }),
@@ -808,6 +810,16 @@ export const jurisdiction = {
 export const admin = {
   stats: () => get('/admin/stats'),
 
+  chat: {
+    insights:        (days) => get('/admin/chat/insights', { params: { days } }),
+    evalCases:       ()     => get('/admin/chat/eval/cases'),
+    runEval:         (ids)  => post('/admin/chat/eval', { params: ids && ids.length ? { ids: ids.join(',') } : undefined }),
+    evalStatus:      ()     => get('/admin/chat/eval/status'),
+    cancelEval:      ()     => post('/admin/chat/eval/cancel'),
+    knowledge:       ()     => get('/admin/chat/knowledge'),
+    reloadKnowledge: ()     => post('/admin/chat/knowledge/reload'),
+  },
+
   // Judges on leave, including hiding an entry and refreshing from the source
   judgesOnLeave: {
     list:      (params)       => get('/admin/judges-on-leave', { params }),
@@ -819,7 +831,7 @@ export const admin = {
   },
 
   causeListRelay: {
-    start:   (date)         => post('/admin/cause-list-relay/start', { params: { date } }),
+    start:   (date, all = false) => post('/admin/cause-list-relay/start', { params: { date, all } }),
     refreshDate: (date)     => post('/admin/cause-list-relay/refresh-date', { params: { date } }),
     answer:  (id, captcha)  => post(`/admin/cause-list-relay/${id}/answer`, { body: { captcha } }),
     next:    ()             => post('/admin/cause-list-relay/continue'),
@@ -827,7 +839,7 @@ export const admin = {
     refresh: (id)          => post(`/admin/cause-list-relay/${id}/refresh`),
     schedule: ()           => get('/admin/cause-list-relay/schedule'),
     runs:    (limit = 30)  => get('/admin/cause-list-relay/runs', { params: { limit } }),
-    runAuto: (date)        => post('/admin/cause-list-relay/run-auto', { params: { date } }),
+    runAuto: (date, all = false) => post('/admin/cause-list-relay/run-auto', { params: { date, all } }),
   },
 
   // When each background job runs (Admin > Schedulers)
@@ -925,11 +937,100 @@ export const contact = {
   markSeen: (id)    => post(`/contact/${id}/seen`),
 }
 
+function parseSseBlock(block) {
+  let event = 'message'
+  const data = []
+  block.split('\n').forEach(line => {
+    if (line.startsWith('event:')) event = line.slice(6).trim()
+    else if (line.startsWith('data:')) data.push(line.slice(5).replace(/^ /, ''))
+  })
+  if (data.length === 0) return null
+  try {
+    return { event, data: JSON.parse(data.join('\n')) }
+  } catch {
+    return null
+  }
+}
+
+async function streamChat(messages, conversationId, on, signal) {
+  const token = localStorage.getItem('internyay_token')
+  const headers = { 'Content-Type': 'application/json', Accept: 'text/event-stream' }
+  if (CLIENT_PLATFORM) headers['X-Client-Platform'] = CLIENT_PLATFORM
+  if (CLIENT_BROWSER) headers['X-Client-Browser'] = CLIENT_BROWSER
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const res = await http(`${BASE_URL}/chat/stream`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ messages, conversationId: conversationId ?? null }),
+    signal,
+  })
+
+  const renewed = token && res.headers.get('X-Refreshed-Token')
+  if (renewed) replaceToken(token, renewed)
+
+  if (!res.ok) {
+    if (res.status === 401 && token && !sessionEnding) {
+      sessionEnding = true
+      forgetAccountByToken(token)
+      localStorage.removeItem('internyay_token')
+      localStorage.removeItem('internyay_user')
+      try { sessionStorage.setItem('internyay_notice', MESSAGES.session) } catch { /* storage unavailable */ }
+      window.location.reload()
+    }
+    const error = await res.json().catch(() => ({}))
+    throw makeApiError(res.status, error.message, { signedIn: !!token })
+  }
+
+  if (!res.body || !res.body.getReader) {
+    const result = await rawRequest('POST', '/chat', { body: { messages, conversationId: conversationId ?? null } })
+    on('done', result)
+    return
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let finished = false
+
+  const dispatch = block => {
+    const parsed = parseSseBlock(block)
+    if (!parsed) return
+    if (parsed.event === 'done' || parsed.event === 'error') finished = true
+    on(parsed.event, parsed.data)
+  }
+
+  try {
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n')
+      let cut = buffer.indexOf('\n\n')
+      while (cut >= 0) {
+        dispatch(buffer.slice(0, cut))
+        buffer = buffer.slice(cut + 2)
+        cut = buffer.indexOf('\n\n')
+      }
+    }
+    if (buffer.trim()) dispatch(buffer)
+  } catch (e) {
+    if (signal?.aborted) return
+    throw makeNetworkError(e)
+  }
+
+  if (!finished && !signal?.aborted) throw new ApiError(MESSAGES.server, { status: 0 })
+}
+
 // Chat assistant. Every chat is saved on the server: send() and addToHistory() put messages into the chat named by
 // conversationId (empty starts a new chat) and the reply says which chat that is
 export const chat = {
   status: ()         => get('/chat/status'),
   send:   (messages, conversationId) => post('/chat', { body: { messages, conversationId: conversationId ?? null } }),
+  stream: streamChat,
+  brief:  () => get('/chat/brief'),
+  feedback: (messageId, rating, note) => post(`/chat/messages/${messageId}/feedback`, { body: { rating, note: note ?? null } }),
+  confirmAction: id => post(`/chat/actions/${id}/confirm`),
+  cancelAction:  id => post(`/chat/actions/${id}/cancel`),
   // The chat list (latest first), one chat with its messages, deleting one chat and deleting all of them
   conversations:      ()   => get('/chat/conversations'),
   conversation:       (id) => get(`/chat/conversations/${id}`),

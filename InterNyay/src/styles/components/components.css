@@ -344,7 +344,7 @@ body:has(.chat__panel) .toast-container {
 
 .case-modal-status { margin-bottom: 1rem; }
 
-/* "See more" button under long lists */
+/* Fallback "See more" button for browsers without scroll detection (see AutoLoad.jsx) */
 .see-more {
   display: flex;
   justify-content: center;
@@ -356,9 +356,4 @@ body:has(.chat__panel) .toast-container {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-}
-
-.see-more__count {
-  color: var(--color-text-muted, #7a7a7a);
-  font-size: var(--fs-xs, 0.8rem);
 }

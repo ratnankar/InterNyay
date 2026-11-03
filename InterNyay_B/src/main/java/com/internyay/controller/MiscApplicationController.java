@@ -35,6 +35,12 @@ public class MiscApplicationController {
         return ResponseEntity.ok(service.list(auth.currentUserId(), status, outcome, caseId, search, page, Math.min(size, 100)));
     }
 
+    // Totals for the filter chips (all, pending, disposed off, allowed, disallowed)
+    @GetMapping("/counts")
+    public ResponseEntity<Map<String, Long>> counts() {
+        return ResponseEntity.ok(service.counts(auth.currentUserId()));
+    }
+
     // Applications with a hearing on a date (yyyy-MM-dd), for the dashboard
     @GetMapping("/on")
     public ResponseEntity<java.util.List<MiscApplicationDto>> onDate(@RequestParam String date) {

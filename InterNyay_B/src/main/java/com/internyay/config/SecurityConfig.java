@@ -83,6 +83,8 @@ public class SecurityConfig {
                 // URL access rules, first match wins
                 .authorizeHttpRequests(auth -> auth
 
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
+
                         // Public: login, registration, OTP, Google sign-in and password reset
                         .requestMatchers("/api/auth/login", "/api/auth/register",
                                 "/api/auth/register/send-otp", "/api/auth/register/verify-otp",

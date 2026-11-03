@@ -41,7 +41,7 @@
   min-height: 40px;
   border-radius: 2px;
   flex-shrink: 0;
-  /* Same colour for every hearing, whatever the case status */
+  /* Colour of the case status is set on the bar by the dashboard; gold only when none is given */
   background: var(--color-gold);
 }
 

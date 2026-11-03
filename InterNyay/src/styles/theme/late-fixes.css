@@ -467,4 +467,18 @@ html { scrollbar-gutter: stable; }
 
 /* Admin tab bars while being dragged with the mouse */
 .admin__tabs.admin__tabs.is-dragging, .admin__subtabs.admin__subtabs.is-dragging { cursor: grabbing; user-select: none; scroll-behavior: auto; }
-.admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs { overscroll-behavior-x: contain; }
+/* Mouse devices only: on iPhone / iPad this lock can swallow the sideways swipe, so touch screens keep the default (see the end of this file) */
+@media (hover: hover) and (pointer: fine) {
+  .admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs { overscroll-behavior-x: contain; }
+}
+
+/* iPhone / iPad: every sideways-scrolling strip or table scrolls natively. "overscroll-behavior-x: contain" on these can make
+   WebKit ignore the swipe (the Cases status chips did not scroll), and a swipe along them must always scroll them */
+@media (hover: none), (pointer: coarse) {
+  .admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs,
+  .case-filters, .status-tiles, .todo-sidebar__nav,
+  .qa-table-wrap, .admin__table-wrap, .drawer__table-wrap, .txn-table-wrap, .invoice__table-wrap, .chat-insights__table-wrap {
+    overscroll-behavior-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

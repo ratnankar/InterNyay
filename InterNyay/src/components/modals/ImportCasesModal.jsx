@@ -1,3 +1,4 @@
+import AutoLoad from '../common/AutoLoad'
 import { useMemo, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import ModalPortal from '../common/ModalPortal'
@@ -10,7 +11,7 @@ import {
   parseMyCases,
 } from '../../utils/myCasesImport'
 
-// How many cases are drawn at first, and added each time "Show more" is pressed
+// How many cases are drawn at first, and added each time the end of the list scrolls into view
 const PAGE = 40
 
 // Upload the "My Cases" file downloaded from eCourts, see the cases sorted into categories and add them one by one.
@@ -205,11 +206,7 @@ export default function ImportCasesModal({ items, onLoaded, onClear, onAdd, onCl
                 })}
               </div>
 
-              {visible.length > shown && (
-                <button type="button" className="btn-outline u-mt-10" onClick={() => setShown(n => n + PAGE)}>
-                  Show more ({visible.length - shown} left)
-                </button>
-              )}
+              <AutoLoad onLoad={() => setShown(n => n + PAGE)} active={visible.length > shown} depKey={shown} />
             </>
           )}
         </div>

@@ -2,7 +2,7 @@ import { MISC_APPLICATION_CHOICES, MISC_DISPOSED, MISC_TYPE_MANUAL } from '../..
 
 export const APPLICATION_CHOICES = MISC_APPLICATION_CHOICES
 
-export const MISC_HEARING_LABEL = 'Misc. Application'
+const MISC_HEARING_LABEL = 'Misc. Application'
 
 const MISC_HEARING_LINE = /^\s*misc\.?\s*application\s*:\s*(.+?)\s*$/i
 

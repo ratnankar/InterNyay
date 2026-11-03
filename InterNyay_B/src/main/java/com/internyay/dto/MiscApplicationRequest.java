@@ -14,7 +14,7 @@ public class MiscApplicationRequest {
     // EXISTING: the case
     public Long caseId;
 
-    // NEW: the case that is created. Title is typed by hand; case no. and CNR are optional (a CNR that is typed must be valid)
+    // the case that is created. Title is typed by hand; case no. and CNR are optional (a CNR that is typed must be valid)
     public Long clientId;
     @Size(max = 500) public String caseTitle;
     @Size(max = 255) public String caseNo;

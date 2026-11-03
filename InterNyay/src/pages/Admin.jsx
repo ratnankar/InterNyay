@@ -34,6 +34,7 @@ import PlansAdmin from '../components/admin/PlansAdmin'
 import FeeCalculatorAdmin from '../components/admin/FeeCalculatorAdmin'
 import OptionsAdmin from '../components/admin/OptionsAdmin'
 import SchedulerAdmin from '../components/admin/SchedulerAdmin'
+import ChatInsightsAdmin from '../components/admin/ChatInsightsAdmin'
 
 import Icon from '../components/common/Icon'
 import NotificationArchive from '../components/admin/NotificationArchive'
@@ -89,6 +90,9 @@ const TAB_GROUPS = [
   ] },
   { id: 'schedulers', icon: 'calendar', label: 'Schedulers', tabs: [
     { id: 'schedulers', label: 'Schedulers' },
+  ] },
+  { id: 'assistant', icon: 'chat', label: 'AI Assistant', tabs: [
+    { id: 'assistant', label: 'AI Assistant' },
   ] },
   { id: 'updates', icon: 'megaphone', label: 'Updates', tabs: [
     { id: 'notifications', label: 'Notifications' },
@@ -961,7 +965,7 @@ export default function Admin() {
   const {
     visible: visibleAccounts,
     remaining: accountsRemaining,
-    showMore: showMoreAccounts, step: showMoreAccountsStep,
+    showMore: showMoreAccounts,
   } = useSeeMore(visible, `${search}|${roleFilter}`, accountsStep)
 
   // Number of associates under each advocate, keyed by advocate id
@@ -1267,7 +1271,7 @@ export default function Admin() {
               </tbody>
             </table>
           </div>
-          <SeeMore remaining={accountsRemaining} onClick={showMoreAccounts} step={showMoreAccountsStep} />
+          <SeeMore remaining={accountsRemaining} onClick={showMoreAccounts} />
         </>
       )}
 
@@ -1527,6 +1531,8 @@ export default function Admin() {
       {tab === 'options' && <OptionsAdmin key={refreshKey} />}
 
       {tab === 'schedulers' && <SchedulerAdmin key={refreshKey} />}
+
+      {tab === 'assistant' && <ChatInsightsAdmin key={refreshKey} />}
 
       {tab === 'contact' && <ContactMessagesAdmin key={refreshKey} onLoaded={list => { writeContactSeen(currentUser?.id, list); setNewMessages(0) }} />}
 

@@ -53,6 +53,8 @@ public class ChatTools {
     private final UserRepository userRepo;
     private final PlanService planService;
     private final LegalFormRepository legalFormRepo;
+    private final ChatActions actions;
+    private final LegalKnowledge legalKnowledge;
 
     // Today in court time
     public static LocalDate today() {
@@ -215,6 +217,35 @@ public class ChatTools {
                         "File number status: the next automatic file number, highest number in use and released numbers that can be reused.")
                 .build());
 
+        tools.add(ToolSpec.of("legal_search",
+                        "Search the built-in legal library: IPC to BNS, CrPC to BNSS and Evidence Act to BSA section tables, limitation, bail, cheque dishonour and consumer court rules. Use it for any question about law, sections or procedure.")
+                .text("query", "Words to look for, e.g. 'IPC 420 BNS', 'default bail 60 days', 'cheque bounce notice period'.").require("query")
+                .number("limit", "Max passages, default 5, max 10.")
+                .build());
+
+        tools.add(ToolSpec.of("propose_task",
+                        "Prepare a new to-do task. Nothing is saved until the advocate presses Confirm on the card shown to them.")
+                .text("title", "Short task title.").require("title")
+                .text("description", "Optional details.")
+                .date("due_date", "Optional due date, today or later.")
+                .text("category", "Optional category.")
+                .build());
+
+        tools.add(ToolSpec.of("propose_task_completion",
+                        "Prepare marking an existing task as completed. Nothing changes until the advocate presses Confirm.")
+                .number("task_id", "Task id from list_tasks.").require("task_id")
+                .build());
+
+        tools.add(ToolSpec.of("propose_hearing_note",
+                        "Prepare adding a note to a recorded hearing of a case, added after any existing note. Nothing changes until the advocate presses Confirm.")
+                .number("hearing_id", "Hearing id from the hearing history of get_case.").require("hearing_id")
+                .text("note", "The note text.").require("note")
+                .build());
+
+        tools.add(ToolSpec.of("contact_support",
+                        "Show the Contact Us button under the reply. Use when the user wants to reach support, a human or an agent.")
+                .build());
+
         return tools;
     }
 
@@ -246,8 +277,41 @@ public class ChatTools {
             case "file_numbers" -> fileNumbers(ctx);
             case "my_plan" -> myPlan(ctx);
             case "legal_forms" -> legalForms(in, ctx);
+            case "legal_search" -> legalSearch(in);
+            case "propose_task" -> actions.proposeTask(ctx, in.text("title"), in.text("description"), in.date("due_date"), in.text("category"));
+            case "propose_task_completion" -> actions.proposeTaskCompletion(ctx, in.id("task_id"));
+            case "propose_hearing_note" -> actions.proposeHearingNote(ctx, in.id("hearing_id"), in.text("note"));
+            case "contact_support" -> contactSupport();
             default -> throw new IllegalArgumentException("Unknown tool " + name);
         };
+    }
+
+    private Object legalSearch(ToolInput in) {
+        String query = in.text("query");
+        if (query == null) throw new IllegalArgumentException("query is required");
+        int limit = in.number("limit", 5, 1, 10);
+
+        List<Map<String, Object>> passages = legalKnowledge.search(query, limit).stream()
+                .map(p -> Rec.of()
+                        .always("source", p.source())
+                        .always("topic", p.title())
+                        .always("text", p.text()).map())
+                .toList();
+
+        Rec rec = Rec.of().always("count", passages.size()).always("passages", passages);
+        rec.always("note", passages.isEmpty()
+                ? "The library has nothing on this. Say so, and tell the advocate to check the bare act."
+                : "Answer from these passages and name the source. Remind the advocate to confirm on the bare act before citing it in court.");
+        return rec.map();
+    }
+
+    private Object contactSupport() {
+        Map<String, Object> card = new LinkedHashMap<>();
+        card.put("type", "contact");
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("message", "The Contact Us button is now shown under your reply.");
+        result.put("_action", card);
+        return result;
     }
 
     // Dashboard style summary: counts, today's and upcoming hearings
@@ -410,6 +474,7 @@ public class ChatTools {
 
         List<HearingDto> history = hearingService.listForCase(c.getId(), ctx.userId());
         rec.put("hearingHistory", history.stream().map(h -> Rec.of()
+                .always("id", h.getId())
                 .always("date", h.getDate())
                 .put("time", h.getTime())
                 .put("outcome", h.getOutcome())

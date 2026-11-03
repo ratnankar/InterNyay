@@ -8,6 +8,7 @@ import './index.css'
 import { stackTables } from './utils/stackTables'
 import { compactButtons } from './utils/compactButtons'
 import { trackKeyboard } from './utils/keyboardState'
+import { touchStrips } from './utils/touchStrips'
 
 // A page file that cannot be preloaded (usually a new version was published): reload once to get the newest version
 window.addEventListener('vite:preloadError', event => { if (reloadOnce()) event.preventDefault() })
@@ -26,3 +27,6 @@ stackTables()
 // Rows of buttons that run out of room show icons only; the chat button and bottom bar step aside while the phone keyboard is open
 compactButtons()
 trackKeyboard()
+
+// Sideways rows (status chips, filter chips, tabs) scroll with the finger on iPhone (see utils/touchStrips.js)
+touchStrips()

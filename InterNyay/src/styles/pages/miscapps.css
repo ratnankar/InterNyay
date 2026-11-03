@@ -26,7 +26,6 @@
 }
 .misc-empty .icon { font-size: var(--fs-icon); }
 .misc-loading { text-align: center; margin-top: 1rem; }
-.misc-more { display: flex; justify-content: center; margin-top: 1.25rem; }
 
 /* Windows */
 .misc-modal { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; }
@@ -109,8 +108,8 @@
 .fit-label--center .fit-label__ruler { left: 50%; transform: translateX(-50%); }
 
 /* Allowed / Disallowed on a disposed off application */
-.misc-status--allowed { --status-color: #1B7F3B; --status-bg: rgba(27, 127, 59, 0.13); }
-.misc-status--disallowed { --status-color: #C62828; --status-bg: rgba(198, 40, 40, 0.12); }
+.misc-status--allowed { --status-color: #E67E22; --status-bg: rgba(230, 126, 34, 0.14); }
+.misc-status--disallowed { --status-color: #6b7385; --status-bg: rgba(107, 115, 133, 0.14); }
 
 .misc-outcome { display: flex; gap: 8px; flex-wrap: wrap; }
 .misc-outcome .btn-gold, .misc-outcome .btn-outline { flex: 1 1 120px; justify-content: center; }
@@ -283,4 +282,20 @@
 
 @media (min-width: 1200px) {
   .misc-page .case-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Total on a filter chip (Misc. Application page) */
+.case-filter-btn__count { margin-left: 6px; font-weight: 700; font-variant-numeric: lining-nums tabular-nums; opacity: 0.85; }
+
+/* Coloured filter chips (Misc. Application page): a dot in the status colour; the chosen chip is tinted in that colour */
+.misc-page .case-filters .case-filter-btn__dot {
+  width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; flex-shrink: 0;
+  background: var(--chip-accent, currentColor);
+}
+.misc-page .case-filters .case-filter-btn.case-filter-btn--tinted.case-filter-btn--active,
+.misc-page .case-filters .case-filter-btn.case-filter-btn--tinted.case-filter-btn--active:hover {
+  border-color: var(--chip-accent);
+  background: color-mix(in srgb, var(--chip-accent) 10%, #fff);
+  color: var(--color-navy);
+  box-shadow: none;
 }

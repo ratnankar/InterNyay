@@ -86,4 +86,14 @@ public interface MiscApplicationRepository extends JpaRepository<MiscApplication
         WHERE h.legalCase.id = a.legalCase.id AND a.user.id = :userId AND a.portalSynced = true
         """)
     List<Object[]> portalHearingDates(Long userId);
+
+    // How many applications there are per status and disposal outcome (same joins as the list, so the numbers match it)
+    @Query("""
+        SELECT a.status, a.disposalOutcome, COUNT(a) FROM MiscApplication a
+        JOIN a.legalCase c
+        JOIN c.courtPlace
+        WHERE a.user.id = :userId
+        GROUP BY a.status, a.disposalOutcome
+        """)
+    List<Object[]> countByStatus(Long userId);
 }

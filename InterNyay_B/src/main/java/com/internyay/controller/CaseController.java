@@ -28,7 +28,6 @@ public class CaseController {
     private final CnrLookupService cnrLookup;
     private final AuthHelper auth;
     private final com.internyay.service.PlanService planService;
-    // ===== NEW =====
     private final NextHearingUpdateService nextHearingUpdateService;
 
     private boolean feesHidden() {
@@ -109,7 +108,7 @@ public class CaseController {
         return ResponseEntity.ok(hearingService.moveNextHearing(id, req, auth.currentUserId()));
     }
 
-    // ===== NEW: manual "Refresh" button — reads the eCourts portal right now =====
+    // manual "Refresh" button — reads the eCourts portal right now
     // Returns 404 when the case is not found or not owned by the caller (the service throws
     // IllegalArgumentException for both cases; from the API's point of view they are the same).
     @PostMapping("/{id}/refresh-hearing")

@@ -22,6 +22,10 @@ public class AdminSchedulerController {
     @Data
     public static class UpdateRequest {
         @NotBlank public String cron;
+        // Further times of the same job, besides cron (optional)
+        public List<String> extraCrons;
+        // The hearing date choice of each extra time, in the same order as extraCrons (blank = same as target)
+        public List<String> extraTargets;
         public boolean enabled = true;
         // Which hearing date(s) the job looks up (TODAY, TOMORROW ...); ignored by jobs without a date choice
         public String target;
@@ -41,7 +45,7 @@ public class AdminSchedulerController {
     @PutMapping("/{key}")
     public ResponseEntity<SchedulerRegistry.JobView> update(@PathVariable String key,
                                                             @RequestBody UpdateRequest req) {
-        return ResponseEntity.ok(registry.update(key, req.getCron(), req.isEnabled(), req.getTarget()));
+        return ResponseEntity.ok(registry.update(key, req.getCron(), req.getExtraCrons(), req.getExtraTargets(), req.isEnabled(), req.getTarget()));
     }
 
     // "Run now": starts the job in the background; the card shows when it is done

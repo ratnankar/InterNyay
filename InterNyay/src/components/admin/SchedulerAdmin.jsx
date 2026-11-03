@@ -36,17 +36,18 @@ const INTERVALS = [5, 10, 15, 20, 30]
 
 // Which hearing date(s) a job looks up
 const TARGET_LABELS = {
-  TODAY: 'Today',
-  TOMORROW: 'Tomorrow',
-  DAY_AFTER: 'Day after tomorrow',
-  TODAY_TOMORROW: 'Today and tomorrow',
-  NEXT_3_DAYS: 'Next 3 days (today + 2)',
-  NEXT_7_DAYS: 'Next 7 days (today + 6)',
+  YESTERDAY: 'Previous day',
+  TODAY: 'Same day',
+  TOMORROW: 'Next day',
+  DAY_AFTER: 'Day after next',
+  TODAY_TOMORROW: 'Same day and next day',
+  NEXT_3_DAYS: 'Next 3 days (same day + 2)',
+  NEXT_7_DAYS: 'Next 7 days (same day + 6)',
 }
 
 // The hearing dates a choice means, counted from today in IST (same rule as the server)
 const TARGET_OFFSETS = {
-  TODAY: [0], TOMORROW: [1], DAY_AFTER: [2], TODAY_TOMORROW: [0, 1], NEXT_3_DAYS: [0, 1, 2], NEXT_7_DAYS: [0, 1, 2, 3, 4, 5, 6],
+  YESTERDAY: [-1], TODAY: [0], TOMORROW: [1], DAY_AFTER: [2], TODAY_TOMORROW: [0, 1], NEXT_3_DAYS: [0, 1, 2], NEXT_7_DAYS: [0, 1, 2, 3, 4, 5, 6],
 }
 
 function targetDates(target) {
@@ -163,29 +164,151 @@ function validate(f) {
   return ''
 }
 
-// One job: switch, what it looks up, how it repeats, and Save / Run now buttons
+// Most times one job can have (same limit as the server)
+const MAX_TIMES = 6
+
+// The fields of one run time: how it repeats, the hour and minute boxes, and the days of the week
+function TimeFields({ time, onChange, disabled }) {
+  const set = patch => onChange({ ...time, ...patch })
+  const toggleDay = d => set({ days: time.days.includes(d) ? time.days.filter(x => x !== d) : [...time.days, d] })
+
+  const hourOptions = HOURS.map(h => <option key={h} value={h}>{hourLabel(h)}</option>)
+  // An hour picker for one field of the time (hour, from or to)
+  const hourField = (label, name) => (
+    <div className="sched-field">
+      <label className="form-label">{label}</label>
+      <Dropdown className="form-input" value={time[name]} disabled={disabled}
+        onChange={e => set({ [name]: Number(e.target.value) })}>{hourOptions}</Dropdown>
+    </div>
+  )
+
+  return (
+    <>
+      <div className="sched-row__fields">
+        <div className="sched-field">
+          <label className="form-label">Repeats</label>
+          <Dropdown className="form-input" value={time.mode} disabled={disabled}
+            onChange={e => set({ mode: e.target.value })}>
+            <option value="DAILY">Once a day</option>
+            <option value="WINDOW">Every hour</option>
+            <option value="INTERVAL">Every few minutes</option>
+            <option value="CUSTOM">Custom (advanced)</option>
+          </Dropdown>
+        </div>
+
+        {time.mode === 'DAILY' && (
+          <>
+            {hourField('At hour', 'hour')}
+            <div className="sched-field sched-field--narrow">
+              <label className="form-label">Minute</label>
+              <input className="form-input" type="number" min="0" max="59" disabled={disabled}
+                value={time.minute} onChange={e => set({ minute: toMinute(e.target.value) })} />
+            </div>
+          </>
+        )}
+
+        {time.mode === 'WINDOW' && (
+          <>
+            {hourField('From', 'from')}
+            {hourField('Until', 'to')}
+            <div className="sched-field sched-field--narrow">
+              <label className="form-label">At minute</label>
+              <input className="form-input" type="number" min="0" max="59" disabled={disabled}
+                value={time.minute} onChange={e => set({ minute: toMinute(e.target.value) })} />
+            </div>
+          </>
+        )}
+
+        {time.mode === 'INTERVAL' && (
+          <>
+            <div className="sched-field sched-field--narrow">
+              <label className="form-label">Every</label>
+              <Dropdown className="form-input" value={time.every} disabled={disabled}
+                onChange={e => set({ every: Number(e.target.value) })}>
+                {INTERVALS.map(n => <option key={n} value={n}>{n} min</option>)}
+              </Dropdown>
+            </div>
+            {hourField('From', 'from')}
+            {hourField('Until', 'to')}
+          </>
+        )}
+
+        {time.mode === 'CUSTOM' && (
+          <div className="sched-field sched-field--wide">
+            <label className="form-label">Time (second minute hour day month weekday)</label>
+            <input className="form-input" disabled={disabled} value={time.custom}
+              placeholder="0 0 10 * * *" onChange={e => set({ custom: e.target.value })} />
+          </div>
+        )}
+      </div>
+
+      {time.mode !== 'CUSTOM' && (
+        <div className="sched-days" role="group" aria-label="Days of the week">
+          <span className="form-label sched-days__label">On</span>
+          {DAY_SHORT.map((name, d) => (
+            <button key={name} type="button" disabled={disabled}
+              className={`sched-day${time.days.includes(d) ? ' sched-day--on' : ''}`}
+              aria-pressed={time.days.includes(d)} onClick={() => toggleDay(d)}>{name}</button>
+          ))}
+          <button type="button" className="sched-days__quick" disabled={disabled} onClick={() => set({ days: ALL_DAYS })}>Every day</button>
+          <button type="button" className="sched-days__quick" disabled={disabled} onClick={() => set({ days: [0, 1, 2, 3, 4, 5] })}>Mon–Sat</button>
+        </div>
+      )}
+    </>
+  )
+}
+
+// One job: switch, what it looks up, one or more run times, and Save / Run now buttons
 function JobRow({ job, onSaved, onRan }) {
   const { addToast } = useApp()
   const hasTargets = Array.isArray(job.targets) && job.targets.length > 0
-  const fromJob = j => ({ enabled: j.enabled, target: j.target || j.defaultTarget || '', ...parseCron(j.cron) })
+  const savedCrons = j => [j.cron, ...(j.extraCrons || [])]
+  // Each time carries its own hearing date choice: the first uses the job's, the others their own (or the job's when none)
+  const jobTarget = j => j.target || j.defaultTarget || ''
+  const fromJob = j => ({
+    enabled: j.enabled,
+    times: savedCrons(j).map((c, i) => ({ ...parseCron(c), target: (i === 0 ? '' : (j.extraTargets || [])[i - 1]) || jobTarget(j) })),
+  })
   const [form, setForm] = useState(() => fromJob(job))
   const [saving, setSaving] = useState(false)
   const [starting, setStarting] = useState(false)
 
   // A new version from the server (after a save or a reload) replaces what is being edited
-  useEffect(() => { setForm(fromJob(job)) }, [job.cron, job.enabled, job.target]) // eslint-disable-line react-hooks/exhaustive-deps
+  const savedKey = `${savedCrons(job).join('|')}#${[job.target, ...(job.extraTargets || [])].join('|')}`
+  useEffect(() => { setForm(fromJob(job)) }, [savedKey, job.enabled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = patch => setForm(f => ({ ...f, ...patch }))
-  const cron = buildCron(form)
-  const savedTarget = job.target || job.defaultTarget || ''
-  const dirty = cron !== buildCron(parseCron(job.cron)) || form.enabled !== job.enabled || (hasTargets && form.target !== savedTarget)
-  const problem = validate(form)
+  const setTime = (i, time) => set({ times: form.times.map((t, n) => (n === i ? time : t)) })
+  const addTime = () => {
+    const last = form.times[form.times.length - 1]
+    // A new time starts as a once-a-day time on the same days and for the same hearing date as the last one
+    set({ times: [...form.times, { ...parseCron('0 0 9 * * *'), days: last?.days?.length ? last.days : ALL_DAYS, target: last?.target || '' }] })
+  }
+  const removeTime = i => set({ times: form.times.filter((_, n) => n !== i) })
+
+  const crons = form.times.map(buildCron)
+  const targets = form.times.map(t => t.target || '')
+  const saved = fromJob(job)
+  const savedBuilt = saved.times.map(buildCron)
+  const dirty = crons.join('|') !== savedBuilt.join('|') || form.enabled !== job.enabled
+    || (hasTargets && targets.join('|') !== saved.times.map(t => t.target || '').join('|'))
+  // The first time that is not acceptable, named by its number when the job has several
+  const problem = (() => {
+    for (let i = 0; i < form.times.length; i++) {
+      const p = validate(form.times[i])
+      if (p) return form.times.length > 1 ? `Time ${i + 1}: ${p}` : p
+    }
+    return ''
+  })()
 
   async function save() {
     if (problem) { addToast(problem, 'error'); return }
     setSaving(true)
     try {
-      const updated = await api.admin.schedulers.update(job.key, { cron, enabled: form.enabled, target: hasTargets ? form.target : null })
+      const updated = await api.admin.schedulers.update(job.key, {
+        cron: crons[0], extraCrons: crons.slice(1), enabled: form.enabled,
+        target: hasTargets ? targets[0] : null, extraTargets: hasTargets ? targets.slice(1) : [],
+      })
       onSaved(updated)
       addToast('Saved')
     } catch (e) {
@@ -198,7 +321,7 @@ function JobRow({ job, onSaved, onRan }) {
   async function runNow() {
     setStarting(true)
     try {
-      await api.admin.schedulers.run(job.key, { target: hasTargets ? form.target : null })
+      await api.admin.schedulers.run(job.key, { target: hasTargets ? runFor : null })
       addToast('Started. The result shows here when it finishes')
       onRan()
     } catch (e) {
@@ -208,22 +331,11 @@ function JobRow({ job, onSaved, onRan }) {
     }
   }
 
-  function toggleDay(d) {
-    set({ days: form.days.includes(d) ? form.days.filter(x => x !== d) : [...form.days, d] })
-  }
-
-  const hourOptions = HOURS.map(h => <option key={h} value={h}>{hourLabel(h)}</option>)
-  // An hour picker for one field of the form (hour, from or to)
-  const hourField = (label, name) => (
-    <div className="sched-field">
-      <label className="form-label">{label}</label>
-      <Dropdown className="form-input" value={form[name]} disabled={!form.enabled}
-        onChange={e => set({ [name]: Number(e.target.value) })}>{hourOptions}</Dropdown>
-    </div>
-  )
-  const dates = hasTargets ? targetDates(form.target) : []
+  // "Run now" uses the hearing date of the first time
+  const runFor = targets[0]
   const last = job.lastRun
   const busy = job.running || starting
+  const several = form.times.length > 1
 
   return (
     <div className={`sched-row${form.enabled ? '' : ' sched-row--off'}`}>
@@ -236,95 +348,47 @@ function JobRow({ job, onSaved, onRan }) {
           label={form.enabled ? 'On' : 'Off'} />
       </div>
 
-      <div className="sched-row__fields">
-        {hasTargets && (
-          <div className="sched-field sched-field--wide-ish">
-            <label className="form-label">Hearing date</label>
-            <Dropdown className="form-input" value={form.target} disabled={!form.enabled}
-              onChange={e => set({ target: e.target.value })}>
-              {job.targets.map(t => <option key={t} value={t}>{TARGET_LABELS[t] || t}</option>)}
-            </Dropdown>
-          </div>
-        )}
-
-        <div className="sched-field">
-          <label className="form-label">Repeats</label>
-          <Dropdown className="form-input" value={form.mode} disabled={!form.enabled}
-            onChange={e => set({ mode: e.target.value })}>
-            <option value="DAILY">Once a day</option>
-            <option value="WINDOW">Every hour</option>
-            <option value="INTERVAL">Every few minutes</option>
-            <option value="CUSTOM">Custom (advanced)</option>
-          </Dropdown>
+      {form.times.map((time, i) => (
+        <div key={i} className={several ? 'sched-time' : 'sched-time sched-time--single'}>
+          {several && (
+            <div className="sched-time__head">
+              <span className="form-label sched-time__title">Time {i + 1}</span>
+              {i > 0 && (
+                <button type="button" className="sched-time__remove" disabled={!form.enabled}
+                  onClick={() => removeTime(i)} aria-label={`Remove time ${i + 1}`}>Remove</button>
+              )}
+            </div>
+          )}
+          {hasTargets && (
+            <div className="sched-row__fields">
+              <div className="sched-field sched-field--wide-ish">
+                <label className="form-label">Hearing date</label>
+                <Dropdown className="form-input" value={time.target || ''} disabled={!form.enabled}
+                  onChange={e => setTime(i, { ...time, target: e.target.value })}>
+                  {job.targets.map(t => <option key={t} value={t}>{TARGET_LABELS[t] || t}</option>)}
+                </Dropdown>
+              </div>
+            </div>
+          )}
+          <TimeFields time={time} onChange={t => setTime(i, { ...t, target: time.target })} disabled={!form.enabled} />
+          {several && <p className="admin__hint sched-time__text">{describe(time)} (IST)</p>}
+          {hasTargets && targetDates(time.target).length > 0 && (
+            <p className="admin__hint sched-row__dates">Looks up: {targetDates(time.target).join(' • ')} <span className="sched-row__note">(counted from the day it runs)</span></p>
+          )}
         </div>
+      ))}
 
-        {form.mode === 'DAILY' && (
-          <>
-            {hourField('At hour', 'hour')}
-            <div className="sched-field sched-field--narrow">
-              <label className="form-label">Minute</label>
-              <input className="form-input" type="number" min="0" max="59" disabled={!form.enabled}
-                value={form.minute} onChange={e => set({ minute: toMinute(e.target.value) })} />
-            </div>
-          </>
-        )}
-
-        {form.mode === 'WINDOW' && (
-          <>
-            {hourField('From', 'from')}
-            {hourField('Until', 'to')}
-            <div className="sched-field sched-field--narrow">
-              <label className="form-label">At minute</label>
-              <input className="form-input" type="number" min="0" max="59" disabled={!form.enabled}
-                value={form.minute} onChange={e => set({ minute: toMinute(e.target.value) })} />
-            </div>
-          </>
-        )}
-
-        {form.mode === 'INTERVAL' && (
-          <>
-            <div className="sched-field sched-field--narrow">
-              <label className="form-label">Every</label>
-              <Dropdown className="form-input" value={form.every} disabled={!form.enabled}
-                onChange={e => set({ every: Number(e.target.value) })}>
-                {INTERVALS.map(n => <option key={n} value={n}>{n} min</option>)}
-              </Dropdown>
-            </div>
-            {hourField('From', 'from')}
-            {hourField('Until', 'to')}
-          </>
-        )}
-
-        {form.mode === 'CUSTOM' && (
-          <div className="sched-field sched-field--wide">
-            <label className="form-label">Time (second minute hour day month weekday)</label>
-            <input className="form-input" disabled={!form.enabled} value={form.custom}
-              placeholder="0 0 10 * * *" onChange={e => set({ custom: e.target.value })} />
-          </div>
-        )}
+      <div>
+        <button type="button" className="sched-add" disabled={!form.enabled || form.times.length >= MAX_TIMES} onClick={addTime}>
+          + Add another time
+        </button>
+        {form.times.length >= MAX_TIMES && <span className="admin__hint sched-add__note"> At most {MAX_TIMES} times per job</span>}
       </div>
-
-      {form.mode !== 'CUSTOM' && (
-        <div className="sched-days" role="group" aria-label="Days of the week">
-          <span className="form-label sched-days__label">On</span>
-          {DAY_SHORT.map((name, d) => (
-            <button key={name} type="button" disabled={!form.enabled}
-              className={`sched-day${form.days.includes(d) ? ' sched-day--on' : ''}`}
-              aria-pressed={form.days.includes(d)} onClick={() => toggleDay(d)}>{name}</button>
-          ))}
-          <button type="button" className="sched-days__quick" disabled={!form.enabled} onClick={() => set({ days: ALL_DAYS })}>Every day</button>
-          <button type="button" className="sched-days__quick" disabled={!form.enabled} onClick={() => set({ days: [0, 1, 2, 3, 4, 5] })}>Mon–Sat</button>
-        </div>
-      )}
-
-      {hasTargets && dates.length > 0 && (
-        <p className="admin__hint sched-row__dates">Looks up: {dates.join(' • ')} <span className="sched-row__note">(counted from the day it runs)</span></p>
-      )}
 
       <div className="sched-row__foot">
         <div className="sched-row__info">
           <p className="admin__hint">
-            {describe(form)} (IST)
+            {several ? `${form.times.length} times` : `${describe(form.times[0])} (IST)`}
             {job.enabled ? ` • Next run: ${formatNext(job.nextRun)}` : ' • Switched off'}
           </p>
           <p className={`admin__hint${last && !last.ok ? ' sched-row__fail' : ''}`}>
@@ -385,10 +449,10 @@ export default function SchedulerAdmin() {
   return (
     <div className="sched-admin">
       <p className="admin__hint u-mb-12">
-        When the background jobs run, which hearing dates they look up (today, tomorrow and so on), and on which days of
-        the week. Times are Indian Standard Time and a change applies straight away, without restarting the server. Runs
+        When the background jobs run (a job can have up to 6 different times), which hearing dates they look up (same day,
+        next day and so on), and on which days of the week. Times are Indian Standard Time and a change applies straight away, without restarting the server. Runs
         must be at least 5 minutes apart. A job that is switched off does not run at all, including from the pages that
-        read its next run. Run now starts a job at once for the date choice shown.
+        read its next run. Each time has its own hearing date, so one job can look at different dates at different times of the day. Run now starts a job at once for the hearing date of its first time.
       </p>
       {jobs.map(j => <JobRow key={j.key} job={j} onSaved={replace} onRan={soon} />)}
     </div>

@@ -338,7 +338,17 @@
 }
 
 .chat__row--user { align-self: flex-end; flex-direction: row-reverse; }
-.chat__row--bot  { align-self: flex-start; }
+.chat__row--bot  { align-self: flex-start; align-items: flex-start; }
+
+/* Column holding the bot bubble with the copy / rating tools underneath it */
+.chat__col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 88%;
+}
+.chat__col > .chat__msg { max-width: 100%; }
 
 .chat__row > .chat__msg { align-self: auto; min-width: 0; }
 

@@ -822,17 +822,17 @@ export default function Documents() {
   const {
     visible: visibleCaseGroups,
     remaining: caseGroupsRemaining,
-    showMore: showMoreCaseGroups, step: showMoreCaseGroupsStep,
+    showMore: showMoreCaseGroups,
   } = useSeeMore(caseGroups, `${searchQuery}|${sortBy}`, docGroupsStep)
   const {
     visible: visibleClientGroups,
     remaining: clientGroupsRemaining,
-    showMore: showMoreClientGroups, step: showMoreClientGroupsStep,
+    showMore: showMoreClientGroups,
   } = useSeeMore(clientGroups, `${clientSearch}|${clientSortBy}`, docGroupsStep)
   const {
     visible: visibleAdvocateDocs,
     remaining: advocateDocsRemaining,
-    showMore: showMoreAdvocateDocs, step: showMoreAdvocateDocsStep,
+    showMore: showMoreAdvocateDocs,
   } = useSeeMore(filteredAdvocateDocs, advocateSearch, docRowsStep)
 
   return (
@@ -842,20 +842,11 @@ export default function Documents() {
         <div>
           <h1 className="page-title">Documents</h1>
 
-          {/* Count shows 'x of y total' when a search hides some documents */}
+          {/* A short line describing the selected tab */}
           <p className="documents__count">
-            {source === 'Case Documents' &&
-              `${filtered.length} document${filtered.length !== 1 ? 's' : ''}${
-                allDocs.length !== filtered.length ? ` of ${allDocs.length} total` : ''
-              }`}
-            {source === 'Client Documents' &&
-              `${filteredClientDocs.length} document${filteredClientDocs.length !== 1 ? 's' : ''}${
-                allClientDocs.length !== filteredClientDocs.length ? ` of ${allClientDocs.length} total` : ''
-              }`}
-            {source === 'Advocate Documents' &&
-              `${filteredAdvocateDocs.length} document${filteredAdvocateDocs.length !== 1 ? 's' : ''}${
-                normalizedAdvocateDocs.length !== filteredAdvocateDocs.length ? ` of ${normalizedAdvocateDocs.length} total` : ''
-              }`}
+            {source === 'Case Documents' && 'Find, preview and manage every document filed against your cases'}
+            {source === 'Client Documents' && 'Keep your clients’ IDs, agreements and papers organised in one place'}
+            {source === 'Advocate Documents' && 'Your own certificates, templates and professional papers, always at hand'}
           </p>
         </div>
 
@@ -1102,7 +1093,7 @@ export default function Documents() {
                     handleDeleteEvidence={handleDeleteEvidence}
                   />
                 ))}
-                <SeeMore remaining={caseGroupsRemaining} onClick={showMoreCaseGroups} step={showMoreCaseGroupsStep} />
+                <SeeMore remaining={caseGroupsRemaining} onClick={showMoreCaseGroups} />
               </div>
             )}
         </>
@@ -1215,7 +1206,7 @@ export default function Documents() {
                   handleDeleteEvidence={handleDeleteEvidence}
                 />
               ))}
-              <SeeMore remaining={clientGroupsRemaining} onClick={showMoreClientGroups} step={showMoreClientGroupsStep} />
+              <SeeMore remaining={clientGroupsRemaining} onClick={showMoreClientGroups} />
             </div>
           )}
         </>
@@ -1311,7 +1302,7 @@ export default function Documents() {
                   </div>
                 </div>
               ))}
-              <SeeMore remaining={advocateDocsRemaining} onClick={showMoreAdvocateDocs} step={showMoreAdvocateDocsStep} />
+              <SeeMore remaining={advocateDocsRemaining} onClick={showMoreAdvocateDocs} />
             </div>
           )}
 

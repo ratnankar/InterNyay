@@ -66,6 +66,7 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null, 
     row('Registration Date', c.registrationDate ? formatDisplayDate(c.registrationDate) : ''),
     row('First Hearing',  c.firstHearingDate ? formatDisplayDate(c.firstHearingDate) : ''),
     row('Last Hearing',   lastHearingDate ? formatDisplayDate(lastHearingDate) : ''),
+    ...(isHearing ? [row('Status', c.status)] : []),
     row('Case Stage',    c.caseStage),
     // A police challan case keeps the same text in Section (firSection) and Acts & Sections, so only Acts & Sections is shown
     // (older cases with just the challan Section fall back to it)

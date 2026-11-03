@@ -118,6 +118,7 @@
 
 /* Chat assistant: previous chats list */
 @import './styles/components/chat-history.css';
+@import './styles/components/chat-assistant.css';
 
 /* Responsive fixes: calendar buttons, Contact Messages sub tabs, narrower sidebar drawer */
 @import './styles/responsive/phone-fixes.css';

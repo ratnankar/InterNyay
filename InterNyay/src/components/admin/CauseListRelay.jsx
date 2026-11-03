@@ -6,6 +6,7 @@ import { getErrorMessage } from '../../utils/errorMessages'
 import ClearableDateInput from '../common/ClearableDateInput'
 import '../../styles/admin/cause-relay.css'
 import Icon from '../common/Icon'
+import ToggleSwitch from '../common/ToggleSwitch'
 
 function tomorrow() {
   const d = new Date()
@@ -63,9 +64,17 @@ function StatusBadge({ status }) {
 }
 
 export default function CauseListRelay() {
-  const { addToast } = useApp()
+  const { addToast, currentUser } = useApp()
 
   const [date, setDate] = useState(tomorrow)
+  const refreshKey = `internyay_relay_refresh_all_${currentUser?.id ?? 'admin'}`
+  const [refreshAll, setRefreshAllState] = useState(() => {
+    try { return localStorage.getItem(refreshKey) === 'true' } catch { return false }
+  })
+  const setRefreshAll = value => {
+    setRefreshAllState(value)
+    try { localStorage.setItem(refreshKey, String(value)) } catch { /* storage unavailable */ }
+  }
   const [step, setStep] = useState(null)
   const [captcha, setCaptcha] = useState('')
   const [busy, setBusy] = useState(false)
@@ -140,7 +149,7 @@ export default function CauseListRelay() {
   const start = () => {
     setLog([])
     addLog(`Started for ${formatDisplayDate(date)}`)
-    run(() => api.admin.causeListRelay.start(date))
+    run(() => api.admin.causeListRelay.start(date, refreshAll))
   }
 
   const refreshNumbers = async () => {
@@ -159,11 +168,15 @@ export default function CauseListRelay() {
     }
   }
 
+  // The automatic lookup has its own date (the one its next run is for, set in Admin > Schedulers). It does not follow the
+  // date picker below, which belongs to Start and Refresh High Court numbers
+  const autoDate = schedule?.nextRunFor || tomorrow()
+
   const runAuto = async () => {
     setStartingAuto(true)
     try {
-      await api.admin.causeListRelay.runAuto(date)
-      addToast(`Automatic lookup started for ${formatDisplayDate(date)}`, 'success')
+      await api.admin.causeListRelay.runAuto(autoDate, refreshAll)
+      addToast(`${refreshAll ? 'Refresh of all numbers' : 'Automatic lookup'} started for ${formatDisplayDate(autoDate)}`, 'success')
       await loadRuns()
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not start the automatic lookup'), 'error')
@@ -206,7 +219,7 @@ export default function CauseListRelay() {
         chosen date (including cases already recorded as heard on that date) the CAPTCHA is read for you, and you type it
         below only when it cannot be read; the cause list numbers are then saved on those cases and on their hearing entry.
         Refresh High Court numbers re-reads the Delhi High Court cause list PDFs for the chosen date (no CAPTCHA) and
-        overwrites the numbers already saved. Cases that already have a number for the date are skipped by Start. The portal may
+        overwrites the numbers already saved. Cases that already have a number for the date are skipped by Start and Run now, unless "Also re-read cases that already have a number" is on, which reads every court room again and replaces the saved numbers. The portal may
         not show cause lists for dates that are long past.
       </p>
 
@@ -260,8 +273,8 @@ export default function CauseListRelay() {
         )}
 
         <div className="relay__actions">
-          <button type="button" className="btn-outline" onClick={runAuto} disabled={startingAuto || autoRunning || !date}>
-            {autoRunning ? 'Run in progress…' : `Run now for ${date ? formatDisplayDate(date) : 'the chosen date'}`}
+          <button type="button" className="btn-outline" onClick={runAuto} disabled={startingAuto || autoRunning}>
+            {autoRunning ? 'Run in progress…' : `${refreshAll ? 'Refresh all for' : 'Run now for'} ${formatDisplayDate(autoDate)}`}
           </button>
         </div>
       </section>
@@ -274,6 +287,9 @@ export default function CauseListRelay() {
         <button type="button" className="btn-outline" onClick={refreshNumbers} disabled={busy || !date}>
           Refresh High Court numbers
         </button>
+        <ToggleSwitch checked={refreshAll} onChange={e => setRefreshAll(e.target.checked)} disabled={busy || startingAuto}
+          label="Also re-read cases that already have a number"
+          title="Applies to Start and Run now: every district court room is read again and the saved numbers are replaced" />
       </div>
 
       {waiting && (

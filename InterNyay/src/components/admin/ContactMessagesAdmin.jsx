@@ -126,7 +126,7 @@ export default function ContactMessagesAdmin({ onLoaded }) {
   const {
     visible: visibleRows,
     remaining: rowsRemaining,
-    showMore: showMoreRows, step: showMoreRowsStep,
+    showMore: showMoreRows,
   } = useSeeMore(visible, `${filter}|${search}`, rowsStep)
   // Swaps in an updated message from the server
   function replaceRow(updated) {
@@ -285,7 +285,7 @@ export default function ContactMessagesAdmin({ onLoaded }) {
           </tbody>
         </table>
       </div>
-      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={showMoreRowsStep} />
+      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} />
 
       {/* Message dialog with the conversation and reply form */}
       {open && (

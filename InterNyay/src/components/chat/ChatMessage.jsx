@@ -1,4 +1,7 @@
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
+import ChatActionCard from './ChatActionCard'
+import ChatBrief from './ChatBrief'
+import Icon from '../common/Icon'
 
 // Patterns for lines that start a bullet or a numbered list item
 const BULLET = /^\s*[-*•]\s+(.*)$/
@@ -77,15 +80,76 @@ function Avatar({ role }) {
   )
 }
 
-// One chat bubble: plain text for the user, formatted text for the assistant
-export default function ChatMessage({ role, content, error, action, onAction }) {
+function ThumbIcon({ down }) {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={down ? 'chat__thumb-down' : undefined}>
+      <path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3Zm0 0 4-8a2 2 0 0 1 2 2v4h5.5a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.3 21H7" />
+    </svg>
+  )
+}
+
+function copyText(text) {
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text)
+  return new Promise((resolve, reject) => {
+    try {
+      const area = document.createElement('textarea')
+      area.value = text
+      area.className = 'chat__copy-buffer'
+      document.body.appendChild(area)
+      area.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(area)
+      if (ok) resolve()
+      else reject(new Error('copy failed'))
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+function Tools({ content, serverId, rating, onRate }) {
+  const [copied, setCopied] = useState(false)
+
+  const copy = async () => {
+    try {
+      await copyText(String(content || '').replace(/\*\*/g, ''))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch { /* copying is not available */ }
+  }
+
+  return (
+    <div className="chat__tools">
+      <button type="button" className={`chat__tool chat__tool--icon${copied ? ' chat__tool--on' : ''}`}
+        onClick={copy} aria-label={copied ? 'Copied' : 'Copy the answer'} title={copied ? 'Copied' : 'Copy'}>
+        <Icon name={copied ? 'check' : 'copy'} size={15} />
+      </button>
+      {serverId && onRate && (
+        <>
+          <button type="button" className={`chat__tool chat__tool--icon${rating === 1 ? ' chat__tool--on' : ''}`}
+            onClick={() => onRate(1)} aria-pressed={rating === 1} aria-label="Good answer" title="Good answer">
+            <ThumbIcon />
+          </button>
+          <button type="button" className={`chat__tool chat__tool--icon${rating === -1 ? ' chat__tool--on chat__tool--bad' : ''}`}
+            onClick={() => onRate(-1)} aria-pressed={rating === -1} aria-label="Poor answer" title="Poor answer">
+            <ThumbIcon down />
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function ChatMessage({
+  role, content, error, action, onAction, streaming, status, card, brief, serverId, rating,
+  onRate, onConfirm, onCancel, onAsk, onRetry,
+}) {
   const className = [
     'chat__msg',
     role === 'user' ? 'chat__msg--user' : 'chat__msg--bot',
     error ? 'chat__msg--error' : '',
   ].filter(Boolean).join(' ')
 
-  // User messages are shown as plain text
   if (role === 'user') {
     return (
       <div className="chat__row chat__row--user">
@@ -95,26 +159,45 @@ export default function ChatMessage({ role, content, error, action, onAction }) 
     )
   }
 
+  const waiting = streaming && !content
+  const finished = !streaming && !error && !brief && content
+
   return (
     <div className="chat__row chat__row--bot">
-    <Avatar role="bot" />
-    <div className={className}>
-      {blocks(content).map((b, i) => {
-        if (b.type === 'p') return <p key={i} className="chat__text">{inline(b.text)}</p>
-        const Tag = b.ordered ? 'ol' : 'ul'
-        return (
-          <Tag key={i} className="chat__list">
-            {b.items.map((item, j) => <li key={j}>{inline(item)}</li>)}
-          </Tag>
-        )
-      })}
-      {/* Support replies get a button that opens the Contact Us page */}
-      {action === 'contact' && onAction && (
-        <button type="button" className="btn-gold chat__action" onClick={onAction}>
-          Open Contact Us
-        </button>
-      )}
-    </div>
+      <Avatar role="bot" />
+      <div className="chat__col">
+      <div className={className}>
+        {brief && <ChatBrief brief={brief} onAsk={onAsk} />}
+        {waiting && (
+          <div className="chat__waiting" aria-live="polite">
+            <span className="chat__typing-dots" aria-hidden="true"><span /><span /><span /></span>
+            <span className="chat__status">{status || 'Thinking…'}</span>
+          </div>
+        )}
+        {!waiting && blocks(content).map((b, i) => {
+          if (b.type === 'p') return <p key={i} className="chat__text">{inline(b.text)}</p>
+          const Tag = b.ordered ? 'ol' : 'ul'
+          return (
+            <Tag key={i} className="chat__list">
+              {b.items.map((item, j) => <li key={j}>{inline(item)}</li>)}
+            </Tag>
+          )
+        })}
+        {streaming && content && status && <p className="chat__status chat__status--inline">{status}</p>}
+        {card && <ChatActionCard card={card} onConfirm={onConfirm} onCancel={onCancel} />}
+        {action === 'contact' && onAction && !streaming && (
+          <button type="button" className="btn-gold chat__action" onClick={onAction}>
+            Open Contact Us
+          </button>
+        )}
+        {error && onRetry && (
+          <button type="button" className="chat__retry" onClick={onRetry}>
+            Try again
+          </button>
+        )}
+      </div>
+      {finished && <Tools content={content} serverId={serverId} rating={rating} onRate={onRate} />}
+      </div>
     </div>
   )
 }

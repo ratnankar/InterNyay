@@ -38,8 +38,9 @@ public class AdminCauseListRelayController {
 
     @PostMapping("/start")
     public ResponseEntity<CauseListRelayStep> start(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(service.start(date));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "false") boolean all) {
+        return ResponseEntity.ok(service.start(date, all));
     }
 
     // After a WORKING step: goes on with the automatic reading of the next court rooms
@@ -88,8 +89,9 @@ public class AdminCauseListRelayController {
     // progress through /runs. 409 when a run is already going
     @PostMapping("/run-auto")
     public ResponseEntity<?> runAuto(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        CauseListRunDto started = autoRun.startInBackground(date, "Run now");
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "false") boolean all) {
+        CauseListRunDto started = autoRun.startInBackground(date, all ? "Run now (refresh all)" : "Run now", all);
 
         if (started == null) {
             return ResponseEntity.status(409).body(Map.of("message", "An automatic run is already going, wait for it to finish"));

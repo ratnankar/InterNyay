@@ -41,7 +41,7 @@ function sameCourtNo(a, b) {
 }
 
 // Judges sitting in the given court room, matched leniently on the room number
-export function judgesForCourtNo(courtNumbers, courtNo) {
+function judgesForCourtNo(courtNumbers, courtNo) {
   if (courtNoKey(courtNo) == null) return []
 
   return (courtNumbers || []).filter(j => sameCourtNo(courtNo, j.courtRoomNo))

@@ -248,7 +248,7 @@ export const getCourtNosByBuilding = (court, district) => {
 
 // Building and floor of a court no. in the court table. Only answers when the court no. is in exactly one
 // building/floor, so a number used in several buildings is never guessed
-export const findRoom = (court, district, courtNo) => {
+const findRoom = (court, district, courtNo) => {
   const hits = getCourtNosByBuilding(court, district)
     .flatMap(g => g.rooms.filter(r => r.courtNo === courtNo).map(r => ({ building: g.building, floor: r.floor })))
   return hits.length === 1 ? hits[0] : { building: '', floor: '' }
@@ -279,7 +279,7 @@ export function caseRoom(c) {
 // "Main (Floor 2)": the building with its floor in brackets. The floor is only shown with a building, so a floor
 // with no building gives nothing
 // Floor 2 is written "Floor 2", unless the stored floor already says so (or is a word like "Ground")
-export const floorLabel = floor => {
+const floorLabel = floor => {
   const f = String(floor || '').trim()
   if (!f) return ''
   return /^floor\b/i.test(f) || /floor$/i.test(f) || /^[a-z]/i.test(f) && !/^\d/.test(f) && !/^[a-z]\d*$/i.test(f) ? f : `Floor ${f}`

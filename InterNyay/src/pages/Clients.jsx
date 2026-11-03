@@ -78,7 +78,6 @@ export default function Clients() {
     visible: visibleClients,
     remaining: clientsRemaining,
     showMore: showMoreClients,
-    step: clientsRowStep,
   } = useSeeMore(displayedClients, `${search}|${sortBy}`, clientsStep, 0, { columns: clientColumns })
 
   return (
@@ -100,6 +99,14 @@ export default function Clients() {
           <p className="page-subtitle">Your clients, their contact details and linked cases</p>
         </div>
         <button type="button" className="btn-gold" onClick={() => setShowAddClient(true)}>+ Add Client</button>
+      </div>
+
+      {/* Total number of clients */}
+      <div className="status-tiles">
+        <div className="status-tile">
+          <span className="status-tile__label">Total Clients</span>
+          <span className="status-tile__value">{clients.length}</span>
+        </div>
       </div>
 
       {/* Search box and sort dropdown */}
@@ -194,7 +201,7 @@ export default function Clients() {
         })}
 
         {/* See more when the list is long */}
-        <SeeMore remaining={clientsRemaining} onClick={showMoreClients} step={clientsRowStep} />
+        <SeeMore remaining={clientsRemaining} onClick={showMoreClients} />
 
         {/* Empty state when there are no clients or nothing matches the search */}
         {displayedClients.length === 0 && (

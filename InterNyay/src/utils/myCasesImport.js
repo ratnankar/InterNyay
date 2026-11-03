@@ -28,7 +28,7 @@ export const IMPORT_CATEGORIES = [
 const normalType = t => String(t || '').toLowerCase().replace(/\./g, ' ').replace(/\s+/g, ' ').trim()
 
 // Category of a case from its type code. A code that is not known falls back to the court it is in
-export function categoryOf(typeName, courtName = '') {
+function categoryOf(typeName, courtName = '') {
   const t = normalType(typeName)
   const hit = IMPORT_CATEGORIES.find(c => c.key !== 'other' && c.test(t))
   if (hit) return hit.key

@@ -51,7 +51,7 @@ export default function PlaceGroupedGrid({ entries: allEntries, byCourt = true, 
     ;[courtId, districtId, buildingId].forEach(id => { if (id) totals[id] = (totals[id] || 0) + 1 })
   })
 
-  const { shown: entries, remaining, showMore, step: nextStep } = useGroupedSeeMore(allEntries, {
+  const { shown: entries, remaining, showMore } = useGroupedSeeMore(allEntries, {
     runOf: e => idsOf(e).runId,
     isClosed: entryClosed,
     step,
@@ -160,7 +160,7 @@ export default function PlaceGroupedGrid({ entries: allEntries, byCourt = true, 
           </section>
         )
       })}
-      {step ? <SeeMore remaining={remaining} onClick={showMore} step={nextStep} /> : null}
+      {step ? <SeeMore remaining={remaining} onClick={showMore} /> : null}
       {footer}
     </div>
   )

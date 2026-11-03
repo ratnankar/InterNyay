@@ -130,9 +130,13 @@ public class DistrictCauseListRelayService {
     }
 
     public synchronized CauseListRelayStep start(java.time.LocalDate date) {
+        return start(date, false);
+    }
+
+    public synchronized CauseListRelayStep start(java.time.LocalDate date, boolean refreshAll) {
         pending.clear();
         List<String> unusable = new ArrayList<>();
-        List<Task> tasks = buildTasks(date, unusable);
+        List<Task> tasks = buildTasks(date, unusable, refreshAll);
 
         // A run that was left open is closed before the new one starts
         if (currentLogId != null) {
@@ -144,7 +148,8 @@ public class DistrictCauseListRelayService {
         currentLines.clear();
         currentSkipped = 0;
         currentLogId = runLog.begin(date, CauseListRunLog.Origin.MANUAL, "Admin relay").getId();
-        currentLines.add("Started for " + date + ": " + tasks.size() + " court room(s) to look up");
+        currentLines.add("Started for " + date + ": " + tasks.size() + " court room(s) to look up"
+                + (refreshAll ? ", including cases that already have a number" : ""));
 
         String note = tasks.isEmpty()
                 ? "Nothing to fetch: every district court case listed on this date already has its cause list number"
@@ -358,8 +363,12 @@ public class DistrictCauseListRelayService {
     // counted and left alone (an admin finishes them in Admin > Cause List, or the next hourly run tries again).
     // Does not touch the run an admin may have open on the page. Stops at the deadline so runs never overlap.
     public UnattendedResult runUnattended(java.time.LocalDate date, long deadlineNanos, Consumer<String> note) {
+        return runUnattended(date, deadlineNanos, note, false);
+    }
+
+    public UnattendedResult runUnattended(java.time.LocalDate date, long deadlineNanos, Consumer<String> note, boolean refreshAll) {
         List<String> unusable = new ArrayList<>();
-        List<Task> tasks = buildTasks(date, unusable);
+        List<Task> tasks = buildTasks(date, unusable, refreshAll);
         unusable.forEach(note);
 
         if (tasks.isEmpty()) return new UnattendedResult(0, 0, 0, unusable.size(), 0);
@@ -662,19 +671,19 @@ public class DistrictCauseListRelayService {
 
     // District cases to look up for a date: the cases whose next hearing is that date, and also the cases that were
     // listed that day but have since been moved to a later date (their hearing of that day is in the hearing history)
-    private List<Task> buildTasks(java.time.LocalDate date, List<String> unusable) {
+    private List<Task> buildTasks(java.time.LocalDate date, List<String> unusable, boolean refreshAll) {
         Predicate<Case> juvenile = courtService.juvenileBoardCases();
         Map<String, List<Case>> groups = new LinkedHashMap<>();
         java.util.Set<Long> seen = new java.util.HashSet<>();
 
         for (Case c : caseRepo.findByNextHearing(date)) {
             // Already has its cause list number for this date (for example saved earlier), no need to ask the portal again
-            boolean numbered = c.getCauseListNo() != null && date.equals(c.getListingDate());
+            boolean numbered = !refreshAll && c.getCauseListNo() != null && date.equals(c.getListingDate());
             addCandidate(c, numbered, juvenile, seen, groups, unusable);
         }
 
         for (Hearing h : hearingRepo.findAllWithCaseByDate(date)) {
-            addCandidate(h.getLegalCase(), h.getCauseListNo() != null, juvenile, seen, groups, unusable);
+            addCandidate(h.getLegalCase(), !refreshAll && h.getCauseListNo() != null, juvenile, seen, groups, unusable);
         }
 
         List<Task> tasks = new ArrayList<>();

@@ -14,6 +14,7 @@ const ADVOCATE_PROMPTS = [
   'Which clients have pending fees?',
   'Show my open cases',
   'Are any tasks overdue?',
+  'Draft a client update for my next hearing',
 ]
 
 // Suggested questions shown to associates (they don't see fees)
@@ -22,6 +23,7 @@ const ASSOCIATE_PROMPTS = [
   'Show my open cases',
   'Which judges are on leave today?',
   'Are any tasks overdue?',
+  'Draft a client update for my next hearing',
 ]
 
 // Case type to name in the "open cases" suggestion, keyed by the profile specialization. Anything not listed stays general.
@@ -51,6 +53,7 @@ export default function ChatWidget() {
   const {
     messages, loading, historyLoading, historyError, enabled, conversations, activeId,
     loadStatus, loadHistory, send, newChat, openConversation, removeConversation, removeAllConversations,
+    rate, confirmCard, cancelCard, showBrief, briefLoading, retry,
   } = useChat()
   // Panel open/closed, and which screen it shows: the open chat or the list of saved chats
   const [open, setOpen] = useState(false)
@@ -96,7 +99,7 @@ export default function ChatWidget() {
 
   // Scroll to the latest message
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    bottomRef.current?.scrollIntoView({ behavior: loading ? 'auto' : 'smooth', block: 'end' })
   }, [messages, loading, open, view])
 
   // Escape closes the panel
@@ -330,6 +333,10 @@ export default function ChatWidget() {
                   I can look up any case, client, hearing, fee, document, task, judge or court detail in your practice.
                 </p>
                 <div className="chat__prompts">
+                  <button type="button" className="chat__prompt chat__prompt--brief" onClick={showBrief}
+                    disabled={enabled === false || briefLoading}>
+                    {briefLoading ? 'Preparing your brief…' : 'Daily brief'}
+                  </button>
                   {prompts.map(p => (
                     <button key={p} type="button" className="chat__prompt" onClick={() => submit(p)} disabled={enabled === false}>
                       {p}
@@ -340,31 +347,27 @@ export default function ChatWidget() {
             )}
 
             {/* Conversation */}
-            {messages.map(m => (
+            {messages.map((m, index) => (
               <ChatMessage
                 key={m.id}
                 role={m.role}
                 content={m.content}
                 error={m.error}
                 action={m.action}
+                streaming={m.streaming}
+                status={m.status}
+                card={m.card}
+                brief={m.brief}
+                serverId={m.serverId}
+                rating={m.rating}
+                onRate={r => rate(m.id, r)}
+                onConfirm={() => confirmCard(m.id)}
+                onCancel={() => cancelCard(m.id)}
+                onAsk={submit}
+                onRetry={m.error && index === messages.length - 1 && !loading ? () => retry(m.id) : undefined}
                 onAction={() => { setActiveNav('contact'); setOpen(false) }}
               />
             ))}
-
-            {/* Typing indicator while waiting for the reply */}
-            {loading && (
-              <div className="chat__row chat__row--bot">
-                <span className="chat__avatar chat__avatar--bot" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 3v18M7 21h10M5 7h14" />
-                    <path d="M5 7l-3 6a3 3 0 0 0 6 0L5 7ZM19 7l-3 6a3 3 0 0 0 6 0l-3-6Z" />
-                  </svg>
-                </span>
-                <div className="chat__msg chat__msg--bot chat__typing" aria-label="Assistant is typing">
-                  <span /><span /><span />
-                </div>
-              </div>
-            )}
 
             {/* Shown when the AI model isn't configured on the server */}
             {enabled === false && (

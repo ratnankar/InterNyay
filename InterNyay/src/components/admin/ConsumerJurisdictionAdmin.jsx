@@ -59,7 +59,7 @@ export default function ConsumerJurisdictionAdmin() {
   const {
     visible: visibleRows,
     remaining: rowsRemaining,
-    showMore: showMoreRows, step: showMoreRowsStep,
+    showMore: showMoreRows,
   } = useSeeMore(visible, search, rowsStep)
   // State or National kinds already used by another commission, so they cannot be added twice
   const takenKinds = useMemo(
@@ -183,7 +183,7 @@ export default function ConsumerJurisdictionAdmin() {
           </tbody>
         </table>
       </div>
-      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} step={showMoreRowsStep} />
+      <SeeMore remaining={rowsRemaining} onClick={showMoreRows} />
 
       {/* Add / edit dialog */}
       {editing && (

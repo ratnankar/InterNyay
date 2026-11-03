@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -195,15 +194,5 @@ public class EcourtsCaseService {
         if (raw == null) return null;
         String cnr = raw.trim().toUpperCase(Locale.ROOT).replaceAll("[\\s-]", "");
         return CNR_FORMAT.matcher(cnr).matches() ? cnr : null;
-    }
-
-    // Takes the date part of an ISO date or date-time string
-    private static LocalDate parseDate(String text) {
-        if (text == null || text.length() < 10) return null;
-        try {
-            return LocalDate.parse(text.substring(0, 10));
-        } catch (DateTimeParseException e) {
-            return null;
-        }
     }
 }

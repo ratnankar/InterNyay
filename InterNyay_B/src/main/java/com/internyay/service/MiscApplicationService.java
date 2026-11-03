@@ -57,6 +57,31 @@ public class MiscApplicationService {
         return rows.map(withDetails(rows.getContent()));
     }
 
+    // Totals for the filter chips: all, pending, disposed off, and the disposed ones that were allowed or disallowed
+    @Transactional(readOnly = true)
+    public Map<String, Long> counts(Long userId) {
+        long pending = 0, disposed = 0, allowed = 0, disallowed = 0;
+        for (Object[] row : repo.countByStatus(userId)) {
+            String status = (String) row[0];
+            String outcome = (String) row[1];
+            long n = ((Number) row[2]).longValue();
+            if (MiscApplication.DISPOSED_OFF.equals(status)) {
+                disposed += n;
+                if (MiscApplication.ALLOWED.equals(outcome)) allowed += n;
+                else if (MiscApplication.DISALLOWED.equals(outcome)) disallowed += n;
+            } else {
+                pending += n;
+            }
+        }
+        Map<String, Long> out = new java.util.LinkedHashMap<>();
+        out.put("all", pending + disposed);
+        out.put("pending", pending);
+        out.put("disposed", disposed);
+        out.put("allowed", allowed);
+        out.put("disallowed", disallowed);
+        return out;
+    }
+
     // Applications that have a hearing on a date: the dashboard shows them as their own cards
     @Transactional(readOnly = true)
     public List<MiscApplicationDto> onDate(Long userId, String date) {

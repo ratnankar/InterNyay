@@ -1,13 +1,7 @@
-// "See more" button shown under a long list, hidden when everything is already visible
-export default function SeeMore({ remaining, onClick, step = 20 }) {
-  if (!remaining || remaining <= 0) return null
+import AutoLoad from './AutoLoad'
 
-  return (
-    <div className="see-more">
-      <button type="button" className="btn-outline see-more__btn" onClick={onClick}>
-        See more
-        <span className="see-more__count">({Math.min(step, remaining)} of {remaining} remaining)</span>
-      </button>
-    </div>
-  )
+// Under a long list: the next rows load by themselves as the end of the list scrolls into view (no button).
+// Renders nothing when everything is already visible. onClick is the "show the next step" function of useSeeMore.
+export default function SeeMore({ remaining, onClick }) {
+  return <AutoLoad onLoad={onClick} active={!!remaining && remaining > 0} depKey={remaining} />
 }

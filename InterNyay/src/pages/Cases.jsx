@@ -137,6 +137,7 @@ export default function Cases() {
   const courtTable = useCourts()
   const {
     clients,
+    cases,
     filteredCases,
     filterStatus,
     setFilterStatus,
@@ -243,6 +244,17 @@ export default function Cases() {
     if (!statusUserId) return
     try { localStorage.setItem(statusKeyFor(statusUserId), status) } catch { /* storage unavailable */ }
   }
+
+  // How many of ALL the advocate's cases are in each status (not affected by the filters below), for the cards at the top
+  const statusCounts = useMemo(() => {
+    const counts = { All: cases.length }
+    STATUSES.slice(1).forEach(st => { counts[st] = 0 })
+    cases.forEach(c => {
+      const st = c.status || 'Pending'
+      if (counts[st] !== undefined) counts[st] += 1
+    })
+    return counts
+  }, [cases])
 
   // Search text, sort order and the values chosen in the Filter menu
   const [search, setSearch] = useState('')
@@ -401,7 +413,7 @@ export default function Cases() {
   const {
     visible: visibleCases,
     remaining: casesRemaining,
-    showMore: showMoreCases, step: showMoreCasesStep,
+    showMore: showMoreCases,
   } = useSeeMore(
     searchedCases,
     [filterStatus, search, sortBy, filterCourt, filterNature, filterRelief, filterCaseType, filterDateFrom, filterDateTo].join('|'),
@@ -1016,19 +1028,22 @@ export default function Cases() {
         />
       )}
 
-      {/* Status filter buttons */}
-      <div className="case-filters">
+      {/* Count tiles: all cases and each status. Clicking one picks that status in the list below */}
+      <div className="status-tiles case-filters" role="group" aria-label="Cases by status">
         {STATUSES.map(status => (
           <button
             key={status}
-            className={`case-filter-btn${
-              filterStatus === status
-                ? ' case-filter-btn--active'
-                : ''
-            }`}
+            type="button"
+            className={`status-tile${filterStatus === status ? ' status-tile--active' : ''}`}
+            style={status === 'All' ? undefined : { '--tile-accent': STATUS_COLORS[status] }}
             onClick={() => chooseStatus(status)}
+            aria-pressed={filterStatus === status}
           >
-            {status}
+            <span className="status-tile__label">
+              {status !== 'All' && <span className="status-tile__dot" aria-hidden="true" />}
+              {status === 'All' ? 'All Cases' : status}
+            </span>
+            <span className="status-tile__value">{statusCounts[status] ?? 0}</span>
           </button>
         ))}
       </div>
@@ -1353,7 +1368,7 @@ export default function Cases() {
         })}
 
         {/* See more when the list is long */}
-        <SeeMore remaining={casesRemaining} onClick={showMoreCases} step={showMoreCasesStep} />
+        <SeeMore remaining={casesRemaining} onClick={showMoreCases} />
 
         {/* Empty state when no cases match */}
         {searchedCases.length === 0 && (

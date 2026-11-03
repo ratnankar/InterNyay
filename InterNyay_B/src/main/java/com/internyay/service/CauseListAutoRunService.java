@@ -46,6 +46,7 @@ public class CauseListAutoRunService {
     private final boolean enabled;
     private final SchedulerRegistry registry;
     private final long maxRunNanos;
+    private final boolean scheduledRefreshAll;
 
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final ExecutorService background = Executors.newSingleThreadExecutor(r -> {
@@ -61,13 +62,15 @@ public class CauseListAutoRunService {
             CaptchaSolverClient solver,
             SchedulerRegistry registry,
             @Value("${causelist.auto.enabled:true}") boolean enabled,
-            @Value("${causelist.auto.max-minutes:50}") int maxMinutes) {
+            @Value("${causelist.auto.max-minutes:50}") int maxMinutes,
+            @Value("${causelist.auto.refresh-all:true}") boolean scheduledRefreshAll) {
         this.causeListService = causeListService;
         this.district = district;
         this.logs = logs;
         this.solver = solver;
         this.enabled = enabled;
         this.registry = registry;
+        this.scheduledRefreshAll = scheduledRefreshAll;
         // A run must end before the next hourly one starts
         this.maxRunNanos = Math.max(5, Math.min(maxMinutes, 55)) * 60L * 1_000_000_000L;
     }
@@ -90,19 +93,23 @@ public class CauseListAutoRunService {
         }
 
         CauseListRunLog row = logs.begin(date, origin, label);
-        return execute(row.getId(), date, label);
+        return execute(row.getId(), date, label, scheduledRefreshAll);
     }
 
     // Starts a run in the background for the "Run now" button; empty when a run is already going
     public CauseListRunDto startInBackground(LocalDate date, String label) {
+        return startInBackground(date, label, false);
+    }
+
+    public CauseListRunDto startInBackground(LocalDate date, String label, boolean refreshAll) {
         if (!running.compareAndSet(false, true)) return null;
 
         CauseListRunLog row = logs.begin(date, Origin.AUTO, label);
-        background.submit(() -> execute(row.getId(), date, label));
+        background.submit(() -> execute(row.getId(), date, label, refreshAll));
         return CauseListRunDto.of(row);
     }
 
-    private CauseListRunDto execute(Long id, LocalDate date, String label) {
+    private CauseListRunDto execute(Long id, LocalDate date, String label, boolean refreshAll) {
         List<String> lines = new ArrayList<>();
         long started = System.nanoTime();
         String tag = "[cause-list-auto #" + id + "]";
@@ -120,7 +127,7 @@ public class CauseListAutoRunService {
             }
 
             try {
-                CauseListService.Result r = causeListService.fetchFor(date, true);
+                CauseListService.Result r = causeListService.fetchFor(date, !refreshAll);
                 hcChecked = r.casesChecked();
                 hcSaved = r.causeListNosSaved();
                 hcMissing = Math.max(0, hcChecked - hcSaved);
@@ -140,7 +147,7 @@ public class CauseListAutoRunService {
             long districtDeadline = started + maxRunNanos;
 
             try {
-                dist = district.runUnattended(date, districtDeadline, line -> lines.add(stamp(line)));
+                dist = district.runUnattended(date, districtDeadline, line -> lines.add(stamp(line)), refreshAll);
                 lines.add(stamp("District courts: " + dist.rooms() + " court room(s) to look up, " + dist.done()
                         + " done, " + dist.needCaptcha() + " need a CAPTCHA typed, " + dist.failed() + " failed, "
                         + dist.saved() + " number(s) saved"));
@@ -203,18 +210,28 @@ public class CauseListAutoRunService {
         ZonedDateTime next = null;
         LocalDate nextFor = null;
 
-        // The times are the ones saved in Admin > Schedulers (null when that job is switched off)
-        String cron = registry.cronOf("causelist_evening");
-        ZonedDateTime evening = cron == null ? null : nextOf(cron, now);
+        // The times are the ones saved in Admin > Schedulers (empty when that job is switched off); each time has its own date choice
+        List<SchedulerRegistry.Timed> times = registry.timesOf("causelist_evening");
+        List<String> crons = new ArrayList<>();
+        ZonedDateTime evening = null;
+        String eveningTarget = null;
+        for (SchedulerRegistry.Timed t : times) {
+            crons.add(t.cron());
+            ZonedDateTime n = nextOf(t.cron(), now);
+            if (n != null && (evening == null || n.isBefore(evening))) {
+                evening = n;
+                eveningTarget = t.target();
+            }
+        }
 
         if (enabled && evening != null) {
             next = evening;
-            // The first hearing date the next run looks up (the date choice is set in Admin > Schedulers)
-            List<LocalDate> dates = SchedulerRegistry.datesFor(registry.targetOf("causelist_evening"), evening.toLocalDate());
+            // The first hearing date the next run looks up (the date choice of that time, set in Admin > Schedulers)
+            List<LocalDate> dates = SchedulerRegistry.datesFor(eveningTarget, evening.toLocalDate());
             nextFor = dates.isEmpty() ? evening.toLocalDate().plusDays(1) : dates.get(0);
         }
 
-        return new CauseListScheduleDto(enabled, cron == null ? List.of() : hoursOf(cron), solver.available(), running.get(),
+        return new CauseListScheduleDto(enabled, hoursOf(crons), solver.available(), running.get(),
                 next == null ? null : next.toOffsetDateTime(), nextFor, logs.lastFinished().orElse(null));
     }
 
@@ -226,7 +243,14 @@ public class CauseListAutoRunService {
         }
     }
 
-    // The clock hours the cron fires at in a day
+    // The clock hours any of the crons fires at in a day
+    static List<Integer> hoursOf(List<String> expressions) {
+        TreeSet<Integer> hours = new TreeSet<>();
+        for (String expression : expressions) hours.addAll(hoursOf(expression));
+        return new ArrayList<>(hours);
+    }
+
+    // The clock hours one cron fires at in a day
     static List<Integer> hoursOf(String expression) {
         TreeSet<Integer> hours = new TreeSet<>();
 

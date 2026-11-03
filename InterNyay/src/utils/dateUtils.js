@@ -52,7 +52,7 @@ export function hearingCountdown(dateStr) {
 //  'normal'  - the date and its countdown only
 //  'refresh' - it is the hearing day and 5 PM has passed: the date stays and a refresh symbol is added
 //  'expired' - the hearing day is over (from 12 AM) and nobody set a new date: the old date is dropped, only the refresh symbol stays
-export const HEARING_REFRESH_HOUR = 17
+const HEARING_REFRESH_HOUR = 17
 export function hearingBoxPhase(dateStr, now = new Date()) {
   const target = parseIsoDate(dateStr)
   if (Number.isNaN(target.getTime())) return 'normal'

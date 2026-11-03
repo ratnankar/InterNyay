@@ -826,9 +826,6 @@ pre, code {
   }
 
   .hearing-row__case-type,
-  .hearing-row__court-no,
-  .hearing-row__cause-list-no,
-  .hearing-row__file-no,
   .hearing-row__past {
     padding: 0;
     border: none;
@@ -840,9 +837,17 @@ pre, code {
     color: var(--color-text-muted);
   }
 
+  /* Court, file and cause list numbers keep the same pill look as on desktop, only a little smaller */
+  .hearing-row__court-no,
+  .hearing-row__cause-list-no,
+  .hearing-row__file-no {
+    padding: 2px 10px;
+    font-size: var(--fs-sm);
+  }
+
   .hearing-row__chips {
-    gap: 2px 14px;
-    margin-top: 4px;
+    gap: 6px 8px;
+    margin-top: 6px;
   }
 
   .hearing-row__meta,
@@ -1867,6 +1872,8 @@ pre, code {
     font-size: var(--fs-sm);
     line-height: 1.35;
   }
+
+  .chat__col { max-width: 92%; }
 
   .chat__msg {
     max-width: 92%;

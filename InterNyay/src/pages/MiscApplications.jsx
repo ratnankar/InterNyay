@@ -1,3 +1,4 @@
+import AutoLoad from '../components/common/AutoLoad'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
@@ -20,9 +21,14 @@ import MiscNextHearingModal from '../components/misc/MiscNextHearingModal'
 const FILTERS = [['', 'All'], [MISC_PENDING, 'Pending'], [MISC_DISPOSED, 'Disposed Off']]
 // Under "Disposed Off": all of them, or only the allowed or the disallowed ones, as [outcome value, label]
 const OUTCOME_FILTERS = [['', 'All'], [MISC_ALLOWED, 'Allowed'], [MISC_DISALLOWED, 'Disallowed']]
+// Which total goes on which chip (keys of the counts the server sends)
+const STATUS_COUNT_KEY = { '': 'all', [MISC_PENDING]: 'pending', [MISC_DISPOSED]: 'disposed' }
+// Chip colours, the same as the Cases page and the application cards (All has none)
+const CHIP_COLORS = { [MISC_PENDING]: '#0B7A75', [MISC_DISPOSED]: '#C62828', [MISC_ALLOWED]: '#E67E22', [MISC_DISALLOWED]: '#6b7385' }
+const OUTCOME_COUNT_KEY = { '': 'disposed', [MISC_ALLOWED]: 'allowed', [MISC_DISALLOWED]: 'disallowed' }
 const PAGE_SIZE = 20
 // Card accent per status (pending, or how a disposed off application ended)
-const ACCENTS = { Pending: '#0B7A75', Disposed: '#6b7385', [MISC_ALLOWED]: '#1B7F3B', [MISC_DISALLOWED]: '#C62828' }
+const ACCENTS = { Pending: '#0B7A75', Disposed: '#C62828', [MISC_ALLOWED]: '#E67E22', [MISC_DISALLOWED]: '#6b7385' }
 
 // Misc. Application page: applications filed in cases, with search, a status filter, and the add and detail windows
 export default function MiscApplications() {
@@ -39,6 +45,8 @@ export default function MiscApplications() {
   // Allowed or Disallowed, only used while Disposed Off is chosen
   const [outcome, setOutcome] = useState('')
   const [showAdd, setShowAdd] = useState(false)
+  // Totals shown on the chips (not affected by the search): { all, pending, disposed, allowed, disallowed }
+  const [counts, setCounts] = useState(null)
   const [openId, setOpenId] = useState(null)
   // Application whose Update Next Hearing window is open (from the refresh symbol on its card)
   const [updateApp, setUpdateApp] = useState(null)
@@ -78,6 +86,12 @@ export default function MiscApplications() {
     }
   }, [status])
 
+  // Reloads the chip totals quietly; a failure leaves the numbers as they were
+  const loadCounts = useCallback(() => {
+    api.miscApplications.counts().then(res => { if (res) setCounts(res) }).catch(() => {})
+  }, [])
+  useEffect(() => { loadCounts() }, [loadCounts])
+
   // Only the answer to the newest search is used, so a slow earlier answer cannot replace it
   const latest = useRef(0)
 
@@ -99,7 +113,11 @@ export default function MiscApplications() {
       setHasMore(!isLast && rows.length > 0)
       setPage(pageNo)
     } catch (e) {
-      if (ticket === latest.current) addToast(getErrorMessage(e, 'Could not load the applications'), 'error')
+      if (ticket === latest.current) {
+        addToast(getErrorMessage(e, 'Could not load the applications'), 'error')
+        // A failed next page stops the automatic loading, so one error does not repeat in a loop; changing the search or filter starts again
+        if (!replace) setHasMore(false)
+      }
     } finally {
       if (ticket === latest.current) setLoading(false)
     }
@@ -119,7 +137,7 @@ export default function MiscApplications() {
       setItems(rows.filter((r, i) => rows.findIndex(x => x.id === r.id) === i))
     } catch { /* keep the list as it is */ }
   }, [search, status, outcome])
-  useEffect(() => onLiveRefresh(() => { if (!loading) refreshQuietly() }), [refreshQuietly, loading])
+  useEffect(() => onLiveRefresh(() => { loadCounts(); if (!loading) refreshQuietly() }), [refreshQuietly, loading, loadCounts])
 
   // Starts again from the first page when the search or the filter changes (the search waits for a pause in typing)
   useEffect(() => {
@@ -131,7 +149,8 @@ export default function MiscApplications() {
   const replaceItem = useCallback(updated => {
     setItems(prev => prev.map(a => (a.id === updated.id ? updated : a)))
     setExtra(prev => (prev && prev.id === updated.id ? updated : prev))
-  }, [])
+    loadCounts()
+  }, [loadCounts])
 
   // An application opened from the dashboard may not be on the first page, so it is fetched by itself
   const [extra, setExtra] = useState(null)
@@ -163,10 +182,13 @@ export default function MiscApplications() {
             key={label}
             data-chip={value === MISC_DISPOSED ? 'disposed' : undefined}
             type="button"
-            className={`case-filter-btn${status === value ? ' case-filter-btn--active' : ''}`}
+            className={`case-filter-btn${CHIP_COLORS[value] ? ' case-filter-btn--tinted' : ''}${status === value ? ' case-filter-btn--active' : ''}`}
+            style={CHIP_COLORS[value] ? { '--chip-accent': CHIP_COLORS[value] } : undefined}
             onClick={() => { setStatus(value); if (value !== MISC_DISPOSED) setOutcome('') }}
           >
+            {CHIP_COLORS[value] && <span className="case-filter-btn__dot" aria-hidden="true" />}
             {label}
+            {counts && <span className="case-filter-btn__count">{counts[STATUS_COUNT_KEY[value]] ?? 0}</span>}
           </button>
         ))}
       </div>
@@ -179,10 +201,13 @@ export default function MiscApplications() {
             <button
               key={label}
               type="button"
-              className={`case-filter-btn${outcome === value ? ' case-filter-btn--active' : ''}`}
+              className={`case-filter-btn${CHIP_COLORS[value] ? ' case-filter-btn--tinted' : ''}${outcome === value ? ' case-filter-btn--active' : ''}`}
+              style={CHIP_COLORS[value] ? { '--chip-accent': CHIP_COLORS[value] } : undefined}
               onClick={() => setOutcome(value)}
             >
+              {CHIP_COLORS[value] && <span className="case-filter-btn__dot" aria-hidden="true" />}
               {label}
+              {counts && <span className="case-filter-btn__count">{counts[OUTCOME_COUNT_KEY[value]] ?? 0}</span>}
             </button>
           ))}
         </div>
@@ -251,15 +276,14 @@ export default function MiscApplications() {
 
       {loading && <p className="doc-group__meta misc-loading">Loading…</p>}
 
-      {hasMore && !loading && (
-        <div className="misc-more"><button type="button" className="btn-outline" onClick={() => load(page + 1, false)}>Show more</button></div>
-      )}
+      <AutoLoad onLoad={() => load(page + 1, false)} active={hasMore && !loading} depKey={page} />
 
       {showAdd && (
         <AddMiscApplicationModal
           onClose={() => setShowAdd(false)}
           onCreated={app => {
             setShowAdd(false)
+            loadCounts()
             // Shown on top of the list only when it fits the current search and filter, otherwise the list is reloaded
             if (!search && !status) setItems(prev => [app, ...prev.filter(a => a.id !== app.id)])
             else load(0, true)
@@ -276,7 +300,7 @@ export default function MiscApplications() {
         <MiscApplicationDetailModal
           app={opened}
           onChange={replaceItem}
-          onDeleted={id => { setItems(prev => prev.filter(a => a.id !== id)); setExtra(null); setOpenId(null) }}
+          onDeleted={id => { setItems(prev => prev.filter(a => a.id !== id)); setExtra(null); setOpenId(null); loadCounts() }}
           onClose={() => setOpenId(null)}
         />
       )}

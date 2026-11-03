@@ -534,3 +534,57 @@
   font-size: 0.85rem;
   line-height: 1.4;
 }
+
+/* Count chips: slim one-line totals by status (Cases page) and the total clients (Clients page).
+   Own classes on purpose: the shared stat-card styles are overridden by several theme files */
+.status-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 1rem;
+}
+.status-tiles .status-tile {
+  --tile-accent: var(--color-navy);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 0;
+  height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--color-border, #dde4ee);
+  border-radius: 999px;
+  background: var(--color-surface, #fff);
+  box-shadow: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  transform: none;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.status-tiles .status-tile::before,
+.status-tiles .status-tile::after { content: none; }
+.status-tiles button.status-tile { cursor: pointer; }
+.status-tiles button.status-tile:hover { border-color: var(--tile-accent); box-shadow: none; transform: none; }
+.status-tiles button.status-tile:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+.status-tiles .status-tile--active {
+  border-color: var(--tile-accent);
+  background: color-mix(in srgb, var(--tile-accent) 10%, var(--color-surface, #fff));
+  color: var(--color-navy);
+}
+
+.status-tile__label { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.status-tile__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tile-accent); flex-shrink: 0; }
+.status-tile__value {
+  font-weight: 700;
+  color: var(--color-navy);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Phones: the row is the same sideways scroller as the other filter chips (the "case-filters" class on it brings the
+   one-line, edge-to-edge scrolling); the chips keep their size and never shrink */
+@media (max-width: 860px) {
+  .status-tiles.case-filters { flex-wrap: nowrap; gap: 6px; }
+  .status-tiles .status-tile { flex: 0 0 auto; height: 30px; padding: 0 10px; gap: 5px; font-size: var(--fs-xs); }
+}

@@ -6,7 +6,9 @@ import com.internyay.dto.ChatHistoryAppendRequest;
 import com.internyay.dto.ChatHistoryItemDto;
 import com.internyay.entity.ChatConversation;
 import com.internyay.entity.ChatMessage;
+import com.internyay.entity.ChatFeedback;
 import com.internyay.repository.ChatConversationRepository;
+import com.internyay.repository.ChatFeedbackRepository;
 import com.internyay.repository.ChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -33,8 +37,11 @@ public class ChatHistoryService {
     // Button names the widget understands
     private static final Set<String> ACTIONS = Set.of("contact");
 
+    public record Saved(Long conversationId, Long messageId) {}
+
     private final ChatMessageRepository messageRepo;
     private final ChatConversationRepository conversationRepo;
+    private final ChatFeedbackRepository feedbackRepo;
 
     // The chat list of an account: all its chats, latest first
     @Transactional(readOnly = true)
@@ -49,8 +56,15 @@ public class ChatHistoryService {
     public ChatConversationDetailDto get(Long accountId, Long conversationId) {
         ChatConversation c = conversationRepo.findByIdAndAccountId(conversationId, accountId)
                 .orElseThrow(() -> new NoSuchElementException("Chat not found"));
-        List<ChatHistoryItemDto> items = messageRepo.findByConversationIdOrderByIdAsc(c.getId()).stream()
-                .map(m -> new ChatHistoryItemDto(m.getId(), m.getRole(), m.getContent(), m.getAction(), m.getCreatedAt()))
+        List<ChatMessage> messages = messageRepo.findByConversationIdOrderByIdAsc(c.getId());
+        Map<Long, Integer> ratings = new HashMap<>();
+        if (!messages.isEmpty()) {
+            for (ChatFeedback f : feedbackRepo.findByAccountIdAndMessageIdIn(accountId, messages.stream().map(ChatMessage::getId).toList())) {
+                ratings.put(f.getMessageId(), f.getRating());
+            }
+        }
+        List<ChatHistoryItemDto> items = messages.stream()
+                .map(m -> new ChatHistoryItemDto(m.getId(), m.getRole(), m.getContent(), m.getAction(), m.getCreatedAt(), ratings.get(m.getId())))
                 .toList();
         return new ChatConversationDetailDto(c.getId(), c.getTitle(), items);
     }
@@ -60,6 +74,11 @@ public class ChatHistoryService {
     // Returns the id of the chat the messages went into
     @Transactional
     public Long append(Long accountId, Long conversationId, List<ChatHistoryAppendRequest.Item> items) {
+        return appendAll(accountId, conversationId, items).conversationId();
+    }
+
+    @Transactional
+    public Saved appendAll(Long accountId, Long conversationId, List<ChatHistoryAppendRequest.Item> items) {
         List<ChatHistoryAppendRequest.Item> valid = new ArrayList<>();
         for (ChatHistoryAppendRequest.Item item : items) {
             if (item == null || item.content() == null || item.content().isBlank()) continue;
@@ -69,7 +88,7 @@ public class ChatHistoryService {
             }
             valid.add(item);
         }
-        if (valid.isEmpty()) return conversationId;
+        if (valid.isEmpty()) return new Saved(conversationId, null);
 
         ChatConversation chat = conversationId == null ? null
                 : conversationRepo.findByIdAndAccountId(conversationId, accountId).orElse(null);
@@ -77,23 +96,29 @@ public class ChatHistoryService {
             chat = conversationRepo.save(ChatConversation.builder().accountId(accountId).title(titleFor(valid)).build());
         }
 
+        Long lastMessageId = null;
         for (ChatHistoryAppendRequest.Item item : valid) {
             String role = item.role().toLowerCase();
             String text = item.content().length() > MAX_CHARS ? item.content().substring(0, MAX_CHARS) : item.content();
             String action = ChatMessage.ASSISTANT.equals(role) && item.action() != null && ACTIONS.contains(item.action()) ? item.action() : null;
-            messageRepo.save(ChatMessage.builder().accountId(accountId).conversationId(chat.getId()).role(role).content(text).action(action).build());
+            lastMessageId = messageRepo.save(ChatMessage.builder().accountId(accountId).conversationId(chat.getId()).role(role).content(text).action(action).build()).getId();
         }
         chat.setUpdatedAt(LocalDateTime.now());
         conversationRepo.save(chat);
-        return chat.getId();
+        return new Saved(chat.getId(), lastMessageId);
     }
 
     // Saves one question and its answer; returns the id of the chat
     @Transactional
     public Long appendExchange(Long accountId, Long conversationId, String question, String reply) {
-        return append(accountId, conversationId, List.of(
+        return appendExchange(accountId, conversationId, question, reply, null).conversationId();
+    }
+
+    @Transactional
+    public Saved appendExchange(Long accountId, Long conversationId, String question, String reply, String action) {
+        return appendAll(accountId, conversationId, List.of(
                 new ChatHistoryAppendRequest.Item(ChatMessage.USER, question, null),
-                new ChatHistoryAppendRequest.Item(ChatMessage.ASSISTANT, reply, null)));
+                new ChatHistoryAppendRequest.Item(ChatMessage.ASSISTANT, reply, action)));
     }
 
     // Deletes one chat and its messages

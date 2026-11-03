@@ -5,7 +5,7 @@ import { navToPath } from '../routes/paths'
 import Calendar from '../components/common/Calendar'
 import Notifications from '../components/common/Notifications'
 import CaseHearings from '../components/common/CaseHearings'
-import { isClosedCase, STATUS_COLORS } from '../constants/data'
+import { isClosedCase, caseAccentColor } from '../constants/data'
 import { formatDisplayDate } from '../utils/dateUtils'
 import CaseFields from '../components/common/CaseFields'
 import { caseNatureOf } from '../utils/caseClassification'
@@ -238,11 +238,7 @@ export default function Dashboard() {
 
                 {/* Collapsed row: accent bar, title, badges, court details and reminder controls */}
                 <div className="hearing-row" onClick={() => toggleExpanded(c.id)}>
-                  <div
-                    className="hearing-row__bar"
-                    style={{ background: STATUS_COLORS[c.status] || undefined }}
-                    title={c.status || undefined}
-                  />
+                  <div className="hearing-row__bar" style={{ background: caseAccentColor(c) }} />
 
                   <div className="hearing-row__body">
                     <div className="hearing-row__heading">
@@ -250,18 +246,6 @@ export default function Dashboard() {
                         <span className="hearing-row__caret">{expanded ? '▾' : '▸'}</span>
                         {c.title}
                       </p>
-                      {c.status && (
-                        <span
-                          className="badge"
-                          style={{
-                            background: (STATUS_COLORS[c.status] || '#999') + '18',
-                            color: STATUS_COLORS[c.status] || '#999',
-                          }}
-                          title="Case status"
-                        >
-                          {c.status}
-                        </span>
-                      )}
                       {natureBadge}
                       {c.caseType && (
                         <span className="hearing-row__case-type" title="Case type">{c.caseType}</span>

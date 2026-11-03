@@ -5,7 +5,7 @@
 let partyCounter = 1
 
 // A new key for a party that was just added in the form
-export const newPartyKey = () => `party-${partyCounter++}`
+const newPartyKey = () => `party-${partyCounter++}`
 
 // Party from the server (or typed in the popup) in the shape the form uses
 export function toFormParty(p) {

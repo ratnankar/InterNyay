@@ -5,7 +5,10 @@ export const STATUS_COLORS = {
   'Withdrawn': '#6A4C93',
   'On Hold': '#1F5FAF',
 }
- 
+
+// Accent colour of a case: its status colour; a case without a status counts as Pending
+export const caseAccentColor = c => STATUS_COLORS[c?.status || 'Pending'] || STATUS_COLORS.Pending
+
 // Fee structures an advocate can choose for a case
 export const FEE_TYPES = [
   { value: 'TOTAL',      label: 'One-Time' },
@@ -80,7 +83,7 @@ export const MISC_APP_NAME = { full: 'Miscellaneous Application', short: 'Misc. 
 
 // Option in the application list that lets the advocate type the application's name
 export const MISC_TYPE_MANUAL = 'Other (Type Manually)'
-export const MISC_TYPE_BAIL = 'Bail Application'
+const MISC_TYPE_BAIL = 'Bail Application'
 export const MISC_APPLICATION_CHOICES = [MISC_TYPE_BAIL, MISC_TYPE_MANUAL]
 
 // Document types for documents attached to a client

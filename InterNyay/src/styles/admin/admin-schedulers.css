@@ -24,7 +24,7 @@
 .sched-row__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; }
 .sched-row__foot .admin__hint { margin: 0; }
 .sched-row__info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 260px; }
-.sched-row__actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+.sched-row__actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; align-items: center; }
 .sched-row__fail { color: var(--lx-red); }
 .sched-row__dates { margin: 0; }
 .sched-row__note { opacity: .7; }
@@ -46,6 +46,30 @@
 .sched-days__quick { border-style: dashed; margin-left: 4px; }
 .sched-days__quick + .sched-days__quick { margin-left: 0; }
 .sched-day:disabled, .sched-days__quick:disabled { opacity: .5; cursor: not-allowed; }
+
+/* One run time of a job; a job with several times shows each in its own box */
+.sched-time { display: flex; flex-direction: column; gap: var(--space-md); }
+.sched-time:not(.sched-time--single) {
+  border: 1px dashed var(--color-gold-border);
+  border-radius: 10px;
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+}
+.sched-time__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
+.sched-time__title { margin: 0; font-weight: 600; }
+.sched-time__text { margin: 0; }
+.sched-time__remove, .sched-add {
+  border: 1px solid var(--color-gold-border);
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font: inherit;
+  font-size: var(--fs-sm, .85rem);
+  cursor: pointer;
+}
+.sched-add { border-style: dashed; font-weight: 600; }
+.sched-add__note { margin-left: 8px; }
+.sched-time__remove:disabled, .sched-add:disabled { opacity: .5; cursor: not-allowed; }
 
 @media (max-width: 600px) {
   .sched-row { padding: var(--space-md); }

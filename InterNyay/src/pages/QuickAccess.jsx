@@ -254,7 +254,7 @@ function JudgesList({ initialQuery, jumpName }) {
     if (showDistrictLevel && j.district && !isOwnDistrict(j.court, j.district) && closed.has(districtKey(j))) return true
     return !!(j.building || '').trim() && closed.has(placeKey(j))
   }
-  const { shown, remaining, showMore, step: nextStep } = useGroupedSeeMore(visible, {
+  const { shown, remaining, showMore } = useGroupedSeeMore(visible, {
     runOf: placeKey,
     isClosed: judgeClosed,
     step: 24,
@@ -348,7 +348,7 @@ function JudgesList({ initialQuery, jumpName }) {
                   )
                 })}
               </div>
-              <SeeMore remaining={remaining} onClick={showMore} step={nextStep} />
+              <SeeMore remaining={remaining} onClick={showMore} />
             </>
           )
       }
@@ -785,7 +785,7 @@ function PoliceDirectory() {
     [index, query, districtId]
   )
   const stationsStep = 30
-  const { visible: shown, remaining: stationsRemaining, showMore: showMoreStations, step: showMoreStationsStep } =
+  const { visible: shown, remaining: stationsRemaining, showMore: showMoreStations,} =
     useSeeMore(results, `${query}|${districtId}`, stationsStep, openKey ? results.findIndex(r => r.key === openKey) + 1 : 0)
 
   // Show an error with retry, a loading message or an empty message until the directory loads
@@ -855,7 +855,7 @@ function PoliceDirectory() {
           ))}
 
       {/* Load the next page of stations */}
-      <SeeMore remaining={stationsRemaining} onClick={showMoreStations} step={showMoreStationsStep} />
+      <SeeMore remaining={stationsRemaining} onClick={showMoreStations} />
 
       {/* Note about where the data comes from */}
       <p className="qa-pd-note">{buildSourceNote(directory)}</p>
@@ -902,7 +902,7 @@ function JurisdictionComingSoon({ label }) {
 function DrtTable({ rows, highlightId, showSno = true, showAmount = true }) {
   // Show the rows a page at a time, keeping the highlighted tribunal visible
   const highlightAt = highlightId ? rows.findIndex(r => r.tribunal.id === highlightId) + 1 : 0
-  const { visible, remaining, showMore, step: nextStep } = useSeeMore(rows, rows.length, 25, highlightAt)
+  const { visible, remaining, showMore } = useSeeMore(rows, rows.length, 25, highlightAt)
 
   return (
     <>
@@ -949,7 +949,7 @@ function DrtTable({ rows, highlightId, showSno = true, showAmount = true }) {
         </tbody>
       </table>
     </div>
-    <SeeMore remaining={remaining} onClick={showMore} step={nextStep} />
+    <SeeMore remaining={remaining} onClick={showMore} />
     </>
   )
 }
@@ -1124,7 +1124,7 @@ function DrtJurisdiction() {
 function ConsumerCommissionTable({ rows, highlightId, showSno = true }) {
   // Show the rows a page at a time, keeping the highlighted commission visible
   const highlightAt = highlightId ? rows.findIndex(r => r.id === highlightId) + 1 : 0
-  const { visible, remaining, showMore, step: nextStep } = useSeeMore(rows, rows.length, 25, highlightAt)
+  const { visible, remaining, showMore } = useSeeMore(rows, rows.length, 25, highlightAt)
 
   return (
     <>
@@ -1165,7 +1165,7 @@ function ConsumerCommissionTable({ rows, highlightId, showSno = true }) {
         </tbody>
       </table>
     </div>
-    <SeeMore remaining={remaining} onClick={showMore} step={nextStep} />
+    <SeeMore remaining={remaining} onClick={showMore} />
     </>
   )
 }

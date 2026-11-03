@@ -506,7 +506,6 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
 .admin__tabs.admin__tabs, .admin__subtabs.admin__subtabs {
   flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
   scrollbar-width: none; cursor: grab;
-  touch-action: pan-x pan-y; /* a swipe along the bar always scrolls the bar */
 }
 @media (hover: none), (pointer: coarse) {
   /* iPhone / iPad: plain native scrolling. No grab cursor, and no edge-chaining lock (WebKit can swallow the swipe) */

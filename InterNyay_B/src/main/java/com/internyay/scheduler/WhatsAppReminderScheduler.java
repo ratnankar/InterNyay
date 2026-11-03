@@ -23,7 +23,7 @@ public class WhatsAppReminderScheduler {
     @PostConstruct
     void register() {
         registry.register("whatsapp_reminders", "WhatsApp hearing reminders",
-                "Sends clients the reminder for tomorrow's hearings.", cron, this::remindClientsOfTomorrowsHearings);
+                "Sends clients the reminder for next day's hearings.", cron, this::remindClientsOfTomorrowsHearings);
     }
 
     public void remindClientsOfTomorrowsHearings() {
