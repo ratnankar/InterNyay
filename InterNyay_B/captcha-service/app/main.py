@@ -22,7 +22,7 @@ class SolveResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.solver = CaptchaSolver(settings.length)
+    app.state.solver = CaptchaSolver(settings.length, settings.min_votes)
     logger.info("Solver ready, expecting %d characters", settings.length)
     yield
 
