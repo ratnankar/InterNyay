@@ -52,7 +52,9 @@ const STATUS_TONE = {
 // How a line of the session log is coloured
 function levelOf(text) {
   // A zero count ("0 failed", "0 need a CAPTCHA typed") is good news and must not turn the line red
-  const t = text.toLowerCase().replace(/\b0 (?:court room\(s\) )?(?:failed|need a captcha typed|not found)/g, '')
+  const t = text.toLowerCase()
+    .replace(/\b0 (?:court room\(s\) )?(?:failed|need a captcha typed|not found)/g, '')
+    .replace(/[^;|]*(?:nothing to look up|no cause list published|skipped by the admin)[^;|]*/g, '')
   if (/failed|error|not found|no judge|not matched|portal returned no|stopped/.test(t)) return 'bad'
   if (/skipped|not accepted|expired|not in the list|not in a published list|need a captcha typed|not tried|left for|could not|cannot/.test(t)) return 'warn'
   if (/saved|refreshed|finished/.test(t)) return 'ok'
