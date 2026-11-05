@@ -36,19 +36,25 @@ public class ManualCaptchaDesk {
         Object finish(SubmitResult result);
     }
 
+    // Fetches a new CAPTCHA picture of the held session, from the eCourts portal or from a district court's website
+    @FunctionalInterface
+    public interface Image {
+        byte[] fetch() throws IOException;
+    }
+
     // What the page gets when a CAPTCHA has to be typed: needsCaptcha is always true, captchaImage is a data URL
     public record Challenge(boolean needsCaptcha, String challengeId, String captchaImage, String message) {}
 
     private static final class Held {
         private final Long userId;
-        private final PortalSession session;
+        private final Image image;
         private final Submit submit;
         private final Finish finish;
         private final Instant created = Instant.now();
 
-        private Held(Long userId, PortalSession session, Submit submit, Finish finish) {
+        private Held(Long userId, Image image, Submit submit, Finish finish) {
             this.userId = userId;
-            this.session = session;
+            this.image = image;
             this.submit = submit;
             this.finish = finish;
         }
@@ -64,12 +70,17 @@ public class ManualCaptchaDesk {
         this.ttl = Duration.ofMinutes(Math.max(2, ttlMinutes));
     }
 
-    // Keeps the session and gives the page the CAPTCHA to show
+    // Keeps the session and gives the page the CAPTCHA to show (a session of the eCourts portal)
     public Challenge open(Long userId, PortalSession session, Submit submit, Finish finish, String message) {
-        byte[] image;
+        return open(userId, () -> portal.captcha(session), submit, finish, message);
+    }
+
+    // Same for any session whose CAPTCHA picture `image` can fetch, e.g. a district court's website
+    public Challenge open(Long userId, Image image, Submit submit, Finish finish, String message) {
+        byte[] picture;
 
         try {
-            image = portal.captcha(session);
+            picture = image.fetch();
         } catch (IOException | RuntimeException e) {
             log.warn("Manual CAPTCHA: the picture could not be loaded: {}", e.getMessage());
             throw new IllegalArgumentException("Could not get the CAPTCHA from eCourts right now, try again in a moment");
@@ -77,9 +88,9 @@ public class ManualCaptchaDesk {
 
         String id = UUID.randomUUID().toString();
         synchronized (open) {
-            open.put(id, new Held(userId, session, submit, finish));
+            open.put(id, new Held(userId, image, submit, finish));
         }
-        return new Challenge(true, id, dataUrl(image), message == null ? "" : message);
+        return new Challenge(true, id, dataUrl(picture), message == null ? "" : message);
     }
 
     // The typed CAPTCHA: a wrong one answers with a new Challenge, the right one with the original button's result
@@ -121,7 +132,7 @@ public class ManualCaptchaDesk {
 
     private byte[] freshImage(String id, Held held) {
         try {
-            return portal.captcha(held.session);
+            return held.image.fetch();
         } catch (IOException | RuntimeException e) {
             forget(id);
             throw new IllegalArgumentException("Could not get a new CAPTCHA from eCourts, try again in a moment");

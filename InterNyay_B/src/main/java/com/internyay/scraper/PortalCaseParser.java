@@ -157,8 +157,8 @@ public final class PortalCaseParser {
         for (String row : section(lines, "Acts")) {
             String[] cells = cells(row);
             if (cells.length == 0 || cells[0].toLowerCase(Locale.ROOT).startsWith("under act")) continue;
-            // A row that is not an act: a process id, an IA row or a CNR number from a table that follows the acts
-            if (cells[0].matches("(?i)^(?:P?DL[A-Z]{2}\\d{8,}.*|process.*|ia .*|main .*)$")) continue;
+            // A row that is not an act: a process id, an IA row or a CNR number (any state, DLST..., HRGR...) from a table that follows the acts
+            if (cells[0].matches("(?i)^(?:P?[A-Z]{4}\\d{8,}.*|process.*|ia .*|main .*)$")) continue;
             String section = cells.length > 1 ? cells[1].replaceAll("[,;\\s]+$", "") : "";
             acts.add(section.isEmpty() ? cells[0] : cells[0] + " - Section " + section);
         }

@@ -95,7 +95,7 @@ public class CaseCauseListRefreshService {
                 if (r.outcome() == CaseOutcome.NEEDS_CAPTCHA && r.ticket() != null) {
                     DistrictCauseListRelayService.Ticket ticket = r.ticket();
                     String key = c.getId() + "|" + date;
-                    return captchaDesk.open(userId, ticket.session(), ticket.submit(), result -> {
+                    return captchaDesk.open(userId, ticket.image(), ticket.submit(), result -> {
                         Result done = fromDistrict(c, date, before, ticket.finish().apply(result));
                         if (done.status() != Status.TRY_AGAIN && done.status() != Status.FAILED) remember(key, done);
                         return done;

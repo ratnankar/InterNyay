@@ -132,6 +132,8 @@ public class DistrictCauseListRelayService {
     private final CauseListRunLogService runLog;
     private final long autoBudgetNanos;
     private final String stateCode;
+    // Courts outside Delhi, by court or district name, with the eCourts portal's own state code (Gurugram is in Haryana)
+    private final Map<String, String> courtStateCodes;
     private final Duration sessionTtl;
 
     @Value("${causelist.district-site.captcha-length:5}")
@@ -159,6 +161,7 @@ public class DistrictCauseListRelayService {
             @Value("${causelist.district-site.enabled:true}") boolean siteEnabled,
             @Value("${causelist.district.auto-budget-seconds:20}") int autoBudgetSeconds,
             @Value("${causelist.district.state-code:26}") String stateCode,
+            @Value("${causelist.district.state-codes:Gurugram=14}") String stateCodes,
             @Value("${causelist.district.session-ttl-minutes:10}") int ttlMinutes) {
         this.caseRepo = caseRepo;
         this.hearingRepo = hearingRepo;
@@ -171,6 +174,7 @@ public class DistrictCauseListRelayService {
         this.runLog = runLog;
         this.autoBudgetNanos = Math.max(5, autoBudgetSeconds) * 1_000_000_000L;
         this.stateCode = stateCode;
+        this.courtStateCodes = parseStateCodes(stateCodes);
         this.sessionTtl = Duration.ofMinutes(Math.max(1, ttlMinutes));
     }
 
@@ -525,9 +529,9 @@ public class DistrictCauseListRelayService {
     // What a single-case district lookup gave. NEEDS_CAPTCHA carries a ticket when the court room is ready for the user's CAPTCHA
     public enum CaseOutcome { FOUND, NOT_LISTED, NEEDS_CAPTCHA, UNSUPPORTED, FAILED }
 
-    // The portal session of a court room waiting for a typed CAPTCHA: its session, how to send the CAPTCHA, and how to turn the
-    // portal's answer into the lookup's result
-    public record Ticket(PortalSession session, ManualCaptchaDesk.Submit submit, java.util.function.Function<SubmitResult, CaseRefresh> finish) {}
+    // A court room waiting for a typed CAPTCHA, whether it is read from the district court's website or from the eCourts portal:
+    // how to get a CAPTCHA picture, how to send the typed CAPTCHA, and how to turn the answer into the lookup's result
+    public record Ticket(ManualCaptchaDesk.Image image, ManualCaptchaDesk.Submit submit, java.util.function.Function<SubmitResult, CaseRefresh> finish) {}
 
     public record CaseRefresh(CaseOutcome outcome, Integer serial, String message, Ticket ticket) {
         public CaseRefresh(CaseOutcome outcome, Integer serial, String message) {
@@ -536,7 +540,8 @@ public class DistrictCauseListRelayService {
     }
 
     // Looks up one district court case in its court room's cause list for the date and saves the number found. Used by the
-    // dashboard's refresh button, so only that case's court room is asked of the portal. The CAPTCHA is read by the solver;
+    // dashboard's refresh button, so only that case's court room is asked, of its district court's website like the Admin cause
+    // list (the eCourts portal when the district has no website, or when the website cannot be read). The CAPTCHA is read by the solver;
     // when it cannot be read the result carries a ticket, so the caller can ask the user to type it (an admin's relay is not
     // involved and is left untouched)
     public CaseRefresh refreshOne(Case c, java.time.LocalDate date) {
@@ -561,13 +566,13 @@ public class DistrictCauseListRelayService {
         Run run = new Run(date, List.of());
 
         try {
-            Pending held = prepare(run, task);
+            Pending held = prepareForOne(run, task);
             Auto auto = solver.available() ? readAutomatically(held) : null;
 
             if (auto == null) {
-                // The reader could not read the CAPTCHA (or there is none): the user types it on this same portal session
-                Ticket ticket = new Ticket(held.session,
-                        captcha -> portal.submit(held.session, held.selection, date, captcha),
+                // The reader could not read the CAPTCHA (or there is none): the user types it on this same session
+                Ticket ticket = new Ticket(() -> captchaOf(held),
+                        captcha -> submitOf(held, captcha),
                         result -> finishOne(held, c, result));
                 return new CaseRefresh(CaseOutcome.NEEDS_CAPTCHA, null, "The CAPTCHA could not be read automatically", ticket);
             }
@@ -587,7 +592,24 @@ public class DistrictCauseListRelayService {
         }
     }
 
-    // The portal's answer for one case: its serial in the list is saved, or the reason there is none is given
+    // A court room for the single-case refresh: read from the district court's website when it has one, like the Admin cause list.
+    // When that website cannot be read (down, changed, its court list not matching) the eCourts portal is tried before giving up,
+    // so the button works at least as often as it did when it only used the portal
+    private Pending prepareForOne(Run run, Task task) throws IOException {
+        if (siteEnabled && DistrictSiteUrls.baseUrlFor(task.district()).isPresent()) {
+            try {
+                return prepareForList(run, task);
+            } catch (NothingToLookUpException e) {
+                throw e;
+            } catch (IOException | RuntimeException e) {
+                log.info("Cause list refresh of {}: the district website could not be used ({}), trying the eCourts portal",
+                        label(task), e.getMessage());
+            }
+        }
+        return prepare(run, task);
+    }
+
+    // The answer for one case: its serial in the list is saved, or the reason there is none is given
     private CaseRefresh finishOne(Pending held, Case c, SubmitResult result) {
         String html = result.html();
 
@@ -607,6 +629,8 @@ public class DistrictCauseListRelayService {
 
     private Pending prepare(Run run, Task task) throws IOException {
         PortalSession session = portal.open();
+        // The portal is organised by state: Delhi unless the court is listed in causelist.district.state-codes
+        String stateCode = stateOf(task);
 
         List<Option> districts = portal.districts(session, stateCode);
 
@@ -1042,6 +1066,26 @@ public class DistrictCauseListRelayService {
             return "the portal returned no " + what + ", it may be refusing requests from this server or its page changed";
         }
         return "the portal has: " + options.stream().map(Option::text).collect(java.util.stream.Collectors.joining(", "));
+    }
+
+    // The portal's state code for the court of a task: the court's own entry (Gurugram -> Haryana), else the district's,
+    // else the default state (Delhi)
+    private String stateOf(Task task) {
+        String byCourt = courtStateCodes.get(squash(task.court()));
+        if (byCourt != null) return byCourt;
+        String byDistrict = courtStateCodes.get(squash(task.district()));
+        return byDistrict != null ? byDistrict : stateCode;
+    }
+
+    // "Gurugram=14, Other Court=22" -> {gurugram=14, othercourt=22}
+    private static Map<String, String> parseStateCodes(String text) {
+        Map<String, String> out = new HashMap<>();
+        if (text == null) return out;
+        for (String part : text.split(",")) {
+            String[] kv = part.split("=", 2);
+            if (kv.length == 2 && !squash(kv[0]).isEmpty() && !kv[1].isBlank()) out.put(squash(kv[0]), kv[1].trim());
+        }
+        return out;
     }
 
     private static String squash(String text) {
