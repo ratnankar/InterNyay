@@ -1353,6 +1353,7 @@ export default function Cases() {
                     date={c.nextHearing}
                     refreshTitle="Refresh the next hearing date from eCourts"
                     onRefresh={() => refreshCardHearing(c)}
+                    busyPath={`/cases/${c.id}/refresh-hearing`}
                   />
                 )}
               </div>

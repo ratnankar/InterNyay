@@ -5,6 +5,14 @@ import { formatDisplayDate } from '../utils/dateUtils'
 import { formatCurrency } from '../utils/formatUtils'
 import { getErrorMessage } from '../utils/errorMessages'
 import { confirmDialog } from '../utils/confirmDialog'
+import { isActionBusyPath, useBusyTick } from '../utils/busyStore'
+
+// Where the server runs each busy key's call: "hearing-5" -> /whatsapp/cases/5/hearing-reminder
+const BUSY_PATHS = {
+  hearing: id => `/whatsapp/cases/${id}/hearing-reminder`,
+  payment: id => `/whatsapp/cases/${id}/payment-reminder`,
+  case:    id => `/whatsapp/cases/${id}/auto`,
+}
 
 // Small helper for messages like "1 client" / "3 clients"
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -21,6 +29,8 @@ export default function useWhatsApp({
   const [busy, setBusy] = useState({})
   // Keys of requests already running, so a double click can't send the same reminder twice
   const inFlight = useRef(new Set())
+  // Re-renders when a call starts or ends anywhere (another screen, another tab, or before a page refresh)
+  useBusyTick()
 
   // Load the WhatsApp status from the backend
   const loadStatus = useCallback(async () => {
@@ -209,7 +219,14 @@ export default function useWhatsApp({
     whatsappStatus: status,
     whatsappError: statusError,
     reloadWhatsApp: loadStatus,
-    whatsappBusy: busy,
+    // A key is busy while this page runs it or while the server still runs the same call (after a refresh or a switch of screen)
+    whatsappBusy: new Proxy(busy, {
+      get(target, key) {
+        if (target[key]) return true
+        const m = typeof key === 'string' && key.match(/^(hearing|payment|case)-(.+)$/)
+        return m ? isActionBusyPath(BUSY_PATHS[m[1]](m[2])) : false
+      },
+    }),
     toggleCaseReminders,
     caseRemindersOn,
     caseHasReminderNumber,

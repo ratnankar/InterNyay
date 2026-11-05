@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useBusy } from '../../utils/busyStore'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import { useCourts, getCourtNames, courtDistrictLabel } from '../../constants/courts'
@@ -53,7 +54,9 @@ export default function JudgeLeaveAdmin() {
   const [errors,    setErrors]    = useState({})
   const [saving,    setSaving]    = useState(false)
   // Whether a refresh from the court websites is running, and its last results
-  const [refreshing, setRefreshing] = useState(false)
+  const [refreshingNow, setRefreshing] = useState(false)
+  // Also true while the server is still reading the court websites after a page refresh or a switch to another tab
+  const refreshing = refreshingNow || useBusy('POST', '/admin/judges-on-leave/refresh')
   const [refreshed,  setRefreshed]  = useState(null)
 
   // Closes the editor, also when the backdrop is clicked

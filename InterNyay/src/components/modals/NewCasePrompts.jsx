@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useApp } from '../../context/AppContext'
 import Icon from '../common/Icon'
 import ModalPortal from '../../components/common/ModalPortal'
+import { useBusyPath } from '../../utils/busyStore'
 import api from '../../services/api'
 import { getErrorMessage } from '../../utils/errorMessages'
 
@@ -30,7 +31,10 @@ export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClo
   // 'choose': the two options. 'cnr': asking for the CNR number. 'captcha': asking for the CAPTCHA of eCourts
   const [step, setStep] = useState(initialCnr ? 'cnr' : 'choose')
   const [cnr, setCnr] = useState(initialCnr)
-  const [busy, setBusy] = useState(!!initialCnr)
+  const [working, setBusy] = useState(!!initialCnr)
+  // An eCourts lookup the server is still running (also after closing this window or refreshing the page)
+  const lookupRunning = useBusyPath('/cases/cnr')
+  const busy = working || lookupRunning
   const [problem, setProblem] = useState('')
   const [session, setSession] = useState({ id: '', image: '' })
   const [captcha, setCaptcha] = useState('')

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useBusyPath } from '../../utils/busyStore'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import { formatDate, formatDisplayDate, formatTimestamp } from '../../utils/dateUtils'
@@ -83,14 +84,18 @@ export default function CauseListRelay() {
   }
   const [step, setStep] = useState(null)
   const [captcha, setCaptcha] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [workingNow, setBusy] = useState(false)
+  // The relay's calls the server is still running (also after a page refresh or a switch to another tab)
+  const relayRunning = useBusyPath('/admin/cause-list-relay')
+  const busy = workingNow || relayRunning
   const [log, setLog] = useState([])
   const [schedule, setSchedule] = useState(null)
   const [runs, setRuns] = useState([])
   const [loadingRuns, setLoadingRuns] = useState(true)
   const [runLimit, setRunLimit] = useState(RUNS_STEP)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [startingAuto, setStartingAuto] = useState(false)
+  const [startingAutoNow, setStartingAuto] = useState(false)
+  const startingAuto = startingAutoNow || useBusyPath('/admin/cause-list-relay/run-auto')
   const closed = useRef(false)
 
   useEffect(() => { closed.current = false; return () => { closed.current = true } }, [])

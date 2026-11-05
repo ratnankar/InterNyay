@@ -14,6 +14,7 @@ import { isClosedCase } from '../../constants/data'
 import { confirmDialog } from '../../utils/confirmDialog'
 import useSessionState from '../../hooks/useSessionState'
 import { beginOrderTask, endOrderTask, usePendingOrders } from '../../utils/pendingOrders'
+import { isActionBusyPath, useBusyPath, useBusyTick } from '../../utils/busyStore'
 
 export default function CaseHearings({ caseItem, dashboard = false, onCaseRefreshed }) {
   const {
@@ -53,6 +54,10 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
   const canManageOrders = !dashboard
 
   const caseId = caseItem?.id
+  // What the server is still doing for this case or one of its hearings (refresh from eCourts, saving, deleting, order
+  // download/upload). Kept across switching cases and page refreshes, so the buttons stay unavailable until it is done
+  const refreshRunning = useBusyPath(`/cases/${caseId}/refresh-hearing`)
+  useBusyTick()
 
   const load = useCallback((silent = false) => {
     if (!caseId) return
@@ -242,14 +247,14 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
           <button type="button"
             className={`btn-outline btn-outline--sm${dashboard ? ' hearing-history__refresh-btn' : ''}`}
             title="Read the case from eCourts now: next hearing date, missing past hearing dates and their orders"
-            disabled={busyId === 'refresh'}
+            disabled={busyId === 'refresh' || refreshRunning}
             onClick={refreshFromEcourts}
-            {...(dashboard ? { 'aria-label': busyId === 'refresh' ? 'Refreshing…' : 'Refresh' } : {})}
+            {...(dashboard ? { 'aria-label': busyId === 'refresh' || refreshRunning ? 'Refreshing…' : 'Refresh' } : {})}
           >
             {dashboard
               // Dashboard: the refresh symbol alone (it spins while the case is being read from eCourts)
-              ? <Icon name="refresh" className={`hearing-history__refresh-icon${busyId === 'refresh' ? ' hearing-history__refresh-icon--spin' : ''}`} />
-              : (busyId === 'refresh' ? 'Refreshing…' : 'Refresh')}
+              ? <Icon name="refresh" className={`hearing-history__refresh-icon${busyId === 'refresh' || refreshRunning ? ' hearing-history__refresh-icon--spin' : ''}`} />
+              : (busyId === 'refresh' || refreshRunning ? 'Refreshing…' : 'Refresh')}
           </button>
 
           {/* Update is shown for every case (a closed one has no "Next Hearing" date, only the buttons) */}
@@ -283,7 +288,7 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
           <SeeMoreList items={hearings} step={10} resetKey={caseItem.id}>
           {shownHearings => shownHearings.map(h => {
           const editing = editingId === h.id
-          const busy = busyId === h.id || pendingOrders.has(h.id)
+          const busy = busyId === h.id || pendingOrders.has(h.id) || isActionBusyPath(`/hearings/${h.id}`)
           const orderDue = !!h.orderDue
           const { note } = splitHearingNotes(h.notes)
 
@@ -381,7 +386,7 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
                       disabled={busy}
                       onClick={() => getOrder(h)}
                     >
-                      <Icon name="download" /> {pendingOrders.has(h.id) ? 'Getting order…' : 'Get order'}
+                      <Icon name="download" /> {pendingOrders.has(h.id) || isActionBusyPath(`/hearings/${h.id}/order`) ? 'Getting order…' : 'Get order'}
                     </button>
                   </div>
                 ) : !orderDue ? null : h.noOrderOnRecord ? (

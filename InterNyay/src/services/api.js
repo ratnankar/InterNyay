@@ -6,6 +6,7 @@ import { makeApiError, makeNetworkError, ApiError, MESSAGES } from '../utils/err
 import { forgetAccountByToken, replaceToken } from '../utils/accounts'
 import { canEmbedPdf } from '../utils/pdfSupport'
 import { askCaptcha, isCaptchaChallenge } from '../utils/captchaDesk'
+import { actionKey, beginAction, endAction, pingOtherTabs, startServerSync } from '../utils/busyStore'
 
 // fetch that reports "server unreachable" as a friendly error instead of the browser's "Failed to fetch"
 async function http(url, options) {
@@ -29,19 +30,16 @@ function formKey(fd) {
     .join('&')
 }
 
-// While any save is running the page gets the class "is-saving", so the gold Save buttons look busy and cannot be clicked again
-function markSaving() {
-  if (typeof document === 'undefined') return
-  document.body.classList.toggle('is-saving', inFlight.size > 0)
-}
-
-// Runs `send()` once per identical in-flight call; later identical calls are ignored until the first one finishes
-function dedupe(key, send) {
+// Runs `send()` once per identical in-flight call; later identical calls are ignored until the first one finishes.
+// `action` names what is being done (see utils/busyStore): while it runs, the buttons that start it stay unavailable
+// even after the page switched to another case or was refreshed
+function dedupe(key, send, action) {
   if (inFlight.has(key)) return new Promise(() => {})
   const promise = send()
   inFlight.set(key, promise)
-  markSaving()
-  const release = () => { inFlight.delete(key); markSaving() }
+  beginAction(action)
+  pingOtherTabs()
+  const release = () => { inFlight.delete(key); endAction(action) }
   promise.then(release, release)
   return promise
 }
@@ -129,14 +127,21 @@ async function rawRequest(method, path, { body, params } = {}) {
 function request(method, path, opts = {}) {
   if (method === 'GET') return rawRequest(method, path, opts)
   const key = `${method} ${path} ${JSON.stringify(opts.params || {})} ${JSON.stringify(opts.body ?? null)}`
-  return dedupe(key, () => rawRequest(method, path, opts))
+  return dedupe(key, () => rawRequest(method, path, opts), actionKey(method, path, opts.params))
 }
 
 // For buttons that read eCourts: when the server could not read the CAPTCHA itself it answers with a challenge, the CAPTCHA
 // window opens, and the result is what the button would have returned once the typed CAPTCHA was accepted
-async function withCaptcha(call) {
-  const res = await call
-  return isCaptchaChallenge(res) ? askCaptcha(res) : res
+// `action` is the call's name (utils/busyStore.actionKey): the button stays unavailable until the CAPTCHA was answered
+// and the result is in, not only while the first request runs
+async function withCaptcha(call, action) {
+  if (action) beginAction(action)
+  try {
+    const res = await call
+    return isCaptchaChallenge(res) ? await askCaptcha(res) : res
+  } finally {
+    if (action) endAction(action)
+  }
 }
 
 // Short helpers for each HTTP method
@@ -154,7 +159,7 @@ const authHeaders = () => {
 
 // POST multipart form data (used for file uploads)
 function postForm(path, formData) {
-  return dedupe(`POST ${path} ${formKey(formData)}`, () => sendForm('POST', path, formData))
+  return dedupe(`POST ${path} ${formKey(formData)}`, () => sendForm('POST', path, formData), actionKey('POST', path))
 }
 
 async function sendForm(method, path, formData) {
@@ -172,7 +177,7 @@ async function sendForm(method, path, formData) {
 
 // PUT multipart form data (used for editing records that carry a file)
 function putForm(path, formData) {
-  return dedupe(`PUT ${path} ${formKey(formData)}`, () => sendForm('PUT', path, formData))
+  return dedupe(`PUT ${path} ${formKey(formData)}`, () => sendForm('PUT', path, formData), actionKey('PUT', path))
 }
 
 // Downloads a file and returns a temporary blob URL that can be shown in an iframe or viewer
@@ -301,7 +306,7 @@ export const cases = {
   // Judge / leave / court number details for the hearings on a date
   hearingLeave: (params)    => get('/cases/hearing-leave', { params }),
   // Looks one case up in the court's cause list for a hearing date again (the dashboard's refresh button)
-  refreshCauseList: (id, date) => withCaptcha(post(`/cases/${id}/cause-list/refresh`, { params: { date } })),
+  refreshCauseList: (id, date) => withCaptcha(post(`/cases/${id}/cause-list/refresh`, { params: { date } }), actionKey('POST', `/cases/${id}/cause-list/refresh`, { date })),
 
   // File numbers already in use, so new cases can pick a free one
   fileNumbers: ()           => get('/cases/file-numbers'),
@@ -317,7 +322,7 @@ export const cases = {
   // (hearingsAdded / ordersFound say how many; the hearing list must be reloaded afterwards).
   // The server answers with { caseId, nextHearing, status, decisionDate, message, hearingsAdded, ordersFound }:
   // a disposed case comes back with status "Decided" and nextHearing null; "message" is ready for a toast
-  refreshHearing: (id)      => withCaptcha(post(`/cases/${id}/refresh-hearing`)),
+  refreshHearing: (id)      => withCaptcha(post(`/cases/${id}/refresh-hearing`), actionKey('POST', `/cases/${id}/refresh-hearing`)),
 
   // Case details from eCourts by CNR, used to fill the Add Case form. Fails with a readable message when eCourts
   // cannot give the case
@@ -362,7 +367,7 @@ export const hearings = {
   removeOrder: (id) => del(`/hearings/${id}/order`),
 
   // Download the order eCourts lists for the hearing's date (the "Get order" button); orders are never downloaded by themselves
-  fetchOrder: (id) => withCaptcha(post(`/hearings/${id}/order/fetch`)),
+  fetchOrder: (id) => withCaptcha(post(`/hearings/${id}/order/fetch`), actionKey('POST', `/hearings/${id}/order/fetch`)),
 }
 
 // To-do list tasks
@@ -1057,6 +1062,10 @@ const captcha = {
   refresh: (id)       => post(`/captcha/${id}/refresh`),
   cancel:  (id)       => post(`/captcha/${id}/cancel`),
 }
+
+// Which actions of this account the server is still running: keeps buttons unavailable after a page refresh or in a second tab
+// (utils/busyStore.js). Asked on start, when the tab is shown again, and while something is still listed
+startServerSync(() => get('/in-flight'))
 
 const api = { captcha, publicApi, contact, chat, courts, courtPreferences, quickAccess, police, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
 export default api

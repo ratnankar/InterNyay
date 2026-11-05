@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import { getErrorMessage } from '../../utils/errorMessages'
 import ErrorMessage from '../common/ErrorMessage'
+import { useBusy, useBusyPath } from '../../utils/busyStore'
 
 const RANGES = [7, 30, 90]
 // How often the page asks the server how far the test questions are
@@ -126,14 +127,17 @@ export default function ChatInsightsAdmin() {
   const [evaluation, setEvaluation] = useState(null)
   const [starting, setStarting] = useState(false)
   const [stopping, setStopping] = useState(false)
-  const [reloading, setReloading] = useState(false)
+  const [reloadingNow, setReloading] = useState(false)
+  // Calls the server is still running (also after a page refresh): starting/stopping a test run, reloading the library
+  const evalCallRunning = useBusyPath('/admin/chat/eval')
+  const reloading = reloadingNow || useBusy('POST', '/admin/chat/knowledge/reload')
   // How many passages the legal library holds and how many test questions exist (shown for information only)
   const [passages, setPassages] = useState(null)
   const [caseCount, setCaseCount] = useState(null)
   const mounted = useRef(true)
   // Only the newest request may fill the page, so quickly switching the period never shows older figures
   const requestId = useRef(0)
-  const evaluating = starting || !!evaluation?.running
+  const evaluating = starting || evalCallRunning || !!evaluation?.running
 
   const load = useCallback(async () => {
     const id = ++requestId.current

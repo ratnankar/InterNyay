@@ -2,23 +2,28 @@ import { useState } from 'react'
 import { formatDisplayDate, hearingBoxPhase, hearingCountdown } from '../../utils/dateUtils'
 import useClockTick from '../../hooks/useClockTick'
 import Icon from './Icon'
+import { useBusyPath } from '../../utils/busyStore'
 
 // The "Next Hearing" box on a case / misc. application card.
 // - normally: calendar icon, date and countdown
 // - on the hearing day after 5 PM: the same, plus a refresh symbol
 // - from 12 AM, when the date was not updated: the old date is removed and only the refresh symbol is shown
 // onRefresh may return a promise; the symbol spins until it settles.
-export default function NextHearingBox({ date, onRefresh, refreshTitle = 'Refresh the next hearing date' }) {
+// busyPath (e.g. "/cases/5/refresh-hearing"): the symbol also stays busy while the server runs a call on that address,
+// after switching to another page and back or after a page refresh.
+export default function NextHearingBox({ date, onRefresh, refreshTitle = 'Refresh the next hearing date', busyPath }) {
   const now = useClockTick()
-  const [busy, setBusy] = useState(false)
+  const [working, setWorking] = useState(false)
+  const running = useBusyPath(busyPath)
+  const busy = working || running
   const phase = hearingBoxPhase(date, now)
   const cd = phase === 'normal' || phase === 'refresh' ? hearingCountdown(date) : null
 
   async function refresh(e) {
     e.stopPropagation()
     if (busy || !onRefresh) return
-    setBusy(true)
-    try { await onRefresh() } finally { setBusy(false) }
+    setWorking(true)
+    try { await onRefresh() } finally { setWorking(false) }
   }
 
   const refreshButton = phase !== 'normal' && onRefresh && (

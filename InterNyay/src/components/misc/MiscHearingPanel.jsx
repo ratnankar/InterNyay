@@ -6,6 +6,7 @@ import { getErrorMessage } from '../../utils/errorMessages'
 import { formatDisplayDate } from '../../utils/dateUtils'
 import HearingDateInput from '../common/HearingDateInput'
 import Icon from '../common/Icon'
+import { isActionBusyPath, useBusyPath, useBusyTick } from '../../utils/busyStore'
 import SeeMoreList from '../common/SeeMoreList'
 import { isDisposed } from './miscUtils'
 import MiscHearingUpdate from './MiscHearingUpdate'
@@ -20,7 +21,11 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
   const [draft, setDraft] = useState('')
   const [draftNote, setDraftNote] = useState('')
   const [busyId, setBusyId] = useState(null)
-  const [refreshing, setRefreshing] = useState(false)
+  const [refreshingNow, setRefreshing] = useState(false)
+  // Also true while the server still reads the case from eCourts after a page refresh or a switch to another screen
+  const refreshRunning = useBusyPath(`/cases/${app.caseId}/refresh-hearing`)
+  const refreshing = refreshingNow || refreshRunning
+  useBusyTick()
 
   const rows = app.hearings || []
   const pending = !isDisposed(app)
@@ -106,7 +111,7 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
         <SeeMoreList items={rows} step={10} resetKey={app.id}>
           {shown => shown.map(h => {
             const editing = editingId === h.id
-            const busy = busyId === h.id
+            const busy = busyId === h.id || isActionBusyPath(`/misc-applications/${app.id}/hearings/${h.id}`)
             return (
               <div key={h.id} className="hearing-entry">
                 <div className="hearing-entry__date">

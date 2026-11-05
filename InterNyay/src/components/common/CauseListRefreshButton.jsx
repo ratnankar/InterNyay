@@ -3,6 +3,7 @@ import api from '../../services/api'
 import { useApp } from '../../context/AppContext'
 import { getErrorMessage } from '../../utils/errorMessages'
 import Icon from './Icon'
+import { useBusy } from '../../utils/busyStore'
 
 // Statuses the backend answers with that are good news, shown as a success toast (anything else is shown as an error)
 const GOOD = new Set(['UPDATED', 'UNCHANGED'])
@@ -11,13 +12,17 @@ const GOOD = new Set(['UPDATED', 'UNCHANGED'])
 // A small round icon on the hearing row, or (withLabel) a labelled button in the expanded card
 export default function CauseListRefreshButton({ caseId, dateKey, onDone, withLabel = false, hasNumber = true }) {
   const { addToast } = useApp()
-  const [busy, setBusy] = useState(false)
+  const [working, setWorking] = useState(false)
+  // Stays true while this case's cause list is being read, also after switching to another case and back, or after a
+  // page refresh (the server is asked which calls are still running)
+  const running = useBusy('POST', `/cases/${caseId}/cause-list/refresh`, { date: dateKey })
+  const busy = working || running
 
   async function refresh(e) {
     // The hearing card toggles when it is clicked, this button must not do that
     e.stopPropagation()
     if (busy) return
-    setBusy(true)
+    setWorking(true)
 
     try {
       const r = await api.cases.refreshCauseList(caseId, dateKey)
@@ -29,7 +34,7 @@ export default function CauseListRefreshButton({ caseId, dateKey, onDone, withLa
     } catch (err) {
       addToast(getErrorMessage(err, 'Could not refresh the cause list'), 'error')
     } finally {
-      setBusy(false)
+      setWorking(false)
     }
   }
 
