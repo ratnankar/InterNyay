@@ -2,10 +2,12 @@ package com.internyay.controller;
 
 import com.internyay.dto.CourtDto;
 import com.internyay.dto.CourtMoveRequest;
+import com.internyay.dto.CourtRenameRequest;
 import com.internyay.dto.CourtRequest;
 import com.internyay.dto.JuvenileJusticeBoardRequest;
 import com.internyay.dto.MahilaCourtRequest;
 import com.internyay.service.CourtNoTransferService;
+import com.internyay.service.CourtRenameService;
 import com.internyay.service.CourtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class CourtController {
 
     private final CourtService courtService;
     private final CourtNoTransferService transferService;
+    private final CourtRenameService renameService;
 
     @GetMapping
     public ResponseEntity<List<CourtDto>> list() {
@@ -55,6 +58,13 @@ public class CourtController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<CourtDto>> move(@PathVariable Long id, @RequestBody CourtMoveRequest req) {
         return ResponseEntity.ok(transferService.move(id, req));
+    }
+
+    // Admin: rename a court, district, building or floor everywhere it is used
+    @PutMapping("/rename")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CourtDto>> rename(@RequestBody CourtRenameRequest req) {
+        return ResponseEntity.ok(renameService.rename(req));
     }
 
     @DeleteMapping("/{id}")
