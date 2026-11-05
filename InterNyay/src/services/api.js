@@ -234,6 +234,8 @@ export const courts = {
   setJuvenileJusticeBoard: (court, juvenileJusticeBoard) => put('/courts/jjb', { body: { court, juvenileJusticeBoard } }),
   // Moves a court no. to another building and district of the same court
   move:   (id, body) => put(`/courts/${id}/move`, { body }),
+  // Renames a court, district, building or floor everywhere it is used. body: { level, court, district, building, floor, newName }
+  rename: (body) => put('/courts/rename', { body }),
 }
 
 // Quick Access: judges on leave

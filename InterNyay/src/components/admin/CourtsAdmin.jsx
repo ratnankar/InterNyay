@@ -5,6 +5,7 @@ import { useCourts, loadCourts } from '../../constants/courts'
 import Dropdown from '../common/Dropdown'
 import CourtNoAdder from './CourtNoAdder'
 import CourtNoMover from './CourtNoMover'
+import CourtRenameModal from './CourtRenameModal'
 import { Head } from '../common/SuccessorCourts'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { confirmDialog } from '../../utils/confirmDialog'
@@ -181,6 +182,26 @@ export default function CourtsAdmin() {
   // Court no. being moved (its id), the mover opens under its chip
   const [moving, setMoving] = useState(null)
 
+  // The tree remembers which branches are open by their names: after a rename the branch (and everything inside it) stays open
+  const keepOpenAfterRename = target => newName => {
+    const at = { court: 0, district: 1, building: 2, floor: 3 }[target.level]
+    const path = [target.court, target.district || '', target.building || '', target.floor || '']
+    setOpen(o => Object.fromEntries(Object.entries(o).map(([key, value]) => {
+      const parts = key.split('|')
+      const inside = parts.length > at && path.slice(0, at + 1).every((p, i) => parts[i] === p)
+      if (inside) parts[at] = newName
+      return [inside ? parts.join('|') : key, value]
+    })))
+  }
+
+  // Court, district, building or floor being renamed (see CourtRenameModal)
+  const [renaming, setRenaming] = useState(null)
+
+  const RenameBtn = ({ target, label }) => (
+    <button type="button" className="courts-btn courts-btn--gold courts-row__action" aria-label={label} title={label}
+            onClick={() => setRenaming(target)}>Rename</button>
+  )
+
   const RemoveBtn = ({ onClick, label }) => (
     <button type="button" className="courts-btn courts-btn--danger courts-row__action" aria-label={label} title={label} onClick={onClick}>Remove</button>
   )
@@ -213,6 +234,7 @@ export default function CourtsAdmin() {
 
   return (
     <div className="courts-admin">
+      {renaming && <CourtRenameModal target={renaming} onClose={() => setRenaming(null)} onRenamed={keepOpenAfterRename(renaming)} />}
       <div className="courts-add">
       <div className="admin__toolbar">
         {LEVELS.map(l => (
@@ -310,6 +332,7 @@ export default function CourtsAdmin() {
                           title={c.jjb ? 'Clear the Juvenile Justice Board mark' : 'Mark as a Juvenile Justice Board: cases have no CNR and nothing is fetched from eCourts'}
                           onClick={() => toggleJuvenile(c)}>{c.jjb ? 'Unmark JJB' : 'Mark JJB'}</button>
                 )}
+                <RenameBtn label="Rename court" target={{ level: 'court', court: c.court }} />
                 {c.rowId && <RemoveBtn label="Remove court" onClick={() => remove({ id: c.rowId, court: c.court }, 'court')} />}
               </div>
 
@@ -335,6 +358,9 @@ export default function CourtsAdmin() {
                             <Head level="day" open={!!open[bKey]} label={b.building ? b.building : 'No building'}
                                   count={total} onToggle={() => toggle(bKey)} />
                             {b.building && (
+                              <RenameBtn label="Rename building" target={{ level: 'building', court: c.court, district: d.district, building: b.building }} />
+                            )}
+                            {b.building && (
                               <RemoveBtn label="Remove building"
                                          onClick={() => removeRows([...b.nos.map(n => n.id), ...floorNos.map(n => n.id), ...floorList.flatMap(f => f.rowIds), ...b.rowIds], `building ${b.building} with its floors and court numbers`)} />
                             )}
@@ -349,6 +375,7 @@ export default function CourtsAdmin() {
                                     <div className="courts-row courts-row--day">
                                       <Head level="day" open={!!open[fKey]} label={`Floor ${f.floor}`}
                                             count={f.nos.length} onToggle={() => toggle(fKey)} />
+                                      <RenameBtn label="Rename floor" target={{ level: 'floor', court: c.court, district: d.district, building: b.building, floor: f.floor }} />
                                       <RemoveBtn label="Remove floor"
                                                  onClick={() => removeRows([...f.nos.map(n => n.id), ...f.rowIds], `floor ${f.floor} with its court numbers`)} />
                                     </div>
@@ -379,6 +406,7 @@ export default function CourtsAdmin() {
                       <div key={dKey} className="archive__month">
                         <div className="courts-row courts-row--month">
                           <Head level="month" open={!!open[dKey]} label={d.district || 'No district'} count={d.count} onToggle={() => toggle(dKey)} />
+                          {d.district && <RenameBtn label="Rename district" target={{ level: 'district', court: c.court, district: d.district }} />}
                           {d.rowId && d.district && <RemoveBtn label="Remove district" onClick={() => remove({ id: d.rowId, district: d.district }, 'district')} />}
                         </div>
                         {open[dKey] && (

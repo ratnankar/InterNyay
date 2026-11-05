@@ -95,7 +95,8 @@ export default function CauseListRelay() {
   const [runLimit, setRunLimit] = useState(RUNS_STEP)
   const [loadingMore, setLoadingMore] = useState(false)
   const [startingAutoNow, setStartingAuto] = useState(false)
-  const startingAuto = startingAutoNow || useBusyPath('/admin/cause-list-relay/run-auto')
+  const autoCallRunning = useBusyPath('/admin/cause-list-relay/run-auto')
+  const startingAuto = startingAutoNow || autoCallRunning
   const closed = useRef(false)
 
   useEffect(() => { closed.current = false; return () => { closed.current = true } }, [])

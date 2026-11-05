@@ -56,7 +56,8 @@ export default function JudgeLeaveAdmin() {
   // Whether a refresh from the court websites is running, and its last results
   const [refreshingNow, setRefreshing] = useState(false)
   // Also true while the server is still reading the court websites after a page refresh or a switch to another tab
-  const refreshing = refreshingNow || useBusy('POST', '/admin/judges-on-leave/refresh')
+  const refreshRunning = useBusy('POST', '/admin/judges-on-leave/refresh')
+  const refreshing = refreshingNow || refreshRunning
   const [refreshed,  setRefreshed]  = useState(null)
 
   // Closes the editor, also when the backdrop is clicked

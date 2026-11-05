@@ -130,7 +130,8 @@ export default function ChatInsightsAdmin() {
   const [reloadingNow, setReloading] = useState(false)
   // Calls the server is still running (also after a page refresh): starting/stopping a test run, reloading the library
   const evalCallRunning = useBusyPath('/admin/chat/eval')
-  const reloading = reloadingNow || useBusy('POST', '/admin/chat/knowledge/reload')
+  const reloadRunning = useBusy('POST', '/admin/chat/knowledge/reload')
+  const reloading = reloadingNow || reloadRunning
   // How many passages the legal library holds and how many test questions exist (shown for information only)
   const [passages, setPassages] = useState(null)
   const [caseCount, setCaseCount] = useState(null)
