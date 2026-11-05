@@ -2,14 +2,15 @@ package com.internyay.scraper;
 
 import java.util.List;
 
-// Judges on leave pages of the Delhi district courts, one per district
+// The district court websites, one per district: the Judges on Leave page of each is scraped, and the same websites give
+// the district cause lists (DistrictSiteUrls takes each site's address from here)
 public final class DistrictLeaveUrls {
 
     // Only static data, no need to create an object
     private DistrictLeaveUrls() {
     }
 
-    // Court complex, district name and the leave page url
+    // Court complex, district name and the Judges on Leave page url (the site's address is that url without its last page)
     public record DistrictInfo(
             String court,
             String district,
@@ -84,6 +85,13 @@ public final class DistrictLeaveUrls {
                     "Rohini",
                     "North West",
                     "https://rohini.dcourts.gov.in/judges-on-leave/"
+            ),
+
+            // Haryana, not Delhi. Its website is read for judges on leave and for the cause list like the Delhi ones
+            new DistrictInfo(
+                    "Gurugram",
+                    "Gurugram",
+                    "https://gurugram.dcourts.gov.in/judges-on-leave/"
             )
     );
 }

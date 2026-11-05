@@ -11,6 +11,9 @@ import com.internyay.scraper.CaseKey;
 import com.internyay.scraper.CourtNoToken;
 import com.internyay.scraper.DistrictCauseListParser;
 import com.internyay.scraper.DistrictPortalClient;
+import com.internyay.scraper.DistrictSiteClient;
+import com.internyay.scraper.DistrictSiteClient.SiteSession;
+import com.internyay.scraper.DistrictSiteUrls;
 import com.internyay.scraper.DistrictPortalClient.Option;
 import com.internyay.scraper.DistrictPortalClient.PortalSession;
 import com.internyay.scraper.DistrictPortalClient.Selection;
@@ -49,6 +52,22 @@ public class DistrictCauseListRelayService {
         }
     }
 
+    private static final class NothingToLookUpException extends IOException {
+        private NothingToLookUpException(String message) {
+            super(message);
+        }
+    }
+
+    private static final List<String> NO_LIST_PHRASES = List.of("no record", "no cause list", "no data", "not published",
+            "not available", "no case", "no matching", "no result", "not found");
+
+    private static boolean noListPublished(String message) {
+        if (message == null || message.isBlank()) return true;
+
+        String lower = message.toLowerCase(Locale.ROOT);
+        return NO_LIST_PHRASES.stream().anyMatch(lower::contains);
+    }
+
     // Districts named differently on the portal than in the courts table
     private static final Map<String, String> DISTRICT_ALIASES = Map.of("rouseavenue", "New Delhi");
 
@@ -77,6 +96,9 @@ public class DistrictCauseListRelayService {
         private final Task task;
         private final PortalSession session;
         private final Selection selection;
+        // Set instead of session / selection when the court room is read from its district court's own website
+        private final SiteSession siteSession;
+        private final DistrictSiteClient.Selection siteSelection;
         private final Instant created = Instant.now();
 
         private Pending(Run run, Task task, PortalSession session, Selection selection) {
@@ -84,6 +106,17 @@ public class DistrictCauseListRelayService {
             this.task = task;
             this.session = session;
             this.selection = selection;
+            this.siteSession = null;
+            this.siteSelection = null;
+        }
+
+        private Pending(Run run, Task task, SiteSession siteSession, DistrictSiteClient.Selection siteSelection) {
+            this.run = run;
+            this.task = task;
+            this.session = null;
+            this.selection = null;
+            this.siteSession = siteSession;
+            this.siteSelection = siteSelection;
         }
     }
 
@@ -92,6 +125,8 @@ public class DistrictCauseListRelayService {
     private final CourtService courtService;
     private final JudgeService judgeService;
     private final DistrictPortalClient portal;
+    private final DistrictSiteClient site;
+    private final boolean siteEnabled;
     private final CaptchaSolverClient solver;
     private final CauseListRunLogService runLog;
     private final long autoBudgetNanos;
@@ -112,8 +147,10 @@ public class DistrictCauseListRelayService {
             CourtService courtService,
             JudgeService judgeService,
             DistrictPortalClient portal,
+            DistrictSiteClient site,
             CaptchaSolverClient solver,
             CauseListRunLogService runLog,
+            @Value("${causelist.district-site.enabled:true}") boolean siteEnabled,
             @Value("${causelist.district.auto-budget-seconds:20}") int autoBudgetSeconds,
             @Value("${causelist.district.state-code:26}") String stateCode,
             @Value("${causelist.district.session-ttl-minutes:10}") int ttlMinutes) {
@@ -122,6 +159,8 @@ public class DistrictCauseListRelayService {
         this.courtService = courtService;
         this.judgeService = judgeService;
         this.portal = portal;
+        this.site = site;
+        this.siteEnabled = siteEnabled;
         this.solver = solver;
         this.runLog = runLog;
         this.autoBudgetNanos = Math.max(5, autoBudgetSeconds) * 1_000_000_000L;
@@ -151,10 +190,12 @@ public class DistrictCauseListRelayService {
         currentLines.add("Started for " + date + ": " + tasks.size() + " court room(s) to look up"
                 + (refreshAll ? ", including cases that already have a number" : ""));
 
-        String note = tasks.isEmpty()
-                ? "Nothing to fetch: every district court case listed on this date already has its cause list number"
-                : "";
-        return next(unusable, note);
+        List<String> notes = new ArrayList<>(unusable);
+
+        if (tasks.isEmpty()) {
+            notes.add("Nothing to fetch: every district court case listed on this date already has its cause list number");
+        }
+        return next(new ArrayList<>(), String.join("; ", notes));
     }
 
     public synchronized CauseListRelayStep answer(String sessionId, String captcha) {
@@ -167,7 +208,7 @@ public class DistrictCauseListRelayService {
         SubmitResult result;
 
         try {
-            result = portal.submit(held.session, held.selection, held.run.date, captcha);
+            result = submitOf(held, captcha);
         } catch (IOException | RuntimeException e) {
             log.error("District cause list submit failed: {}", e.getMessage());
             return next(new ArrayList<>(List.of(label(held.task) + ": " + e.getMessage())), "");
@@ -185,8 +226,10 @@ public class DistrictCauseListRelayService {
         }
 
         if (result.html() == null) {
-            String reason = result.message().isBlank() ? "no cause list returned" : result.message();
-            return next(new ArrayList<>(List.of(label(held.task) + ": " + reason)), "");
+            if (noListPublished(result.message())) {
+                return next(new ArrayList<>(), label(held.task) + ": no cause list published for this court room yet");
+            }
+            return next(new ArrayList<>(List.of(label(held.task) + ": " + result.message())), "");
         }
 
         return next(new ArrayList<>(), save(held, result.html()));
@@ -203,7 +246,7 @@ public class DistrictCauseListRelayService {
         if (held == null) {
             return expired();
         }
-        return next(new ArrayList<>(List.of(label(held.task) + ": skipped")), "");
+        return next(new ArrayList<>(), label(held.task) + ": skipped by the admin");
     }
 
     public synchronized CauseListRelayStep refresh(String sessionId) {
@@ -243,7 +286,7 @@ public class DistrictCauseListRelayService {
             Task task = run.queue.poll();
 
             try {
-                Pending held = prepare(run, task);
+                Pending held = prepareForList(run, task);
 
                 if (solver.available()) {
                     Auto auto = readAutomatically(held);
@@ -252,9 +295,11 @@ public class DistrictCauseListRelayService {
                         if (auto.error() != null) {
                             skipped.add(label(task) + ": " + auto.error());
                         } else if (auto.result().html() == null) {
-                            String why = auto.result().message() == null || auto.result().message().isBlank()
-                                    ? "no cause list returned" : auto.result().message();
-                            skipped.add(label(task) + ": " + why);
+                            if (noListPublished(auto.result().message())) {
+                                notes.add(label(task) + ": no cause list published for this court room yet");
+                            } else {
+                                skipped.add(label(task) + ": " + auto.result().message());
+                            }
                         } else {
                             notes.add(save(held, auto.result().html()));
                         }
@@ -273,6 +318,10 @@ public class DistrictCauseListRelayService {
                 log.warn("District cause list stopped: {}", e.getMessage());
                 skipped.add(e.getMessage() + ". Stopped, " + (run.queue.size() + 1) + " court room(s) not tried");
                 run.queue.clear();
+
+            } catch (NothingToLookUpException e) {
+                log.info("District cause list {}: {}", label(task), e.getMessage());
+                notes.add(label(task) + ": " + e.getMessage());
 
             } catch (IOException | RuntimeException e) {
                 log.warn("District cause list task {} skipped: {}", label(task), e.getMessage());
@@ -327,7 +376,7 @@ public class DistrictCauseListRelayService {
             byte[] image;
 
             try {
-                image = portal.captcha(held.session);
+                image = captchaOf(held);
             } catch (IOException | RuntimeException e) {
                 log.warn("District cause list {}: CAPTCHA image could not be loaded: {}", label(held.task), e.getMessage());
                 return null;
@@ -343,7 +392,7 @@ public class DistrictCauseListRelayService {
             SubmitResult result;
 
             try {
-                result = portal.submit(held.session, held.selection, held.run.date, text.get());
+                result = submitOf(held, text.get());
             } catch (IOException | RuntimeException e) {
                 log.error("District cause list submit failed: {}", e.getMessage());
                 return new Auto(null, e.getMessage());
@@ -371,15 +420,15 @@ public class DistrictCauseListRelayService {
         List<Task> tasks = buildTasks(date, unusable, refreshAll);
         unusable.forEach(note);
 
-        if (tasks.isEmpty()) return new UnattendedResult(0, 0, 0, unusable.size(), 0);
+        if (tasks.isEmpty()) return UnattendedResult.EMPTY;
 
         if (!solver.available()) {
             note.accept("CAPTCHA solver unavailable: " + tasks.size() + " court room(s) left for an admin or the next run");
-            return new UnattendedResult(tasks.size(), 0, tasks.size(), unusable.size(), 0);
+            return new UnattendedResult(tasks.size(), 0, tasks.size(), 0, 0);
         }
 
         Run run = new Run(date, List.of());
-        int done = 0, needCaptcha = 0, failed = unusable.size(), index = 0;
+        int done = 0, needCaptcha = 0, failed = 0, index = 0;
 
         for (Task task : tasks) {
             index++;
@@ -392,7 +441,7 @@ public class DistrictCauseListRelayService {
             }
 
             try {
-                Pending held = prepare(run, task);
+                Pending held = prepareForList(run, task);
                 Auto auto = readAutomatically(held);
 
                 if (auto == null) {
@@ -402,10 +451,12 @@ public class DistrictCauseListRelayService {
                     failed++;
                     note.accept(label(task) + ": " + auto.error());
                 } else if (auto.result().html() == null) {
-                    failed++;
-                    String why = auto.result().message() == null || auto.result().message().isBlank()
-                            ? "no cause list returned" : auto.result().message();
-                    note.accept(label(task) + ": " + why);
+                    if (noListPublished(auto.result().message())) {
+                        note.accept(label(task) + ": no cause list published for this court room yet");
+                    } else {
+                        failed++;
+                        note.accept(label(task) + ": " + auto.result().message());
+                    }
                 } else {
                     done++;
                     note.accept(save(held, auto.result().html()));
@@ -417,6 +468,10 @@ public class DistrictCauseListRelayService {
                 note.accept(e.getMessage() + ". Stopped, " + left + " court room(s) not tried");
                 failed += left;
                 break;
+
+            } catch (NothingToLookUpException e) {
+                log.info("Unattended district cause list {}: {}", label(task), e.getMessage());
+                note.accept(label(task) + ": " + e.getMessage());
 
             } catch (IOException | RuntimeException e) {
                 failed++;
@@ -483,6 +538,9 @@ public class DistrictCauseListRelayService {
             }
 
             return finishOne(held, c, auto.result());
+
+        } catch (NothingToLookUpException e) {
+            return new CaseRefresh(CaseOutcome.UNSUPPORTED, null, e.getMessage());
 
         } catch (IOException | RuntimeException e) {
             log.warn("District cause list refresh for case {} failed: {}", c.getId(), e.getMessage());
@@ -593,43 +651,9 @@ public class DistrictCauseListRelayService {
                 }
             }
 
-            List<Option> tied = judgeName == null ? List.of() : JudgeNameMatch.topTied(courts, Option::text, judgeName);
-
-            // A judge can hold two courts (a regular one and an evening court): prefer the regular one
-            if (tied.size() > 1) {
-                List<Option> regular = tied.stream().filter(o -> !o.text().toLowerCase().contains("evening")).toList();
-
-                if (regular.size() == 1) {
-                    tied = regular;
-                }
-            }
-
-            Option court = tied.size() == 1 ? tied.get(0) : null;
-
-            if (tied.size() > 1) {
-                ambiguous = tied.stream().map(Option::text).collect(java.util.stream.Collectors.joining(" | "));
-            }
-
-            if (court == null) {
-                List<Option> mentioned = courts.stream()
-                        .filter(o -> CourtNoToken.mentions(o.text(), task.courtNo()))
-                        .toList();
-
-                if (mentioned.size() == 1) {
-                    court = mentioned.get(0);
-                }
-            }
-
-            // Family courts are listed by their own room code ("FC-46") and carry no judge name in the portal's list, so
-            // the code itself is looked for. Only a code with letters in it: a bare number would fit too many courts
-            if (court == null && task.courtNo() != null && task.courtNo().matches("(?i).*[a-z].*\\d.*")) {
-                String code = squash(task.courtNo());
-                List<Option> byRoomCode = courts.stream().filter(o -> squash(o.text()).contains(code)).toList();
-
-                if (byRoomCode.size() == 1) {
-                    court = byRoomCode.get(0);
-                }
-            }
+            CourtMatch match = matchCourt(courts, task, judgeName);
+            if (match.ambiguous() != null) ambiguous = match.ambiguous();
+            Option court = match.court();
 
             if (court != null) {
                 Selection selection = new Selection(stateCode, district.value(), complexCode, establishmentCode,
@@ -645,16 +669,160 @@ public class DistrictCauseListRelayService {
                     storedCode, task.court(), task.district(), task.courtNo());
         }
 
+        if (judgeName == null) {
+            throw new NothingToLookUpException("no judge is listed in Quick Access for court no. '" + task.courtNo()
+                    + "', nothing to look up");
+        }
+
         String sample = offeredCourts.stream().limit(12).collect(java.util.stream.Collectors.joining("; "));
         log.warn("Court no. '{}' not matched among {} portal court(s) of {} / {}: {}", task.courtNo(),
                 offeredCourts.size(), task.court(), task.district(), sample);
-        throw new IOException(judgeName == null
-                ? "no judge is listed in Quick Access for court no. '" + task.courtNo()
-                        + "', so it cannot be matched to the portal's court list"
-                : "judge '" + judgeName + "' (court no. '" + task.courtNo() + "') not found in the portal's court list ("
-                        + offeredCourts.size() + " courts); "
-                        + (ambiguous != null ? "several portal courts fit, none could be chosen: " + ambiguous
-                                : closest(allCourts, judgeName)));
+        throw new IOException("judge '" + judgeName + "' (court no. '" + task.courtNo() + "') not found in the portal's court list ("
+                + offeredCourts.size() + " courts); "
+                + (ambiguous != null ? "several portal courts fit, none could be chosen: " + ambiguous
+                        : closest(allCourts, judgeName)));
+    }
+
+    // The court of a list (the portal's or a district site's) that belongs to the task's court room, and the options that
+    // tied when several fit. First by the judge Quick Access holds for the court room, then by a court / room number the
+    // option text mentions, then by a room code like "FC-46"
+    private record CourtMatch(Option court, String ambiguous) {}
+
+    private CourtMatch matchCourt(List<Option> courts, Task task, String judgeName) {
+        List<Option> tied = judgeName == null ? List.of() : JudgeNameMatch.topTied(courts, Option::text, judgeName);
+
+        // A judge can hold two courts (a regular one and an evening court): prefer the regular one
+        if (tied.size() > 1) {
+            List<Option> regular = tied.stream().filter(o -> !o.text().toLowerCase().contains("evening")).toList();
+
+            if (regular.size() == 1) {
+                tied = regular;
+            }
+        }
+
+        Option court = tied.size() == 1 ? tied.get(0) : null;
+        String ambiguous = tied.size() > 1
+                ? tied.stream().map(Option::text).collect(java.util.stream.Collectors.joining(" | ")) : null;
+
+        if (court == null) {
+            List<Option> mentioned = courts.stream()
+                    .filter(o -> CourtNoToken.mentions(o.text(), task.courtNo()))
+                    .toList();
+
+            if (mentioned.size() == 1) {
+                court = mentioned.get(0);
+            }
+        }
+
+        // Family courts are listed by their own room code ("FC-46") and carry no judge name in the list, so the code
+        // itself is looked for. Only a code with letters in it: a bare number would fit too many courts
+        if (court == null && task.courtNo() != null && task.courtNo().matches("(?i).*[a-z].*\\d.*")) {
+            String code = squash(task.courtNo());
+            List<Option> byRoomCode = courts.stream().filter(o -> squash(o.text()).contains(code)).toList();
+
+            if (byRoomCode.size() == 1) {
+                court = byRoomCode.get(0);
+            }
+        }
+        return new CourtMatch(court, ambiguous);
+    }
+
+    // A court room ready to be asked for its cause list. Cause lists are read from the district court's own website
+    // (southdelhi.dcourts.gov.in and the like); a district with no website of its own, or the site switched off in the
+    // settings (causelist.district-site.enabled), is read from the eCourts Services portal as before
+    private Pending prepareForList(Run run, Task task) throws IOException {
+        if (siteEnabled) {
+            Optional<String> base = DistrictSiteUrls.baseUrlFor(task.district());
+
+            if (base.isPresent()) {
+                return prepareSite(run, task, base.get());
+            }
+            log.info("{} has no district court website listed, reading its cause list from the eCourts Services portal",
+                    task.district());
+        }
+        return prepare(run, task);
+    }
+
+    private Pending prepareSite(Run run, Task task, String baseUrl) throws IOException {
+        SiteSession session = site.open(baseUrl);
+        List<Option> complexes = site.complexes(session);
+        Option complex = pick(complexes, task.court());
+
+        if (complex == null) {
+            throw new IOException("court complex '" + task.court() + "' not found on " + baseUrl + " ("
+                    + offered(complexes, "court complexes") + ")");
+        }
+
+        List<Option> courts = site.courts(session, complex);
+
+        if (courts.isEmpty()) {
+            throw new IOException(baseUrl + " returned no courts for " + complex.text());
+        }
+
+        String judgeName = judgeNameOf(task);
+        Option byCode = byStoredCode(courts, judgeService.courtCodeFor(task.court(), task.district(), task.courtNo()));
+
+        if (byCode != null) {
+            log.info("Court no. '{}' of {} / {} matched by court code to '{}' on {}", task.courtNo(), task.court(),
+                    task.district(), byCode.text(), baseUrl);
+
+            return new Pending(run, task, session,
+                    new DistrictSiteClient.Selection(complex.value(), byCode.value(), byCode.text(), task.kind()));
+        }
+
+        CourtMatch match = matchCourt(courts, task, judgeName);
+
+        if (match.court() == null) {
+            if (judgeName == null) {
+                throw new NothingToLookUpException("no judge is listed in Quick Access for court no. '" + task.courtNo()
+                        + "', nothing to look up");
+            }
+
+            String sample = courts.stream().limit(12).map(Option::text).collect(java.util.stream.Collectors.joining("; "));
+            log.warn("Court no. '{}' not matched among {} court(s) of {} / {} on {}: {}", task.courtNo(), courts.size(),
+                    task.court(), task.district(), baseUrl, sample);
+            throw new IOException("judge '" + judgeName + "' (court no. '" + task.courtNo() + "') not found in the district website's court list ("
+                    + courts.size() + " courts); "
+                    + (match.ambiguous() != null ? "several courts fit, none could be chosen: " + match.ambiguous()
+                            : closest(courts, judgeName)));
+        }
+
+        log.info("Court no. '{}' of {} / {} matched to '{}' on {}", task.courtNo(), task.court(), task.district(),
+                match.court().text(), baseUrl);
+
+        return new Pending(run, task, session,
+                new DistrictSiteClient.Selection(complex.value(), match.court().value(), match.court().text(), task.kind()));
+    }
+
+    private static Option byStoredCode(List<Option> courts, String storedCode) {
+        if (storedCode == null || storedCode.isBlank()) return null;
+
+        String code = storedCode.trim();
+        String number = code.substring(code.lastIndexOf('^') + 1).trim();
+        if (number.isEmpty()) return null;
+
+        List<Option> exact = courts.stream()
+                .filter(o -> o.value() != null && o.value().trim().equalsIgnoreCase(code))
+                .toList();
+        if (exact.size() == 1) return exact.get(0);
+
+        java.util.regex.Pattern lead = java.util.regex.Pattern.compile("^\\s*" + java.util.regex.Pattern.quote(number) + "(?!\\d)");
+        List<Option> byNumber = courts.stream()
+                .filter(o -> (o.value() != null && o.value().trim().equals(number)) || lead.matcher(o.text()).find())
+                .toList();
+
+        return byNumber.size() == 1 ? byNumber.get(0) : null;
+    }
+
+    // The CAPTCHA picture of a court room, from whichever place its list is read
+    private byte[] captchaOf(Pending held) throws IOException {
+        return held.siteSession != null ? site.captcha(held.siteSession) : portal.captcha(held.session);
+    }
+
+    private SubmitResult submitOf(Pending held, String captcha) throws IOException {
+        return held.siteSession != null
+                ? site.submit(held.siteSession, held.siteSelection, held.run.date, captcha)
+                : portal.submit(held.session, held.selection, held.run.date, captcha);
     }
 
     private CauseListRelayStep captchaStep(String id, Pending held, String message) {
@@ -665,7 +833,7 @@ public class DistrictCauseListRelayService {
         String image;
 
         try {
-            image = "data:image/png;base64," + Base64.getEncoder().encodeToString(portal.captcha(held.session));
+            image = "data:image/png;base64," + Base64.getEncoder().encodeToString(captchaOf(held));
         } catch (IOException e) {
             throw new IllegalStateException("CAPTCHA image could not be loaded: " + e.getMessage(), e);
         }
@@ -690,13 +858,13 @@ public class DistrictCauseListRelayService {
                 idsBySerial.computeIfAbsent(serial, k -> new ArrayList<>()).add(c.getId());
             } else {
                 notListed.add(c.getCaseNo());
-                CaseKey.parse(c.getCaseNo()).ifPresent(k -> log.warn("Case {} not in the list; entries with number {}: {}",
+                CaseKey.parse(c.getCaseNo()).ifPresent(k -> log.info("Case {} not in the list; entries with number {}: {}",
                         c.getCaseNo(), k.number(), serials.keySet().stream().filter(o -> o.number() == k.number()).toList()));
             }
         }
 
         if (idsBySerial.isEmpty()) {
-            log.warn("Cause list for {} had {} serial(s) but none matched the {} case(s) asked for; list sample {}, case sample {}",
+            log.info("Cause list for {} had {} serial(s) but none matched the {} case(s) asked for; list sample {}, case sample {}",
                     held.task.courtNo(), serials.size(), held.task.caseIds().size(),
                     serials.keySet().stream().limit(5).toList(),
                     asked.stream().map(Case::getCaseNo).limit(5).toList());
