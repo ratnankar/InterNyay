@@ -49,7 +49,7 @@ class CaptchaSolverClientTest {
     }
 
     private CaptchaSolverClient client(boolean enabled, String key) {
-        return new CaptchaSolverClient(enabled, "http://127.0.0.1:" + server.getAddress().getPort(), key, 2000, 3);
+        return new CaptchaSolverClient(enabled, "http://127.0.0.1:" + server.getAddress().getPort(), key, 2000, 3, 15000);
     }
 
     @Test
@@ -84,16 +84,26 @@ class CaptchaSolverClientTest {
     }
 
     @Test
-    void serverErrorPausesTheService() {
+    void failureOnOneImageDoesNotPauseTheService() {
         status = 500;
         CaptchaSolverClient client = client(true, "");
         assertTrue(client.solve(IMAGE).isEmpty());
+        assertTrue(client.available());
+        assertFalse(client.issue().isBlank());
+    }
+
+    @Test
+    void unavailableServicePausesTheService() {
+        status = 503;
+        CaptchaSolverClient client = client(true, "");
+        assertTrue(client.solve(IMAGE).isEmpty());
         assertFalse(client.available());
+        assertFalse(client.issue().isBlank());
     }
 
     @Test
     void unreachableServicePausesTheService() {
-        CaptchaSolverClient client = new CaptchaSolverClient(true, "http://127.0.0.1:9", "", 2000, 3);
+        CaptchaSolverClient client = new CaptchaSolverClient(true, "http://127.0.0.1:9", "", 2000, 3, 15000);
         assertTrue(client.solve(IMAGE).isEmpty());
         assertFalse(client.available());
     }
@@ -114,6 +124,6 @@ class CaptchaSolverClientTest {
 
     @Test
     void attemptsHaveAFloorOfOne() {
-        assertEquals(1, new CaptchaSolverClient(true, "http://127.0.0.1:9", "", 2000, 0).maxAttempts());
+        assertEquals(1, new CaptchaSolverClient(true, "http://127.0.0.1:9", "", 2000, 0, 15000).maxAttempts());
     }
 }

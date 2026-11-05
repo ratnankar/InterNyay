@@ -19,4 +19,6 @@ public interface CauseListRunLogRepository extends JpaRepository<CauseListRunLog
 
     List<CauseListRunLog> findByStatusAndStartedAtBefore(Status status, LocalDateTime before);
 
+    List<CauseListRunLog> findByStatus(Status status);
+
 }

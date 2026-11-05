@@ -21,6 +21,7 @@ import com.internyay.scraper.JudgeNameMatch;
 import com.internyay.scraper.DistrictPortalClient.SubmitResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -81,7 +82,7 @@ public class DistrictCauseListRelayService {
     private static final class Run {
         private final java.time.LocalDate date;
         private final Deque<Task> queue = new ArrayDeque<>();
-        private final int total;
+        private int total;
         private int saved;
 
         private Run(java.time.LocalDate date, List<Task> tasks) {
@@ -133,6 +134,11 @@ public class DistrictCauseListRelayService {
     private final String stateCode;
     private final Duration sessionTtl;
 
+    @Value("${causelist.district-site.captcha-length:5}")
+    private int siteCaptchaLength = 5;
+
+    private Instant lastActivity = Instant.now();
+
     private final Map<String, Pending> pending = new HashMap<>();
     private Run current;
 
@@ -173,6 +179,7 @@ public class DistrictCauseListRelayService {
     }
 
     public synchronized CauseListRelayStep start(java.time.LocalDate date, boolean refreshAll) {
+        lastActivity = Instant.now();
         pending.clear();
         List<String> unusable = new ArrayList<>();
         List<Task> tasks = buildTasks(date, unusable, refreshAll);
@@ -199,6 +206,7 @@ public class DistrictCauseListRelayService {
     }
 
     public synchronized CauseListRelayStep answer(String sessionId, String captcha) {
+        lastActivity = Instant.now();
         Pending held = take(sessionId);
 
         if (held == null) {
@@ -237,10 +245,12 @@ public class DistrictCauseListRelayService {
 
     // The page asks for this after a WORKING step: the automatic reading goes on with the next court rooms
     public synchronized CauseListRelayStep resume() {
+        lastActivity = Instant.now();
         return next(new ArrayList<>(), "");
     }
 
     public synchronized CauseListRelayStep skip(String sessionId) {
+        lastActivity = Instant.now();
         Pending held = take(sessionId);
 
         if (held == null) {
@@ -250,6 +260,7 @@ public class DistrictCauseListRelayService {
     }
 
     public synchronized CauseListRelayStep refresh(String sessionId) {
+        lastActivity = Instant.now();
         Pending held = pending.get(sessionId);
 
         if (held == null) {
@@ -261,6 +272,23 @@ public class DistrictCauseListRelayService {
         } catch (RuntimeException e) {
             return next(new ArrayList<>(List.of(label(held.task) + ": " + e.getMessage())), "");
         }
+    }
+
+    @Scheduled(fixedDelay = 60_000L, initialDelay = 60_000L)
+    void sweepIdleRun() {
+        closeIdleRun();
+    }
+
+    public synchronized void closeIdleRun() {
+        if (currentLogId == null) return;
+        if (Duration.between(lastActivity, Instant.now()).compareTo(sessionTtl) < 0) return;
+
+        currentLines.add("Left open: no activity for " + sessionTtl.toMinutes() + " minutes");
+        runLog.finish(currentLogId, CauseListRunLog.Status.ABANDONED, manualTotals(),
+                "Left open: the page was refreshed or closed before the run finished", currentLines);
+        currentLogId = null;
+        current = null;
+        pending.clear();
     }
 
     private CauseListRelayStep next(List<String> skipped, String message) {
@@ -322,6 +350,7 @@ public class DistrictCauseListRelayService {
             } catch (NothingToLookUpException e) {
                 log.info("District cause list {}: {}", label(task), e.getMessage());
                 notes.add(label(task) + ": " + e.getMessage());
+                run.total--;
 
             } catch (IOException | RuntimeException e) {
                 log.warn("District cause list task {} skipped: {}", label(task), e.getMessage());
@@ -350,11 +379,15 @@ public class DistrictCauseListRelayService {
     private void finishManualRun(Run run) {
         if (currentLogId == null) return;
 
-        String summary = run.saved + " number(s) saved in " + run.total + " court room(s)"
-                + (currentSkipped > 0 ? "; " + currentSkipped + " skipped or failed" : "");
+        boolean nothing = run.total == 0 && currentSkipped == 0;
+        String summary = nothing
+                ? "Nothing to look up: every district court case on this date already has its number, or none needs one"
+                : run.saved + " number(s) saved in " + run.total + " court room(s)"
+                        + (currentSkipped > 0 ? "; " + currentSkipped + " skipped or failed" : "");
         currentLines.add(summary);
-        runLog.finish(currentLogId, currentSkipped > 0 ? CauseListRunLog.Status.PARTIAL : CauseListRunLog.Status.SUCCESS,
-                manualTotals(), summary, currentLines);
+        CauseListRunLog.Status status = nothing ? CauseListRunLog.Status.NOTHING_TO_DO
+                : currentSkipped > 0 ? CauseListRunLog.Status.PARTIAL : CauseListRunLog.Status.SUCCESS;
+        runLog.finish(currentLogId, status, manualTotals(), summary, currentLines);
         currentLogId = null;
     }
 
@@ -372,6 +405,8 @@ public class DistrictCauseListRelayService {
     // Reads the CAPTCHA with the solver and submits it, with a fresh image after each refused guess. Returns null when the
     // CAPTCHA could not be read (the admin then types it as before)
     private Auto readAutomatically(Pending held) {
+        int unread = 0, refused = 0;
+
         for (int attempt = 1; attempt <= solver.maxAttempts(); attempt++) {
             byte[] image;
 
@@ -382,9 +417,10 @@ public class DistrictCauseListRelayService {
                 return null;
             }
 
-            Optional<String> text = solver.solve(image);
+            Optional<String> text = solver.solve(image, held.siteSession != null ? siteCaptchaLength : 0);
 
             if (text.isEmpty()) {
+                unread++;
                 if (!solver.available()) break;
                 continue;
             }
@@ -402,9 +438,11 @@ public class DistrictCauseListRelayService {
                 log.info("District cause list {}: CAPTCHA read automatically on attempt {}", label(held.task), attempt);
                 return new Auto(result, null);
             }
+            refused++;
         }
 
-        log.info("District cause list {}: CAPTCHA not read automatically, asking the admin", label(held.task));
+        log.warn("District cause list {}: CAPTCHA not read automatically ({} not readable, {} refused by the site; solver: {}), asking the admin",
+                label(held.task), unread, refused, solver.issue().isBlank() ? "no problem reported" : solver.issue());
         return null;
     }
 
@@ -428,7 +466,7 @@ public class DistrictCauseListRelayService {
         }
 
         Run run = new Run(date, List.of());
-        int done = 0, needCaptcha = 0, failed = 0, index = 0;
+        int done = 0, needCaptcha = 0, failed = 0, index = 0, nothingToLookUp = 0;
 
         for (Task task : tasks) {
             index++;
@@ -472,6 +510,7 @@ public class DistrictCauseListRelayService {
             } catch (NothingToLookUpException e) {
                 log.info("Unattended district cause list {}: {}", label(task), e.getMessage());
                 note.accept(label(task) + ": " + e.getMessage());
+                nothingToLookUp++;
 
             } catch (IOException | RuntimeException e) {
                 failed++;
@@ -480,7 +519,7 @@ public class DistrictCauseListRelayService {
             }
         }
 
-        return new UnattendedResult(tasks.size(), done, needCaptcha, failed, run.saved);
+        return new UnattendedResult(tasks.size() - nothingToLookUp, done, needCaptcha, failed, run.saved);
     }
 
     // What a single-case district lookup gave. NEEDS_CAPTCHA carries a ticket when the court room is ready for the user's CAPTCHA

@@ -52,24 +52,28 @@ class CaptchaSolver:
         ]
         self._lock = threading.Lock()
 
-    def _read(self, engine, image: bytes) -> Optional[str]:
+    def _read(self, engine, image: bytes, seen: List[str], length: int) -> Optional[str]:
         try:
             raw = engine.classification(image)
         except Exception:
             return None
         text = raw.strip() if isinstance(raw, str) else ""
-        if len(text) != self._length or not text.isalnum():
+        if text and text not in seen:
+            seen.append(text)
+        if len(text) != length or not text.isalnum():
             return None
         return text
 
-    def solve(self, image: bytes) -> Optional[str]:
+    def solve(self, image: bytes, length: Optional[int] = None) -> Optional[str]:
+        length = length or self._length
         votes: Counter = Counter()
         order: List[str] = []
+        seen: List[str] = []
 
         with self._lock:
             for variant in variants_of(image):
                 for engine in self._engines:
-                    text = self._read(engine, variant)
+                    text = self._read(engine, variant, seen, length)
                     if text is None:
                         continue
                     if text not in votes:
@@ -77,7 +81,7 @@ class CaptchaSolver:
                     votes[text] += 1
 
         if not votes:
-            logger.info("No reading of the expected length")
+            logger.info("No reading of the expected length %d, the engines read: %s", length, seen[:8])
             return None
 
         best = max(order, key=lambda t: (votes[t], -order.index(t)))

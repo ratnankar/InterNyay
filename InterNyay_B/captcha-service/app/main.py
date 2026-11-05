@@ -54,8 +54,13 @@ async def solve(request: Request):
     if not image.startswith(IMAGE_SIGNATURES):
         raise HTTPException(status_code=415, detail="Not an image")
 
+    length = None
+    hint = request.headers.get("x-captcha-length", "")
+    if hint.isdigit() and 3 <= int(hint) <= 12:
+        length = int(hint)
+
     try:
-        text = await run_in_threadpool(request.app.state.solver.solve, image)
+        text = await run_in_threadpool(request.app.state.solver.solve, image, length)
     except Exception:
         logger.exception("Solver failed")
         raise HTTPException(status_code=500, detail="Solver failed")

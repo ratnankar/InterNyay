@@ -5,6 +5,7 @@ import com.internyay.entity.CauseListRunLog;
 import com.internyay.entity.CauseListRunLog.Origin;
 import com.internyay.entity.CauseListRunLog.Status;
 import com.internyay.repository.CauseListRunLogRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +36,20 @@ public class CauseListRunLogService {
 
     private final CauseListRunLogRepository repo;
 
+
+    @PostConstruct
+    void closeRunsLeftByEarlierProcess() {
+        try {
+            for (CauseListRunLog row : repo.findByStatus(Status.RUNNING)) {
+                row.setStatus(row.getOrigin() == Origin.MANUAL ? Status.ABANDONED : Status.FAILED);
+                row.setFinishedAt(LocalDateTime.now());
+                row.setSummary("The server restarted while this run was going");
+                repo.save(row);
+            }
+        } catch (RuntimeException e) {
+            log.warn("Runs left open by an earlier start could not be closed: {}", e.getMessage());
+        }
+    }
 
     public CauseListRunLog begin(LocalDate hearingDate, Origin origin, String label) {
         CauseListRunLog row = new CauseListRunLog();

@@ -92,7 +92,14 @@ public class CauseListAutoRunService {
             return null;
         }
 
-        CauseListRunLog row = logs.begin(date, origin, label);
+        CauseListRunLog row;
+
+        try {
+            row = logs.begin(date, origin, label);
+        } catch (RuntimeException e) {
+            running.set(false);
+            throw e;
+        }
         return execute(row.getId(), date, label, scheduledRefreshAll);
     }
 
@@ -104,9 +111,18 @@ public class CauseListAutoRunService {
     public CauseListRunDto startInBackground(LocalDate date, String label, boolean refreshAll) {
         if (!running.compareAndSet(false, true)) return null;
 
-        CauseListRunLog row = logs.begin(date, Origin.AUTO, label);
-        background.submit(() -> execute(row.getId(), date, label, refreshAll));
-        return CauseListRunDto.of(row);
+        CauseListRunLog row = null;
+
+        try {
+            row = logs.begin(date, Origin.AUTO, label);
+            Long id = row.getId();
+            background.submit(() -> execute(id, date, label, refreshAll));
+            return CauseListRunDto.of(row);
+        } catch (RuntimeException e) {
+            running.set(false);
+            if (row != null) logs.finish(row.getId(), Status.FAILED, Totals.NONE, "The run could not start: " + e.getMessage(), List.of());
+            throw e;
+        }
     }
 
     private CauseListRunDto execute(Long id, LocalDate date, String label, boolean refreshAll) {

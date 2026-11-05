@@ -39,11 +39,23 @@ public class SecurityConfig {
     private final RateLimitFilter rateLimitFilter;
     // Rejects an identical second save while the first one is still running (double click, second tab)
     private final DuplicateSubmitFilter duplicateSubmitFilter;
+    // Notes which saves/uploads/refreshes are running, so the pages can keep their buttons unavailable after a refresh
+    private final InFlightFilter inFlightFilter;
     private final ObjectMapper objectMapper;
 
     // Frontend origins allowed to call the API
     @Value("${internyay.cors.allowed-origins}")
     private String[] allowedOrigins;
+
+    // The in-flight filter is part of the security chain (it needs the signed-in account); do not also register it
+    // as a plain servlet filter, where it would run before the login is known
+    @Bean
+    public org.springframework.boot.web.servlet.FilterRegistrationBean<InFlightFilter> inFlightFilterRegistration(InFlightFilter filter) {
+        org.springframework.boot.web.servlet.FilterRegistrationBean<InFlightFilter> reg =
+                new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
+        reg.setEnabled(false);
+        return reg;
+    }
 
     // Main security rules
     @Bean
@@ -142,6 +154,9 @@ public class SecurityConfig {
 
                 // Double-save guard runs after the login check, before any controller
                 .addFilterAfter(duplicateSubmitFilter, JwtAuthFilter.class)
+
+                // Counts a call as running from here until the controller is done (a duplicate rejected above is not counted)
+                .addFilterAfter(inFlightFilter, DuplicateSubmitFilter.class)
 
                 // Rate limit runs first, so blocked requests never reach the password check or the email sender
                 .addFilterBefore(rateLimitFilter, JwtAuthFilter.class);

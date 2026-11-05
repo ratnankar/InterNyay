@@ -82,6 +82,7 @@ public class AdminCauseListRelayController {
     // Recent runs (automatic and manual), newest first
     @GetMapping("/runs")
     public ResponseEntity<List<CauseListRunDto>> runs(@RequestParam(defaultValue = "30") int limit) {
+        service.closeIdleRun();
         return ResponseEntity.ok(runLog.recent(limit));
     }
 
