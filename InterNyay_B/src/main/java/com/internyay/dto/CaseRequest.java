@@ -28,6 +28,10 @@ public class CaseRequest {
 
     public Integer fileSeq;
 
+    // True when the advocate left the file number empty on purpose: the case is then saved without a file number
+    // (and a saved case gives its number up) instead of getting the next free one
+    public Boolean noFileNumber;
+
     public String cnrNo;
 
     public String filingDate;

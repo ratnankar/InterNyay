@@ -192,4 +192,129 @@ class FeeCalculatorServiceTest {
 
         assertRefused(rules, "Notes must be a list");
     }
+
+    // ---- State ad valorem tables (Delhi & Chandigarh, Haryana, Uttar Pradesh & Uttarakhand)
+
+    // Fee of the first band of a scale whose upper limit is not below the value, for a flat-fee State table
+    private double tableFee(JsonNode rules, String scale, double value) {
+        for (JsonNode band : rules.get("scales").get(scale).get("slabs")) {
+            if (band.get("upTo").isNull() || value <= band.get("upTo").asDouble()) return band.get("base").asDouble();
+        }
+        throw new AssertionError("no band");
+    }
+
+    @Test
+    void defaultsHaveTheThreeStateTablesAndStates() {
+        JsonNode rules = service.current();
+
+        assertThat(rules.get("jurisdictions")).hasSize(4);
+        assertThat(rules.get("jurisdictions").get(0).get("key").asText()).isEqualTo("delhi");
+        assertThat(rules.get("jurisdictions").get(0).get("scale").asText()).isEqualTo("adValoremDelhi");
+        for (String scale : new String[]{"adValoremDelhi", "adValoremHaryana", "adValoremUP"}) {
+            ArrayNode slabs = (ArrayNode) rules.get("scales").get(scale).get("slabs");
+            assertThat(slabs.size()).isGreaterThan(200);
+            assertThat(slabs.get(slabs.size() - 1).get("upTo").isNull()).isTrue();
+            assertThat(rules.get("scales").get(scale).has("maxFee")).isFalse();
+        }
+        // The Central Act scale keeps its cap
+        assertThat(rules.get("scales").get("adValorem").get("maxFee").asInt()).isEqualTo(3000);
+    }
+
+    @Test
+    void stateTablesHoldTheFeesOfTheSourceTables() {
+        JsonNode rules = service.current();
+
+        assertThat(tableFee(rules, "adValoremDelhi", 5)).isEqualTo(0.5);
+        assertThat(tableFee(rules, "adValoremDelhi", 510)).isEqualTo(76.5);
+        assertThat(tableFee(rules, "adValoremDelhi", 100_000)).isEqualTo(3320.0);
+        assertThat(tableFee(rules, "adValoremDelhi", 400_000)).isEqualTo(6248.0);
+        assertThat(tableFee(rules, "adValoremHaryana", 100_000)).isEqualTo(5300.0);
+        assertThat(tableFee(rules, "adValoremHaryana", 7_500_000)).isEqualTo(206_300.0);
+        assertThat(tableFee(rules, "adValoremUP", 30_000)).isEqualTo(2657.5);
+        // The two rows the source prints irregularly use the value the table's own series gives
+        assertThat(tableFee(rules, "adValoremDelhi", 215_000)).isEqualTo(4442.4);
+        assertThat(tableFee(rules, "adValoremUP", 23_500)).isEqualTo(2170.0);
+        // Above the last row the fee grows by a fixed amount per block
+        JsonNode delhiTail = rules.get("scales").get("adValoremDelhi").get("slabs").get(rules.get("scales").get("adValoremDelhi").get("slabs").size() - 1);
+        assertThat(delhiTail.get("stepSize").asInt()).isEqualTo(5000);
+        assertThat(delhiTail.get("stepFee").asDouble()).isEqualTo(48.8);
+    }
+
+    @Test
+    void seedDefaultsAddsTheStatesToRulesSavedBeforeTheyExisted() throws Exception {
+        ObjectNode legacy = service.current().deepCopy();
+        legacy.remove("jurisdictions");
+        ObjectNode scales = (ObjectNode) legacy.get("scales");
+        scales.remove("adValoremDelhi");
+        scales.remove("adValoremHaryana");
+        scales.remove("adValoremUP");
+        ((ObjectNode) scales.get("adValorem")).put("maxFee", 2500);   // an admin edit that must survive
+        ArrayNode notes = mapper.createArrayNode();
+        notes.add("Rates are those of the Court Fees Act, 1870: Schedule I (ad valorem) and Schedule II (fixed fees).");
+        notes.add("The ad valorem fee on a plaint or memorandum of appeal is capped at 3,000.");
+        notes.add("The Act says rates in each State / Union Territory are as per its own State Amendments.");
+        notes.add("A note the admin wrote.");
+        legacy.set("notes", notes);
+        ArrayNode quick = mapper.createArrayNode();
+        quick.add(mapper.readTree("{\"label\":\"Civil suit (10 lakh, max)\",\"mode\":\"adv\",\"value\":1000000}"));
+        legacy.set("quickRef", quick);
+        FeeCalculatorConfig row = FeeCalculatorConfig.builder().id(FeeCalculatorConfig.ROW_ID).config(legacy.toString()).build();
+        when(repo.existsById(FeeCalculatorConfig.ROW_ID)).thenReturn(true);
+        when(repo.findById(FeeCalculatorConfig.ROW_ID)).thenReturn(Optional.of(row));
+
+        service.seedDefaults();
+
+        verify(repo).save(row);
+        JsonNode upgraded = mapper.readTree(row.getConfig());
+        assertThat(upgraded.get("jurisdictions")).hasSize(4);
+        assertThat(upgraded.get("scales").has("adValoremDelhi")).isTrue();
+        assertThat(upgraded.get("scales").get("adValorem").get("maxFee").asInt()).isEqualTo(2500);
+        assertThat(upgraded.get("notes").toString()).contains("A note the admin wrote.").doesNotContain("is capped at 3,000");
+        assertThat(upgraded.get("notes").get(0).asText()).startsWith("Ad valorem fees (plaints, appeals and reviews)");
+        assertThat(upgraded.get("quickRef").toString()).doesNotContain("lakh, max");
+        assertThat(upgraded.get("filings")).hasSameSizeAs(legacy.get("filings"));
+    }
+
+    @Test
+    void seedDefaultsLeavesRulesThatAlreadyHaveStatesAlone() {
+        FeeCalculatorConfig row = FeeCalculatorConfig.builder().id(FeeCalculatorConfig.ROW_ID).config(service.current().toString()).build();
+        when(repo.existsById(FeeCalculatorConfig.ROW_ID)).thenReturn(true);
+        when(repo.findById(FeeCalculatorConfig.ROW_ID)).thenReturn(Optional.of(row));
+
+        service.seedDefaults();
+
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void refusesNoStates() {
+        ObjectNode rules = validRules();
+        rules.set("jurisdictions", mapper.createArrayNode());
+
+        assertRefused(rules, "at least one State");
+    }
+
+    @Test
+    void refusesAStateWithoutAName() {
+        ObjectNode rules = validRules();
+        ((ObjectNode) rules.get("jurisdictions").get(0)).put("label", " ");
+
+        assertRefused(rules, "Every State needs a name");
+    }
+
+    @Test
+    void refusesADuplicateStateKey() {
+        ObjectNode rules = validRules();
+        ((ArrayNode) rules.get("jurisdictions")).add(rules.get("jurisdictions").get(0).deepCopy());
+
+        assertRefused(rules, "Duplicate State key");
+    }
+
+    @Test
+    void refusesAStateWithAScaleThatIsNotAdValorem() {
+        ObjectNode rules = validRules();
+        ((ObjectNode) rules.get("jurisdictions").get(0)).put("scale", "consumer");
+
+        assertRefused(rules, "ad valorem fee scale");
+    }
 }

@@ -2,6 +2,8 @@ package com.internyay.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.internyay.entity.FeeCalculatorConfig;
 import com.internyay.repository.FeeCalculatorConfigRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 // Court fee calculator rules kept by the admin
@@ -23,8 +27,16 @@ import java.util.Set;
 public class FeeCalculatorService {
 
     private static final Set<String> KINDS = Set.of("adv", "half", "fixed", "scale");
-    private static final Set<String> SCALES = Set.of("adValorem", "consumer", "probate", "succession");
+    // adValorem is the Central Act scale; the adValorem* ones are the State tables (Delhi & Chandigarh, Haryana, Uttar Pradesh & Uttarakhand)
+    private static final Set<String> SCALES = Set.of("adValorem", "adValoremDelhi", "adValoremHaryana", "adValoremUP", "consumer", "probate", "succession");
     private static final int MAX_FILINGS = 500;
+    private static final int MAX_BANDS = 1000;
+
+    // Notes the admin may have saved unchanged from the first built-in rules; they are replaced by the State notes (see upgraded)
+    private static final List<String> LEGACY_NOTE_STARTS = List.of(
+            "Rates are those of the Court Fees Act, 1870",
+            "The ad valorem fee on a plaint or memorandum of appeal is capped",
+            "The Act says rates in each State");
 
     private final FeeCalculatorConfigRepository repo;
     private final ObjectMapper mapper;
@@ -39,16 +51,55 @@ public class FeeCalculatorService {
     }
 
     // Puts the default rules in the table when it is empty (a new or dropped database), so nothing has to be seeded by hand.
-    // Rules the admin already saved are never touched.
+    // Rules the admin already saved are never replaced; the ones saved before the State tables existed only gain the States (see upgraded).
     @EventListener(ApplicationReadyEvent.class)
     public void seedDefaults() {
         try {
-            if (repo.existsById(FeeCalculatorConfig.ROW_ID)) return;
-            save(defaults());
-            log.info("Fee calculator: default rules saved to the database");
+            if (!repo.existsById(FeeCalculatorConfig.ROW_ID)) {
+                save(defaults());
+                log.info("Fee calculator: default rules saved to the database");
+                return;
+            }
+            repo.findById(FeeCalculatorConfig.ROW_ID).ifPresent(row -> {
+                try {
+                    JsonNode up = upgraded(mapper.readTree(row.getConfig()));
+                    if (up == null) return;
+                    save(up);
+                    log.info("Fee calculator: State ad valorem tables added to the saved rules");
+                } catch (Exception e) {
+                    log.warn("Fee calculator: could not add the State tables to the saved rules ({}). The calculator uses its built-in States until then.", e.getMessage());
+                }
+            });
         } catch (Exception e) {
             log.warn("Fee calculator: could not save the default rules ({}). The defaults are served until the table exists.", e.getMessage());
         }
+    }
+
+    // Rules saved before the State tables existed, with the State scales and States added. Everything else the admin saved is kept.
+    // The notes about the Central Act cap and "check the local schedule" and the Quick Reference rows of the first built-in rules are
+    // replaced by the new ones only while the admin has not changed them. Returns null when there is nothing to add.
+    JsonNode upgraded(JsonNode saved) {
+        if (saved == null || !saved.isObject() || saved.has("jurisdictions") || !saved.path("scales").isObject()) return null;
+        JsonNode def = defaults();
+        ObjectNode out = saved.deepCopy();
+        ObjectNode scales = (ObjectNode) out.get("scales");
+        def.get("scales").fieldNames().forEachRemaining(n -> { if (!scales.has(n)) scales.set(n, def.get("scales").get(n)); });
+        out.set("jurisdictions", def.get("jurisdictions"));
+
+        JsonNode notes = saved.get("notes");
+        if (notes != null && notes.isArray()) {
+            ArrayNode kept = mapper.createArrayNode();
+            for (int i = 0; i < 2 && i < def.path("notes").size(); i++) kept.add(def.get("notes").get(i));
+            for (JsonNode n : notes) if (LEGACY_NOTE_STARTS.stream().noneMatch(n.asText("").trim()::startsWith)) kept.add(n);
+            out.set("notes", kept);
+        }
+        JsonNode quick = saved.get("quickRef");
+        if (quick != null && quick.isArray()) {
+            for (JsonNode r : quick) {
+                if (text(r, "label").contains("lakh, max")) { out.set("quickRef", def.get("quickRef")); break; }
+            }
+        }
+        return out;
     }
 
     // The saved rules (the defaults if the row is missing)
@@ -102,6 +153,7 @@ public class FeeCalculatorService {
         for (String s : SCALES) {
             JsonNode slabs = scales.path(s).path("slabs");
             if (!slabs.isArray() || slabs.isEmpty()) throw new IllegalArgumentException("The " + s + " scale needs at least one band");
+            if (slabs.size() > MAX_BANDS) throw new IllegalArgumentException("Too many bands in the " + s + " scale");
             double prev = 0;
             for (int i = 0; i < slabs.size(); i++) {
                 JsonNode b = slabs.get(i);
@@ -119,6 +171,21 @@ public class FeeCalculatorService {
                         throw new IllegalArgumentException("Band values in the " + s + " scale must be numbers of 0 or more");
             }
             if (slabs.get(slabs.size() - 1).hasNonNull("upTo")) throw new IllegalArgumentException("The last band of the " + s + " scale must have no upper limit");
+        }
+        JsonNode states = c.get("jurisdictions");
+        if (states != null && !states.isNull()) {
+            if (!states.isArray() || states.isEmpty()) throw new IllegalArgumentException("Add at least one State");
+            Set<String> stateKeys = new HashSet<>();
+            for (JsonNode j : states) {
+                String key = text(j, "key"), label = text(j, "label"), scale = text(j, "scale");
+                if (key.isEmpty() || label.isEmpty()) throw new IllegalArgumentException("Every State needs a name");
+                if (!stateKeys.add(key)) throw new IllegalArgumentException("Duplicate State key '" + key + "'");
+                if (!scale.startsWith("adValorem") || !SCALES.contains(scale))
+                    throw new IllegalArgumentException("'" + label + "' needs an ad valorem fee scale");
+                JsonNode stateNotes = j.get("notes");
+                if (stateNotes != null && !stateNotes.isNull() && !stateNotes.isArray())
+                    throw new IllegalArgumentException("The notes of '" + label + "' must be a list");
+            }
         }
         JsonNode forums = c.get("forums");
         if (forums != null && !forums.isNull() && !forums.isArray()) throw new IllegalArgumentException("Forums must be a list");

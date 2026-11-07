@@ -6,7 +6,7 @@
    "label": "Money suit (recovery,  damages,  compensation)",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(i)",
-   "valueLabel": "Amount claimed (₹)"
+   "valueLabel": "Amount claimed (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -15,7 +15,7 @@
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(ii)",
    "mult": 10,
-   "valueLabel": "Amount claimed per year (₹)"
+   "valueLabel": "Amount claimed per year (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -23,7 +23,7 @@
    "label": "Suit for possession of land,  house or garden",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(v)",
-   "valueLabel": "Value of the property under s. 7(v) (₹)"
+   "valueLabel": "Value of the property under s. 7(v) (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -31,7 +31,7 @@
    "label": "Specific performance of a contract of sale",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(x)(a)",
-   "valueLabel": "Amount of the consideration (₹)"
+   "valueLabel": "Amount of the consideration (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -39,7 +39,7 @@
    "label": "Suit to redeem or foreclose a mortgage",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(ix)",
-   "valueLabel": "Principal money secured by the mortgage (₹)"
+   "valueLabel": "Principal money secured by the mortgage (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -47,7 +47,7 @@
    "label": "Suit between landlord and tenant (rent,  ejectment etc.)",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(xi)",
-   "valueLabel": "Annual rent of the premises (₹)"
+   "valueLabel": "Annual rent of the premises (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -55,7 +55,7 @@
    "label": "Suit to enforce a right of pre-emption",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(vi)",
-   "valueLabel": "Value of the land / house under s. 7(v) (₹)"
+   "valueLabel": "Value of the land / house under s. 7(v) (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -63,7 +63,7 @@
    "label": "Suit for share in joint family property / partition",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(iv)(b)",
-   "valueLabel": "Value of the relief as stated in the plaint (₹)"
+   "valueLabel": "Value of the relief as stated in the plaint (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -71,7 +71,7 @@
    "label": "Declaration with consequential relief",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(iv)(c)",
-   "valueLabel": "Value of the relief as stated in the plaint (₹)"
+   "valueLabel": "Value of the relief as stated in the plaint (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -79,7 +79,7 @@
    "label": "Suit for injunction",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(iv)(d)",
-   "valueLabel": "Value of the relief as stated in the plaint (₹)"
+   "valueLabel": "Value of the relief as stated in the plaint (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -87,7 +87,7 @@
    "label": "Suit for accounts",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 7(iv)(f)",
-   "valueLabel": "Value of the relief as stated in the plaint (₹)"
+   "valueLabel": "Value of the relief as stated in the plaint (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -95,7 +95,7 @@
    "label": "Possession suit under s. 6,  Specific Relief Act",
    "kind": "half",
    "ref": "Sch. I,  Art. 2",
-   "valueLabel": "Value of the property (₹)"
+   "valueLabel": "Value of the property (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -143,7 +143,7 @@
    "label": "Review application before 90 days of decree",
    "kind": "half",
    "ref": "Sch. I,  Art. 5",
-   "valueLabel": "Value of the original suit / appeal (₹)"
+   "valueLabel": "Value of the original suit / appeal (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -151,7 +151,7 @@
    "label": "Review application on or after 90 days",
    "kind": "adv",
    "ref": "Sch. I,  Art. 4",
-   "valueLabel": "Value of the original suit / appeal (₹)"
+   "valueLabel": "Value of the original suit / appeal (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -184,7 +184,7 @@
    "kind": "scale",
    "ref": "Sch. I,  Art. 11",
    "scale": "probate",
-   "valueLabel": "Value of the estate (₹)"
+   "valueLabel": "Value of the estate (\u20b9)"
   },
   {
    "caseType": "civil",
@@ -193,7 +193,7 @@
    "kind": "scale",
    "ref": "Sch. I,  Art. 12",
    "scale": "succession",
-   "valueLabel": "Value of the debts / securities (₹)"
+   "valueLabel": "Value of the debts / securities (\u20b9)"
   },
   {
    "caseType": "appeal",
@@ -201,7 +201,7 @@
    "label": "Appeal from a decree or order having the force of a decree",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1",
-   "valueLabel": "Value of the subject matter of the appeal (₹)"
+   "valueLabel": "Value of the subject matter of the appeal (\u20b9)"
   },
   {
    "caseType": "appeal",
@@ -209,12 +209,12 @@
    "label": "Appeal against an order on compensation (land acquisition)",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1; s. 8",
-   "valueLabel": "Difference between amount awarded and amount claimed (₹)"
+   "valueLabel": "Difference between amount awarded and amount claimed (\u20b9)"
   },
   {
    "caseType": "appeal",
    "key": "other_civil",
-   "label": "Appeal not from a decree – civil court other than High Court",
+   "label": "Appeal not from a decree \u2013 civil court other than High Court",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 11(a) (8 annas)",
    "amount": 0.5
@@ -222,7 +222,7 @@
   {
    "caseType": "appeal",
    "key": "other_hc",
-   "label": "Appeal not from a decree – High Court",
+   "label": "Appeal not from a decree \u2013 High Court",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 11(b)",
    "amount": 2
@@ -230,7 +230,7 @@
   {
    "caseType": "appeal",
    "key": "pauper_dist",
-   "label": "Leave to appeal as a pauper – District Court",
+   "label": "Leave to appeal as a pauper \u2013 District Court",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 3(a)",
    "amount": 1
@@ -238,7 +238,7 @@
   {
    "caseType": "appeal",
    "key": "pauper_hc",
-   "label": "Leave to appeal as a pauper – High Court",
+   "label": "Leave to appeal as a pauper \u2013 High Court",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 3(b)",
    "amount": 2
@@ -310,7 +310,7 @@
   {
    "caseType": "criminal",
    "key": "hc_crl",
-   "label": "High Court – bail,  anticipatory bail,  quashing,  revision or other criminal petition",
+   "label": "High Court \u2013 bail,  anticipatory bail,  quashing,  revision or other criminal petition",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 1(d)",
    "amount": 2
@@ -318,7 +318,7 @@
   {
    "caseType": "criminal",
    "key": "appeal_dist",
-   "label": "Criminal appeal – Sessions Court",
+   "label": "Criminal appeal \u2013 Sessions Court",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 11(a) (8 annas)",
    "amount": 0.5
@@ -326,7 +326,7 @@
   {
    "caseType": "criminal",
    "key": "appeal_hc",
-   "label": "Criminal appeal – High Court",
+   "label": "Criminal appeal \u2013 High Court",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 11(b)",
    "amount": 2
@@ -362,15 +362,53 @@
    "kind": "scale",
    "ref": "Rule 7,  CP (CDRC) Rules,  2020 (not under the 1870 Act)",
    "scale": "consumer",
-   "valueLabel": "Value of goods / services paid as consideration (₹)"
+   "valueLabel": "Value of goods / services paid as consideration (\u20b9)"
   },
   {
    "caseType": "labour",
    "key": "claim",
    "label": "Industrial dispute / claim before the Labour Court",
    "kind": "fixed",
-   "ref": "Industrial Disputes Act – no court fee (not under the 1870 Act)",
+   "ref": "Industrial Disputes Act \u2013 no court fee (not under the 1870 Act)",
    "amount": 0
+  }
+ ],
+ "jurisdictions": [
+  {
+   "key": "delhi",
+   "label": "Delhi & Chandigarh",
+   "scale": "adValoremDelhi",
+   "notes": [
+    "Delhi & Chandigarh table. Above \u20b94,00,000 the fee increases by \u20b948.80 for every \u20b95,000 or part thereof.",
+    "The source table prints \u20b94,442.60 for \u20b92,15,000; the series pattern gives \u20b94,442.40, which is used here. Please verify against the official table."
+   ]
+  },
+  {
+   "key": "haryana",
+   "label": "Haryana",
+   "scale": "adValoremHaryana",
+   "notes": [
+    "Haryana table. Above \u20b975,00,000 the fee increases by \u20b925 for every \u20b95,000 or part thereof.",
+    "The source carries an editor's note that the Haryana Gazette notification of 10-9-2009 printed \u20b9500 in the table, probably a typing error. Please verify with the registry."
+   ]
+  },
+  {
+   "key": "up",
+   "label": "Uttar Pradesh & Uttarakhand",
+   "scale": "adValoremUP",
+   "notes": [
+    "Uttar Pradesh & Uttarakhand table. Above \u20b930,000 the fee increases by \u20b937.50 for every \u20b9500 or part thereof.",
+    "The source table prints \u20b92,180.00 for \u20b923,500; the series pattern gives \u20b92,170.00, which is used here. Please verify against the official table."
+   ]
+  },
+  {
+   "key": "central",
+   "label": "Other States (Central Act, 1870)",
+   "scale": "adValorem",
+   "notes": [
+    "Central Act scale (Sch. I, Art. 1), for States without a table here. The ad valorem fee on a plaint or memorandum of appeal is capped at \u20b93,000 (any value above \u20b94,10,000 pays the maximum).",
+    "The Act says rates in each State / Union Territory are as per its own State Amendments. Check the local schedule for your court's State."
+   ]
   }
  ],
  "scales": {
@@ -424,6 +462,2940 @@
      "base": 1175,
      "stepSize": 5000,
      "stepFee": 25
+    }
+   ]
+  },
+  "adValoremDelhi": {
+   "slabs": [
+    {
+     "upTo": 5,
+     "base": 0.5
+    },
+    {
+     "upTo": 10,
+     "base": 1
+    },
+    {
+     "upTo": 15,
+     "base": 1.5
+    },
+    {
+     "upTo": 20,
+     "base": 2
+    },
+    {
+     "upTo": 25,
+     "base": 2.5
+    },
+    {
+     "upTo": 30,
+     "base": 3
+    },
+    {
+     "upTo": 35,
+     "base": 3.5
+    },
+    {
+     "upTo": 40,
+     "base": 4
+    },
+    {
+     "upTo": 45,
+     "base": 4.5
+    },
+    {
+     "upTo": 50,
+     "base": 5
+    },
+    {
+     "upTo": 55,
+     "base": 5.5
+    },
+    {
+     "upTo": 60,
+     "base": 6
+    },
+    {
+     "upTo": 65,
+     "base": 6.5
+    },
+    {
+     "upTo": 70,
+     "base": 7
+    },
+    {
+     "upTo": 75,
+     "base": 7.5
+    },
+    {
+     "upTo": 80,
+     "base": 8
+    },
+    {
+     "upTo": 85,
+     "base": 8.5
+    },
+    {
+     "upTo": 90,
+     "base": 9
+    },
+    {
+     "upTo": 95,
+     "base": 9.5
+    },
+    {
+     "upTo": 100,
+     "base": 10
+    },
+    {
+     "upTo": 110,
+     "base": 11
+    },
+    {
+     "upTo": 120,
+     "base": 12
+    },
+    {
+     "upTo": 130,
+     "base": 13
+    },
+    {
+     "upTo": 140,
+     "base": 14
+    },
+    {
+     "upTo": 150,
+     "base": 15
+    },
+    {
+     "upTo": 160,
+     "base": 16
+    },
+    {
+     "upTo": 170,
+     "base": 17
+    },
+    {
+     "upTo": 180,
+     "base": 18
+    },
+    {
+     "upTo": 190,
+     "base": 19
+    },
+    {
+     "upTo": 200,
+     "base": 20
+    },
+    {
+     "upTo": 210,
+     "base": 21
+    },
+    {
+     "upTo": 220,
+     "base": 22
+    },
+    {
+     "upTo": 230,
+     "base": 23
+    },
+    {
+     "upTo": 240,
+     "base": 24
+    },
+    {
+     "upTo": 250,
+     "base": 25
+    },
+    {
+     "upTo": 260,
+     "base": 26
+    },
+    {
+     "upTo": 270,
+     "base": 27
+    },
+    {
+     "upTo": 280,
+     "base": 28
+    },
+    {
+     "upTo": 290,
+     "base": 29
+    },
+    {
+     "upTo": 300,
+     "base": 30
+    },
+    {
+     "upTo": 310,
+     "base": 31
+    },
+    {
+     "upTo": 320,
+     "base": 32
+    },
+    {
+     "upTo": 330,
+     "base": 33
+    },
+    {
+     "upTo": 340,
+     "base": 34
+    },
+    {
+     "upTo": 350,
+     "base": 35
+    },
+    {
+     "upTo": 360,
+     "base": 36
+    },
+    {
+     "upTo": 370,
+     "base": 37
+    },
+    {
+     "upTo": 380,
+     "base": 38
+    },
+    {
+     "upTo": 390,
+     "base": 39
+    },
+    {
+     "upTo": 400,
+     "base": 40
+    },
+    {
+     "upTo": 410,
+     "base": 41
+    },
+    {
+     "upTo": 420,
+     "base": 42
+    },
+    {
+     "upTo": 430,
+     "base": 43
+    },
+    {
+     "upTo": 440,
+     "base": 44
+    },
+    {
+     "upTo": 450,
+     "base": 45
+    },
+    {
+     "upTo": 460,
+     "base": 46
+    },
+    {
+     "upTo": 470,
+     "base": 47
+    },
+    {
+     "upTo": 480,
+     "base": 48
+    },
+    {
+     "upTo": 490,
+     "base": 49
+    },
+    {
+     "upTo": 500,
+     "base": 50
+    },
+    {
+     "upTo": 510,
+     "base": 76.5
+    },
+    {
+     "upTo": 520,
+     "base": 78
+    },
+    {
+     "upTo": 530,
+     "base": 79.5
+    },
+    {
+     "upTo": 540,
+     "base": 81
+    },
+    {
+     "upTo": 550,
+     "base": 82.5
+    },
+    {
+     "upTo": 560,
+     "base": 84
+    },
+    {
+     "upTo": 570,
+     "base": 85.5
+    },
+    {
+     "upTo": 580,
+     "base": 87
+    },
+    {
+     "upTo": 590,
+     "base": 88.5
+    },
+    {
+     "upTo": 600,
+     "base": 90
+    },
+    {
+     "upTo": 610,
+     "base": 91.5
+    },
+    {
+     "upTo": 620,
+     "base": 93
+    },
+    {
+     "upTo": 630,
+     "base": 94.5
+    },
+    {
+     "upTo": 640,
+     "base": 96
+    },
+    {
+     "upTo": 650,
+     "base": 97.5
+    },
+    {
+     "upTo": 660,
+     "base": 99
+    },
+    {
+     "upTo": 670,
+     "base": 100.5
+    },
+    {
+     "upTo": 680,
+     "base": 102
+    },
+    {
+     "upTo": 690,
+     "base": 103.5
+    },
+    {
+     "upTo": 700,
+     "base": 105
+    },
+    {
+     "upTo": 710,
+     "base": 106.5
+    },
+    {
+     "upTo": 720,
+     "base": 108
+    },
+    {
+     "upTo": 730,
+     "base": 109.5
+    },
+    {
+     "upTo": 740,
+     "base": 111
+    },
+    {
+     "upTo": 750,
+     "base": 112.5
+    },
+    {
+     "upTo": 760,
+     "base": 114
+    },
+    {
+     "upTo": 770,
+     "base": 115.5
+    },
+    {
+     "upTo": 780,
+     "base": 117
+    },
+    {
+     "upTo": 790,
+     "base": 118.5
+    },
+    {
+     "upTo": 800,
+     "base": 120
+    },
+    {
+     "upTo": 810,
+     "base": 121.5
+    },
+    {
+     "upTo": 820,
+     "base": 123
+    },
+    {
+     "upTo": 830,
+     "base": 124.5
+    },
+    {
+     "upTo": 840,
+     "base": 126
+    },
+    {
+     "upTo": 850,
+     "base": 127.5
+    },
+    {
+     "upTo": 860,
+     "base": 129
+    },
+    {
+     "upTo": 870,
+     "base": 130.5
+    },
+    {
+     "upTo": 880,
+     "base": 132
+    },
+    {
+     "upTo": 890,
+     "base": 133.5
+    },
+    {
+     "upTo": 900,
+     "base": 135
+    },
+    {
+     "upTo": 910,
+     "base": 136.5
+    },
+    {
+     "upTo": 920,
+     "base": 138
+    },
+    {
+     "upTo": 930,
+     "base": 139.5
+    },
+    {
+     "upTo": 940,
+     "base": 141
+    },
+    {
+     "upTo": 950,
+     "base": 142.5
+    },
+    {
+     "upTo": 960,
+     "base": 144
+    },
+    {
+     "upTo": 970,
+     "base": 145.5
+    },
+    {
+     "upTo": 980,
+     "base": 147
+    },
+    {
+     "upTo": 990,
+     "base": 148.5
+    },
+    {
+     "upTo": 1000,
+     "base": 150
+    },
+    {
+     "upTo": 1100,
+     "base": 162.2
+    },
+    {
+     "upTo": 1200,
+     "base": 174.4
+    },
+    {
+     "upTo": 1300,
+     "base": 186.6
+    },
+    {
+     "upTo": 1400,
+     "base": 198.8
+    },
+    {
+     "upTo": 1500,
+     "base": 211
+    },
+    {
+     "upTo": 1600,
+     "base": 223.2
+    },
+    {
+     "upTo": 1700,
+     "base": 235.4
+    },
+    {
+     "upTo": 1800,
+     "base": 247.6
+    },
+    {
+     "upTo": 1900,
+     "base": 259.8
+    },
+    {
+     "upTo": 2000,
+     "base": 272
+    },
+    {
+     "upTo": 2100,
+     "base": 284.2
+    },
+    {
+     "upTo": 2200,
+     "base": 296.4
+    },
+    {
+     "upTo": 2300,
+     "base": 308.6
+    },
+    {
+     "upTo": 2400,
+     "base": 320.8
+    },
+    {
+     "upTo": 2500,
+     "base": 333
+    },
+    {
+     "upTo": 2600,
+     "base": 345.2
+    },
+    {
+     "upTo": 2700,
+     "base": 357.4
+    },
+    {
+     "upTo": 2800,
+     "base": 369.6
+    },
+    {
+     "upTo": 2900,
+     "base": 381.8
+    },
+    {
+     "upTo": 3000,
+     "base": 394
+    },
+    {
+     "upTo": 3100,
+     "base": 406.2
+    },
+    {
+     "upTo": 3200,
+     "base": 418.4
+    },
+    {
+     "upTo": 3300,
+     "base": 430.6
+    },
+    {
+     "upTo": 3400,
+     "base": 442.8
+    },
+    {
+     "upTo": 3500,
+     "base": 455
+    },
+    {
+     "upTo": 3600,
+     "base": 467.2
+    },
+    {
+     "upTo": 3700,
+     "base": 479.4
+    },
+    {
+     "upTo": 3800,
+     "base": 491.6
+    },
+    {
+     "upTo": 3900,
+     "base": 503.8
+    },
+    {
+     "upTo": 4000,
+     "base": 516
+    },
+    {
+     "upTo": 4100,
+     "base": 528.2
+    },
+    {
+     "upTo": 4200,
+     "base": 540.4
+    },
+    {
+     "upTo": 4300,
+     "base": 552.6
+    },
+    {
+     "upTo": 4400,
+     "base": 564.8
+    },
+    {
+     "upTo": 4500,
+     "base": 577
+    },
+    {
+     "upTo": 4600,
+     "base": 589.2
+    },
+    {
+     "upTo": 4700,
+     "base": 601.4
+    },
+    {
+     "upTo": 4800,
+     "base": 613.6
+    },
+    {
+     "upTo": 4900,
+     "base": 625.8
+    },
+    {
+     "upTo": 5000,
+     "base": 638
+    },
+    {
+     "upTo": 5250,
+     "base": 662.4
+    },
+    {
+     "upTo": 5500,
+     "base": 686.8
+    },
+    {
+     "upTo": 5750,
+     "base": 711.2
+    },
+    {
+     "upTo": 6000,
+     "base": 735.6
+    },
+    {
+     "upTo": 6250,
+     "base": 760
+    },
+    {
+     "upTo": 6500,
+     "base": 784.4
+    },
+    {
+     "upTo": 6750,
+     "base": 808.8
+    },
+    {
+     "upTo": 7000,
+     "base": 833.2
+    },
+    {
+     "upTo": 7250,
+     "base": 857.6
+    },
+    {
+     "upTo": 7500,
+     "base": 882
+    },
+    {
+     "upTo": 7750,
+     "base": 906.4
+    },
+    {
+     "upTo": 8000,
+     "base": 930.8
+    },
+    {
+     "upTo": 8250,
+     "base": 955.2
+    },
+    {
+     "upTo": 8500,
+     "base": 979.6
+    },
+    {
+     "upTo": 8750,
+     "base": 1004
+    },
+    {
+     "upTo": 9000,
+     "base": 1028.4
+    },
+    {
+     "upTo": 9250,
+     "base": 1052.8
+    },
+    {
+     "upTo": 9500,
+     "base": 1077.2
+    },
+    {
+     "upTo": 9750,
+     "base": 1101.6
+    },
+    {
+     "upTo": 10000,
+     "base": 1126
+    },
+    {
+     "upTo": 10500,
+     "base": 1162.5
+    },
+    {
+     "upTo": 11000,
+     "base": 1199
+    },
+    {
+     "upTo": 11500,
+     "base": 1235.5
+    },
+    {
+     "upTo": 12000,
+     "base": 1272
+    },
+    {
+     "upTo": 12500,
+     "base": 1308.5
+    },
+    {
+     "upTo": 13000,
+     "base": 1345
+    },
+    {
+     "upTo": 13500,
+     "base": 1381.5
+    },
+    {
+     "upTo": 14000,
+     "base": 1418
+    },
+    {
+     "upTo": 14500,
+     "base": 1454.5
+    },
+    {
+     "upTo": 15000,
+     "base": 1491
+    },
+    {
+     "upTo": 15500,
+     "base": 1527.5
+    },
+    {
+     "upTo": 16000,
+     "base": 1564
+    },
+    {
+     "upTo": 16500,
+     "base": 1600.5
+    },
+    {
+     "upTo": 17000,
+     "base": 1637
+    },
+    {
+     "upTo": 17500,
+     "base": 1673.5
+    },
+    {
+     "upTo": 18000,
+     "base": 1710
+    },
+    {
+     "upTo": 18500,
+     "base": 1746.5
+    },
+    {
+     "upTo": 19000,
+     "base": 1783
+    },
+    {
+     "upTo": 19500,
+     "base": 1819.5
+    },
+    {
+     "upTo": 20000,
+     "base": 1856
+    },
+    {
+     "upTo": 21000,
+     "base": 1904.8
+    },
+    {
+     "upTo": 22000,
+     "base": 1953.6
+    },
+    {
+     "upTo": 23000,
+     "base": 2002.4
+    },
+    {
+     "upTo": 24000,
+     "base": 2051.2
+    },
+    {
+     "upTo": 25000,
+     "base": 2100
+    },
+    {
+     "upTo": 26000,
+     "base": 2148.8
+    },
+    {
+     "upTo": 27000,
+     "base": 2197.6
+    },
+    {
+     "upTo": 28000,
+     "base": 2246.4
+    },
+    {
+     "upTo": 29000,
+     "base": 2295.2
+    },
+    {
+     "upTo": 30000,
+     "base": 2344
+    },
+    {
+     "upTo": 32000,
+     "base": 2392.8
+    },
+    {
+     "upTo": 34000,
+     "base": 2441.6
+    },
+    {
+     "upTo": 36000,
+     "base": 2490.4
+    },
+    {
+     "upTo": 38000,
+     "base": 2539.2
+    },
+    {
+     "upTo": 40000,
+     "base": 2588
+    },
+    {
+     "upTo": 42000,
+     "base": 2636.8
+    },
+    {
+     "upTo": 44000,
+     "base": 2685.6
+    },
+    {
+     "upTo": 46000,
+     "base": 2734.4
+    },
+    {
+     "upTo": 48000,
+     "base": 2783.2
+    },
+    {
+     "upTo": 50000,
+     "base": 2832
+    },
+    {
+     "upTo": 55000,
+     "base": 2880.8
+    },
+    {
+     "upTo": 60000,
+     "base": 2929.6
+    },
+    {
+     "upTo": 65000,
+     "base": 2978.4
+    },
+    {
+     "upTo": 70000,
+     "base": 3027.2
+    },
+    {
+     "upTo": 75000,
+     "base": 3076
+    },
+    {
+     "upTo": 80000,
+     "base": 3124.8
+    },
+    {
+     "upTo": 85000,
+     "base": 3173.6
+    },
+    {
+     "upTo": 90000,
+     "base": 3222.4
+    },
+    {
+     "upTo": 95000,
+     "base": 3271.2
+    },
+    {
+     "upTo": 100000,
+     "base": 3320
+    },
+    {
+     "upTo": 105000,
+     "base": 3368.8
+    },
+    {
+     "upTo": 110000,
+     "base": 3417.6
+    },
+    {
+     "upTo": 115000,
+     "base": 3466.4
+    },
+    {
+     "upTo": 120000,
+     "base": 3515.2
+    },
+    {
+     "upTo": 125000,
+     "base": 3564
+    },
+    {
+     "upTo": 130000,
+     "base": 3612.8
+    },
+    {
+     "upTo": 135000,
+     "base": 3661.6
+    },
+    {
+     "upTo": 140000,
+     "base": 3710.4
+    },
+    {
+     "upTo": 145000,
+     "base": 3759.2
+    },
+    {
+     "upTo": 150000,
+     "base": 3808
+    },
+    {
+     "upTo": 155000,
+     "base": 3856.8
+    },
+    {
+     "upTo": 160000,
+     "base": 3905.6
+    },
+    {
+     "upTo": 165000,
+     "base": 3954.4
+    },
+    {
+     "upTo": 170000,
+     "base": 4003.2
+    },
+    {
+     "upTo": 175000,
+     "base": 4052
+    },
+    {
+     "upTo": 180000,
+     "base": 4100.8
+    },
+    {
+     "upTo": 185000,
+     "base": 4149.6
+    },
+    {
+     "upTo": 190000,
+     "base": 4198.4
+    },
+    {
+     "upTo": 195000,
+     "base": 4247.2
+    },
+    {
+     "upTo": 200000,
+     "base": 4296
+    },
+    {
+     "upTo": 205000,
+     "base": 4344.8
+    },
+    {
+     "upTo": 210000,
+     "base": 4393.6
+    },
+    {
+     "upTo": 215000,
+     "base": 4442.4
+    },
+    {
+     "upTo": 220000,
+     "base": 4491.2
+    },
+    {
+     "upTo": 225000,
+     "base": 4540
+    },
+    {
+     "upTo": 230000,
+     "base": 4588.8
+    },
+    {
+     "upTo": 235000,
+     "base": 4637.6
+    },
+    {
+     "upTo": 240000,
+     "base": 4686.4
+    },
+    {
+     "upTo": 245000,
+     "base": 4735.2
+    },
+    {
+     "upTo": 250000,
+     "base": 4784
+    },
+    {
+     "upTo": 255000,
+     "base": 4832.8
+    },
+    {
+     "upTo": 260000,
+     "base": 4881.6
+    },
+    {
+     "upTo": 265000,
+     "base": 4930.4
+    },
+    {
+     "upTo": 270000,
+     "base": 4979.2
+    },
+    {
+     "upTo": 275000,
+     "base": 5028
+    },
+    {
+     "upTo": 280000,
+     "base": 5076.8
+    },
+    {
+     "upTo": 285000,
+     "base": 5125.6
+    },
+    {
+     "upTo": 290000,
+     "base": 5174.4
+    },
+    {
+     "upTo": 295000,
+     "base": 5223.2
+    },
+    {
+     "upTo": 300000,
+     "base": 5272
+    },
+    {
+     "upTo": 305000,
+     "base": 5320.8
+    },
+    {
+     "upTo": 310000,
+     "base": 5369.6
+    },
+    {
+     "upTo": 315000,
+     "base": 5418.4
+    },
+    {
+     "upTo": 320000,
+     "base": 5467.2
+    },
+    {
+     "upTo": 325000,
+     "base": 5516
+    },
+    {
+     "upTo": 330000,
+     "base": 5564.8
+    },
+    {
+     "upTo": 335000,
+     "base": 5613.6
+    },
+    {
+     "upTo": 340000,
+     "base": 5662.4
+    },
+    {
+     "upTo": 345000,
+     "base": 5711.2
+    },
+    {
+     "upTo": 350000,
+     "base": 5760
+    },
+    {
+     "upTo": 355000,
+     "base": 5808.8
+    },
+    {
+     "upTo": 360000,
+     "base": 5857.6
+    },
+    {
+     "upTo": 365000,
+     "base": 5906.4
+    },
+    {
+     "upTo": 370000,
+     "base": 5955.2
+    },
+    {
+     "upTo": 375000,
+     "base": 6004
+    },
+    {
+     "upTo": 380000,
+     "base": 6052.8
+    },
+    {
+     "upTo": 385000,
+     "base": 6101.6
+    },
+    {
+     "upTo": 390000,
+     "base": 6150.4
+    },
+    {
+     "upTo": 395000,
+     "base": 6199.2
+    },
+    {
+     "upTo": 400000,
+     "base": 6248
+    },
+    {
+     "upTo": null,
+     "base": 6248,
+     "stepSize": 5000,
+     "stepFee": 48.8
+    }
+   ]
+  },
+  "adValoremHaryana": {
+   "slabs": [
+    {
+     "upTo": 40,
+     "base": 1
+    },
+    {
+     "upTo": 120,
+     "base": 3
+    },
+    {
+     "upTo": 200,
+     "base": 5
+    },
+    {
+     "upTo": 280,
+     "base": 7
+    },
+    {
+     "upTo": 360,
+     "base": 9
+    },
+    {
+     "upTo": 440,
+     "base": 11
+    },
+    {
+     "upTo": 520,
+     "base": 13
+    },
+    {
+     "upTo": 600,
+     "base": 15
+    },
+    {
+     "upTo": 680,
+     "base": 17
+    },
+    {
+     "upTo": 760,
+     "base": 19
+    },
+    {
+     "upTo": 840,
+     "base": 21
+    },
+    {
+     "upTo": 920,
+     "base": 23
+    },
+    {
+     "upTo": 1000,
+     "base": 25
+    },
+    {
+     "upTo": 1200,
+     "base": 30
+    },
+    {
+     "upTo": 1400,
+     "base": 35
+    },
+    {
+     "upTo": 1600,
+     "base": 40
+    },
+    {
+     "upTo": 1800,
+     "base": 45
+    },
+    {
+     "upTo": 2000,
+     "base": 50
+    },
+    {
+     "upTo": 2200,
+     "base": 55
+    },
+    {
+     "upTo": 2400,
+     "base": 60
+    },
+    {
+     "upTo": 2600,
+     "base": 65
+    },
+    {
+     "upTo": 2800,
+     "base": 70
+    },
+    {
+     "upTo": 3000,
+     "base": 75
+    },
+    {
+     "upTo": 3200,
+     "base": 80
+    },
+    {
+     "upTo": 3400,
+     "base": 85
+    },
+    {
+     "upTo": 3600,
+     "base": 90
+    },
+    {
+     "upTo": 3800,
+     "base": 95
+    },
+    {
+     "upTo": 4000,
+     "base": 100
+    },
+    {
+     "upTo": 4200,
+     "base": 105
+    },
+    {
+     "upTo": 4400,
+     "base": 110
+    },
+    {
+     "upTo": 4600,
+     "base": 115
+    },
+    {
+     "upTo": 4800,
+     "base": 120
+    },
+    {
+     "upTo": 5000,
+     "base": 125
+    },
+    {
+     "upTo": 5200,
+     "base": 130
+    },
+    {
+     "upTo": 5400,
+     "base": 135
+    },
+    {
+     "upTo": 5600,
+     "base": 140
+    },
+    {
+     "upTo": 5800,
+     "base": 145
+    },
+    {
+     "upTo": 6000,
+     "base": 150
+    },
+    {
+     "upTo": 6200,
+     "base": 155
+    },
+    {
+     "upTo": 6400,
+     "base": 160
+    },
+    {
+     "upTo": 6600,
+     "base": 165
+    },
+    {
+     "upTo": 6800,
+     "base": 170
+    },
+    {
+     "upTo": 7000,
+     "base": 175
+    },
+    {
+     "upTo": 7200,
+     "base": 180
+    },
+    {
+     "upTo": 7400,
+     "base": 185
+    },
+    {
+     "upTo": 7600,
+     "base": 190
+    },
+    {
+     "upTo": 7800,
+     "base": 195
+    },
+    {
+     "upTo": 8000,
+     "base": 200
+    },
+    {
+     "upTo": 8200,
+     "base": 205
+    },
+    {
+     "upTo": 8400,
+     "base": 210
+    },
+    {
+     "upTo": 8600,
+     "base": 215
+    },
+    {
+     "upTo": 8800,
+     "base": 220
+    },
+    {
+     "upTo": 9000,
+     "base": 225
+    },
+    {
+     "upTo": 9200,
+     "base": 230
+    },
+    {
+     "upTo": 9400,
+     "base": 235
+    },
+    {
+     "upTo": 9600,
+     "base": 240
+    },
+    {
+     "upTo": 9800,
+     "base": 245
+    },
+    {
+     "upTo": 10000,
+     "base": 250
+    },
+    {
+     "upTo": 10200,
+     "base": 255
+    },
+    {
+     "upTo": 10400,
+     "base": 260
+    },
+    {
+     "upTo": 10600,
+     "base": 265
+    },
+    {
+     "upTo": 10800,
+     "base": 270
+    },
+    {
+     "upTo": 11000,
+     "base": 275
+    },
+    {
+     "upTo": 11200,
+     "base": 280
+    },
+    {
+     "upTo": 11400,
+     "base": 285
+    },
+    {
+     "upTo": 11600,
+     "base": 290
+    },
+    {
+     "upTo": 11800,
+     "base": 295
+    },
+    {
+     "upTo": 12000,
+     "base": 300
+    },
+    {
+     "upTo": 12200,
+     "base": 305
+    },
+    {
+     "upTo": 12400,
+     "base": 310
+    },
+    {
+     "upTo": 12600,
+     "base": 315
+    },
+    {
+     "upTo": 12800,
+     "base": 320
+    },
+    {
+     "upTo": 13000,
+     "base": 325
+    },
+    {
+     "upTo": 13200,
+     "base": 330
+    },
+    {
+     "upTo": 13400,
+     "base": 335
+    },
+    {
+     "upTo": 13600,
+     "base": 340
+    },
+    {
+     "upTo": 13800,
+     "base": 345
+    },
+    {
+     "upTo": 14000,
+     "base": 350
+    },
+    {
+     "upTo": 14200,
+     "base": 355
+    },
+    {
+     "upTo": 14400,
+     "base": 360
+    },
+    {
+     "upTo": 14600,
+     "base": 365
+    },
+    {
+     "upTo": 14800,
+     "base": 370
+    },
+    {
+     "upTo": 15000,
+     "base": 375
+    },
+    {
+     "upTo": 16000,
+     "base": 410
+    },
+    {
+     "upTo": 17000,
+     "base": 445
+    },
+    {
+     "upTo": 18000,
+     "base": 480
+    },
+    {
+     "upTo": 19000,
+     "base": 515
+    },
+    {
+     "upTo": 20000,
+     "base": 550
+    },
+    {
+     "upTo": 21000,
+     "base": 585
+    },
+    {
+     "upTo": 22000,
+     "base": 620
+    },
+    {
+     "upTo": 23000,
+     "base": 655
+    },
+    {
+     "upTo": 24000,
+     "base": 690
+    },
+    {
+     "upTo": 25000,
+     "base": 725
+    },
+    {
+     "upTo": 26000,
+     "base": 760
+    },
+    {
+     "upTo": 27000,
+     "base": 795
+    },
+    {
+     "upTo": 28000,
+     "base": 840
+    },
+    {
+     "upTo": 29000,
+     "base": 885
+    },
+    {
+     "upTo": 30000,
+     "base": 930
+    },
+    {
+     "upTo": 31000,
+     "base": 975
+    },
+    {
+     "upTo": 32000,
+     "base": 1020
+    },
+    {
+     "upTo": 33000,
+     "base": 1065
+    },
+    {
+     "upTo": 34000,
+     "base": 1110
+    },
+    {
+     "upTo": 35000,
+     "base": 1155
+    },
+    {
+     "upTo": 36000,
+     "base": 1200
+    },
+    {
+     "upTo": 37000,
+     "base": 1245
+    },
+    {
+     "upTo": 38000,
+     "base": 1290
+    },
+    {
+     "upTo": 39000,
+     "base": 1335
+    },
+    {
+     "upTo": 40000,
+     "base": 1390
+    },
+    {
+     "upTo": 41000,
+     "base": 1445
+    },
+    {
+     "upTo": 42000,
+     "base": 1500
+    },
+    {
+     "upTo": 43000,
+     "base": 1555
+    },
+    {
+     "upTo": 44000,
+     "base": 1610
+    },
+    {
+     "upTo": 45000,
+     "base": 1665
+    },
+    {
+     "upTo": 46000,
+     "base": 1720
+    },
+    {
+     "upTo": 47000,
+     "base": 1775
+    },
+    {
+     "upTo": 48000,
+     "base": 1830
+    },
+    {
+     "upTo": 49000,
+     "base": 1885
+    },
+    {
+     "upTo": 50000,
+     "base": 1940
+    },
+    {
+     "upTo": 51000,
+     "base": 1995
+    },
+    {
+     "upTo": 52000,
+     "base": 2060
+    },
+    {
+     "upTo": 53000,
+     "base": 2125
+    },
+    {
+     "upTo": 54000,
+     "base": 2190
+    },
+    {
+     "upTo": 55000,
+     "base": 2255
+    },
+    {
+     "upTo": 56000,
+     "base": 2320
+    },
+    {
+     "upTo": 57000,
+     "base": 2385
+    },
+    {
+     "upTo": 58000,
+     "base": 2450
+    },
+    {
+     "upTo": 59000,
+     "base": 2515
+    },
+    {
+     "upTo": 60000,
+     "base": 2580
+    },
+    {
+     "upTo": 61000,
+     "base": 2645
+    },
+    {
+     "upTo": 62000,
+     "base": 2710
+    },
+    {
+     "upTo": 63000,
+     "base": 2775
+    },
+    {
+     "upTo": 64000,
+     "base": 2850
+    },
+    {
+     "upTo": 65000,
+     "base": 2925
+    },
+    {
+     "upTo": 66000,
+     "base": 3000
+    },
+    {
+     "upTo": 67000,
+     "base": 3075
+    },
+    {
+     "upTo": 68000,
+     "base": 3150
+    },
+    {
+     "upTo": 69000,
+     "base": 3225
+    },
+    {
+     "upTo": 70000,
+     "base": 3300
+    },
+    {
+     "upTo": 71000,
+     "base": 3375
+    },
+    {
+     "upTo": 72000,
+     "base": 3450
+    },
+    {
+     "upTo": 73000,
+     "base": 3525
+    },
+    {
+     "upTo": 74000,
+     "base": 3600
+    },
+    {
+     "upTo": 75000,
+     "base": 3675
+    },
+    {
+     "upTo": 76000,
+     "base": 3740
+    },
+    {
+     "upTo": 77000,
+     "base": 3805
+    },
+    {
+     "upTo": 78000,
+     "base": 3870
+    },
+    {
+     "upTo": 79000,
+     "base": 3935
+    },
+    {
+     "upTo": 80000,
+     "base": 4000
+    },
+    {
+     "upTo": 81000,
+     "base": 4065
+    },
+    {
+     "upTo": 82000,
+     "base": 4130
+    },
+    {
+     "upTo": 83000,
+     "base": 4195
+    },
+    {
+     "upTo": 84000,
+     "base": 4260
+    },
+    {
+     "upTo": 85000,
+     "base": 4325
+    },
+    {
+     "upTo": 86000,
+     "base": 4390
+    },
+    {
+     "upTo": 87000,
+     "base": 4455
+    },
+    {
+     "upTo": 88000,
+     "base": 4520
+    },
+    {
+     "upTo": 89000,
+     "base": 4585
+    },
+    {
+     "upTo": 90000,
+     "base": 4650
+    },
+    {
+     "upTo": 91000,
+     "base": 4715
+    },
+    {
+     "upTo": 92000,
+     "base": 4780
+    },
+    {
+     "upTo": 93000,
+     "base": 4845
+    },
+    {
+     "upTo": 94000,
+     "base": 4910
+    },
+    {
+     "upTo": 95000,
+     "base": 4975
+    },
+    {
+     "upTo": 96000,
+     "base": 5040
+    },
+    {
+     "upTo": 97000,
+     "base": 5105
+    },
+    {
+     "upTo": 98000,
+     "base": 5170
+    },
+    {
+     "upTo": 99000,
+     "base": 5235
+    },
+    {
+     "upTo": 100000,
+     "base": 5300
+    },
+    {
+     "upTo": 110000,
+     "base": 5950
+    },
+    {
+     "upTo": 125000,
+     "base": 6925
+    },
+    {
+     "upTo": 150000,
+     "base": 8550
+    },
+    {
+     "upTo": 175000,
+     "base": 10175
+    },
+    {
+     "upTo": 200000,
+     "base": 11800
+    },
+    {
+     "upTo": 225000,
+     "base": 13425
+    },
+    {
+     "upTo": 250000,
+     "base": 15050
+    },
+    {
+     "upTo": 275000,
+     "base": 16675
+    },
+    {
+     "upTo": 300000,
+     "base": 18300
+    },
+    {
+     "upTo": 325000,
+     "base": 19925
+    },
+    {
+     "upTo": 350000,
+     "base": 21550
+    },
+    {
+     "upTo": 375000,
+     "base": 23175
+    },
+    {
+     "upTo": 400000,
+     "base": 24800
+    },
+    {
+     "upTo": 425000,
+     "base": 26425
+    },
+    {
+     "upTo": 450000,
+     "base": 28050
+    },
+    {
+     "upTo": 475000,
+     "base": 29675
+    },
+    {
+     "upTo": 500000,
+     "base": 31300
+    },
+    {
+     "upTo": 550000,
+     "base": 34050
+    },
+    {
+     "upTo": 600000,
+     "base": 36800
+    },
+    {
+     "upTo": 650000,
+     "base": 39550
+    },
+    {
+     "upTo": 700000,
+     "base": 42300
+    },
+    {
+     "upTo": 750000,
+     "base": 45050
+    },
+    {
+     "upTo": 800000,
+     "base": 47800
+    },
+    {
+     "upTo": 850000,
+     "base": 50550
+    },
+    {
+     "upTo": 900000,
+     "base": 53300
+    },
+    {
+     "upTo": 950000,
+     "base": 56050
+    },
+    {
+     "upTo": 1000000,
+     "base": 58800
+    },
+    {
+     "upTo": 1100000,
+     "base": 63300
+    },
+    {
+     "upTo": 1200000,
+     "base": 67800
+    },
+    {
+     "upTo": 1300000,
+     "base": 72300
+    },
+    {
+     "upTo": 1400000,
+     "base": 76800
+    },
+    {
+     "upTo": 1500000,
+     "base": 81300
+    },
+    {
+     "upTo": 1600000,
+     "base": 85800
+    },
+    {
+     "upTo": 1700000,
+     "base": 90300
+    },
+    {
+     "upTo": 1800000,
+     "base": 94800
+    },
+    {
+     "upTo": 1900000,
+     "base": 99300
+    },
+    {
+     "upTo": 2000000,
+     "base": 103800
+    },
+    {
+     "upTo": 2200000,
+     "base": 110800
+    },
+    {
+     "upTo": 2400000,
+     "base": 117800
+    },
+    {
+     "upTo": 2600000,
+     "base": 124800
+    },
+    {
+     "upTo": 2800000,
+     "base": 131800
+    },
+    {
+     "upTo": 3000000,
+     "base": 138800
+    },
+    {
+     "upTo": 3100000,
+     "base": 141300
+    },
+    {
+     "upTo": 3300000,
+     "base": 146300
+    },
+    {
+     "upTo": 3500000,
+     "base": 151300
+    },
+    {
+     "upTo": 3700000,
+     "base": 156300
+    },
+    {
+     "upTo": 3900000,
+     "base": 161300
+    },
+    {
+     "upTo": 4100000,
+     "base": 166300
+    },
+    {
+     "upTo": 4300000,
+     "base": 171300
+    },
+    {
+     "upTo": 4500000,
+     "base": 176300
+    },
+    {
+     "upTo": 4800000,
+     "base": 180800
+    },
+    {
+     "upTo": 5000000,
+     "base": 183800
+    },
+    {
+     "upTo": 5200000,
+     "base": 186800
+    },
+    {
+     "upTo": 5400000,
+     "base": 189800
+    },
+    {
+     "upTo": 5600000,
+     "base": 192800
+    },
+    {
+     "upTo": 5800000,
+     "base": 195800
+    },
+    {
+     "upTo": 6000000,
+     "base": 198800
+    },
+    {
+     "upTo": 6300000,
+     "base": 200300
+    },
+    {
+     "upTo": 6500000,
+     "base": 201300
+    },
+    {
+     "upTo": 6700000,
+     "base": 202300
+    },
+    {
+     "upTo": 6900000,
+     "base": 203300
+    },
+    {
+     "upTo": 7100000,
+     "base": 204300
+    },
+    {
+     "upTo": 7300000,
+     "base": 205300
+    },
+    {
+     "upTo": 7500000,
+     "base": 206300
+    },
+    {
+     "upTo": null,
+     "base": 206300,
+     "stepSize": 5000,
+     "stepFee": 25
+    }
+   ]
+  },
+  "adValoremUP": {
+   "slabs": [
+    {
+     "upTo": 5,
+     "base": 0.5
+    },
+    {
+     "upTo": 10,
+     "base": 1
+    },
+    {
+     "upTo": 15,
+     "base": 1.5
+    },
+    {
+     "upTo": 20,
+     "base": 2
+    },
+    {
+     "upTo": 25,
+     "base": 2.5
+    },
+    {
+     "upTo": 30,
+     "base": 3
+    },
+    {
+     "upTo": 35,
+     "base": 3.5
+    },
+    {
+     "upTo": 40,
+     "base": 4
+    },
+    {
+     "upTo": 45,
+     "base": 4.5
+    },
+    {
+     "upTo": 50,
+     "base": 5
+    },
+    {
+     "upTo": 55,
+     "base": 5.5
+    },
+    {
+     "upTo": 60,
+     "base": 6
+    },
+    {
+     "upTo": 65,
+     "base": 6.5
+    },
+    {
+     "upTo": 70,
+     "base": 7
+    },
+    {
+     "upTo": 75,
+     "base": 7.5
+    },
+    {
+     "upTo": 80,
+     "base": 8
+    },
+    {
+     "upTo": 85,
+     "base": 8.5
+    },
+    {
+     "upTo": 90,
+     "base": 9
+    },
+    {
+     "upTo": 95,
+     "base": 9.5
+    },
+    {
+     "upTo": 100,
+     "base": 10
+    },
+    {
+     "upTo": 110,
+     "base": 11.25
+    },
+    {
+     "upTo": 120,
+     "base": 12.5
+    },
+    {
+     "upTo": 130,
+     "base": 13.75
+    },
+    {
+     "upTo": 140,
+     "base": 15
+    },
+    {
+     "upTo": 150,
+     "base": 16.25
+    },
+    {
+     "upTo": 160,
+     "base": 17.5
+    },
+    {
+     "upTo": 170,
+     "base": 18.75
+    },
+    {
+     "upTo": 180,
+     "base": 20
+    },
+    {
+     "upTo": 190,
+     "base": 21.25
+    },
+    {
+     "upTo": 200,
+     "base": 22.5
+    },
+    {
+     "upTo": 210,
+     "base": 23.75
+    },
+    {
+     "upTo": 220,
+     "base": 25
+    },
+    {
+     "upTo": 230,
+     "base": 26.25
+    },
+    {
+     "upTo": 240,
+     "base": 27.5
+    },
+    {
+     "upTo": 250,
+     "base": 28.75
+    },
+    {
+     "upTo": 260,
+     "base": 30
+    },
+    {
+     "upTo": 270,
+     "base": 31.25
+    },
+    {
+     "upTo": 280,
+     "base": 32.5
+    },
+    {
+     "upTo": 290,
+     "base": 33.75
+    },
+    {
+     "upTo": 300,
+     "base": 35
+    },
+    {
+     "upTo": 310,
+     "base": 36.5
+    },
+    {
+     "upTo": 320,
+     "base": 38
+    },
+    {
+     "upTo": 330,
+     "base": 39.5
+    },
+    {
+     "upTo": 340,
+     "base": 41
+    },
+    {
+     "upTo": 350,
+     "base": 42.5
+    },
+    {
+     "upTo": 360,
+     "base": 44
+    },
+    {
+     "upTo": 370,
+     "base": 45.5
+    },
+    {
+     "upTo": 380,
+     "base": 47
+    },
+    {
+     "upTo": 390,
+     "base": 48.5
+    },
+    {
+     "upTo": 400,
+     "base": 50
+    },
+    {
+     "upTo": 410,
+     "base": 51.5
+    },
+    {
+     "upTo": 420,
+     "base": 53
+    },
+    {
+     "upTo": 430,
+     "base": 54.5
+    },
+    {
+     "upTo": 440,
+     "base": 56
+    },
+    {
+     "upTo": 450,
+     "base": 57.5
+    },
+    {
+     "upTo": 460,
+     "base": 59
+    },
+    {
+     "upTo": 470,
+     "base": 60.5
+    },
+    {
+     "upTo": 480,
+     "base": 62
+    },
+    {
+     "upTo": 490,
+     "base": 63.5
+    },
+    {
+     "upTo": 500,
+     "base": 65
+    },
+    {
+     "upTo": 510,
+     "base": 67.25
+    },
+    {
+     "upTo": 520,
+     "base": 69.5
+    },
+    {
+     "upTo": 530,
+     "base": 71.75
+    },
+    {
+     "upTo": 540,
+     "base": 74
+    },
+    {
+     "upTo": 550,
+     "base": 76.25
+    },
+    {
+     "upTo": 560,
+     "base": 78.5
+    },
+    {
+     "upTo": 570,
+     "base": 80.75
+    },
+    {
+     "upTo": 580,
+     "base": 83
+    },
+    {
+     "upTo": 590,
+     "base": 85.25
+    },
+    {
+     "upTo": 600,
+     "base": 87.5
+    },
+    {
+     "upTo": 610,
+     "base": 89.75
+    },
+    {
+     "upTo": 620,
+     "base": 92
+    },
+    {
+     "upTo": 630,
+     "base": 94.25
+    },
+    {
+     "upTo": 640,
+     "base": 96.5
+    },
+    {
+     "upTo": 650,
+     "base": 98.75
+    },
+    {
+     "upTo": 660,
+     "base": 101
+    },
+    {
+     "upTo": 670,
+     "base": 103.25
+    },
+    {
+     "upTo": 680,
+     "base": 105.5
+    },
+    {
+     "upTo": 690,
+     "base": 107.75
+    },
+    {
+     "upTo": 700,
+     "base": 110
+    },
+    {
+     "upTo": 710,
+     "base": 112.25
+    },
+    {
+     "upTo": 720,
+     "base": 114.5
+    },
+    {
+     "upTo": 730,
+     "base": 116.75
+    },
+    {
+     "upTo": 740,
+     "base": 119
+    },
+    {
+     "upTo": 750,
+     "base": 121.25
+    },
+    {
+     "upTo": 760,
+     "base": 123.5
+    },
+    {
+     "upTo": 770,
+     "base": 125.75
+    },
+    {
+     "upTo": 780,
+     "base": 128
+    },
+    {
+     "upTo": 790,
+     "base": 130.25
+    },
+    {
+     "upTo": 800,
+     "base": 132.5
+    },
+    {
+     "upTo": 810,
+     "base": 134.75
+    },
+    {
+     "upTo": 820,
+     "base": 137
+    },
+    {
+     "upTo": 830,
+     "base": 139.25
+    },
+    {
+     "upTo": 840,
+     "base": 141.5
+    },
+    {
+     "upTo": 850,
+     "base": 143.75
+    },
+    {
+     "upTo": 860,
+     "base": 146
+    },
+    {
+     "upTo": 870,
+     "base": 148.25
+    },
+    {
+     "upTo": 880,
+     "base": 150.5
+    },
+    {
+     "upTo": 890,
+     "base": 152.75
+    },
+    {
+     "upTo": 900,
+     "base": 155
+    },
+    {
+     "upTo": 910,
+     "base": 157.25
+    },
+    {
+     "upTo": 920,
+     "base": 159.5
+    },
+    {
+     "upTo": 930,
+     "base": 161.75
+    },
+    {
+     "upTo": 940,
+     "base": 164
+    },
+    {
+     "upTo": 950,
+     "base": 166.25
+    },
+    {
+     "upTo": 960,
+     "base": 168.5
+    },
+    {
+     "upTo": 970,
+     "base": 170.75
+    },
+    {
+     "upTo": 980,
+     "base": 173
+    },
+    {
+     "upTo": 990,
+     "base": 175.25
+    },
+    {
+     "upTo": 1000,
+     "base": 177.5
+    },
+    {
+     "upTo": 1100,
+     "base": 189.5
+    },
+    {
+     "upTo": 1200,
+     "base": 201.5
+    },
+    {
+     "upTo": 1300,
+     "base": 213.5
+    },
+    {
+     "upTo": 1400,
+     "base": 225.5
+    },
+    {
+     "upTo": 1500,
+     "base": 237.5
+    },
+    {
+     "upTo": 1600,
+     "base": 249.5
+    },
+    {
+     "upTo": 1700,
+     "base": 261.5
+    },
+    {
+     "upTo": 1800,
+     "base": 273.5
+    },
+    {
+     "upTo": 1900,
+     "base": 285.5
+    },
+    {
+     "upTo": 2000,
+     "base": 297.5
+    },
+    {
+     "upTo": 2100,
+     "base": 309.5
+    },
+    {
+     "upTo": 2200,
+     "base": 321.5
+    },
+    {
+     "upTo": 2300,
+     "base": 333.5
+    },
+    {
+     "upTo": 2400,
+     "base": 345.5
+    },
+    {
+     "upTo": 2500,
+     "base": 357.5
+    },
+    {
+     "upTo": 2600,
+     "base": 369.5
+    },
+    {
+     "upTo": 2700,
+     "base": 381.5
+    },
+    {
+     "upTo": 2800,
+     "base": 393.5
+    },
+    {
+     "upTo": 2900,
+     "base": 405.5
+    },
+    {
+     "upTo": 3000,
+     "base": 417.5
+    },
+    {
+     "upTo": 3100,
+     "base": 429.5
+    },
+    {
+     "upTo": 3200,
+     "base": 441.5
+    },
+    {
+     "upTo": 3300,
+     "base": 453.5
+    },
+    {
+     "upTo": 3400,
+     "base": 465.5
+    },
+    {
+     "upTo": 3500,
+     "base": 477.5
+    },
+    {
+     "upTo": 3600,
+     "base": 489.5
+    },
+    {
+     "upTo": 3700,
+     "base": 501.5
+    },
+    {
+     "upTo": 3800,
+     "base": 513.5
+    },
+    {
+     "upTo": 3900,
+     "base": 525.5
+    },
+    {
+     "upTo": 4000,
+     "base": 537.5
+    },
+    {
+     "upTo": 4100,
+     "base": 549.5
+    },
+    {
+     "upTo": 4200,
+     "base": 561.5
+    },
+    {
+     "upTo": 4300,
+     "base": 573.5
+    },
+    {
+     "upTo": 4400,
+     "base": 585.5
+    },
+    {
+     "upTo": 4500,
+     "base": 597.5
+    },
+    {
+     "upTo": 4600,
+     "base": 609.5
+    },
+    {
+     "upTo": 4700,
+     "base": 621.5
+    },
+    {
+     "upTo": 4800,
+     "base": 633.5
+    },
+    {
+     "upTo": 4900,
+     "base": 645.5
+    },
+    {
+     "upTo": 5000,
+     "base": 657.5
+    },
+    {
+     "upTo": 5200,
+     "base": 677.5
+    },
+    {
+     "upTo": 5400,
+     "base": 697.5
+    },
+    {
+     "upTo": 5600,
+     "base": 717.5
+    },
+    {
+     "upTo": 5800,
+     "base": 737.5
+    },
+    {
+     "upTo": 6000,
+     "base": 757.5
+    },
+    {
+     "upTo": 6200,
+     "base": 777.5
+    },
+    {
+     "upTo": 6400,
+     "base": 797.5
+    },
+    {
+     "upTo": 6600,
+     "base": 817.5
+    },
+    {
+     "upTo": 6800,
+     "base": 837.5
+    },
+    {
+     "upTo": 7000,
+     "base": 857.5
+    },
+    {
+     "upTo": 7200,
+     "base": 877.5
+    },
+    {
+     "upTo": 7400,
+     "base": 897.5
+    },
+    {
+     "upTo": 7600,
+     "base": 917.5
+    },
+    {
+     "upTo": 7800,
+     "base": 937.5
+    },
+    {
+     "upTo": 8000,
+     "base": 957.5
+    },
+    {
+     "upTo": 8200,
+     "base": 977.5
+    },
+    {
+     "upTo": 8400,
+     "base": 997.5
+    },
+    {
+     "upTo": 8600,
+     "base": 1017.5
+    },
+    {
+     "upTo": 8800,
+     "base": 1037.5
+    },
+    {
+     "upTo": 9000,
+     "base": 1057.5
+    },
+    {
+     "upTo": 9200,
+     "base": 1077.5
+    },
+    {
+     "upTo": 9400,
+     "base": 1097.5
+    },
+    {
+     "upTo": 9600,
+     "base": 1117.5
+    },
+    {
+     "upTo": 9800,
+     "base": 1137.5
+    },
+    {
+     "upTo": 10000,
+     "base": 1157.5
+    },
+    {
+     "upTo": 10500,
+     "base": 1195
+    },
+    {
+     "upTo": 11000,
+     "base": 1232.5
+    },
+    {
+     "upTo": 11500,
+     "base": 1270
+    },
+    {
+     "upTo": 12000,
+     "base": 1307.5
+    },
+    {
+     "upTo": 12500,
+     "base": 1345
+    },
+    {
+     "upTo": 13000,
+     "base": 1382.5
+    },
+    {
+     "upTo": 13500,
+     "base": 1420
+    },
+    {
+     "upTo": 14000,
+     "base": 1457.5
+    },
+    {
+     "upTo": 14500,
+     "base": 1495
+    },
+    {
+     "upTo": 15000,
+     "base": 1532.5
+    },
+    {
+     "upTo": 15500,
+     "base": 1570
+    },
+    {
+     "upTo": 16000,
+     "base": 1607.5
+    },
+    {
+     "upTo": 16500,
+     "base": 1645
+    },
+    {
+     "upTo": 17000,
+     "base": 1682.5
+    },
+    {
+     "upTo": 17500,
+     "base": 1720
+    },
+    {
+     "upTo": 18000,
+     "base": 1757.5
+    },
+    {
+     "upTo": 18500,
+     "base": 1795
+    },
+    {
+     "upTo": 19000,
+     "base": 1832.5
+    },
+    {
+     "upTo": 19500,
+     "base": 1870
+    },
+    {
+     "upTo": 20000,
+     "base": 1907.5
+    },
+    {
+     "upTo": 20500,
+     "base": 1945
+    },
+    {
+     "upTo": 21000,
+     "base": 1982.5
+    },
+    {
+     "upTo": 21500,
+     "base": 2020
+    },
+    {
+     "upTo": 22000,
+     "base": 2057.5
+    },
+    {
+     "upTo": 22500,
+     "base": 2095
+    },
+    {
+     "upTo": 23000,
+     "base": 2132.5
+    },
+    {
+     "upTo": 23500,
+     "base": 2170
+    },
+    {
+     "upTo": 24000,
+     "base": 2207.5
+    },
+    {
+     "upTo": 24500,
+     "base": 2245
+    },
+    {
+     "upTo": 25000,
+     "base": 2282.5
+    },
+    {
+     "upTo": 25500,
+     "base": 2320
+    },
+    {
+     "upTo": 26000,
+     "base": 2357.5
+    },
+    {
+     "upTo": 26500,
+     "base": 2395
+    },
+    {
+     "upTo": 27000,
+     "base": 2432.5
+    },
+    {
+     "upTo": 27500,
+     "base": 2470
+    },
+    {
+     "upTo": 28000,
+     "base": 2507.5
+    },
+    {
+     "upTo": 28500,
+     "base": 2545
+    },
+    {
+     "upTo": 29000,
+     "base": 2582.5
+    },
+    {
+     "upTo": 30000,
+     "base": 2657.5
+    },
+    {
+     "upTo": null,
+     "base": 2657.5,
+     "stepSize": 500,
+     "stepFee": 37.5
     }
    ]
   },
@@ -520,17 +3492,17 @@
  ],
  "quickRef": [
   {
-   "label": "Civil suit (₹1 lakh)",
+   "label": "Civil suit (\u20b91 lakh)",
    "mode": "adv",
    "value": 100000
   },
   {
-   "label": "Civil suit (₹4 lakh)",
+   "label": "Civil suit (\u20b95 lakh)",
    "mode": "adv",
-   "value": 400000
+   "value": 500000
   },
   {
-   "label": "Civil suit (₹10 lakh, max)",
+   "label": "Civil suit (\u20b910 lakh)",
    "mode": "adv",
    "value": 1000000
   },
@@ -547,7 +3519,7 @@
    "key": "writ"
   },
   {
-   "label": "Consumer (₹5 lakh)",
+   "label": "Consumer (\u20b95 lakh)",
    "mode": "filing",
    "caseType": "consumer",
    "key": "complaint",
@@ -555,12 +3527,11 @@
   }
  ],
  "notes": [
-  "Rates are those of the Court Fees Act, 1870: Schedule I (ad valorem) and Schedule II (fixed fees). Old anna amounts are converted at 16 annas = ₹1 and shown to the nearest paisa.",
-  "The ad valorem fee on a plaint or memorandum of appeal is capped at ₹3,000 (any value above ₹4,10,000 pays the maximum).",
-  "The Act says rates in each State / Union Territory are as per its own State Amendments. Check the local schedule if your court's State has amended these rates.",
-  "The claim value is worked out under s. 7 of the Act (for example, maintenance is valued at 10 times one year's amount, a mortgage suit at the principal money, a landlord–tenant suit at one year's rent). In s. 7(iv) suits the plaintiff states the value.",
+  "Ad valorem fees (plaints, appeals and reviews) follow the State / Union Territory chosen above. Fixed fees (Schedule II) follow the Court Fees Act, 1870; old anna amounts are converted at 16 annas = \u20b91 and shown to the nearest paisa.",
+  "A State table gives the fee for a claim value up to each amount listed, so a value between two amounts pays the fee of the next amount up.",
+  "The claim value is worked out under s. 7 of the Act (for example, maintenance is valued at 10 times one year's amount, a mortgage suit at the principal money, a landlord\u2013tenant suit at one year's rent). In s. 7(iv) suits the plaintiff states the value.",
   "If a suit covers two or more distinct subjects, the fees for each are added together (s. 17). If the Court refers the parties to settlement under s. 89 CPC, the full plaint fee is refunded (s. 16).",
-  "Some documents carry no fee (s. 19), such as written statements called for after the first hearing, and probate or letters of administration where the property does not exceed ₹1,000.",
+  "Some documents carry no fee (s. 19), such as written statements called for after the first hearing, and probate or letters of administration where the property does not exceed \u20b91,000.",
   "Consumer complaints and Labour Court matters are not governed by this Act. Consumer fees follow Rule 7 of the CP (CDRC) Rules, 2020.",
   "Always confirm with the court registry before filing."
  ]

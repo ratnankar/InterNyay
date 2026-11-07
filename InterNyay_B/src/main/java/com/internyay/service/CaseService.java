@@ -344,7 +344,7 @@ public class CaseService {
     }
 
     // The file number is the one the advocate typed. Corporate panel cases always use their typed number; for the
-    // others, an empty field gets the next free sequence number
+    // others, an empty field gets the next free sequence number unless the advocate chose to have no file number
     private void numberNewCase(Case c, CaseRequest req, Long userId) {
 
         String typed = trimmedOrNull(req.getFileNo());
@@ -357,6 +357,12 @@ public class CaseService {
 
         if (typed != null) {
             applyTypedFileNo(c, typed, userId);
+            return;
+        }
+
+        if (Boolean.TRUE.equals(req.getNoFileNumber())) {
+            c.setFileNo(null);
+            c.setFileSeq(null);
             return;
         }
 
@@ -420,6 +426,13 @@ public class CaseService {
             return;
         }
 
+        // The advocate chose to have no file number: a number the case held is given up (it can be used by another case)
+        if (Boolean.TRUE.equals(req.getNoFileNumber()) && plainBlank(req.getFileNo())) {
+            c.setFileNo(null);
+            c.setFileSeq(null);
+            return;
+        }
+
         Integer current = c.getFileSeq();
 
         // A case that had no sequence number yet and now needs one
@@ -442,6 +455,10 @@ public class CaseService {
         } else if (current != null) {
             c.setFileNo(String.valueOf(current));
         }
+    }
+
+    private static boolean plainBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
     // True when the main client or any additional client is a corporate panel client
