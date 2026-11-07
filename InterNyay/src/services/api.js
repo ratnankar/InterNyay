@@ -896,7 +896,7 @@ export const admin = {
     moveTo: (id, position) => post(`/admin/options/${id}/move-to`, { params: { position } }),
   },
 
-  // Court fee calculator rules (filings, fee scales, notes)
+  // Court fee calculator rules (case type fees, fee scales, notes)
   feeCalculator: {
     get:    ()     => get('/admin/fee-calculator'),
     save:   (body) => put('/admin/fee-calculator', { body }),

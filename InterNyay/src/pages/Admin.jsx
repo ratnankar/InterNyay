@@ -1524,7 +1524,7 @@ export default function Admin() {
 
       {tab === 'plans' && <PlansAdmin key={refreshKey} />}
 
-      {/* Fee calculator tab: filings, fee scales and notes used by the Court Fee Calculator */}
+      {/* Fee calculator tab: case type fees, fee scales and notes used by the Court Fee Calculator */}
       {tab === 'feecalc' && <FeeCalculatorAdmin key={refreshKey} />}
 
       {/* Dropdown choices */}

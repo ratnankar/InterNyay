@@ -13,35 +13,33 @@ function fmt(n) {
 
 // Court Fee Calculator page: estimates the court fee under the Court Fees Act, 1870
 export default function CourtFeeCalculator() {
-  // Filings, fee scales and notes, as set by the admin
+  // Fee rules, fee scales and notes, as set by the admin
   const rules = useFeeRules()
-  const { matters: allMatters, matterNeedsValue, chargeableValue, calcMatterFee, consumerForum, jurisdictions, jurisdictionOf, usesJurisdiction } = rules
-  // Selected case type, the specific filing, claim value and whether Calculate was clicked
+  const { ruleOf, matterNeedsValue, chargeableValue, calcFee, consumerForum, jurisdictions, jurisdictionOf, usesJurisdiction } = rules
+  // Selected case type, claim value and whether Calculate was clicked
   const [caseType,    setCaseType]    = useState('civil')
-  const [matterKey,   setMatterKey]   = useState('')
   const [claimValue,  setClaimValue]  = useState('')
   const [calculated,  setCalculated]  = useState(false)
   // State / Union Territory whose ad valorem table applies (remembered for the session; the first listed State is the default)
   const [stateKey,   setStateKey]   = useSessionState('fee_calc_state', '')
 
-  // The chosen filing, whether it needs a claim value, and the claim value as a number
-  const matters    = allMatters[caseType] || []
-  const matter     = matters.find(m => m.key === matterKey) || matters[0] || null
+  // The fee rule of the chosen case type, whether it needs a claim value, and the claim value as a number
+  const matter     = ruleOf(caseType)
   const needsValue = !!matter && matterNeedsValue(matter)
   const cv         = parseFloat(claimValue) || 0
 
-  // The State chosen, and whether it matters for this filing (only ad valorem fees differ between States)
+  // The State chosen, and whether it matters for this case type (only ad valorem fees differ between States)
   const state      = jurisdictionOf(stateKey)
   const byState    = usesJurisdiction(matter)
 
-  // Court fee for the chosen filing
-  const courtFee   = useMemo(() => calcMatterFee(matter, cv, state.key), [matter, cv, state, rules])
+  // Court fee for the chosen case type
+  const courtFee   = useMemo(() => calcFee(matter, cv, state.key), [matter, cv, state, rules])
   const isReady    = !!matter && (!needsValue || cv > 0) && calculated
 
   // Hide the result so it must be calculated again after any input changes
   const reset = () => setCalculated(false)
-  // Switching case type selects that type's first filing
-  const pickType = value => { setCaseType(value); setMatterKey(''); reset() }
+  // Switching case type shows that type's fee rule
+  const pickType = value => { setCaseType(value); reset() }
 
   return (
     <div>
@@ -75,17 +73,9 @@ export default function CourtFeeCalculator() {
           </div>
 
           <div className="card calc-step">
-            {/* Step 2: the filing and claim value (when needed) */}
+            {/* Step 2: the fee rule of the case type and the claim value (when needed) */}
             <p className="calc-step__label">Step 2 — Case Details</p>
             <div className="calc-details-grid">
-              <div>
-                <label className="form-label">Filing / Relief</label>
-                <Dropdown className="form-input" value={matter?.key || ''}
-                  onChange={e => { setMatterKey(e.target.value); reset() }}>
-                  {matters.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
-                </Dropdown>
-              </div>
-
               {/* State / Union Territory, for the fees that differ between States */}
               {byState && (
                 <div>
@@ -101,7 +91,7 @@ export default function CourtFeeCalculator() {
               {!matter ? (
                 <div>
                   <label className="form-label">Fee Type</label>
-                  <div className="calc-fixed-badge">No filings set up for this case type</div>
+                  <div className="calc-fixed-badge">No fee set up for this case type</div>
                 </div>
               ) : needsValue ? (
                 <div>

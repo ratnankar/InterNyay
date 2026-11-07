@@ -15,13 +15,13 @@ import useSessionState from '../../hooks/useSessionState'
 // Copy of a config so edits never touch the loaded one or the built-in defaults
 const clone = o => JSON.parse(JSON.stringify(o))
 
-// Rupee text for the filings table
+// Rupee text for the case types table
 const rupees = n => '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })
 
 // A blank number box is saved as "not set"; anything else must be a number
 const numOrNull = v => (v === '' || v === null || v === undefined ? null : Number(v))
 
-// Short description of what a filing charges
+// Short description of what a case type charges
 function feeSummary(f) {
   if (f.kind === 'fixed') return Number(f.amount) === 0 ? 'Nil' : `Fixed ${rupees(f.amount)}`
   if (f.kind === 'adv')   return 'Ad valorem scale'
@@ -29,18 +29,7 @@ function feeSummary(f) {
   return SCALE_NAMES[f.scale] || 'Own fee scale'
 }
 
-// Lowercase letters, digits and underscores from a name, kept unique among the filings of its case type
-function makeKey(label, taken) {
-  const base = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'filing'
-  let key = base, n = 2
-  while (taken.has(key)) key = `${base}_${n++}`
-  return key
-}
-
-// Blank filing form for a case type
-const emptyFiling = caseType => ({ caseType, key: '', label: '', kind: 'adv', amount: '', scale: 'adValorem', mult: '', valueLabel: '', ref: '', isNew: true })
-
-// Admin screen for the court fee calculator: filings, fee scales and notes
+// Admin screen for the court fee calculator: the fee of each case type, fee scales and notes
 export default function FeeCalculatorAdmin() {
   const { addToast } = useApp()
   const [cfg, setCfg] = useState(null)
@@ -49,9 +38,8 @@ export default function FeeCalculatorAdmin() {
   // True for a few seconds right after a successful save, so "Saved" shows once and then goes away
   const [justSaved, setJustSaved] = useState(false)
   const [loadError, setLoadError] = useState('')
-  const [section, setSection] = useSessionState('admin_fee_section', 'filings')
-  const [caseType, setCaseType] = useState('civil')
-  // Filing in the editor (null when closed) and its error
+  const [section, setSection] = useSessionState('admin_fee_section', 'types')
+  // Case type rule in the editor (null when closed) and its error
   const [editing, setEditing] = useState(null)
   const [formError, setFormError] = useState('')
   const [confirmReset, setConfirmReset] = useState(false)
@@ -67,6 +55,7 @@ export default function FeeCalculatorAdmin() {
     api.admin.feeCalculator.get()
       .then(r => {
         const c = clone(r?.config || DEFAULT_CONFIG)
+        if (!Array.isArray(c.caseTypes)) c.caseTypes = clone(DEFAULT_CONFIG.caseTypes)
         if (!Array.isArray(c.quickRef)) c.quickRef = clone(DEFAULT_CONFIG.quickRef)   // rules saved before Quick Reference was editable
         // Rules saved before the State tables existed get the built-in States and State scales
         if (!Array.isArray(c.jurisdictions) || !c.jurisdictions.length) c.jurisdictions = clone(DEFAULT_CONFIG.jurisdictions)
@@ -91,16 +80,8 @@ export default function FeeCalculatorAdmin() {
 
   const update = fn => { setCfg(c => { const n = clone(c); fn(n); return n }); setDirty(true); setJustSaved(false) }
 
-  const filings = useMemo(() => (cfg?.filings || []), [cfg])
-  const shown = filings.map((f, i) => ({ f, i })).filter(x => x.f.caseType === caseType)
+  const typeRules = useMemo(() => COURT_TYPES.map(t => ({ t, i: (cfg?.caseTypes || []).findIndex(r => r.caseType === t.value) })), [cfg])
 
-  // Press and hold the grip of a row and drag it to any place; the order is applied once, when released
-  const filingDrag = useDragReorder(shown.map(x => x.f.key), (_start, finalKeys) => update(n => {
-    const same = n.filings.map((f, idx) => idx).filter(idx => n.filings[idx].caseType === caseType)
-    const byKey = new Map(same.map(idx => [n.filings[idx].key, n.filings[idx]]))
-    if (finalKeys.length !== same.length || finalKeys.some(k => !byKey.has(k))) return
-    same.forEach((idx, pos) => { n.filings[idx] = byKey.get(finalKeys[pos]) })
-  }))
   const quickDrag = useDragReorder(quickRows.map((_, i) => i), (_start, finalKeys) => update(n => {
     const src = n.quickRef || clone(DEFAULT_CONFIG.quickRef)
     n.quickRef = finalKeys.map(k => src[Number(k)])
@@ -109,29 +90,12 @@ export default function FeeCalculatorAdmin() {
     n.notes = finalKeys.map(k => n.notes[Number(k)])
   }))
 
-  // Moves a filing up or down among the filings of its case type
-  function move(i, dir) {
-    update(n => {
-      const same = n.filings.map((f, idx) => idx).filter(idx => n.filings[idx].caseType === n.filings[i].caseType)
-      const pos = same.indexOf(i), target = same[pos + dir]
-      if (target === undefined) return
-      ;[n.filings[i], n.filings[target]] = [n.filings[target], n.filings[i]]
-    })
-  }
-
-  async function removeFiling(i) {
-    const f = filings[i]
-    if (!await confirmDialog(`Remove "${f.label}" from the calculator?`)) return
-    update(n => { n.filings.splice(i, 1) })
-  }
-
-  // Saves the filing in the editor into the working copy
-  function saveFiling() {
+  function saveRule() {
     const f = editing
-    if (!f.label.trim()) return setFormError('Enter the filing name')
+    if (!f.label.trim()) return setFormError('Enter the fee name')
     if (f.kind === 'fixed' && (f.amount === '' || Number(f.amount) < 0)) return setFormError('Enter the fixed fee (0 for no fee)')
     if (f.mult !== '' && !(Number(f.mult) > 0)) return setFormError('The multiplier must be above 0, or left blank')
-    const out = { caseType: f.caseType, key: f.key, label: f.label.trim(), kind: f.kind, ref: f.ref.trim() }
+    const out = { caseType: f.caseType, label: f.label.trim(), kind: f.kind, ref: f.ref.trim() }
     if (f.kind === 'fixed') out.amount = Number(f.amount)
     if (f.kind === 'scale') out.scale = f.scale
     if (f.kind !== 'fixed') {
@@ -139,12 +103,9 @@ export default function FeeCalculatorAdmin() {
       out.valueLabel = f.valueLabel.trim() || 'Claim / Subject Matter Value (₹)'
     }
     update(n => {
-      if (f.isNew) {
-        out.key = makeKey(out.label, new Set(n.filings.filter(x => x.caseType === f.caseType).map(x => x.key)))
-        n.filings.push(out)
-      } else {
-        n.filings[f.index] = out
-      }
+      const at = n.caseTypes.findIndex(r => r.caseType === f.caseType)
+      if (at >= 0) n.caseTypes[at] = out
+      else n.caseTypes.push(out)
     })
     setEditing(null)
   }
@@ -168,6 +129,7 @@ export default function FeeCalculatorAdmin() {
         prev = up
       }
     }
+    if (COURT_TYPES.some(t => !c.caseTypes.some(r => r.caseType === t.value))) return 'Every case type needs a fee'
     if (!c.jurisdictions.length) return 'Add at least one State'
     if (c.jurisdictions.some(j => !String(j.label).trim())) return 'Every State needs a name'
     if (c.jurisdictions.some(j => !c.scales[j.scale])) return 'Every State needs a fee scale'
@@ -197,10 +159,10 @@ export default function FeeCalculatorAdmin() {
     c.jurisdictions = c.jurisdictions.map(j => ({ key: j.key, label: String(j.label).trim(), scale: j.scale, notes: (j.notes || []).map(x => String(x).trim()).filter(Boolean) }))
     c.notes = c.notes.map(x => String(x).trim()).filter(Boolean)
     c.quickRef = (c.quickRef || []).map(r => {
-      const o = { label: String(r.label || '').trim(), mode: r.mode === 'filing' ? 'filing' : 'adv' }
+      const o = { label: String(r.label || '').trim(), mode: r.mode === 'caseType' ? 'caseType' : 'adv' }
       const v = numOrNull(r.value)
       if (v !== null) o.value = v
-      if (o.mode === 'filing') { o.caseType = r.caseType; o.key = r.key }
+      if (o.mode === 'caseType') o.caseType = r.caseType
       return o
     }).filter(r => r.label)
     const err = problem(c)
@@ -242,7 +204,7 @@ export default function FeeCalculatorAdmin() {
   return (
     <div>
       <div className="admin__toolbar">
-        {[['filings', 'Filings'], ['states', 'States'], ['scales', 'Fee scales'], ['quick', 'Quick reference'], ['notes', 'Notes']].map(([id, label]) => (
+        {[['types', 'Case types'], ['states', 'States'], ['scales', 'Fee scales'], ['quick', 'Quick reference'], ['notes', 'Notes']].map(([id, label]) => (
           <button type="button" key={id} className={section === id ? 'btn-gold' : 'btn-outline'} onClick={() => setSection(id)}>{label}</button>
         ))}
         <span className="admin__count">
@@ -260,37 +222,34 @@ export default function FeeCalculatorAdmin() {
         )}
       </div>
 
-      {/* Filings: what can be picked in the calculator, per case type */}
-      {section === 'filings' && (
+      {section === 'types' && (
         <>
           <div className="admin__toolbar">
-            {COURT_TYPES.map(t => (
-              <button type="button" key={t.value} className={caseType === t.value ? 'btn-gold btn-outline--sm' : 'btn-outline btn-outline--sm'}
-                onClick={() => setCaseType(t.value)}>
-                {t.label} ({filings.filter(f => f.caseType === t.value).length})
-              </button>
-            ))}
-            <button type="button" className="btn-gold" onClick={() => { setFormError(''); setEditing(emptyFiling(caseType)) }}>+ Add filing</button>
+            <p className="admin__hint">Each case type has one fee. The calculator shows it as soon as the user picks the case type, asking for a claim value only when the fee depends on one.</p>
           </div>
           <div className="admin__table-wrap">
             <table className="admin__table">
-              <thead><tr><th>Filing</th><th>Fee</th><th>Reference</th><th /></tr></thead>
+              <thead><tr><th>Case type</th><th>Fee name</th><th>Fee</th><th>Reference</th><th /></tr></thead>
               <tbody>
-                {shown.length === 0 && <tr><td colSpan={4} className="admin__empty">No filings for this case type</td></tr>}
-                {filingDrag.ordered(shown, x => x.f.key).map(({ f, i }, pos) => (
-                  <tr key={f.key} ref={filingDrag.rowRef(f.key)} style={filingDrag.rowStyle(f.key)}>
-                    <td className="admin__multiline"><strong>{f.label}</strong></td>
-                    <td>{feeSummary(f)}{f.mult > 1 ? ` × ${f.mult} value` : ''}</td>
-                    <td className="admin__multiline">{f.ref || '—'}</td>
-                    <td className="admin__actions">
-                      <span {...filingDrag.gripProps(f.key)} style={{ ...filingDrag.gripProps(f.key).style, fontSize: 18, lineHeight: 1, padding: '0 6px' }}>⠿</span>
-                      <button type="button" className="btn-outline btn-outline--sm" disabled={pos === 0} onClick={() => move(i, -1)} title="Move up">↑</button>
-                      <button type="button" className="btn-outline btn-outline--sm" disabled={pos === shown.length - 1} onClick={() => move(i, 1)} title="Move down">↓</button>
-                      <button type="button" className="btn-outline btn-outline--sm" onClick={() => { setFormError(''); setEditing({ ...f, index: i, amount: f.amount ?? '', mult: f.mult ?? '', valueLabel: f.valueLabel || '', ref: f.ref || '', scale: f.scale || 'adValorem' }) }}>Edit</button>
-                      <button type="button" className="btn-outline btn-outline--sm btn-outline--danger" onClick={() => removeFiling(i)}>Remove</button>
-                    </td>
-                  </tr>
-                ))}
+                {typeRules.map(({ t, i }) => {
+                  const f = i >= 0 ? cfg.caseTypes[i] : null
+                  return (
+                    <tr key={t.value}>
+                      <td><strong>{t.label}</strong></td>
+                      <td className="admin__multiline">{f ? f.label : <span className="admin__count">Not set</span>}</td>
+                      <td>{f ? `${feeSummary(f)}${f.mult > 1 ? ` × ${f.mult} value` : ''}` : '—'}</td>
+                      <td className="admin__multiline">{f?.ref || '—'}</td>
+                      <td className="admin__actions">
+                        <button type="button" className="btn-outline btn-outline--sm" onClick={() => {
+                          setFormError('')
+                          setEditing(f
+                            ? { ...f, amount: f.amount ?? '', mult: f.mult ?? '', valueLabel: f.valueLabel || '', ref: f.ref || '', scale: f.scale || 'adValorem' }
+                            : { caseType: t.value, label: '', kind: 'adv', amount: '', scale: 'adValorem', mult: '', valueLabel: '', ref: '' })
+                        }}>Edit</button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -445,22 +404,18 @@ export default function FeeCalculatorAdmin() {
                     <tr key={i} ref={quickDrag.rowRef(i)} style={quickDrag.rowStyle(i)}>
                       <td><input className="form-input" value={r.label} onChange={e => set({ label: e.target.value })} /></td>
                       <td>
-                        <Dropdown className="form-input" value={r.mode === 'filing' ? `${r.caseType}/${r.key}` : 'adv'}
+                        <Dropdown className="form-input" value={r.mode === 'caseType' ? r.caseType : 'adv'}
                           onChange={e => {
                             const v = e.target.value
-                            if (v === 'adv') set({ mode: 'adv', caseType: undefined, key: undefined })
-                            else { const [ct, ...k] = v.split('/'); set({ mode: 'filing', caseType: ct, key: k.join('/') }) }
+                            if (v === 'adv') set({ mode: 'adv', caseType: undefined })
+                            else set({ mode: 'caseType', caseType: v })
                           }}>
                           <option value="adv">Ad valorem scale (civil suit)</option>
-                          {filings.map(f => (
-                            <option key={`${f.caseType}/${f.key}`} value={`${f.caseType}/${f.key}`}>
-                              {COURT_TYPES.find(t => t.value === f.caseType)?.label}: {f.label}
-                            </option>
-                          ))}
+                          {COURT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                         </Dropdown>
                       </td>
                       <td><input className="form-input u-w-130" type="number" min="0" placeholder="if needed" value={r.value ?? ''} onChange={e => set({ value: e.target.value })} /></td>
-                      <td>{shown ? <strong>{shown[1]}</strong> : <span className="admin__count">Filing not found</span>}</td>
+                      <td>{shown ? <strong>{shown[1]}</strong> : <span className="admin__count">Case type not found</span>}</td>
                       <td className="admin__actions">
                         <span {...quickDrag.gripProps(i)} style={{ ...quickDrag.gripProps(i).style, fontSize: 18, lineHeight: 1, padding: '0 6px' }}>⠿</span>
                         <button type="button" className="btn-outline btn-outline--sm" disabled={i === 0} onClick={() => update(n => { n.quickRef = n.quickRef || clone(DEFAULT_CONFIG.quickRef); [n.quickRef[i - 1], n.quickRef[i]] = [n.quickRef[i], n.quickRef[i - 1]] })}>↑</button>
@@ -497,15 +452,15 @@ export default function FeeCalculatorAdmin() {
         </>
       )}
 
-      {/* Filing editor */}
+      {/* Case type fee editor */}
       {editing && (
         <ModalPortal>
           <div className="overlay" {...overlay}>
             <div className="modal modal--md" onClick={e => e.stopPropagation()}>
-              <h3 className="section-title">{editing.isNew ? 'Add filing' : 'Edit filing'} — {COURT_TYPES.find(t => t.value === editing.caseType)?.label}</h3>
+              <h3 className="section-title">Edit fee — {COURT_TYPES.find(t => t.value === editing.caseType)?.label}</h3>
               <div className="admin__form">
                 <div className="form-group admin__form-group--full">
-                  <label className="form-label">Filing name *</label>
+                  <label className="form-label">Fee name *</label>
                   <input className="form-input" value={editing.label} onChange={e => setEditing({ ...editing, label: e.target.value })} />
                 </div>
                 <div className="form-group">
@@ -548,7 +503,7 @@ export default function FeeCalculatorAdmin() {
               {formError && <p className="admin__hint admin__hint--error">{formError}</p>}
               <div className="form-actions">
                 <button type="button" className="btn-outline" onClick={closeEditor}>Cancel</button>
-                <button type="button" className="btn-gold" onClick={saveFiling}>Done</button>
+                <button type="button" className="btn-gold" onClick={saveRule}>Done</button>
               </div>
             </div>
           </div>

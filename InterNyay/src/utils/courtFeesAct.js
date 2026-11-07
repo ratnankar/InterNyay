@@ -1,5 +1,5 @@
 // Court fee rules. The built-in defaults below follow the Court Fees Act, 1870 (Act 7 of 1870), as printed in the central text.
-// The admin can change every filing, fee scale and note in Admin -> Fee Calculator; the saved copy is read from the backend and
+// The admin can change every case type's fee rule, fee scale and note in Admin -> Fee Calculator; the saved copy is read from the backend and
 // replaces these defaults. Everything the calculator needs is worked out from one config object (see buildFeeRules).
 //
 // Basis: Schedule I (ad valorem fees, Art. 1 and the Table of Rates), Schedule II (fixed fees), and the valuation rules in
@@ -14,7 +14,7 @@ import { DELHI_SCALE, HARYANA_SCALE, UTTAR_PRADESH_SCALE } from './stateFeeTable
 const LAKH = 100000
 const CRORE = 100 * LAKH
 
-// Case types shown as buttons in Step 1 (the filings under each come from the config)
+// Case types shown as buttons in Step 1 (each has one fee rule in the config)
 export const COURT_TYPES = [
   { value: 'civil',    label: 'Civil Suit',          icon: 'scale',   desc: 'Money, possession, probate, execution' },
   { value: 'criminal', label: 'Criminal Case',       icon: 'lock',    desc: 'Complaints, bail, CRL.M.C., appeals'   },
@@ -25,7 +25,7 @@ export const COURT_TYPES = [
   { value: 'appeal',   label: 'Appeal',              icon: 'bank',    desc: 'From decree or other orders'           },
 ]
 
-// Fee types a filing can have, as shown in the admin editor
+// Fee types a case type can have, as shown in the admin editor
 export const FEE_KINDS = [
   { value: 'adv',   label: 'Ad valorem (scale of the chosen State)' },
   { value: 'half',  label: 'Half of the ad valorem fee' },
@@ -33,7 +33,7 @@ export const FEE_KINDS = [
   { value: 'scale', label: 'Own fee scale' },
 ]
 
-// Fee scales a filing of type "Own fee scale" can use, and what each is called in the admin editor
+// Fee scales a case type of type "Own fee scale" can use, and what each is called in the admin editor
 export const SCALE_NAMES = {
   adValorem:        'Ad valorem – Central Act (Sch. I, Art. 1)',
   adValoremDelhi:   'Ad valorem – Delhi & Chandigarh',
@@ -51,53 +51,14 @@ export const SCALE_NAMES = {
 //   otherwise                  -> the flat amount in base
 // maxFee, when set, caps the fee of the scale (the Act caps a plaint at Rs 3,000).
 export const DEFAULT_CONFIG = {
-  filings: [
-  { caseType:"civil", key:"suit", label:"Money suit (recovery,  damages,  compensation)", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(i)", valueLabel:"Amount claimed (₹)" },
-  { caseType:"civil", key:"maintenance", label:"Suit for maintenance or annuity", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(ii)", mult:10, valueLabel:"Amount claimed per year (₹)" },
-  { caseType:"civil", key:"possession", label:"Suit for possession of land,  house or garden", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(v)", valueLabel:"Value of the property under s. 7(v) (₹)" },
-  { caseType:"civil", key:"spec_perf", label:"Specific performance of a contract of sale", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(x)(a)", valueLabel:"Amount of the consideration (₹)" },
-  { caseType:"civil", key:"mortgage", label:"Suit to redeem or foreclose a mortgage", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(ix)", valueLabel:"Principal money secured by the mortgage (₹)" },
-  { caseType:"civil", key:"landlord", label:"Suit between landlord and tenant (rent,  ejectment etc.)", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(xi)", valueLabel:"Annual rent of the premises (₹)" },
-  { caseType:"civil", key:"preemption", label:"Suit to enforce a right of pre-emption", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(vi)", valueLabel:"Value of the land / house under s. 7(v) (₹)" },
-  { caseType:"civil", key:"partition", label:"Suit for share in joint family property / partition", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(iv)(b)", valueLabel:"Value of the relief as stated in the plaint (₹)" },
-  { caseType:"civil", key:"decl_conseq", label:"Declaration with consequential relief", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(iv)(c)", valueLabel:"Value of the relief as stated in the plaint (₹)" },
-  { caseType:"civil", key:"injunction", label:"Suit for injunction", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(iv)(d)", valueLabel:"Value of the relief as stated in the plaint (₹)" },
-  { caseType:"civil", key:"accounts", label:"Suit for accounts", kind:"adv", ref:"Sch. I,  Art. 1; s. 7(iv)(f)", valueLabel:"Value of the relief as stated in the plaint (₹)" },
-  { caseType:"civil", key:"sra_possess", label:"Possession suit under s. 6,  Specific Relief Act", kind:"half", ref:"Sch. I,  Art. 2", valueLabel:"Value of the property (₹)" },
-  { caseType:"civil", key:"declaration", label:"Declaration only (no consequential relief)", kind:"fixed", ref:"Sch. II,  Art. 17(iii)", amount:10 },
-  { caseType:"civil", key:"no_value", label:"Any other suit where value cannot be estimated in money", kind:"fixed", ref:"Sch. II,  Art. 17(vi)", amount:10 },
-  { caseType:"civil", key:"award", label:"Suit to set aside an award", kind:"fixed", ref:"Sch. II,  Art. 17(iv)", amount:10 },
-  { caseType:"civil", key:"adoption", label:"Suit to set aside an adoption", kind:"fixed", ref:"Sch. II,  Art. 17(v)", amount:10 },
-  { caseType:"civil", key:"occupancy", label:"Suit to establish or disprove right of occupancy", kind:"fixed", ref:"Sch. II,  Art. 5 (8 annas)", amount:0.5 },
-  { caseType:"civil", key:"review_90", label:"Review application before 90 days of decree", kind:"half", ref:"Sch. I,  Art. 5", valueLabel:"Value of the original suit / appeal (₹)" },
-  { caseType:"civil", key:"review_late", label:"Review application on or after 90 days", kind:"adv", ref:"Sch. I,  Art. 4", valueLabel:"Value of the original suit / appeal (₹)" },
-  { caseType:"civil", key:"execution", label:"Execution petition / other application in a civil court", kind:"fixed", ref:"Sch. II,  Art. 1(b) (8 annas)", amount:0.5 },
-  { caseType:"civil", key:"pauper", label:"Application for leave to sue as a pauper", kind:"fixed", ref:"Sch. II,  Art. 2 (8 annas)", amount:0.5 },
-  { caseType:"civil", key:"caveat", label:"Caveat", kind:"fixed", ref:"Sch. II,  Art. 12", amount:5 },
-  { caseType:"civil", key:"probate", label:"Probate / letters of administration", kind:"scale", ref:"Sch. I,  Art. 11", scale:"probate", valueLabel:"Value of the estate (₹)" },
-  { caseType:"civil", key:"succession", label:"Succession certificate", kind:"scale", ref:"Sch. I,  Art. 12", scale:"succession", valueLabel:"Value of the debts / securities (₹)" },
-  { caseType:"appeal", key:"decree", label:"Appeal from a decree or order having the force of a decree", kind:"adv", ref:"Sch. I,  Art. 1", valueLabel:"Value of the subject matter of the appeal (₹)" },
-  { caseType:"appeal", key:"compensation", label:"Appeal against an order on compensation (land acquisition)", kind:"adv", ref:"Sch. I,  Art. 1; s. 8", valueLabel:"Difference between amount awarded and amount claimed (₹)" },
-  { caseType:"appeal", key:"other_civil", label:"Appeal not from a decree – civil court other than High Court", kind:"fixed", ref:"Sch. II,  Art. 11(a) (8 annas)", amount:0.5 },
-  { caseType:"appeal", key:"other_hc", label:"Appeal not from a decree – High Court", kind:"fixed", ref:"Sch. II,  Art. 11(b)", amount:2 },
-  { caseType:"appeal", key:"pauper_dist", label:"Leave to appeal as a pauper – District Court", kind:"fixed", ref:"Sch. II,  Art. 3(a)", amount:1 },
-  { caseType:"appeal", key:"pauper_hc", label:"Leave to appeal as a pauper – High Court", kind:"fixed", ref:"Sch. II,  Art. 3(b)", amount:2 },
-  { caseType:"family", key:"hma", label:"Petition under Hindu Marriage Act / Special Marriage Act (divorce,  custody etc.)", kind:"fixed", ref:"Sch. II,  Art. 17(vi),  applied by analogy", amount:10 },
-  { caseType:"family", key:"divorce_act", label:"Petition under Indian Divorce Act,  1869 (other than s. 44) or appeal under s. 55", kind:"fixed", ref:"Sch. II,  Art. 20", amount:20 },
-  { caseType:"family", key:"parsi", label:"Plaint or appeal under Parsi Marriage and Divorce Act", kind:"fixed", ref:"Sch. II,  Art. 21", amount:20 },
-  { caseType:"family", key:"convert", label:"Petition under Native Converts Marriage Dissolution Act,  1866", kind:"fixed", ref:"Sch. II,  Art. 14", amount:5 },
-  { caseType:"family", key:"maint125", label:"Maintenance application (s. 125 CrPC / s. 144 BNSS)", kind:"fixed", ref:"Sch. II,  Art. 1(b) (8 annas)", amount:0.5 },
-  { caseType:"family", key:"misc_app", label:"Miscellaneous / interim application", kind:"fixed", ref:"Sch. II,  Art. 1(b) (8 annas)", amount:0.5 },
-  { caseType:"criminal", key:"complaint", label:"Criminal complaint (offence not arrestable without warrant)", kind:"fixed", ref:"Sch. II,  Art. 1(b) (8 annas)", amount:0.5 },
-  { caseType:"criminal", key:"app_dist", label:"Application / bail in a criminal court (Magistrate / Sessions)", kind:"fixed", ref:"Sch. II,  Art. 1(b) (8 annas)", amount:0.5 },
-  { caseType:"criminal", key:"hc_crl", label:"High Court – bail,  anticipatory bail,  quashing,  revision or other criminal petition", kind:"fixed", ref:"Sch. II,  Art. 1(d)", amount:2 },
-  { caseType:"criminal", key:"appeal_dist", label:"Criminal appeal – Sessions Court", kind:"fixed", ref:"Sch. II,  Art. 11(a) (8 annas)", amount:0.5 },
-  { caseType:"criminal", key:"appeal_hc", label:"Criminal appeal – High Court", kind:"fixed", ref:"Sch. II,  Art. 11(b)", amount:2 },
-  { caseType:"writ", key:"writ", label:"Writ petition (Art. 226 / habeas corpus)", kind:"fixed", ref:"Sch. II,  Art. 1(d)", amount:2 },
-  { caseType:"writ", key:"hc_other", label:"Any other petition / application in the High Court", kind:"fixed", ref:"Sch. II,  Art. 1(d)", amount:2 },
-  { caseType:"writ", key:"hc_caveat", label:"Caveat in the High Court", kind:"fixed", ref:"Sch. II,  Art. 12", amount:5 },
-  { caseType:"consumer", key:"complaint", label:"Consumer complaint (value of goods / services paid)", kind:"scale", ref:"Rule 7,  CP (CDRC) Rules,  2020 (not under the 1870 Act)", scale:"consumer", valueLabel:"Value of goods / services paid as consideration (₹)" },
-  { caseType:"labour", key:"claim", label:"Industrial dispute / claim before the Labour Court", kind:"fixed", ref:"Industrial Disputes Act – no court fee (not under the 1870 Act)", amount:0 },
+  caseTypes: [
+    { caseType:"civil", label:"Civil suit (plaint)", kind:"adv", ref:"Sch. I,  Art. 1; s. 7", valueLabel:"Value of the suit as stated in the plaint (₹)" },
+    { caseType:"appeal", label:"Appeal from a decree", kind:"adv", ref:"Sch. I,  Art. 1", valueLabel:"Value of the subject matter of the appeal (₹)" },
+    { caseType:"criminal", label:"Criminal application / complaint", kind:"fixed", ref:"Sch. II,  Art. 1(b) (8 annas)", amount:0.5 },
+    { caseType:"family", label:"Family / matrimonial petition", kind:"fixed", ref:"Sch. II,  Art. 17(vi),  applied by analogy", amount:10 },
+    { caseType:"writ", label:"Writ petition (Art. 226)", kind:"fixed", ref:"Sch. II,  Art. 1(d)", amount:2 },
+    { caseType:"consumer", label:"Consumer complaint", kind:"scale", ref:"Rule 7,  CP (CDRC) Rules,  2020 (not under the 1870 Act)", scale:"consumer", valueLabel:"Value of goods / services paid as consideration (₹)" },
+    { caseType:"labour", label:"Industrial dispute / claim", kind:"fixed", ref:"Industrial Disputes Act – no court fee (not under the 1870 Act)", amount:0 },
   ],
   // States / Union Territories shown in the calculator. Each one charges the ad valorem scale named in `scale`; the first one is the default.
   jurisdictions: [
@@ -166,23 +127,25 @@ export const DEFAULT_CONFIG = {
     { upTo: 2 * CRORE, label: 'State Consumer Commission' },
     { upTo: null,      label: 'National Consumer Commission (NCDRC)' },
   ],
-  // Quick Reference rows: mode 'adv' = the ad valorem fee on `value`; mode 'filing' = the fee of one filing (caseType + key) on `value`
+  // Quick Reference rows: mode 'adv' = the ad valorem fee on `value`; mode 'caseType' = the fee of that case type on `value`
   quickRef: [
     { label: 'Civil suit (₹1 lakh)', mode: 'adv', value: 100000 },
     { label: 'Civil suit (₹5 lakh)', mode: 'adv', value: 500000 },
     { label: 'Civil suit (₹10 lakh)', mode: 'adv', value: 1000000 },
-    { label: 'Declaration only / no value', mode: 'filing', caseType: 'civil', key: 'declaration' },
-    { label: 'Writ / High Court petition', mode: 'filing', caseType: 'writ', key: 'writ' },
-    { label: 'Consumer (₹5 lakh)', mode: 'filing', caseType: 'consumer', key: 'complaint', value: 500000 },
+    { label: 'Appeal (₹5 lakh)', mode: 'caseType', caseType: 'appeal', value: 500000 },
+    { label: 'Family / matrimonial petition', mode: 'caseType', caseType: 'family' },
+    { label: 'Writ / High Court petition', mode: 'caseType', caseType: 'writ' },
+    { label: 'Consumer (₹5 lakh)', mode: 'caseType', caseType: 'consumer', value: 500000 },
   ],
   // Notes shown beside the result (a State's own notes, from `jurisdictions`, are shown with them)
   notes: [
-    'Ad valorem fees (plaints, appeals and reviews) follow the State / Union Territory chosen above. Fixed fees (Schedule II) follow the Court Fees Act, 1870; old anna amounts are converted at 16 annas = ₹1 and shown to the nearest paisa.',
+    'Ad valorem fees (civil plaints and appeals) follow the State / Union Territory chosen above. Fixed fees (Schedule II) follow the Court Fees Act, 1870; old anna amounts are converted at 16 annas = ₹1 and shown to the nearest paisa.',
     'A State table gives the fee for a claim value up to each amount listed, so a value between two amounts pays the fee of the next amount up.',
     'The claim value is worked out under s. 7 of the Act (for example, maintenance is valued at 10 times one year\'s amount, a mortgage suit at the principal money, a landlord–tenant suit at one year\'s rent). In s. 7(iv) suits the plaintiff states the value.',
     'If a suit covers two or more distinct subjects, the fees for each are added together (s. 17). If the Court refers the parties to settlement under s. 89 CPC, the full plaint fee is refunded (s. 16).',
     'Some documents carry no fee (s. 19), such as written statements called for after the first hearing, and probate or letters of administration where the property does not exceed ₹1,000.',
     'Consumer complaints and Labour Court matters are not governed by this Act. Consumer fees follow Rule 7 of the CP (CDRC) Rules, 2020.',
+    'The fee shown is the standard fee for the chosen case type. Other applications, High Court criminal petitions and appeals, reviews, caveats and probate carry their own fees under Schedules I and II.',
     'Always confirm with the court registry before filing.',
   ],
 }
@@ -215,13 +178,12 @@ function scaleFee(scale, value) {
 
 // Everything the calculator needs, worked out from a config (the admin's saved one, or DEFAULT_CONFIG)
 export function buildFeeRules(config) {
-  const cfg = config && Array.isArray(config.filings) && config.scales ? config : DEFAULT_CONFIG
+  const cfg = config && Array.isArray(config.caseTypes) && config.scales ? config : DEFAULT_CONFIG
   const scales = { ...DEFAULT_CONFIG.scales, ...cfg.scales }
 
-  // Filings grouped by case type, in the order the admin set
-  const matters = {}
-  COURT_TYPES.forEach(t => { matters[t.value] = [] })
-  cfg.filings.forEach(f => { if (matters[f.caseType]) matters[f.caseType].push(f) })
+  const rulesByType = {}
+  cfg.caseTypes.forEach(r => { if (r && r.caseType && !rulesByType[r.caseType]) rulesByType[r.caseType] = r })
+  const ruleOf = caseType => rulesByType[caseType] || null
 
   // States / Union Territories, each with the ad valorem scale its courts charge. The first one is the default. Rules saved before
   // States existed have none, so the built-in list is used for them.
@@ -236,17 +198,17 @@ export function buildFeeRules(config) {
   // Fee of any one scale by its name, for the admin preview
   const feeOfScale = (name, v) => money(scaleFee(scales[name], v))
 
-  // Whether a filing needs a claim value entered
+  // Whether a case type needs a claim value entered
   const matterNeedsValue = m => m.kind === 'adv' || m.kind === 'half' || (m.kind === 'scale' && !!m.valueLabel)
 
-  // Whether the State matters for a filing: only the ad valorem fees differ between States (fixed fees, consumer and the rest do not)
+  // Whether the State matters for a case type: only the ad valorem fees differ between States (fixed fees, consumer and the rest do not)
   const usesJurisdiction = m => !!m && (m.kind === 'adv' || m.kind === 'half')
 
   // The value the fee is actually charged on (e.g. maintenance is valued at 10 x one year's amount, s. 7(ii))
   const chargeableValue = (m, value) => (Number(value) || 0) * (Number(m?.mult) || 1)
 
-  // Fee for a chosen filing
-  function calcMatterFee(m, value, jKey) {
+  // Fee for a case type's rule
+  function calcFee(m, value, jKey) {
     if (!m) return 0
     const v = chargeableValue(m, value)
     if (m.kind === 'adv')   return adValorem(v, jKey)
@@ -262,14 +224,14 @@ export function buildFeeRules(config) {
     return (hit || list[list.length - 1]).label
   }
 
-  // Quick Reference rows as [label, fee text] for a State; a row whose filing was removed is left out
+  // Quick Reference rows as [label, fee text] for a State; a row whose case type has no rule is left out
   const quickRefFor = jKey => (Array.isArray(cfg.quickRef) ? cfg.quickRef : DEFAULT_CONFIG.quickRef).flatMap(r => {
     const value = Number(r.value) || 0
     let fee
-    if (r.mode === 'filing') {
-      const m = matters[r.caseType]?.find(x => x.key === r.key)
+    if (r.mode === 'caseType') {
+      const m = ruleOf(r.caseType)
       if (!m) return []
-      fee = calcMatterFee(m, value, jKey)
+      fee = calcFee(m, value, jKey)
     } else {
       fee = adValorem(value, jKey)
     }
@@ -278,8 +240,8 @@ export function buildFeeRules(config) {
   })
 
   return {
-    quickRef: quickRefFor(), quickRefFor, matters, jurisdictions, jurisdictionOf, usesJurisdiction,
-    adValorem, feeOfScale, matterNeedsValue, chargeableValue, calcMatterFee, consumerForum,
+    quickRef: quickRefFor(), quickRefFor, ruleOf, jurisdictions, jurisdictionOf, usesJurisdiction,
+    adValorem, feeOfScale, matterNeedsValue, chargeableValue, calcFee, consumerForum,
     notes: Array.isArray(cfg.notes) ? cfg.notes : DEFAULT_CONFIG.notes,
   }
 }
