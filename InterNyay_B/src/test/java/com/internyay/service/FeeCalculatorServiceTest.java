@@ -56,7 +56,7 @@ class FeeCalculatorServiceTest {
     void servesTheBuiltInDefaultsWhenNothingIsSaved() {
         JsonNode rules = service.current();
 
-        assertThat(rules.get("filings")).isNotNull().isNotEmpty();
+        assertThat(rules.get("caseTypes")).isNotNull().isNotEmpty();
         assertThat(rules.get("scales").has("adValorem")).isTrue();
     }
 
@@ -75,7 +75,7 @@ class FeeCalculatorServiceTest {
                 .id(FeeCalculatorConfig.ROW_ID).config("{not json").build();
         when(repo.findById(FeeCalculatorConfig.ROW_ID)).thenReturn(Optional.of(row));
 
-        assertThat(service.current().get("filings")).isNotEmpty();
+        assertThat(service.current().get("caseTypes")).isNotEmpty();
     }
 
     @Test
@@ -113,7 +113,7 @@ class FeeCalculatorServiceTest {
     void resetSavesTheDefaults() {
         JsonNode result = service.reset();
 
-        assertThat(result.get("filings")).isNotEmpty();
+        assertThat(result.get("caseTypes")).isNotEmpty();
         verify(repo).save(any(FeeCalculatorConfig.class));
     }
 
@@ -122,30 +122,46 @@ class FeeCalculatorServiceTest {
         assertThatThrownBy(() -> service.save(null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.save(mapper.createObjectNode()))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("at least one filing");
+                .hasMessageContaining("fee for every case type");
     }
 
     @Test
-    void refusesADuplicateFilingKey() {
+    void refusesADuplicateCaseType() {
         ObjectNode rules = validRules();
-        ArrayNode filings = (ArrayNode) rules.get("filings");
-        filings.add(filings.get(0).deepCopy());
+        ArrayNode caseTypes = (ArrayNode) rules.get("caseTypes");
+        caseTypes.add(caseTypes.get(0).deepCopy());
 
-        assertRefused(rules, "Duplicate filing key");
+        assertRefused(rules, "Duplicate case type");
+    }
+
+    @Test
+    void refusesAnUnknownCaseType() {
+        ObjectNode rules = validRules();
+        ((ObjectNode) rules.get("caseTypes").get(0)).put("caseType", "tribunal");
+
+        assertRefused(rules, "Unknown case type");
+    }
+
+    @Test
+    void refusesRulesMissingACaseType() {
+        ObjectNode rules = validRules();
+        ((ArrayNode) rules.get("caseTypes")).remove(0);
+
+        assertRefused(rules, "Every case type needs a fee");
     }
 
     @Test
     void refusesAnUnknownFeeType() {
         ObjectNode rules = validRules();
-        ((ObjectNode) rules.get("filings").get(0)).put("kind", "mystery");
+        ((ObjectNode) rules.get("caseTypes").get(0)).put("kind", "mystery");
 
         assertRefused(rules, "Unknown fee type");
     }
 
     @Test
-    void refusesAFilingWithoutAName() {
+    void refusesACaseTypeFeeWithoutAName() {
         ObjectNode rules = validRules();
-        ((ObjectNode) rules.get("filings").get(0)).put("label", "");
+        ((ObjectNode) rules.get("caseTypes").get(0)).put("label", "");
 
         assertRefused(rules, "needs a name");
     }
@@ -153,9 +169,9 @@ class FeeCalculatorServiceTest {
     @Test
     void refusesANegativeFixedFee() {
         ObjectNode rules = validRules();
-        ObjectNode filing = (ObjectNode) rules.get("filings").get(0);
-        filing.put("kind", "fixed");
-        filing.put("amount", -5);
+        ObjectNode rule = (ObjectNode) rules.get("caseTypes").get(0);
+        rule.put("kind", "fixed");
+        rule.put("amount", -5);
 
         assertRefused(rules, "fixed fee of 0 or more");
     }
@@ -163,7 +179,7 @@ class FeeCalculatorServiceTest {
     @Test
     void refusesAMultiplierOfZero() {
         ObjectNode rules = validRules();
-        ((ObjectNode) rules.get("filings").get(0)).put("mult", 0);
+        ((ObjectNode) rules.get("caseTypes").get(0)).put("mult", 0);
 
         assertRefused(rules, "multiplier");
     }
@@ -272,7 +288,56 @@ class FeeCalculatorServiceTest {
         assertThat(upgraded.get("notes").toString()).contains("A note the admin wrote.").doesNotContain("is capped at 3,000");
         assertThat(upgraded.get("notes").get(0).asText()).startsWith("Ad valorem fees (plaints, appeals and reviews)");
         assertThat(upgraded.get("quickRef").toString()).doesNotContain("lakh, max");
-        assertThat(upgraded.get("filings")).hasSameSizeAs(legacy.get("filings"));
+        assertThat(upgraded.get("caseTypes")).hasSameSizeAs(legacy.get("caseTypes"));
+    }
+
+    private JsonNode ruleOf(JsonNode rules, String caseType) {
+        for (JsonNode rule : rules.get("caseTypes")) if (caseType.equals(rule.get("caseType").asText())) return rule;
+        throw new AssertionError("no rule for " + caseType);
+    }
+
+    @Test
+    void defaultsHaveOneFeePerCaseTypeAndNoFilings() {
+        JsonNode rules = service.current();
+
+        assertThat(rules.has("filings")).isFalse();
+        assertThat(rules.get("caseTypes")).hasSize(7);
+        for (JsonNode rule : rules.get("caseTypes")) assertThat(rule.has("key")).isFalse();
+    }
+
+    @Test
+    void seedDefaultsTurnsSavedFilingsIntoOneFeePerCaseType() throws Exception {
+        ObjectNode legacy = service.current().deepCopy();
+        legacy.remove("caseTypes");
+        ArrayNode filings = mapper.createArrayNode();
+        filings.add(mapper.readTree("{\"caseType\":\"civil\",\"key\":\"injunction\",\"label\":\"Injunction\",\"kind\":\"adv\"}"));
+        filings.add(mapper.readTree("{\"caseType\":\"civil\",\"key\":\"suit\",\"label\":\"Money suit edited\",\"kind\":\"adv\",\"valueLabel\":\"Amount\"}"));
+        filings.add(mapper.readTree("{\"caseType\":\"writ\",\"key\":\"hc_other\",\"label\":\"Other HC petition\",\"kind\":\"fixed\",\"amount\":7}"));
+        legacy.set("filings", filings);
+        ArrayNode quick = mapper.createArrayNode();
+        quick.add(mapper.readTree("{\"label\":\"Declaration\",\"mode\":\"filing\",\"caseType\":\"civil\",\"key\":\"declaration\"}"));
+        quick.add(mapper.readTree("{\"label\":\"Consumer\",\"mode\":\"filing\",\"caseType\":\"consumer\",\"key\":\"complaint\",\"value\":500000}"));
+        quick.add(mapper.readTree("{\"label\":\"Civil\",\"mode\":\"adv\",\"value\":100000}"));
+        legacy.set("quickRef", quick);
+        FeeCalculatorConfig row = FeeCalculatorConfig.builder().id(FeeCalculatorConfig.ROW_ID).config(legacy.toString()).build();
+        when(repo.existsById(FeeCalculatorConfig.ROW_ID)).thenReturn(true);
+        when(repo.findById(FeeCalculatorConfig.ROW_ID)).thenReturn(Optional.of(row));
+
+        service.seedDefaults();
+
+        verify(repo).save(row);
+        JsonNode migrated = mapper.readTree(row.getConfig());
+        assertThat(migrated.has("filings")).isFalse();
+        assertThat(migrated.get("caseTypes")).hasSize(7);
+        JsonNode civil = ruleOf(migrated, "civil");
+        assertThat(civil.get("label").asText()).isEqualTo("Money suit edited");
+        assertThat(civil.has("key")).isFalse();
+        assertThat(ruleOf(migrated, "writ").get("amount").asInt()).isEqualTo(7);
+        assertThat(ruleOf(migrated, "consumer").get("kind").asText()).isEqualTo("scale");
+        assertThat(migrated.get("quickRef")).hasSize(2);
+        assertThat(migrated.get("quickRef").get(0).get("mode").asText()).isEqualTo("caseType");
+        assertThat(migrated.get("quickRef").get(0).has("key")).isFalse();
+        assertThat(migrated.get("quickRef").get(1).get("mode").asText()).isEqualTo("adv");
     }
 
     @Test

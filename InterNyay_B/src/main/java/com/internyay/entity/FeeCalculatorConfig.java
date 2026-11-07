@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-// The court fee calculator rules (filings, fee scales and notes) as one JSON document edited by the admin.
+// The court fee calculator rules (case type fees, fee scales and notes) as one JSON document edited by the admin.
 // Only one row is ever kept (id 1). With no row the app uses its built-in Court Fees Act, 1870 defaults.
 @Entity
 @Table(name = "fee_calculator_config")

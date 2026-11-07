@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 // Court fee calculator rules kept by the admin
@@ -29,7 +30,10 @@ public class FeeCalculatorService {
     private static final Set<String> KINDS = Set.of("adv", "half", "fixed", "scale");
     // adValorem is the Central Act scale; the adValorem* ones are the State tables (Delhi & Chandigarh, Haryana, Uttar Pradesh & Uttarakhand)
     private static final Set<String> SCALES = Set.of("adValorem", "adValoremDelhi", "adValoremHaryana", "adValoremUP", "consumer", "probate", "succession");
-    private static final int MAX_FILINGS = 500;
+    private static final List<String> CASE_TYPES = List.of("civil", "criminal", "family", "labour", "consumer", "writ", "appeal");
+    private static final Map<String, String> LEGACY_PRIMARY_FILINGS = Map.of(
+            "civil", "suit", "appeal", "decree", "criminal", "app_dist", "family", "hma",
+            "writ", "writ", "consumer", "complaint", "labour", "claim");
     private static final int MAX_BANDS = 1000;
 
     // Notes the admin may have saved unchanged from the first built-in rules; they are replaced by the State notes (see upgraded)
@@ -62,17 +66,60 @@ public class FeeCalculatorService {
             }
             repo.findById(FeeCalculatorConfig.ROW_ID).ifPresent(row -> {
                 try {
-                    JsonNode up = upgraded(mapper.readTree(row.getConfig()));
-                    if (up == null) return;
-                    save(up);
-                    log.info("Fee calculator: State ad valorem tables added to the saved rules");
+                    JsonNode saved = mapper.readTree(row.getConfig());
+                    JsonNode migrated = migratedToCaseTypes(saved);
+                    JsonNode up = upgraded(migrated != null ? migrated : saved);
+                    JsonNode result = up != null ? up : migrated;
+                    if (result == null) return;
+                    save(result);
+                    log.info("Fee calculator: saved rules brought up to date");
                 } catch (Exception e) {
-                    log.warn("Fee calculator: could not add the State tables to the saved rules ({}). The calculator uses its built-in States until then.", e.getMessage());
+                    log.warn("Fee calculator: could not update the saved rules ({}). The calculator uses its built-in rules until then.", e.getMessage());
                 }
             });
         } catch (Exception e) {
             log.warn("Fee calculator: could not save the default rules ({}). The defaults are served until the table exists.", e.getMessage());
         }
+    }
+
+    JsonNode migratedToCaseTypes(JsonNode saved) {
+        if (saved == null || !saved.isObject() || saved.has("caseTypes") || !saved.path("filings").isArray()) return null;
+        JsonNode def = defaults();
+        ObjectNode out = saved.deepCopy();
+        out.remove("filings");
+        ArrayNode rules = mapper.createArrayNode();
+        for (String type : CASE_TYPES) {
+            JsonNode chosen = null;
+            JsonNode first = null;
+            for (JsonNode f : saved.get("filings")) {
+                if (!type.equals(text(f, "caseType"))) continue;
+                if (first == null) first = f;
+                if (text(f, "key").equals(LEGACY_PRIMARY_FILINGS.get(type))) { chosen = f; break; }
+            }
+            if (chosen == null) chosen = first;
+            if (chosen != null) {
+                ObjectNode rule = chosen.deepCopy();
+                rule.remove("key");
+                rules.add(rule);
+            } else {
+                for (JsonNode d : def.get("caseTypes")) if (type.equals(text(d, "caseType"))) rules.add(d);
+            }
+        }
+        out.set("caseTypes", rules);
+        JsonNode quick = saved.get("quickRef");
+        if (quick != null && quick.isArray()) {
+            ArrayNode rows = mapper.createArrayNode();
+            for (JsonNode r : quick) {
+                if (!"filing".equals(text(r, "mode"))) { rows.add(r); continue; }
+                if (!text(r, "key").equals(LEGACY_PRIMARY_FILINGS.get(text(r, "caseType")))) continue;
+                ObjectNode row = r.deepCopy();
+                row.put("mode", "caseType");
+                row.remove("key");
+                rows.add(row);
+            }
+            out.set("quickRef", rows);
+        }
+        return out;
     }
 
     // Rules saved before the State tables existed, with the State scales and States added. Everything else the admin saved is kept.
@@ -131,15 +178,14 @@ public class FeeCalculatorService {
     // Refuses rules the calculator could not use
     private void validate(JsonNode c) {
         if (c == null || !c.isObject()) throw new IllegalArgumentException("Fee rules are missing");
-        JsonNode filings = c.get("filings");
-        if (filings == null || !filings.isArray() || filings.isEmpty()) throw new IllegalArgumentException("Add at least one filing");
-        if (filings.size() > MAX_FILINGS) throw new IllegalArgumentException("Too many filings");
-        java.util.Set<String> seen = new java.util.HashSet<>();
-        for (JsonNode f : filings) {
-            String type = text(f, "caseType"), key = text(f, "key"), label = text(f, "label"), kind = text(f, "kind");
-            if (type.isEmpty() || key.isEmpty()) throw new IllegalArgumentException("Every filing needs a case type and a key");
-            if (label.isEmpty()) throw new IllegalArgumentException("Every filing needs a name");
-            if (!seen.add(type + "/" + key)) throw new IllegalArgumentException("Duplicate filing key '" + key + "' under " + type);
+        JsonNode caseTypes = c.get("caseTypes");
+        if (caseTypes == null || !caseTypes.isArray() || caseTypes.isEmpty()) throw new IllegalArgumentException("Add a fee for every case type");
+        Set<String> seen = new HashSet<>();
+        for (JsonNode f : caseTypes) {
+            String type = text(f, "caseType"), label = text(f, "label"), kind = text(f, "kind");
+            if (!CASE_TYPES.contains(type)) throw new IllegalArgumentException("Unknown case type '" + type + "'");
+            if (label.isEmpty()) throw new IllegalArgumentException("Every case type fee needs a name");
+            if (!seen.add(type)) throw new IllegalArgumentException("Duplicate case type '" + type + "'");
             if (!KINDS.contains(kind)) throw new IllegalArgumentException("Unknown fee type for '" + label + "'");
             if ("fixed".equals(kind) && !(f.path("amount").isNumber() && f.get("amount").asDouble() >= 0))
                 throw new IllegalArgumentException("'" + label + "' needs a fixed fee of 0 or more");
@@ -148,6 +194,7 @@ public class FeeCalculatorService {
             if (f.hasNonNull("mult") && !(f.get("mult").isNumber() && f.get("mult").asDouble() > 0))
                 throw new IllegalArgumentException("The multiplier of '" + label + "' must be above 0");
         }
+        if (!seen.containsAll(CASE_TYPES)) throw new IllegalArgumentException("Every case type needs a fee");
         JsonNode scales = c.get("scales");
         if (scales == null || !scales.isObject()) throw new IllegalArgumentException("Fee scales are missing");
         for (String s : SCALES) {
@@ -195,9 +242,9 @@ public class FeeCalculatorService {
             for (JsonNode r : quick) {
                 if (text(r, "label").isEmpty()) throw new IllegalArgumentException("Every quick reference row needs a label");
                 String mode = text(r, "mode");
-                if (!mode.equals("adv") && !mode.equals("filing")) throw new IllegalArgumentException("Unknown quick reference type");
-                if (mode.equals("filing") && (text(r, "caseType").isEmpty() || text(r, "key").isEmpty()))
-                    throw new IllegalArgumentException("Pick a filing for each quick reference row");
+                if (!mode.equals("adv") && !mode.equals("caseType")) throw new IllegalArgumentException("Unknown quick reference type");
+                if (mode.equals("caseType") && !CASE_TYPES.contains(text(r, "caseType")))
+                    throw new IllegalArgumentException("Pick a case type for each quick reference row");
                 if (r.hasNonNull("value") && !(r.get("value").isNumber() && r.get("value").asDouble() >= 0))
                     throw new IllegalArgumentException("Quick reference values must be numbers of 0 or more");
             }

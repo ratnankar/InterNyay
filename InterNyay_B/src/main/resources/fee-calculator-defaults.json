@@ -1,364 +1,43 @@
 {
- "filings": [
+ "caseTypes": [
   {
    "caseType": "civil",
-   "key": "suit",
-   "label": "Money suit (recovery,  damages,  compensation)",
+   "label": "Civil suit (plaint)",
    "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(i)",
-   "valueLabel": "Amount claimed (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "maintenance",
-   "label": "Suit for maintenance or annuity",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(ii)",
-   "mult": 10,
-   "valueLabel": "Amount claimed per year (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "possession",
-   "label": "Suit for possession of land,  house or garden",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(v)",
-   "valueLabel": "Value of the property under s. 7(v) (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "spec_perf",
-   "label": "Specific performance of a contract of sale",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(x)(a)",
-   "valueLabel": "Amount of the consideration (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "mortgage",
-   "label": "Suit to redeem or foreclose a mortgage",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(ix)",
-   "valueLabel": "Principal money secured by the mortgage (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "landlord",
-   "label": "Suit between landlord and tenant (rent,  ejectment etc.)",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(xi)",
-   "valueLabel": "Annual rent of the premises (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "preemption",
-   "label": "Suit to enforce a right of pre-emption",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(vi)",
-   "valueLabel": "Value of the land / house under s. 7(v) (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "partition",
-   "label": "Suit for share in joint family property / partition",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(iv)(b)",
-   "valueLabel": "Value of the relief as stated in the plaint (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "decl_conseq",
-   "label": "Declaration with consequential relief",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(iv)(c)",
-   "valueLabel": "Value of the relief as stated in the plaint (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "injunction",
-   "label": "Suit for injunction",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(iv)(d)",
-   "valueLabel": "Value of the relief as stated in the plaint (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "accounts",
-   "label": "Suit for accounts",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 7(iv)(f)",
-   "valueLabel": "Value of the relief as stated in the plaint (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "sra_possess",
-   "label": "Possession suit under s. 6,  Specific Relief Act",
-   "kind": "half",
-   "ref": "Sch. I,  Art. 2",
-   "valueLabel": "Value of the property (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "declaration",
-   "label": "Declaration only (no consequential relief)",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 17(iii)",
-   "amount": 10
-  },
-  {
-   "caseType": "civil",
-   "key": "no_value",
-   "label": "Any other suit where value cannot be estimated in money",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 17(vi)",
-   "amount": 10
-  },
-  {
-   "caseType": "civil",
-   "key": "award",
-   "label": "Suit to set aside an award",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 17(iv)",
-   "amount": 10
-  },
-  {
-   "caseType": "civil",
-   "key": "adoption",
-   "label": "Suit to set aside an adoption",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 17(v)",
-   "amount": 10
-  },
-  {
-   "caseType": "civil",
-   "key": "occupancy",
-   "label": "Suit to establish or disprove right of occupancy",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 5 (8 annas)",
-   "amount": 0.5
-  },
-  {
-   "caseType": "civil",
-   "key": "review_90",
-   "label": "Review application before 90 days of decree",
-   "kind": "half",
-   "ref": "Sch. I,  Art. 5",
-   "valueLabel": "Value of the original suit / appeal (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "review_late",
-   "label": "Review application on or after 90 days",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 4",
-   "valueLabel": "Value of the original suit / appeal (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "execution",
-   "label": "Execution petition / other application in a civil court",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 1(b) (8 annas)",
-   "amount": 0.5
-  },
-  {
-   "caseType": "civil",
-   "key": "pauper",
-   "label": "Application for leave to sue as a pauper",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 2 (8 annas)",
-   "amount": 0.5
-  },
-  {
-   "caseType": "civil",
-   "key": "caveat",
-   "label": "Caveat",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 12",
-   "amount": 5
-  },
-  {
-   "caseType": "civil",
-   "key": "probate",
-   "label": "Probate / letters of administration",
-   "kind": "scale",
-   "ref": "Sch. I,  Art. 11",
-   "scale": "probate",
-   "valueLabel": "Value of the estate (\u20b9)"
-  },
-  {
-   "caseType": "civil",
-   "key": "succession",
-   "label": "Succession certificate",
-   "kind": "scale",
-   "ref": "Sch. I,  Art. 12",
-   "scale": "succession",
-   "valueLabel": "Value of the debts / securities (\u20b9)"
+   "ref": "Sch. I,  Art. 1; s. 7",
+   "valueLabel": "Value of the suit as stated in the plaint (\u20b9)"
   },
   {
    "caseType": "appeal",
-   "key": "decree",
-   "label": "Appeal from a decree or order having the force of a decree",
+   "label": "Appeal from a decree",
    "kind": "adv",
    "ref": "Sch. I,  Art. 1",
    "valueLabel": "Value of the subject matter of the appeal (\u20b9)"
   },
   {
-   "caseType": "appeal",
-   "key": "compensation",
-   "label": "Appeal against an order on compensation (land acquisition)",
-   "kind": "adv",
-   "ref": "Sch. I,  Art. 1; s. 8",
-   "valueLabel": "Difference between amount awarded and amount claimed (\u20b9)"
-  },
-  {
-   "caseType": "appeal",
-   "key": "other_civil",
-   "label": "Appeal not from a decree \u2013 civil court other than High Court",
+   "caseType": "criminal",
+   "label": "Criminal application / complaint",
    "kind": "fixed",
-   "ref": "Sch. II,  Art. 11(a) (8 annas)",
+   "ref": "Sch. II,  Art. 1(b) (8 annas)",
    "amount": 0.5
   },
   {
-   "caseType": "appeal",
-   "key": "other_hc",
-   "label": "Appeal not from a decree \u2013 High Court",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 11(b)",
-   "amount": 2
-  },
-  {
-   "caseType": "appeal",
-   "key": "pauper_dist",
-   "label": "Leave to appeal as a pauper \u2013 District Court",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 3(a)",
-   "amount": 1
-  },
-  {
-   "caseType": "appeal",
-   "key": "pauper_hc",
-   "label": "Leave to appeal as a pauper \u2013 High Court",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 3(b)",
-   "amount": 2
-  },
-  {
    "caseType": "family",
-   "key": "hma",
-   "label": "Petition under Hindu Marriage Act / Special Marriage Act (divorce,  custody etc.)",
+   "label": "Family / matrimonial petition",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 17(vi),  applied by analogy",
    "amount": 10
   },
   {
-   "caseType": "family",
-   "key": "divorce_act",
-   "label": "Petition under Indian Divorce Act,  1869 (other than s. 44) or appeal under s. 55",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 20",
-   "amount": 20
-  },
-  {
-   "caseType": "family",
-   "key": "parsi",
-   "label": "Plaint or appeal under Parsi Marriage and Divorce Act",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 21",
-   "amount": 20
-  },
-  {
-   "caseType": "family",
-   "key": "convert",
-   "label": "Petition under Native Converts Marriage Dissolution Act,  1866",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 14",
-   "amount": 5
-  },
-  {
-   "caseType": "family",
-   "key": "maint125",
-   "label": "Maintenance application (s. 125 CrPC / s. 144 BNSS)",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 1(b) (8 annas)",
-   "amount": 0.5
-  },
-  {
-   "caseType": "family",
-   "key": "misc_app",
-   "label": "Miscellaneous / interim application",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 1(b) (8 annas)",
-   "amount": 0.5
-  },
-  {
-   "caseType": "criminal",
-   "key": "complaint",
-   "label": "Criminal complaint (offence not arrestable without warrant)",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 1(b) (8 annas)",
-   "amount": 0.5
-  },
-  {
-   "caseType": "criminal",
-   "key": "app_dist",
-   "label": "Application / bail in a criminal court (Magistrate / Sessions)",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 1(b) (8 annas)",
-   "amount": 0.5
-  },
-  {
-   "caseType": "criminal",
-   "key": "hc_crl",
-   "label": "High Court \u2013 bail,  anticipatory bail,  quashing,  revision or other criminal petition",
+   "caseType": "writ",
+   "label": "Writ petition (Art. 226)",
    "kind": "fixed",
    "ref": "Sch. II,  Art. 1(d)",
    "amount": 2
-  },
-  {
-   "caseType": "criminal",
-   "key": "appeal_dist",
-   "label": "Criminal appeal \u2013 Sessions Court",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 11(a) (8 annas)",
-   "amount": 0.5
-  },
-  {
-   "caseType": "criminal",
-   "key": "appeal_hc",
-   "label": "Criminal appeal \u2013 High Court",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 11(b)",
-   "amount": 2
-  },
-  {
-   "caseType": "writ",
-   "key": "writ",
-   "label": "Writ petition (Art. 226 / habeas corpus)",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 1(d)",
-   "amount": 2
-  },
-  {
-   "caseType": "writ",
-   "key": "hc_other",
-   "label": "Any other petition / application in the High Court",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 1(d)",
-   "amount": 2
-  },
-  {
-   "caseType": "writ",
-   "key": "hc_caveat",
-   "label": "Caveat in the High Court",
-   "kind": "fixed",
-   "ref": "Sch. II,  Art. 12",
-   "amount": 5
   },
   {
    "caseType": "consumer",
-   "key": "complaint",
-   "label": "Consumer complaint (value of goods / services paid)",
+   "label": "Consumer complaint",
    "kind": "scale",
    "ref": "Rule 7,  CP (CDRC) Rules,  2020 (not under the 1870 Act)",
    "scale": "consumer",
@@ -366,8 +45,7 @@
   },
   {
    "caseType": "labour",
-   "key": "claim",
-   "label": "Industrial dispute / claim before the Labour Court",
+   "label": "Industrial dispute / claim",
    "kind": "fixed",
    "ref": "Industrial Disputes Act \u2013 no court fee (not under the 1870 Act)",
    "amount": 0
@@ -3507,32 +3185,36 @@
    "value": 1000000
   },
   {
-   "label": "Declaration only / no value",
-   "mode": "filing",
-   "caseType": "civil",
-   "key": "declaration"
+   "label": "Appeal (\u20b95 lakh)",
+   "mode": "caseType",
+   "caseType": "appeal",
+   "value": 500000
+  },
+  {
+   "label": "Family / matrimonial petition",
+   "mode": "caseType",
+   "caseType": "family"
   },
   {
    "label": "Writ / High Court petition",
-   "mode": "filing",
-   "caseType": "writ",
-   "key": "writ"
+   "mode": "caseType",
+   "caseType": "writ"
   },
   {
    "label": "Consumer (\u20b95 lakh)",
-   "mode": "filing",
+   "mode": "caseType",
    "caseType": "consumer",
-   "key": "complaint",
    "value": 500000
   }
  ],
  "notes": [
-  "Ad valorem fees (plaints, appeals and reviews) follow the State / Union Territory chosen above. Fixed fees (Schedule II) follow the Court Fees Act, 1870; old anna amounts are converted at 16 annas = \u20b91 and shown to the nearest paisa.",
+  "Ad valorem fees (civil plaints and appeals) follow the State / Union Territory chosen above. Fixed fees (Schedule II) follow the Court Fees Act, 1870; old anna amounts are converted at 16 annas = \u20b91 and shown to the nearest paisa.",
   "A State table gives the fee for a claim value up to each amount listed, so a value between two amounts pays the fee of the next amount up.",
   "The claim value is worked out under s. 7 of the Act (for example, maintenance is valued at 10 times one year's amount, a mortgage suit at the principal money, a landlord\u2013tenant suit at one year's rent). In s. 7(iv) suits the plaintiff states the value.",
   "If a suit covers two or more distinct subjects, the fees for each are added together (s. 17). If the Court refers the parties to settlement under s. 89 CPC, the full plaint fee is refunded (s. 16).",
   "Some documents carry no fee (s. 19), such as written statements called for after the first hearing, and probate or letters of administration where the property does not exceed \u20b91,000.",
   "Consumer complaints and Labour Court matters are not governed by this Act. Consumer fees follow Rule 7 of the CP (CDRC) Rules, 2020.",
+  "The fee shown is the standard fee for the chosen case type. Other applications, High Court criminal petitions and appeals, reviews, caveats and probate carry their own fees under Schedules I and II.",
   "Always confirm with the court registry before filing."
  ]
 }

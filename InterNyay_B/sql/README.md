@@ -95,7 +95,7 @@ Expected: the log shows `Successfully applied 63 migrations`. The row counts bel
 | `plans` | 4 |
 | `option_items` | 211 |
 
-`fee_calculator_config` has 1 row after the first start (`SELECT JSON_LENGTH(config, '$.filings') FROM fee_calculator_config;` gives 46).
+`fee_calculator_config` has 1 row after the first start (`SELECT JSON_LENGTH(config, '$.caseTypes') FROM fee_calculator_config;` gives 7).
 Use Admin -> Fee Calculator -> Reset to return to the defaults later.
 The rules include the ad valorem tables of Delhi & Chandigarh, Haryana and Uttar Pradesh & Uttarakhand (`$.scales.adValoremDelhi`,
 `adValoremHaryana`, `adValoremUP`, with the States in `$.jurisdictions`). Rules saved by an older version gain them on the next

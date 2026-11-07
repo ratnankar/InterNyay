@@ -138,7 +138,7 @@ class AuthAndPlanIntegrationTest {
 
         mvc.perform(get("/api/fee-calculator/config").header("Authorization", bearerFor(pro)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.config.filings").isArray());
+                .andExpect(jsonPath("$.config.caseTypes").isArray());
     }
 
     @Test

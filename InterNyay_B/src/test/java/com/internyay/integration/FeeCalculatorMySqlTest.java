@@ -45,7 +45,7 @@ class FeeCalculatorMySqlTest {
 
         assertThat(repo.count()).isEqualTo(1);
         FeeCalculatorConfig row = repo.findById(FeeCalculatorConfig.ROW_ID).orElseThrow();
-        assertThat(row.getConfig()).contains("\"filings\"");
+        assertThat(row.getConfig()).contains("\"caseTypes\"");
         assertThat(row.getUpdatedAt()).isNotNull();
 
         // A second start must not touch the saved row
@@ -64,6 +64,6 @@ class FeeCalculatorMySqlTest {
         repo.flush();
 
         assertThat(service.current().get("savedByTest").asBoolean()).isTrue();
-        assertThat(service.current().get("filings")).hasSameSizeAs(rules.get("filings"));
+        assertThat(service.current().get("caseTypes")).hasSameSizeAs(rules.get("caseTypes"));
     }
 }
