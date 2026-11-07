@@ -145,6 +145,12 @@
   margin-bottom: 0.75rem;
 }
 
+.calc-info-card__sub {
+  margin: -0.5rem 0 0.75rem;
+  font-size: var(--fs-xs);
+  color: var(--color-text-mid);
+}
+
 .calc-info-card__note-row {
   display: flex;
   gap: 8px;

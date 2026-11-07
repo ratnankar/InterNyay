@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import Dropdown from '../components/common/Dropdown'
 import Icon from '../components/common/Icon'
 import useFeeRules from '../hooks/useFeeRules'
+import useSessionState from '../hooks/useSessionState'
 import { COURT_TYPES } from '../utils/courtFeesAct'
 
 // Format a number as Indian rupees (paise only when present)
@@ -14,12 +15,14 @@ function fmt(n) {
 export default function CourtFeeCalculator() {
   // Filings, fee scales and notes, as set by the admin
   const rules = useFeeRules()
-  const { matters: allMatters, matterNeedsValue, chargeableValue, calcMatterFee, consumerForum } = rules
+  const { matters: allMatters, matterNeedsValue, chargeableValue, calcMatterFee, consumerForum, jurisdictions, jurisdictionOf, usesJurisdiction } = rules
   // Selected case type, the specific filing, claim value and whether Calculate was clicked
   const [caseType,    setCaseType]    = useState('civil')
   const [matterKey,   setMatterKey]   = useState('')
   const [claimValue,  setClaimValue]  = useState('')
   const [calculated,  setCalculated]  = useState(false)
+  // State / Union Territory whose ad valorem table applies (remembered for the session; the first listed State is the default)
+  const [stateKey,   setStateKey]   = useSessionState('fee_calc_state', '')
 
   // The chosen filing, whether it needs a claim value, and the claim value as a number
   const matters    = allMatters[caseType] || []
@@ -27,8 +30,12 @@ export default function CourtFeeCalculator() {
   const needsValue = !!matter && matterNeedsValue(matter)
   const cv         = parseFloat(claimValue) || 0
 
+  // The State chosen, and whether it matters for this filing (only ad valorem fees differ between States)
+  const state      = jurisdictionOf(stateKey)
+  const byState    = usesJurisdiction(matter)
+
   // Court fee for the chosen filing
-  const courtFee   = useMemo(() => calcMatterFee(matter, cv), [matter, cv, rules])
+  const courtFee   = useMemo(() => calcMatterFee(matter, cv, state.key), [matter, cv, state, rules])
   const isReady    = !!matter && (!needsValue || cv > 0) && calculated
 
   // Hide the result so it must be calculated again after any input changes
@@ -79,6 +86,17 @@ export default function CourtFeeCalculator() {
                 </Dropdown>
               </div>
 
+              {/* State / Union Territory, for the fees that differ between States */}
+              {byState && (
+                <div>
+                  <label className="form-label">State / Union Territory</label>
+                  <Dropdown className="form-input" value={state.key}
+                    onChange={e => { setStateKey(e.target.value); reset() }}>
+                    {jurisdictions.map(j => <option key={j.key} value={j.key}>{j.label}</option>)}
+                  </Dropdown>
+                </div>
+              )}
+
               {/* Claim value input, or a 'fixed fee' badge when no value is needed */}
               {!matter ? (
                 <div>
@@ -107,7 +125,7 @@ export default function CourtFeeCalculator() {
             <div className="calc-estimate">
               <div className="calc-estimate__info">
                 <p className="calc-estimate__label">
-                  Fee Estimate • {COURT_TYPES.find(c => c.value === caseType)?.label} • Court Fees Act, 1870
+                  Fee Estimate • {COURT_TYPES.find(c => c.value === caseType)?.label} • {byState ? state.label : 'Court Fees Act, 1870'}
                 </p>
                 {!isReady ? (
                   <p className="calc-estimate__hint">Fill in the details and click <strong>Calculate Court Fee</strong></p>
@@ -138,7 +156,7 @@ export default function CourtFeeCalculator() {
           {/* Important notes card */}
           <div className="card calc-info-card">
             <p className="calc-info-card__title"><Icon name="pin" /> Important Notes</p>
-            {rules.notes.map((note, i) => (
+            {[...(byState ? state.notes || [] : []), ...rules.notes].map((note, i) => (
               <div key={i} className="calc-info-card__note-row">
                 <span className="calc-info-card__bullet">•</span>
                 <p className="calc-info-card__note">{note}</p>
@@ -149,7 +167,8 @@ export default function CourtFeeCalculator() {
           <div className="card calc-info-card">
             {/* Quick reference card */}
             <p className="calc-info-card__title"><Icon name="bolt" /> Quick Reference</p>
-            {rules.quickRef.map(([label, fee]) => (
+            <p className="calc-info-card__sub">Ad valorem fees for {state.label}</p>
+            {rules.quickRefFor(state.key).map(([label, fee]) => (
               <div key={label} className="calc-quick-row">
                 <p className="calc-quick-row__label">{label}</p>
                 <p className="calc-quick-row__fee">{fee}</p>

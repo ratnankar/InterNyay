@@ -57,6 +57,8 @@ export default function FeeCalculatorAdmin() {
   const [confirmReset, setConfirmReset] = useState(false)
   // Previewing the rules being edited
   const [previewValue, setPreviewValue] = useState('')
+  // The fee scale shown in the Fee scales tab (the State tables have hundreds of rows, so one is shown at a time)
+  const [scaleName, setScaleName] = useState('adValoremDelhi')
   const quickRows = cfg?.quickRef || DEFAULT_CONFIG.quickRef
 
   // Load the saved rules
@@ -66,6 +68,10 @@ export default function FeeCalculatorAdmin() {
       .then(r => {
         const c = clone(r?.config || DEFAULT_CONFIG)
         if (!Array.isArray(c.quickRef)) c.quickRef = clone(DEFAULT_CONFIG.quickRef)   // rules saved before Quick Reference was editable
+        // Rules saved before the State tables existed get the built-in States and State scales
+        if (!Array.isArray(c.jurisdictions) || !c.jurisdictions.length) c.jurisdictions = clone(DEFAULT_CONFIG.jurisdictions)
+        c.scales = c.scales || {}
+        Object.keys(DEFAULT_CONFIG.scales).forEach(k => { if (!c.scales[k]) c.scales[k] = clone(DEFAULT_CONFIG.scales[k]) })
         setCfg(c)
         setDirty(false)
       })
@@ -162,6 +168,9 @@ export default function FeeCalculatorAdmin() {
         prev = up
       }
     }
+    if (!c.jurisdictions.length) return 'Add at least one State'
+    if (c.jurisdictions.some(j => !String(j.label).trim())) return 'Every State needs a name'
+    if (c.jurisdictions.some(j => !c.scales[j.scale])) return 'Every State needs a fee scale'
     let prev = 0
     for (let i = 0; i < c.forums.length - 1; i++) {
       const up = numOrNull(c.forums[i].upTo)
@@ -185,6 +194,7 @@ export default function FeeCalculatorAdmin() {
       })
     })
     c.forums = c.forums.map((f, i) => ({ upTo: i === c.forums.length - 1 ? null : numOrNull(f.upTo), label: String(f.label).trim() }))
+    c.jurisdictions = c.jurisdictions.map(j => ({ key: j.key, label: String(j.label).trim(), scale: j.scale, notes: (j.notes || []).map(x => String(x).trim()).filter(Boolean) }))
     c.notes = c.notes.map(x => String(x).trim()).filter(Boolean)
     c.quickRef = (c.quickRef || []).map(r => {
       const o = { label: String(r.label || '').trim(), mode: r.mode === 'filing' ? 'filing' : 'adv' }
@@ -225,11 +235,14 @@ export default function FeeCalculatorAdmin() {
   // Rules as the calculator will use them, for the preview
   const preview = buildFeeRules(cfg)
   const pv = Number(previewValue) || 0
+  // Helpers for the States tab
+  const setState = (i, patch) => update(n => { Object.assign(n.jurisdictions[i], patch) })
+  const moveState = (i, dir) => update(n => { const j = n.jurisdictions; [j[i], j[i + dir]] = [j[i + dir], j[i]] })
 
   return (
     <div>
       <div className="admin__toolbar">
-        {[['filings', 'Filings'], ['scales', 'Fee scales'], ['quick', 'Quick reference'], ['notes', 'Notes']].map(([id, label]) => (
+        {[['filings', 'Filings'], ['states', 'States'], ['scales', 'Fee scales'], ['quick', 'Quick reference'], ['notes', 'Notes']].map(([id, label]) => (
           <button type="button" key={id} className={section === id ? 'btn-gold' : 'btn-outline'} onClick={() => setSection(id)}>{label}</button>
         ))}
         <span className="admin__count">
@@ -284,14 +297,66 @@ export default function FeeCalculatorAdmin() {
         </>
       )}
 
-      {/* Fee scales: the value bands behind the ad valorem, consumer, probate and succession fees */}
+      {/* States: which ad valorem scale each State / Union Territory of the calculator charges */}
+      {section === 'states' && (
+        <>
+          <div className="admin__toolbar">
+            <p className="admin__hint">
+              The calculator lets the user pick one of these States for ad valorem fees (plaints, appeals, reviews). Each State uses one of the ad valorem
+              fee scales (edited in Fee scales); its notes, one per line, are shown with the result. The first State is the default.
+            </p>
+            <button type="button" className="btn-gold" onClick={() => update(n => {
+              n.jurisdictions.push({ key: makeKey('state', new Set(n.jurisdictions.map(x => x.key))), label: '', scale: 'adValorem', notes: [] })
+            })}>+ Add State</button>
+          </div>
+          <div className="admin__table-wrap">
+            <table className="admin__table">
+              <thead><tr><th>State / Union Territory</th><th>Ad valorem scale</th><th>Notes (one per line)</th><th /></tr></thead>
+              <tbody>
+                {cfg.jurisdictions.map((j, i) => (
+                  <tr key={j.key}>
+                    <td>
+                      <input className="form-input" value={j.label} onChange={e => setState(i, { label: e.target.value })} />
+                      {i === 0 && <span className="admin__count">Default</span>}
+                    </td>
+                    <td>
+                      <Dropdown className="form-input" value={j.scale} onChange={e => setState(i, { scale: e.target.value })}>
+                        {Object.entries(SCALE_NAMES).filter(([k]) => k.startsWith('adValorem')).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </Dropdown>
+                    </td>
+                    <td>
+                      <textarea className="form-input u-maxw-none" rows={3} value={(j.notes || []).join('\n')}
+                        onChange={e => setState(i, { notes: e.target.value.split('\n') })} />
+                    </td>
+                    <td className="admin__actions">
+                      <button type="button" className="btn-outline btn-outline--sm" disabled={i === 0} onClick={() => moveState(i, -1)} title="Move up">↑</button>
+                      <button type="button" className="btn-outline btn-outline--sm" disabled={i === cfg.jurisdictions.length - 1} onClick={() => moveState(i, 1)} title="Move down">↓</button>
+                      {cfg.jurisdictions.length > 1 && (
+                        <button type="button" className="btn-outline btn-outline--sm btn-outline--danger" onClick={() => update(n => { n.jurisdictions.splice(i, 1) })}>Remove</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Fee scales: the value bands behind the ad valorem (one per State), consumer, probate and succession fees */}
       {section === 'scales' && (
         <>
+          <div className="admin__toolbar">
+            {Object.entries(SCALE_NAMES).map(([k, v]) => (
+              <button type="button" key={k} className={scaleName === k ? 'btn-gold btn-outline--sm' : 'btn-outline btn-outline--sm'} onClick={() => setScaleName(k)}>{v}</button>
+            ))}
+          </div>
           <p className="admin__hint">
             Each band runs from the previous band's upper limit to its own. A band charges either a % of the whole value, a base fee plus an
             amount for every block of the given size (or part of one) above where the band starts, or just the base fee. The last band has no upper limit.
+            In a State table every band is a flat fee for values up to its limit, and the last band adds the fee per block above the last listed value.
           </p>
-          {Object.entries(SCALE_NAMES).map(([name, label]) => {
+          {Object.entries(SCALE_NAMES).filter(([name]) => name === scaleName).map(([name, label]) => {
             const s = cfg.scales[name]
             return (
               <div key={name} className="u-mb-24">
@@ -354,9 +419,9 @@ export default function FeeCalculatorAdmin() {
 
           {/* Quick check of the ad valorem scale as edited (before saving) */}
           <div className="admin__toolbar u-mt-24">
-            <strong>Try the ad valorem scale</strong>
+            <strong>Try this scale</strong>
             <input className="form-input u-w-160" type="number" min="0" placeholder="Value (₹)" value={previewValue} onChange={e => setPreviewValue(e.target.value)} />
-            <span className="admin__count">{pv > 0 ? `Fee: ${rupees(preview.adValorem(pv))}` : 'Enter a value to see the fee'}</span>
+            <span className="admin__count">{pv > 0 ? `Fee: ${rupees(preview.feeOfScale(scaleName, pv))}` : 'Enter a value to see the fee'}</span>
           </div>
         </>
       )}
@@ -365,7 +430,7 @@ export default function FeeCalculatorAdmin() {
       {section === 'quick' && (
         <>
           <div className="admin__toolbar">
-            <p className="admin__hint">Example fees shown in the "Quick Reference" card. The fee is calculated from the rules above, so it always matches the calculator.</p>
+            <p className="admin__hint">Example fees shown in the "Quick Reference" card. The fee is calculated from the rules above, so it always matches the calculator. Ad valorem rows are shown here for the first (default) State.</p>
             <button type="button" className="btn-gold" onClick={() => update(n => { n.quickRef = [...(n.quickRef || DEFAULT_CONFIG.quickRef), { label: '', mode: 'adv', value: '' }] })}>+ Add row</button>
           </div>
           <div className="admin__table-wrap">
@@ -415,7 +480,7 @@ export default function FeeCalculatorAdmin() {
       {section === 'notes' && (
         <>
           <div className="admin__toolbar">
-            <p className="admin__hint">Notes are listed under "Important Notes" in the calculator, in this order.</p>
+            <p className="admin__hint">Notes are listed under "Important Notes" in the calculator, in this order, after the State's own notes (edited in the States tab).</p>
             <button type="button" className="btn-gold" onClick={() => update(n => { n.notes.push('') })}>+ Add note</button>
           </div>
           {cfg.notes.length === 0 && <p className="admin__empty">No notes</p>}

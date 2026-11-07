@@ -589,7 +589,9 @@ export function AppProvider({ children }) {
     fileSeq: null,
     fileNoOrigin: 'new',
     fileNoManual: false,
-    // The number a saved case had when it was opened, restored when the field is left empty
+    // True when the file number field was emptied on purpose: the case is saved without a file number
+    noFileNo: false,
+    // The number a saved case had when it was opened
     fileNoOriginal: '',
 
     // CNR: the form was filled from eCourts using the CNR, so the next date and status come from the court; the hearing
@@ -2020,6 +2022,8 @@ export function AppProvider({ children }) {
       fileSeq:        c.fileSeq        ?? null,
       fileNoOrigin,
       fileNoManual:   false,
+      // A saved case with no file number stays without one unless a number is typed or picked
+      noFileNo:       !(c.fileNo || '').trim() && !c.fileSeq,
       fileNoOriginal: c.fileNo         || '',
       cnrNo:          c.cnrNo          || '',
       filingDate:     c.filingDate     || '',
@@ -2279,10 +2283,15 @@ export function AppProvider({ children }) {
 
     // Panel clients type their file number and don't use the automatic sequence. For everyone else the field starts with the
     // suggested next number; when the advocate types their own, a plain number (25) joins the sequence on the server and
-    // anything else (FILE/2024/045) is kept as typed. An empty field means the next free number
+    // anything else (FILE/2024/045) is kept as typed. An empty field the advocate cleared on purpose means no file number; a field never touched means the next free number
     const typedFileNo = (newCaseForm.fileNo || '').trim()
     if (hasCorporatePanelClient(caseClients)) {
       payload.fileSeq = null
+    } else if (newCaseForm.noFileNo && !typedFileNo) {
+      // The file number is optional: left empty on purpose, the case is saved without one
+      payload.fileNo = ''
+      payload.fileSeq = null
+      payload.noFileNumber = true
     } else if (newCaseForm.fileNoManual && typedFileNo && ['new', 'auto', 'legacy'].includes(newCaseForm.fileNoOrigin)) {
       // Typed for a new case, or a changed number on a saved case: a plain number joins the sequence, other text stays as typed
       payload.fileNo = typedFileNo
@@ -2294,6 +2303,7 @@ export function AppProvider({ children }) {
     }
     delete payload.fileNoOrigin
     delete payload.fileNoManual
+    delete payload.noFileNo
     delete payload.fileNoOriginal
 
     // FIR details only apply to police challan cases
