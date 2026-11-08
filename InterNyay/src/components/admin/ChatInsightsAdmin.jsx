@@ -4,6 +4,7 @@ import api from '../../services/api'
 import { getErrorMessage } from '../../utils/errorMessages'
 import ErrorMessage from '../common/ErrorMessage'
 import { useBusy, useBusyPath } from '../../utils/busyStore'
+import Linkify from '../common/Linkify'
 
 const RANGES = [7, 30, 90]
 // How often the page asks the server how far the test questions are
@@ -364,7 +365,7 @@ export default function ChatInsightsAdmin() {
                 {r.answer && (
                   <details className="chat-insights__details">
                     <summary>See the answer</summary>
-                    <p>{r.answer}</p>
+                    <p><Linkify text={r.answer} /></p>
                   </details>
                 )}
               </>,

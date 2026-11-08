@@ -14,6 +14,7 @@ import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
 import PlaceGroupedGrid, { sortByPlace } from './PlaceGroupedGrid'
 import { nameSearchMatches } from '../../utils/judgeMatch'
+import usePersistedState from '../../hooks/usePersistedState'
 
 // Admin screen for the judges themselves: name and photo only.
 // Where a judge sits (court, building, court no., contacts ...) is managed in the Listing section
@@ -22,11 +23,11 @@ export default function JudgeProfilesAdmin() {
 
   const [judges,  setJudges]  = useState([])
   const [loading, setLoading] = useState(false)
-  const [search,  setSearch]  = useState('')
+  const [search,  setSearch]  = useSessionState('admin_profiles_search', '')
   // all / free (not holding a court) / multi (more than one court)
   const [view,    setView]    = useSessionState('admin_judge_profiles_view', 'all')
   // Only the judges who hold a seat in this court ('' = all courts)
-  const [courtFilter, setCourtFilter] = useState('')
+  const [courtFilter, setCourtFilter] = usePersistedState('admin_profiles_court', '')
   // Judge being added or edited (null when closed)
   const [editing, setEditing] = useState(null)
   const [error,   setError]   = useState('')

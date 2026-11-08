@@ -10,6 +10,7 @@ import { isActionBusyPath, useBusyPath, useBusyTick } from '../../utils/busyStor
 import SeeMoreList from '../common/SeeMoreList'
 import { isDisposed } from './miscUtils'
 import MiscHearingUpdate from './MiscHearingUpdate'
+import Linkify from '../common/Linkify'
 
 // Hearing history of one misc. application: opens and closes, holds the "next hearing date" with its Update button
 // (while the application is pending), and lets each date be edited or deleted
@@ -143,7 +144,7 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
                     </>
                   ) : (
                     <p className={`hearing-entry__note${h.note ? '' : ' hearing-entry__note--empty'}`}>
-                      {h.note || 'No note for this date'}
+                      {h.note ? <Linkify text={h.note} /> : 'No note for this date'}
                     </p>
                   )}
                 </div>

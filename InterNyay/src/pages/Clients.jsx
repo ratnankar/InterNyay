@@ -9,8 +9,10 @@ import Icon from '../components/common/Icon'
 import useSeeMore from '../hooks/useSeeMore'
 import useGridColumns from '../hooks/useGridColumns'
 import usePersistedState from '../hooks/usePersistedState'
+import useSessionState from '../hooks/useSessionState'
 import SeeMore from '../components/common/SeeMore'
-import ScrollToTopButton from '../components/common/ScrollToTopButton'
+import SearchInput from '../components/common/SearchInput'
+import { telLink } from '../utils/jurisdiction'
 // Sort choices for the clients list as [value, label] pairs
 const SORT_OPTIONS = [
   ['name',   'Name A–Z'],
@@ -27,7 +29,7 @@ export default function Clients() {
   const [viewClient, setViewClient] = useState(null)
 
   // Search text and the selected sort order
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useSessionState('clients_search', '')
   const [sortBy, setSortBy] = usePersistedState('clients_sort', 'newest', SORT_OPTIONS.map(([v]) => v))
 
   // Number of cases linked to each client id, used for the 'Most Cases' sort
@@ -82,7 +84,6 @@ export default function Clients() {
 
   return (
     <div className="clients-page">
-      <ScrollToTopButton />
       {/* Full-size view of a client's photo */}
       {viewClient && (
         <ImageViewer
@@ -111,19 +112,7 @@ export default function Clients() {
 
       {/* Search box and sort dropdown */}
       <div className="list-toolbar">
-        <div className="doc-search-wrap">
-          <span className="doc-search-icon"><Icon name="search" /></span>
-          <input
-            className="form-input doc-search-input"
-            placeholder="Search by name, email, phone, or address…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {/* Button to clear the search text */}
-          {search && (
-            <button type="button" className="doc-search-clear" onClick={() => setSearch('')}><Icon name="close" /></button>
-          )}
-        </div>
+        <SearchInput placeholder="Search by name, email, phone, or address…" value={search} onChange={setSearch} />
 
         <div className="sort-control">
           <label htmlFor="clients-sort">Sort:</label>
@@ -181,8 +170,8 @@ export default function Clients() {
               {/* Contact details, only shown if at least one exists */}
               {(cl.email || phone || cl.address) && (
                 <div className="client-card__info">
-                  {cl.email && <p className="client-card__info-row"><Icon name="mail" /> {cl.email}</p>}
-                  {phone && <p className="client-card__info-row"><Icon name="phone" /> {phone}</p>}
+                  {cl.email && <p className="client-card__info-row"><Icon name="mail" /> <a className="qa-link" href={`mailto:${cl.email}`} onClick={e => e.stopPropagation()}>{cl.email}</a></p>}
+                  {phone && <p className="client-card__info-row"><Icon name="phone" /> <a className="qa-link" href={telLink(phone)} onClick={e => e.stopPropagation()}>{phone}</a></p>}
                   {cl.address && <p className="client-card__address"><Icon name="pin-map" /> {cl.address}</p>}
                 </div>
               )}

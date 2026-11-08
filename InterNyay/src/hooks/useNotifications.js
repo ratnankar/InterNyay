@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import api from '../services/api'
+import usePersistedState from './usePersistedState'
+import { NOTIFICATION_SOURCES } from '../constants/notifications'
 import { getErrorMessage } from '../utils/errorMessages'
 
 // How often to check whether notifications changed on the server
@@ -8,7 +10,8 @@ const POLL_MS = 5_000
 // Loads court notifications (optionally filtered by source) and auto-refreshes when the server reports a change
 export default function useNotifications(initialSource = 'All') {
   // Selected source filter ('All' means no filter)
-  const [source, setSource] = useState(initialSource)
+  // The chosen source is remembered for this user (the bell list and the Notifications page share it)
+  const [source, setSource] = usePersistedState('notifications_source', initialSource, NOTIFICATION_SOURCES)
   // Notifications currently shown
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)

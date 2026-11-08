@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { NOTIFICATION_SOURCES } from '../constants/notifications'
 import useNotifications from '../hooks/useNotifications'
 import useNotificationPdf from '../hooks/useNotificationPdf'
+import useSessionState from '../hooks/useSessionState'
 import NotificationPdfModal from '../components/common/NotificationPdfModal'
 import NotificationDetailModal from '../components/common/NotificationDetailModal'
 import { formatTimestamp } from '../utils/dateUtils'
@@ -13,6 +14,7 @@ import { dateKey, formatDayLabel } from '../utils/archiveUtils'
 
 import Icon from '../components/common/Icon'
 import Linkify from '../components/common/Linkify'
+import SearchInput from '../components/common/SearchInput'
 
 const notificationDate = n => n.date
 
@@ -22,7 +24,7 @@ export default function NotificationsPage() {
   const { setActiveNav } = useApp()
   const { source, setSource, items, loading, error, refetch } = useNotifications()
   const { preview, viewPdf, closePreview, pdfError, clearPdfError } = useNotificationPdf()
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useSessionState('notifications_search', '')
   // Notification opened in the detail window
   const [selected, setSelected] = useState(null)
 
@@ -78,19 +80,7 @@ export default function NotificationsPage() {
 
       {/* Search box */}
       <div className="list-toolbar">
-        <div className="doc-search-wrap">
-          <span className="doc-search-icon"><Icon name="search" /></span>
-          <input
-            className="form-input doc-search-input"
-            placeholder="Search notifications by title, source, or message…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {/* Button to clear the search text */}
-          {search && (
-            <button type="button" className="doc-search-clear" onClick={() => setSearch('')}><Icon name="close" /></button>
-          )}
-        </div>
+        <SearchInput placeholder="Search notifications by title, source, or message…" value={search} onChange={setSearch} />
       </div>
 
       {/* Loading skeleton, error with retry, empty state, or the notification list */}

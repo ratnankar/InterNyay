@@ -1,5 +1,7 @@
 // Main app layout: sidebar on the left, the current page (the matched child route) on the right,
 // and every global modal mounted once so any page can open them through context state.
+import ScrollToTopButton from '../components/common/ScrollToTopButton'
+import ModalScrollTopButton from '../components/common/ModalScrollTopButton'
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import ErrorBoundary from '../components/common/ErrorBoundary'
@@ -21,6 +23,7 @@ import NextHearingModal from '../components/modals/NextHearingModal'
 import DocPreviewModal from '../components/common/DocPreviewModal'
 import ImportantNotificationPopup from '../components/common/ImportantNotificationPopup'
 import ChatWidget from '../components/chat/ChatWidget'
+import useStickyBars from '../hooks/useStickyBars'
 
 // Renders the chat assistant only when the user's plan includes it
 function ChatGate() {
@@ -31,6 +34,7 @@ function ChatGate() {
 export default function AppLayout() {
   const { isAdmin, isAssociate } = useApp()
   const { pathname } = useLocation()
+  useStickyBars()
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
     const previous = meta?.getAttribute('content')
@@ -46,6 +50,9 @@ export default function AppLayout() {
           <Outlet />
         </ErrorBoundary>
       </main>
+      {/* Back-to-top buttons: one for the page, one for pop-up windows that scroll */}
+      <ScrollToTopButton />
+      <ModalScrollTopButton />
       {/* Global modals live here so any page can open them through context state. A crash in one of them hides it, not the page */}
       <ErrorBoundary fallback={null} resetKey={pathname}>
       <AddCaseModal />

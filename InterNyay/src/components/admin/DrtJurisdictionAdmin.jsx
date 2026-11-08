@@ -11,6 +11,7 @@ import SeeMore from '../common/SeeMore'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import SearchInput from '../common/SearchInput'
+import useSessionState from '../../hooks/useSessionState'
 
 // Tribunal types. The high-value bench and the appellate tribunal can exist only once each
 const KINDS = [
@@ -44,7 +45,7 @@ export default function DrtJurisdictionAdmin() {
   const { directory, loading, error, reload } = useDrtJurisdiction()
 
   // Search text, tribunal being edited (null when closed), validation errors and saving flag
-  const [search,  setSearch]  = useState('')
+  const [search,  setSearch]  = useSessionState('admin_drt_search', '')
   const [editing, setEditing] = useState(null)
   const [errors,  setErrors]  = useState({})
   const [saving,  setSaving]  = useState(false)

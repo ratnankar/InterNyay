@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import useSessionState from '../../hooks/useSessionState'
 import { useApp } from '../../context/AppContext'
 import { formatDate, getDaysInMonth, getFirstDayOfMonth, formatShortDate } from '../../utils/dateUtils'
 import { holidayCourtClass, holidayCourtLabel } from '../../constants/holidays'
@@ -6,6 +7,7 @@ import { holidayCourtClass, holidayCourtLabel } from '../../constants/holidays'
 import Icon from './Icon'
 import HearingLimitModal from '../modals/HearingLimitModal'
 import { confirmDialog } from '../../utils/confirmDialog'
+import Linkify from './Linkify'
 // Weekday headers for the month grid, starting on Sunday
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -21,7 +23,7 @@ export default function Calendar() {
   } = useApp()
 
   // Whether the upcoming-holidays list is expanded
-  const [holidaysOpen, setHolidaysOpen] = useState(false)
+  const [holidaysOpen, setHolidaysOpen] = useSessionState('calendar_holidays_open', false)
   // Whether the daily hearing limit window is open
   const [limitOpen, setLimitOpen] = useState(false)
 
@@ -198,7 +200,7 @@ export default function Calendar() {
               {formatShortDate(selectedHoliday.date)} · {holidayCourtLabel(selectedHoliday)} holiday
             </p>
             {selectedHoliday.description && (
-              <p className="calendar__selected-holiday-desc">{selectedHoliday.description}</p>
+              <p className="calendar__selected-holiday-desc"><Linkify text={selectedHoliday.description} /></p>
             )}
           </div>
         </div>

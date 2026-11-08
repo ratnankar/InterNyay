@@ -10,6 +10,7 @@ import { Head } from '../common/SuccessorCourts'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { confirmDialog } from '../../utils/confirmDialog'
 import useSessionState from '../../hooks/useSessionState'
+import usePersistedState from '../../hooks/usePersistedState'
 
 const LEVELS = [
   { id: 'court',    label: 'Court' },
@@ -31,7 +32,7 @@ const blank = { court: '', district: '', building: '', newBuilding: '', floor: '
 export default function CourtsAdmin() {
   const { addToast } = useApp()
   const { rows, loaded, courtNames, highCourts, hierarchy } = useCourts()
-  const [level, setLevel] = useState('court')
+  const [level, setLevel] = usePersistedState('admin_courts_level', 'court', LEVELS.map(l => l.id))
   const [form, setForm] = useState(blank)
   const [busy, setBusy] = useState(false)
 

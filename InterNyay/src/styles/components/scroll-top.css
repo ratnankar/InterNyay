@@ -92,3 +92,15 @@
   .scroll-top-btn--show,
   .scroll-top-btn--show:hover .scroll-top-btn__arrow { animation: none; }
 }
+
+/* Inside a pop-up window: small, at the window's bottom right corner, above the overlay (z-index 100) */
+.scroll-top-btn.scroll-top-btn--modal {
+  --st-size: 38px;
+  z-index: 120;
+  bottom: auto;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  animation: none;
+}
+.scroll-top-btn.scroll-top-btn--modal:hover { transform: translateY(-3px); }

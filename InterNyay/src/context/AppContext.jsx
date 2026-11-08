@@ -65,6 +65,17 @@ function savedCaseStatus() {
 const AppContext = createContext(null)
 
 // Provider that holds all state and actions; components read them with the useApp() hook at the bottom of this file
+const EMPTY_CLIENT_FORM = {
+  name: '',
+  email: '',
+  whatsappPhone: '',
+  additionalPhone: '',
+  address: '',
+  type: 'INDIVIDUAL',
+  customLabel: '',
+  profilePicture: ''
+}
+
 export function AppProvider({ children }) {
 
   // Router access: the URL is the source of truth for the page, the sign-in tab and the opened case/client
@@ -685,16 +696,13 @@ export function AppProvider({ children }) {
   const [feeOnlyReadOnly, setFeeOnlyReadOnly] = useState(false)
 
   // Add client form values
-  const [newClientForm, setNewClientForm] = useState({
-    name: '',
-    email: '',
-    whatsappPhone: '',
-    additionalPhone: '',
-    address: '',
-    type: 'INDIVIDUAL',
-    customLabel: '',
-    profilePicture: ''
-  })
+  const [newClientForm, setNewClientForm] = useState({ ...EMPTY_CLIENT_FORM })
+
+  useEffect(() => {
+    if (showAddClient) return
+    setNewClientForm({ ...EMPTY_CLIENT_FORM })
+    setMarkTarget(null)
+  }, [showAddClient])
 
   // Upload form state for case documents
   const [docName, setDocName] = useState('')
@@ -1964,6 +1972,13 @@ export function AppProvider({ children }) {
     setCaseClientSubTypes({})
   }
 
+  function openAddCase(cnr = '') {
+    resetCaseModal()
+    setSelectedCase(null)
+    setScanCnr(cnr)
+    setShowAddCase(true)
+  }
+
   // Fills the case form with an existing case and opens it for editing
   function openEditCase(c) {
 
@@ -2292,7 +2307,7 @@ export function AppProvider({ children }) {
       payload.fileNo = ''
       payload.fileSeq = null
       payload.noFileNumber = true
-    } else if (newCaseForm.fileNoManual && typedFileNo && ['new', 'auto', 'legacy'].includes(newCaseForm.fileNoOrigin)) {
+    } else if (newCaseForm.fileNoManual && typedFileNo && ['new', 'auto', 'legacy', 'panel'].includes(newCaseForm.fileNoOrigin)) {
       // Typed for a new case, or a changed number on a saved case: a plain number joins the sequence, other text stays as typed
       payload.fileNo = typedFileNo
       payload.fileSeq = /^[1-9]\d{0,8}$/.test(typedFileNo) ? Number(typedFileNo) : null
@@ -2676,14 +2691,10 @@ export function AppProvider({ children }) {
   function startMarkAsClient(nonClient, caseId = null) {
     setMarkTarget({ caseId, nonClient })
     setNewClientForm({
+      ...EMPTY_CLIENT_FORM,
       name: nonClient.name || '',
-      email: '',
       whatsappPhone: nonClient.phone || '',
-      additionalPhone: '',
-      address: nonClient.address || '',
-      type: 'INDIVIDUAL',
-      customLabel: '',
-      profilePicture: ''
+      address: nonClient.address || ''
     })
     setShowAddClient('markNonClient')
   }
@@ -2774,16 +2785,7 @@ export function AppProvider({ children }) {
 
       setShowAddClient(false)
 
-      setNewClientForm({
-        name: '',
-        email: '',
-        whatsappPhone: '',
-        additionalPhone: '',
-        address: '',
-        type: 'INDIVIDUAL',
-        customLabel: '',
-        profilePicture: ''
-      })
+      setNewClientForm({ ...EMPTY_CLIENT_FORM })
 
       addToast(
         'Client registered successfully'
@@ -3803,6 +3805,7 @@ export function AppProvider({ children }) {
         removeCaseClient,
         setPrimaryCaseClient,
         resetCaseModal,
+        openAddCase,
 
         editingCaseId,
         openEditCase,

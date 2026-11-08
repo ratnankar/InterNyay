@@ -130,3 +130,11 @@
 
 /* Phone fixes: page header wrap, search and sort size, Remind buttons, safety nets. Keep last */
 @import './styles/responsive/phone-layout.css';
+
+@import './styles/components/sticky-windows.css';
+
+/* Search / filter bars that stay in view while the page scrolls */
+@import './styles/components/sticky-bars.css';
+
+/* Expenses / Transactions: shadow band under the payment card, Year chip shape. Keep last */
+@import './styles/pages/expenses-filters.css';

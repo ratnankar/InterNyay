@@ -26,6 +26,7 @@ import SearchInput from '../common/SearchInput'
 import ClearableDateInput from '../common/ClearableDateInput'
 import PlaceGroupedGrid, { sortByPlace } from './PlaceGroupedGrid'
 import { nameSearchMatches } from '../../utils/judgeMatch'
+import usePersistedState from '../../hooks/usePersistedState'
 // Patterns used to check the court email and the virtual court link
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const LINK_PATTERN = /^https?:\/\/\S+$/
@@ -88,8 +89,8 @@ export default function ListingAdmin() {
   // Judges, loading flag, search text and court filter
   const [judges,   setJudges]   = useState([])
   const [loading,  setLoading]  = useState(false)
-  const [search,   setSearch]   = useState('')
-  const [courtFilter, setCourtFilter] = useState('')
+  const [search,   setSearch]   = useSessionState('admin_listing_search', '')
+  const [courtFilter, setCourtFilter] = usePersistedState('admin_listing_court', '')
   // Judges (name and photo), which listings to show (all / judge holds more than one court) and the listing whose judge is being changed
   const [profiles, setProfiles] = useState([])
   const [view, setView] = useSessionState('admin_listing_view', 'all')

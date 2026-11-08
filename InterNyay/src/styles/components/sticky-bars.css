@@ -1,0 +1,79 @@
+/* Sticky bars: the search box, filter and sort row of every list page stays in view while the page scrolls.
+   Desktop: the page scrolls inside .app-main, so the bar sticks to its top edge.
+   Phones and tablets (860px and below): the whole window scrolls and the top bar (56px) is itself sticky, so the bar sticks just below it.
+   Modal windows have their own sticky header, toolbar and button rows (sticky-windows.css). */
+:root {
+  --sticky-gap: 0.75rem;
+  /* .app-main has 1.75rem of top padding and a sticky offset is measured inside that padding, so it is taken off again */
+  --sticky-top: calc(var(--sticky-gap) - 1.75rem);
+}
+
+@media (max-width: 860px) {
+  /* Window scroll: the offset is measured from the screen edge, below the 56px top bar */
+  :root { --sticky-top: calc(56px + var(--sticky-gap)); }
+
+  /* overflow-x: hidden turns .app-main into its own (non scrolling) scroll box, and a sticky bar then sticks to that box
+     instead of the window. clip cuts off the sideways overflow the same way without making a scroll box. */
+  .app-main {
+    overflow-x: clip;
+  }
+}
+
+/* Cases, Clients, Misc. Applications, Notifications, Transactions, Expenses, To-Do, Documents, Quick Access directories and
+   the Admin console lists. Only Admin toolbars that hold a search box stick; the "add" rows are forms and stay in place. */
+.app-main .list-toolbar,
+.app-main .todo-filter-bar,
+.app-main .doc-filter-bar,
+.app-main .search-card,
+.app-main .admin__toolbar:has(.doc-search-wrap) {
+  position: sticky;
+  top: var(--sticky-top);
+  z-index: 20;
+}
+
+/* While pinned (the useStickyBars hook adds "is-stuck") the bar floats a little below the top edge as a white card. Two layers
+   sit behind its content: ::before paints the page canvas over the gap above the bar and round its corners, so the cards
+   scrolling underneath do not show there (it is the same canvas as the page, so it is not visible as a band); ::after is the
+   white card itself with a firmer outline and a light lift. The bar's own box turns transparent so nothing is drawn twice. */
+.app-main :is(.list-toolbar, .todo-filter-bar, .doc-filter-bar, .search-card, .admin__toolbar).is-stuck {
+  background: transparent;
+  border-color: transparent;
+}
+.app-main :is(.list-toolbar, .todo-filter-bar, .doc-filter-bar, .search-card, .admin__toolbar).is-stuck::before,
+.app-main :is(.list-toolbar, .todo-filter-bar, .doc-filter-bar, .search-card, .admin__toolbar).is-stuck::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.app-main :is(.list-toolbar, .todo-filter-bar, .doc-filter-bar, .search-card, .admin__toolbar).is-stuck::before {
+  z-index: -2;
+  top: calc(-1 * var(--sticky-gap) - 1px);
+  left: -1px;
+  right: -1px;
+  height: calc(var(--sticky-gap) + 24px);
+  background-image: var(--sk-canvas-image);
+  background-color: var(--sk-page, #f4f7fb);
+  background-attachment: fixed;
+}
+.app-main :is(.list-toolbar, .todo-filter-bar, .doc-filter-bar, .search-card, .admin__toolbar).is-stuck::after {
+  z-index: -1;
+  inset: -1px;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #cbd5e4;
+  border-radius: var(--lc-radius, 14px);
+  box-shadow: 0 6px 14px -8px rgba(15, 30, 60, 0.25);
+}
+
+/* No page-colour shadow strip behind the bars: it showed up as a pale band around the search box. The bars stick flush
+   to the top edge instead (--sticky-gap: 0), so there is no gap for rows to scroll through. */
+/* A sticky bar must not be taller than a short screen: on a landscape phone it would cover the list it filters */
+@media (max-height: 480px) {
+  .app-main .list-toolbar,
+  .app-main .todo-filter-bar,
+  .app-main .doc-filter-bar,
+  .app-main .search-card,
+  .app-main .admin__toolbar:has(.doc-search-wrap) {
+    position: static;
+  }
+}

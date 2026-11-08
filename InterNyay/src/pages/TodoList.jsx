@@ -9,6 +9,8 @@ import Icon from '../components/common/Icon'
 import { confirmDialog } from '../utils/confirmDialog'
 import useSessionState from '../hooks/useSessionState'
 import ClearableDateInput from '../components/common/ClearableDateInput'
+import SearchInput from '../components/common/SearchInput'
+import Linkify from '../components/common/Linkify'
 // Task statuses available in the status filter
 const STATUSES = ['Pending', 'Completed']
 
@@ -21,9 +23,9 @@ export default function TodoList() {
   const { todos, addTodo, updateTodo, deleteTodo } = useApp()
   // Add-task form visibility, status and category filters, search text and sort order
   const [showAdd, setShowAdd] = useState(false)
-  const [filterStatus, setFilterStatus] = useSessionState('todos_status', 'All')
-  const [selectedCategory, setSelectedCategory] = useSessionState('todos_category', 'All')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [filterStatus, setFilterStatus] = usePersistedState('todos_status', 'All')
+  const [selectedCategory, setSelectedCategory] = usePersistedState('todos_category', 'All')
+  const [searchQuery, setSearchQuery] = useSessionState('todos_search', '')
   const [sortBy, setSortBy] = usePersistedState('todos_sort', 'date', ['date', 'oldest', 'dueDate'])
 
   // Custom category typing mode in the add form and the typed name
@@ -52,8 +54,10 @@ export default function TodoList() {
   // Go back to 'All' if the selected category no longer exists
   useEffect(() => {
     if (selectedCategory === 'All' || selectedCategory === UNCATEGORIZED) return
+    // Tasks still loading: do not mistake an empty list for a removed category and forget the remembered chip
+    if (!todos.length) return
     if (!allCategories.includes(selectedCategory)) setSelectedCategory('All')
-  }, [selectedCategory, allCategories])
+  }, [selectedCategory, allCategories, todos.length, setSelectedCategory])
 
   // Tasks after the status filter and search text (before the category filter)
   const statusAndSearchFiltered = useMemo(() => {
@@ -113,6 +117,10 @@ export default function TodoList() {
       id: Date.now(),
       createdAt: Date.now(),
     })
+    closeAdd()
+  }
+
+  function closeAdd() {
     setNewTodo({ title: '', description: '', dueDate: '', status: 'Pending', category: '' })
     setAddingCategory(false)
     setNewCategoryName('')
@@ -150,7 +158,7 @@ export default function TodoList() {
           <h1 className="page-title">To-Do List</h1>
           <p className="page-subtitle">Manage tasks and action items</p>
         </div>
-        <button type="button" className="btn-gold" onClick={() => setShowAdd(!showAdd)}>
+        <button type="button" className="btn-gold" onClick={() => (showAdd ? closeAdd() : setShowAdd(true))}>
           {showAdd ? <><Icon name="close" /> Cancel</> : '+ Add Task'}
         </button>
       </div>
@@ -253,7 +261,7 @@ export default function TodoList() {
 
             <div className="form-field-group form-field-group--full">
               <div className="form-actions">
-                <button type="button" className="btn-outline" onClick={() => setShowAdd(false)}>Cancel</button>
+                <button type="button" className="btn-outline" onClick={closeAdd}>Cancel</button>
                 <button type="button" className="btn-gold" onClick={handleAddTodo}>Add Task</button>
               </div>
             </div>
@@ -263,15 +271,7 @@ export default function TodoList() {
 
       {/* Search box, status filter and sort dropdown */}
       <div className="todo-filter-bar">
-        <div className="todo-search-wrap">
-          <span className="doc-search-icon"><Icon name="search" /></span>
-          <input className="form-input todo-search-input" placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)} />
-          {searchQuery && (
-            <button type="button" className="doc-search-clear" onClick={() => setSearchQuery('')}><Icon name="close" /></button>
-          )}
-        </div>
+        <SearchInput placeholder="Search tasks…" value={searchQuery} onChange={setSearchQuery} />
 
         <div className="todo-filters">
           <Dropdown searchable={false} className="form-input" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
@@ -357,7 +357,7 @@ export default function TodoList() {
                     <div className="todo-item__header">
                       <h4 className="todo-item__title">{todo.title}</h4>
                     </div>
-                    {todo.description && <p className="todo-item__desc">{todo.description}</p>}
+                    {todo.description && <p className="todo-item__desc"><Linkify text={todo.description} /></p>}
                     <div className="todo-item__footer">
                       <span className="todo-status">{todo.status}</span>
                       {selectedCategory === 'All' && (

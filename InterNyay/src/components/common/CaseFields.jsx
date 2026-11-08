@@ -6,9 +6,13 @@ import { caseNatureOf } from '../../utils/caseClassification'
 import { formatDisplayDate } from '../../utils/dateUtils'
 import useLastHearingDate from '../../hooks/useLastHearingDate'
 import { formatCurrency } from '../../utils/formatUtils'
+import Linkify from './Linkify'
+
+// Text values show their web and e-mail addresses as links; numbers and elements stay as they are
+const linked = v => (typeof v === 'string' ? <Linkify text={v} /> : v)
 
 // Detail rows of a case, with an optional hearing
-export default function CaseFields({ caseItem: c, clients = [], hearing = null, showParties = true, withLastHearing = false, hearingDate = '' }) {
+export default function CaseFields({ caseItem: c, clients = [], hearing = null, showParties = true, withLastHearing = false, hearingDate = '', causeListAction = null }) {
   useCourts()
   const lastHearingDate = useLastHearingDate(c.id, withLastHearing, hearingDate)
   // Split the case's court into district and court name
@@ -49,7 +53,7 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null, 
   const hearingRows = [
     row('Court No',       c.courtNo),
     row('Building',       building),
-    row('Cause List No',  causeListNo != null && causeListNo !== '' ? causeListNo : ''),
+    row('Cause List No',  causeListNo != null && causeListNo !== '' ? causeListNo : '', causeListAction ? { always: true, prefix: causeListAction } : {}),
     row('Judge',          judge),
   ]
 
@@ -140,7 +144,11 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null, 
               return (
                 <Fragment key={f.label}>
                   <th scope="row" className="case-fields__label">{f.label}</th>
-                  <td className={cls} colSpan={stretch ? 3 : 1}>{empty ? '—' : f.value}</td>
+                  <td className={cls} colSpan={stretch ? 3 : 1}>
+                    {f.prefix ? (
+                      <span className="case-fields__with-action"><span>{empty ? '—' : linked(f.value)}</span>{f.prefix}</span>
+                    ) : (empty ? '—' : linked(f.value))}
+                  </td>
                 </Fragment>
               )
             })}

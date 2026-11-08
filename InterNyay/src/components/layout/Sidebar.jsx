@@ -126,15 +126,42 @@ export default function Sidebar() {
 
   // Number of unread admin replies, shown on Contact Us and on the account row
   const [unreadReplies, setUnreadReplies] = useState(0)
+  // How many of those the user has already "seen" by opening Contact Us, Feedback or Notifications. The badge shows only replies
+  // beyond that number, so it goes away on opening the page (even if no message was read) and comes back only for a new reply.
+  const ackKey = `unread_replies_seen_${currentUser?.id ?? currentUser?.email ?? ''}`
+  const [ackCount, setAckCount] = useState(() => {
+    try { return Number(localStorage.getItem(ackKey)) || 0 } catch { return 0 }
+  })
+  const saveAck = n => {
+    setAckCount(n)
+    try { localStorage.setItem(ackKey, String(n)) } catch { /* storage unavailable: the badge just returns after a reload */ }
+  }
+  const onSeenPage = activeNav === 'contact' || activeNav === 'notifications'
   // Refresh the badge whenever the user changes page (admins don't have it)
   useEffect(() => {
     if (isAdmin) return undefined
     let cancelled = false
-    api.contact.unreadReplies()
-      .then(r => { if (!cancelled) setUnreadReplies(r?.count || 0) })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [activeNav, isAdmin])
+    const refresh = () => {
+      api.contact.unreadReplies()
+        .then(r => {
+          if (cancelled) return
+          const count = r?.count || 0
+          setUnreadReplies(count)
+          let stored = 0
+          try { stored = Number(localStorage.getItem(ackKey)) || 0 } catch { /* ignore */ }
+          // On a "seen" page everything counts as seen; replies that were read (count dropped) lower the mark too
+          if (onSeenPage) { if (stored !== count) saveAck(count) } else if (count < stored) saveAck(count)
+        })
+        .catch(() => {})
+    }
+    refresh()
+    window.addEventListener('contact-replies-seen', refresh)
+    return () => {
+      cancelled = true
+      window.removeEventListener('contact-replies-seen', refresh)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeNav, isAdmin, ackKey])
 
   const { can } = usePlanFeatures()
   // Menu items for this user: associates don't see transactions, only advocates see expenses, and plan features can hide items
@@ -180,9 +207,10 @@ export default function Sidebar() {
   // Highlight the user row on the profile, plan and contact pages
   const userRowActive = activeNav === 'profile' || activeNav === 'myplan' || activeNav === 'contact'
   // Unread replies show on the account row while the pop-up is closed
-  const unreadBadge = unreadReplies > 0 && (
-    <span className="nav-item__badge" aria-label={`${unreadReplies} unread repl${unreadReplies === 1 ? 'y' : 'ies'}`}>
-      {unreadReplies}
+  const badgeCount = onSeenPage ? 0 : Math.max(0, unreadReplies - ackCount)
+  const unreadBadge = badgeCount > 0 && (
+    <span className="nav-item__badge" aria-label={`${badgeCount} unread repl${badgeCount === 1 ? 'y' : 'ies'}`}>
+      {badgeCount}
     </span>
   )
 

@@ -318,6 +318,9 @@ export default function Dashboard() {
                       caseItem={c}
                       clients={clients}
                       hearing={{ causeListNo, judgeName: info?.judgeName }}
+                      causeListAction={!isClosedCase(c)
+                        ? <CauseListRefreshButton caseId={c.id} dateKey={calendarDateKey} onDone={reloadHearingInfo} />
+                        : null}
                       withLastHearing
                       hearingDate={calendarDateKey}
                     />
@@ -326,9 +329,6 @@ export default function Dashboard() {
 
                     {/* Fee button (not for closed cases unless stagewise) and Open in Cases button */}
                     <div className="hearing-card__footer">
-                      {!isClosedCase(c) && (
-                        <CauseListRefreshButton caseId={c.id} dateKey={calendarDateKey} onDone={reloadHearingInfo} withLabel />
-                      )}
                       {(!isClosedCase(c) || c.feeType === 'STAGEWISE') && (
                       <button type="button"
                         className="btn-outline btn-outline--sm"

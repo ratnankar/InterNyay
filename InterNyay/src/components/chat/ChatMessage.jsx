@@ -2,6 +2,7 @@ import { Fragment, useState } from 'react'
 import ChatActionCard from './ChatActionCard'
 import ChatBrief from './ChatBrief'
 import Icon from '../common/Icon'
+import Linkify from '../common/Linkify'
 
 // Patterns for lines that start a bullet or a numbered list item
 const BULLET = /^\s*[-*•]\s+(.*)$/
@@ -12,7 +13,7 @@ function inline(text) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
     part.startsWith('**') && part.endsWith('**') && part.length > 4
       ? <strong key={i}>{part.slice(2, -2)}</strong>
-      : <Fragment key={i}>{part}</Fragment>
+      : <Fragment key={i}><Linkify text={part} /></Fragment>
   )
 }
 
@@ -154,7 +155,7 @@ export default function ChatMessage({
     return (
       <div className="chat__row chat__row--user">
         <Avatar role="user" />
-        <div className={className}><p className="chat__text">{content}</p></div>
+        <div className={className}><p className="chat__text"><Linkify text={content} /></p></div>
       </div>
     )
   }

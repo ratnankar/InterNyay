@@ -17,6 +17,9 @@ import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
 import ContactAttachments from '../common/ContactAttachments'
+import Linkify from '../common/Linkify'
+import { telLink } from '../../utils/jurisdiction'
+import usePersistedState from '../../hooks/usePersistedState'
 
 // Status filters for the message list
 const FILTERS = [
@@ -55,8 +58,8 @@ export default function ContactMessagesAdmin({ onLoaded }) {
   const [loading, setLoading] = useState(true)
   const [source, setSource]   = useSessionState('admin_contact_source', 'ACCOUNT')
   // Status filter and search text
-  const [filter, setFilter]   = useState('ALL')
-  const [search, setSearch]   = useState('')
+  const [filter, setFilter]   = usePersistedState('admin_contact_filter', 'ALL')
+  const [search, setSearch]   = useSessionState('admin_contact_search', '')
   // Message open in the dialog, the reply being written, its delivery channel and the sending flag
   const [openId, setOpenId]   = useSessionState('admin_contact_open', null)
   const [draft, setDraft]     = useState('')
@@ -295,15 +298,15 @@ export default function ContactMessagesAdmin({ onLoaded }) {
               <h3 className="section-title">{open.subject}</h3>
 
               <div className="contact-detail__meta">
-                <div><strong>From:</strong> {open.name} ({roleLabel(open.role)}) · {open.email}</div>
-                {open.phone && <div><strong>Phone:</strong> {open.phone}</div>}
+                <div><strong>From:</strong> {open.name} ({roleLabel(open.role)}) · <Linkify text={open.email} /></div>
+                {open.phone && <div><strong>Phone:</strong> <a className="qa-link" href={telLink(open.phone)}>{open.phone}</a></div>}
                 <div><strong>Topic:</strong> {open.category}</div>
               </div>
 
               <div className="contact-thread contact-thread--admin">
                 <div className="contact-bubble contact-bubble--them">
                   <div className="contact-bubble__who">{open.name} · {formatContactDate(open.createdAt)}</div>
-                  <div className="contact-bubble__text">{open.message}</div>
+                  <div className="contact-bubble__text"><Linkify text={open.message} /></div>
                   <ContactAttachments attachments={open.attachments} loadBlob={api.admin.contactMessages.attachmentBlob} />
                 </div>
                 {(open.replies || []).map(r => (
@@ -311,7 +314,7 @@ export default function ContactMessagesAdmin({ onLoaded }) {
                     <div className="contact-bubble__who">
                       {r.adminName} · {formatContactDate(r.createdAt)} · {deliveryLabel(r)}
                     </div>
-                    <div className="contact-bubble__text">{r.body}</div>
+                    <div className="contact-bubble__text"><Linkify text={r.body} /></div>
                   </div>
                 ))}
               </div>

@@ -604,3 +604,36 @@
 .import-row .client-selected__name { overflow-wrap: anywhere; }
 .import-row .client-selected__email { overflow-wrap: anywhere; }
 .import-row__vs { font-style: italic; color: var(--color-text-faint); }
+
+/* Import from eCourts: compact filter bar. Row 1: Status chips and the "hide added" tick. Row 2: Case type and Next hearing as
+   two equal drop-downs, then the search box. Counts sit in the option names, so nothing wraps into extra chip rows. */
+.import-bar__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+}
+.import-bar__row .import-filters { margin-bottom: 0; }
+.import-bar__row .import-filters__check { margin-left: 0; }
+.import-bar__selects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 10px 12px;
+  margin-bottom: 10px;
+}
+.import-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.import-field__label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.import-bar__row .case-filter-btn { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; }
+.modal--import .modal__toolbar { max-height: none; overflow: visible; }
+@media (max-width: 640px) {
+  .import-bar__selects { grid-template-columns: minmax(0, 1fr); }
+  .modal--import .modal__toolbar { position: static; }
+}

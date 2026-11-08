@@ -517,30 +517,16 @@ function PartiesSection() {
   )
 }
 
-// Case file number. Corporate panel clients type it by hand. For everyone else a new case starts with the next free
-// number; any number or text can be typed instead, and the file number of a saved case can be changed the same way
 function FileNumberField({ form, setForm }) {
   const { caseClients } = useApp()
-  // Whether the file numbers popup is open
   const [windowOpen, setWindowOpen] = useState(false)
 
-  // True when a corporate panel client is attached
   const panel = hasCorporatePanelClient(caseClients)
-  // Where the current file number came from ("auto", "legacy", "panel", or "new" when the case has none yet)
-  const origin = form.fileNoOrigin
-
-  // A file number the saved case already has (it can still be changed)
-  const kept = !panel && (origin === 'auto' || origin === 'legacy')
-  // True when the next free number should be suggested and used
+  const kept = !panel && (form.fileNoOrigin === 'auto' || form.fileNoOrigin === 'legacy')
   const numbered = !panel && !kept
-  // The number can be typed only while the case has none of its own (a case that just left corporate panel is given a new one)
-  const editable = kept || (numbered && origin === 'new')
-  // True once the advocate has typed their own number
-  const typed = editable && !!form.fileNoManual
-  // True once the advocate emptied the field: the file number is optional, so the case is saved without one
-  const none = editable && !!form.noFileNo
+  const typed = !panel && !!form.fileNoManual
+  const none = !panel && !!form.noFileNo
 
-  // Fetch the next free file number once, unless the form already has one
   useEffect(() => {
     if (!numbered) return undefined
 
@@ -554,7 +540,6 @@ function FileNumberField({ form, setForm }) {
     return () => { alive = false }
   }, [numbered, setForm])
 
-  // Panel clients type the file number manually
   if (panel) {
     return (
       <div>
@@ -562,44 +547,51 @@ function FileNumberField({ form, setForm }) {
           File Number
           <span className="case-parties__hint"> — Corporate Panel, type manually</span>
         </label>
-        <input
-          className="form-input"
-          placeholder="e.g. FILE/2024/045"
-          maxLength={255}
-          value={form.fileNo}
-          onChange={e => setForm(f => ({ ...f, fileNo: e.target.value }))}
-        />
+        <div className="file-no-row">
+          <input
+            className="form-input"
+            placeholder="e.g. FILE/2024/045"
+            maxLength={255}
+            value={form.fileNo}
+            onChange={e => setForm(f => ({ ...f, fileNo: e.target.value }))}
+          />
+        </div>
       </div>
     )
   }
 
-  // Number displayed in the field: what was typed, else the number the case holds or the suggested one
   const shownNumber = none ? '' : typed || kept ? form.fileNo : (form.fileSeq ?? '')
-
-  // The number marked as chosen in the file numbers popup
   const typedNumber = /^[1-9]\d{0,8}$/.test((form.fileNo || '').trim()) ? Number((form.fileNo || '').trim()) : undefined
   const selected = none ? undefined : typed || kept ? typedNumber : form.fileSeq
+
+  let hint = ' — suggested, type to change, empty for none'
+  if (none) hint = ' — optional, saved without a file number'
+  else if (typed) hint = ' — changed by you'
+  else if (kept) hint = ' — type to change, empty for none'
+
+  function pick(number) {
+    setForm(f => (numbered && number === f.fileSeq
+      ? { ...f, fileNo: '', fileNoManual: false, noFileNo: false }
+      : { ...f, fileNo: String(number), fileNoManual: true, noFileNo: false }))
+    setWindowOpen(false)
+  }
 
   return (
     <div>
       <label className="form-label">
         File Number
-        <span className="case-parties__hint">
-          {none ? ' — optional, saved without a file number' : typed ? ' — changed by you' : kept ? ' — type to change, empty to remove' : editable ? ' — suggested, empty for none' : ' — automatic'}
-        </span>
+        <span className="case-parties__hint">{hint}</span>
       </label>
 
       <div className="file-no-row">
         <input
           className="form-input"
-          readOnly={!editable}
           maxLength={255}
           value={shownNumber}
-          placeholder={editable ? (none ? 'No file number' : 'e.g. 25 or FILE/2024/045') : 'Assigned when the case is saved'}
-          onChange={editable ? e => setForm(f => ({ ...f, fileNo: e.target.value, fileNoManual: true, noFileNo: false })) : undefined}
-          // The file number is optional: leaving the field empty means the case has none (pick or type a number to have one)
-          onBlur={editable ? () => setForm(f => (f.fileNoManual && !(f.fileNo || '').trim()
-            ? { ...f, fileNo: '', fileNoManual: false, noFileNo: true } : f)) : undefined}
+          placeholder={none ? 'No file number' : 'e.g. 25 or FILE/2024/045'}
+          onChange={e => setForm(f => ({ ...f, fileNo: e.target.value, fileNoManual: true, noFileNo: false }))}
+          onBlur={() => setForm(f => (f.fileNoManual && !(f.fileNo || '').trim()
+            ? { ...f, fileNo: '', fileNoManual: false, noFileNo: true } : f))}
         />
         <button type="button" className="btn-outline" onClick={() => setWindowOpen(true)}>
           File numbers
@@ -608,13 +600,9 @@ function FileNumberField({ form, setForm }) {
 
       {windowOpen && (
         <FileNumbersModal
-          selected={numbered || kept ? selected : undefined}
+          selected={selected}
           onClose={() => setWindowOpen(false)}
-          onPick={kept
-            ? number => { setForm(f => ({ ...f, fileNo: String(number), fileNoManual: true, noFileNo: false })); setWindowOpen(false) }
-            : numbered
-              ? number => { setForm(f => ({ ...f, fileSeq: number, fileNo: '', fileNoManual: false, noFileNo: false })); setWindowOpen(false) }
-              : undefined}
+          onPick={pick}
         />
       )}
     </div>

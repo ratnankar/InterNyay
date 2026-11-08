@@ -12,6 +12,7 @@ import { useDisableAutofill } from './utils/noAutofill'
 import { useFullTextOnHover } from './utils/fullTextOnHover'
 import { useEnterToContinue } from './utils/enterKey'
 import { useModalA11y } from './utils/modalA11y'
+import { useModalStickyOffset } from './utils/modalStickyOffset'
 
 // Global behaviours that apply on every screen
 function GlobalBehaviours() {
@@ -20,6 +21,7 @@ function GlobalBehaviours() {
   useEnterToContinue()
   // Dialog semantics and Escape-to-close for every modal and drawer
   useModalA11y()
+  useModalStickyOffset()
   // Browser autofill and saved-value suggestions stay on for the landing, sign-in and register pages only: switched off once signed in
   useDisableAutofill(loggedIn)
   // Text cut short with "…" shows its full text when pointed at

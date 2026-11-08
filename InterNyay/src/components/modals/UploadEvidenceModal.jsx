@@ -7,6 +7,7 @@ import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
 import ModalPortal from '../../components/common/ModalPortal'
 import UploadNameField from '../common/UploadNameField'
+import SearchInput from '../common/SearchInput'
 // Categories that must be linked to a specific client or case
 const NEEDS_TARGET = ['Client', 'Case']
 
@@ -30,7 +31,7 @@ export default function UploadEvidenceModal() {
 
   // Real name of the file that was chosen (the evidence name below can be changed)
   const [pickedFile, setPickedFile] = useState('')
-  useEffect(() => { if (!showUploadEvidence) setPickedFile('') }, [showUploadEvidence])
+  useEffect(() => { if (!showUploadEvidence) { setPickedFile(''); setTargetSearch('') } }, [showUploadEvidence])
 
   // Up to 8 clients or cases matching the search; cases match on title, number or client name
   const targetMatches = useMemo(() => {
@@ -141,23 +142,16 @@ export default function UploadEvidenceModal() {
                     {evidenceCategory === 'Client' ? 'Client *' : 'Case *'}
                   </label>
 
-                  <div className="doc-search-wrap">
-                    <span className="doc-search-icon"><Icon name="search" /></span>
-                    <input
-                      className="form-input doc-search-input"
-                      autoFocus
-                      placeholder={
-                        evidenceCategory === 'Client'
-                          ? 'Type to search a client…'
-                          : 'Type to search a case, case number, or client…'
-                      }
-                      value={targetSearch}
-                      onChange={e => setTargetSearch(e.target.value)}
-                    />
-                    {targetSearch && (
-                      <button type="button" className="doc-search-clear" onClick={() => setTargetSearch('')}><Icon name="close" /></button>
-                    )}
-                  </div>
+                  <SearchInput
+                    autoFocus
+                    placeholder={
+                      evidenceCategory === 'Client'
+                        ? 'Type to search a client…'
+                        : 'Type to search a case, case number, or client…'
+                    }
+                    value={targetSearch}
+                    onChange={setTargetSearch}
+                  />
 
                   {targetSearch.trim() && (
                     targetMatches.length === 0 ? (

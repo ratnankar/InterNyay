@@ -28,10 +28,12 @@
 
 /* ---------- Page canvas ---------- */
 body { background: var(--sk-page); }
+:root { --sk-canvas-image: radial-gradient(900px 340px at 85% -80px, rgba(22, 56, 111, 0.07), transparent 70%); }
 .app-main {
-  background:
-    radial-gradient(900px 340px at 85% -80px, rgba(22, 56, 111, 0.07), transparent 70%),
-    var(--sk-page);
+  /* Fixed to the screen, so the strip behind a pinned search bar (sticky-bars.css) can paint the very same canvas */
+  background-image: var(--sk-canvas-image);
+  background-color: var(--sk-page);
+  background-attachment: fixed;
   scroll-behavior: smooth;
 }
 .app-main::-webkit-scrollbar, .sidebar::-webkit-scrollbar { width: 10px; height: 10px; }

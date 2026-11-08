@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { formatContactDate } from '../../constants/contact'
 import SearchInput from '../common/SearchInput'
+import usePersistedState from '../../hooks/usePersistedState'
 
 const PAGE_SIZE = 25
 
@@ -77,8 +78,8 @@ export default function LoginLogAdmin({ user = null }) {
 
   const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(true)
-  const [type, setType]       = useState('ALL')
-  const [app, setApp]         = useState('ALL')
+  const [type, setType]       = usePersistedState('admin_login_type', 'ALL')
+  const [app, setApp]         = usePersistedState('admin_login_app', 'ALL')
   const [search, setSearch]   = useState('')
   const [query, setQuery]     = useState('')
   const [page, setPage]       = useState(0)

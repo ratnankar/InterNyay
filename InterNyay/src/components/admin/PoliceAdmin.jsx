@@ -12,6 +12,7 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
+import usePersistedState from '../../hooks/usePersistedState'
 
 // Tabs of the police directory admin
 const VIEWS = [
@@ -124,8 +125,8 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
 // Police stations tab: list, search, add, edit and delete stations
 function StationsView({ directory }) {
   const { saving, run } = useSaver()
-  const [search, setSearch] = useState('')
-  const [districtFilter, setDistrictFilter] = useState('')
+  const [search, setSearch] = useSessionState('admin_police_search', '')
+  const [districtFilter, setDistrictFilter] = usePersistedState('admin_police_district', '')
   const [editing, setEditing] = useState(null)
   const [errors, setErrors] = useState({})
 
@@ -277,8 +278,8 @@ function StationsView({ directory }) {
 // Sub-divisions tab: list, search, add, edit and delete sub-divisions
 function SubDivisionsView({ directory }) {
   const { saving, run } = useSaver()
-  const [search, setSearch] = useState('')
-  const [districtFilter, setDistrictFilter] = useState('')
+  const [search, setSearch] = useSessionState('admin_police_links_search', '')
+  const [districtFilter, setDistrictFilter] = usePersistedState('admin_police_links_district', '')
   const [editing, setEditing] = useState(null)
   const [errors, setErrors] = useState({})
 

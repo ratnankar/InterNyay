@@ -13,6 +13,7 @@ import SeeMore from '../components/common/SeeMore'
 import { confirmDialog } from '../utils/confirmDialog'
 import ModalPortal from '../components/common/ModalPortal'
 import useSessionState from '../hooks/useSessionState'
+import SearchInput from '../components/common/SearchInput'
 // File extension to icon name lookup, with a fallback for unknown types
 const DOC_ICONS = {
   pdf: 'pdf',
@@ -430,18 +431,18 @@ export default function Documents() {
   } = useApp()
 
   // Which tab is selected
-  const [source, setSource] = useSessionState('documents_source', 'Case Documents')
+  const [source, setSource] = usePersistedState('documents_source', 'Case Documents', SOURCES)
 
   // Case documents tab: search text, view mode (by case or flat list) and sort order
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useSessionState('documents_search', '')
   const [sortBy, setSortBy] = usePersistedState('documents_sort', 'date', ['date', 'oldest', 'name'])
 
   // Client documents tab: search text and sort order
-  const [clientSearch, setClientSearch] = useState('')
+  const [clientSearch, setClientSearch] = useSessionState('documents_client_search', '')
   const [clientSortBy, setClientSortBy] = usePersistedState('client_documents_sort', 'date', ['date', 'oldest', 'name'])
 
   // Advocate documents tab: search text
-  const [advocateSearch, setAdvocateSearch] = useState('')
+  const [advocateSearch, setAdvocateSearch] = useSessionState('documents_advocate_search', '')
 
   // State for the 'find a case or client to upload for' popup
   const [showUploadSearch, setShowUploadSearch] = useState(false)
@@ -894,19 +895,7 @@ export default function Documents() {
                 Search for the {source === 'Case Documents' ? 'case' : 'client'} you want to upload a document for.
               </p>
 
-              <div className="doc-search-wrap">
-                <span className="doc-search-icon"><Icon name="search" /></span>
-                <input
-                  className="form-input doc-search-input"
-                  autoFocus
-                  placeholder={`Search a ${source === 'Case Documents' ? 'case' : 'client'}…`}
-                  value={uploadSearch}
-                  onChange={e => setUploadSearch(e.target.value)}
-                />
-                {uploadSearch && (
-                  <button type="button" className="doc-search-clear" onClick={() => setUploadSearch('')}><Icon name="close" /></button>
-                )}
-              </div>
+              <SearchInput autoFocus placeholder={`Search a ${source === 'Case Documents' ? 'case' : 'client'}…`} value={uploadSearch} onChange={setUploadSearch} />
 
               {/* Results: clients first, then cases, clicking one starts the upload */}
               {uploadSearch.trim() && (
@@ -987,29 +976,7 @@ export default function Documents() {
           {/* Search box, sort dropdown and clear button */}
           <div className="card doc-filter-bar">
             <div className="doc-filter-row">
-              <div className="doc-search-wrap">
-                <span className="doc-search-icon">
-                  <Icon name="search" />
-                </span>
-
-                <input
-                  className="form-input doc-search-input"
-                  placeholder="Search by file name, case, client, or case number…"
-                  value={searchQuery}
-                  onChange={e =>
-                    setSearchQuery(e.target.value)
-                  }
-                />
-
-                {searchQuery && (
-                  <button type="button"
-                    className="doc-search-clear"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <Icon name="close" />
-                  </button>
-                )}
-              </div>
+              <SearchInput placeholder="Search by file name, case, client, or case number…" value={searchQuery} onChange={setSearchQuery} />
 
               <div className="doc-filter-group doc-filter-group--right">
                 <label className="doc-filter-label">
@@ -1105,25 +1072,7 @@ export default function Documents() {
           {/* Search box, sort dropdown and clear button */}
           <div className="card doc-filter-bar">
             <div className="doc-filter-row">
-              <div className="doc-search-wrap">
-                <span className="doc-search-icon"><Icon name="search" /></span>
-
-                <input
-                  className="form-input doc-search-input"
-                  placeholder="Search by file name or client…"
-                  value={clientSearch}
-                  onChange={e => setClientSearch(e.target.value)}
-                />
-
-                {clientSearch && (
-                  <button type="button"
-                    className="doc-search-clear"
-                    onClick={() => setClientSearch('')}
-                  >
-                    <Icon name="close" />
-                  </button>
-                )}
-              </div>
+              <SearchInput placeholder="Search by file name or client…" value={clientSearch} onChange={setClientSearch} />
 
               <div className="doc-filter-group doc-filter-group--right">
                 <label className="doc-filter-label">
@@ -1217,20 +1166,7 @@ export default function Documents() {
         <>
           {/* Search box */}
           <div className="card doc-filter-bar">
-            <div className="doc-search-wrap">
-              <span className="doc-search-icon"><Icon name="search" /></span>
-
-              <input
-                className="form-input doc-search-input"
-                placeholder="Search by file name or type…"
-                value={advocateSearch}
-                onChange={e => setAdvocateSearch(e.target.value)}
-              />
-
-              {advocateSearch && (
-                <button type="button" className="doc-search-clear" onClick={() => setAdvocateSearch('')}><Icon name="close" /></button>
-              )}
-            </div>
+            <SearchInput placeholder="Search by file name or type…" value={advocateSearch} onChange={setAdvocateSearch} />
           </div>
 
           {/* Empty state when nothing matches or no advocate documents exist */}

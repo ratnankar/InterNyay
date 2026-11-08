@@ -41,6 +41,8 @@ import NotificationArchive from '../components/admin/NotificationArchive'
 import SeeMore from '../components/common/SeeMore'
 import SeeMoreList from '../components/common/SeeMoreList'
 import useSeeMore from '../hooks/useSeeMore'
+import usePersistedState from '../hooks/usePersistedState'
+import useSessionState from '../hooks/useSessionState'
 import { getErrorMessage } from '../utils/errorMessages'
 import { confirmDialog } from '../utils/confirmDialog'
 import ModalPortal from '../components/common/ModalPortal'
@@ -48,6 +50,7 @@ import useUnsavedGuard from '../hooks/useUnsavedGuard'
 import AdminPasswordModal from '../components/modals/AdminPasswordModal'
 import SearchInput from '../components/common/SearchInput'
 import ClearableDateInput from '../components/common/ClearableDateInput'
+import Linkify from '../components/common/Linkify'
 
 // Admin sidebar: groups of tabs, each group with an icon and its tabs
 const TAB_GROUPS = [
@@ -264,8 +267,8 @@ export default function Admin() {
     const fallback = current || 'FREE'
     return [{ value: fallback, label: fallback.charAt(0) + fallback.slice(1).toLowerCase() }]
   }
-  const [search,   setSearch]   = useState('')
-  const [roleFilter, setRoleFilter] = useState('ALL')
+  const [search,   setSearch]   = useSessionState('admin_users_search', '')
+  const [roleFilter, setRoleFilter] = usePersistedState('admin_users_role', 'ALL')
   const [loading,  setLoading]  = useState(false)
   const [editing,  setEditing]  = useState(null)
   const [userFormErrors, setUserFormErrors] = useState({})
@@ -1232,7 +1235,7 @@ export default function Admin() {
                           </div>
                         )}
                       </td>
-                      <td>{r.email}</td>
+                      <td><Linkify text={r.email} /></td>
                       <td>{r.barNo || '—'}</td>
                       <td>{r.role === 'ASSOCIATE' ? (r.advocateName || '—') : '—'}</td>
                       <td>

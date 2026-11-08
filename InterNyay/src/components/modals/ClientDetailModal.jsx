@@ -18,6 +18,7 @@ import Icon from '../common/Icon'
 import DocInfoButton from '../common/DocInfoButton'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
+import { telLink } from '../../utils/jurisdiction'
 // Edit form inputs as [label, field name, input type, placeholder]
 const FIELDS = [
   ['Full Name *',      'name',            'text', "Client's full legal name"],
@@ -84,6 +85,15 @@ export default function ClientDetailModal() {
       setClientEditRequest(null)
     }
   }, [selectedClient, clientEditRequest]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (selectedClient) return
+    setIsEditing(false)
+    setForm(null)
+    setFormBaseline(null)
+    setViewPhoto(false)
+    setOpenSections({ documents: false, evidence: false })
+  }, [selectedClient])
 
   // Nothing to show when no client is selected
   if (!selectedClient) return null
@@ -226,7 +236,11 @@ export default function ClientDetailModal() {
                   {infoItems.map(([label, value]) => (
                     <div key={label} className="profile-view-item">
                       <p className="profile-view-item__label">{label}</p>
-                      <p className="profile-view-item__value">{value}</p>
+                      <p className="profile-view-item__value">
+                        {label === 'Email' ? <a className="qa-link" href={`mailto:${value}`}>{value}</a>
+                          : label.endsWith('Phone') ? <a className="qa-link" href={telLink(value)}>{value}</a>
+                          : value}
+                      </p>
                     </div>
                   ))}
                 </div>

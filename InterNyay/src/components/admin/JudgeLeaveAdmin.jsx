@@ -16,6 +16,7 @@ import useSessionState from '../../hooks/useSessionState'
 import SearchInput from '../common/SearchInput'
 import ClearableDateInput from '../common/ClearableDateInput'
 import { nameSearchMatches } from '../../utils/judgeMatch'
+import usePersistedState from '../../hooks/usePersistedState'
 
 const leaveStartDate = r => r.leaveFrom
 
@@ -47,8 +48,8 @@ export default function JudgeLeaveAdmin() {
   const [loading,   setLoading]   = useState(false)
   // 'current' shows leave now and upcoming, 'archive' shows ended leave by year and month
   const [view,      setView]      = useSessionState('admin_judge_leave_view', 'current')
-  const [court,     setCourt]     = useState('')
-  const [search,    setSearch]    = useState('')
+  const [court,     setCourt]     = usePersistedState('admin_leave_court', '')
+  const [search,    setSearch]    = useSessionState('admin_leave_search', '')
   // Entry being edited (null when closed), its validation errors and the saving flag
   const [editing,   setEditing]   = useState(null)
   const [errors,    setErrors]    = useState({})

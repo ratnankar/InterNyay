@@ -10,12 +10,14 @@ import useUnsavedGuard from '../hooks/useUnsavedGuard'
 import useImageCrop from '../hooks/useImageCrop'
 import Dropdown from '../components/common/Dropdown'
 import useSeeMore from '../hooks/useSeeMore'
+import usePersistedState from '../hooks/usePersistedState'
 import SeeMore from '../components/common/SeeMore'
 
 import Icon from '../components/common/Icon'
 import { getErrorMessage } from '../utils/errorMessages'
 import ModalPortal from '../components/common/ModalPortal'
 import ClearableDateInput from '../components/common/ClearableDateInput'
+import Linkify from '../components/common/Linkify'
 // Payment status filters
 const STATUS_FILTERS = ['All', 'Paid', 'Due']
 // Blank values for the Add Expense form
@@ -77,17 +79,18 @@ export default function Expenses({ embedded = false }) {
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [statusFilter, setStatusFilter] = useState('All')
+  const [statusFilter, setStatusFilter] = usePersistedState('expenses_status', 'All', STATUS_FILTERS)
 
   // Associate filter, the advocate's associates, and whether the payment details card is open
-  const [associateFilter, setAssociateFilter] = useState('all')
+  const [associateFilter, setAssociateFilter] = usePersistedState('expenses_associate', 'all')
   const [associates, setAssociates] = useState([])
+  const [associatesLoaded, setAssociatesLoaded] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
   // Selected period preset, year and custom from/to dates
-  const [period, setPeriod] = useState(DEFAULT_EXPENSE_PERIOD)
-  const [year, setYear] = useState(new Date().getFullYear())
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const [period, setPeriod] = usePersistedState('expenses_period', DEFAULT_EXPENSE_PERIOD, v => v === 'all' || v === 'year' || v === 'custom' || PERIOD_PRESETS.some(p => p.key === v))
+  const [year, setYear] = usePersistedState('expenses_year', new Date().getFullYear(), v => Number.isInteger(v))
+  const [fromDate, setFromDate] = usePersistedState('expenses_from', '', v => typeof v === 'string')
+  const [toDate, setToDate] = usePersistedState('expenses_to', '', v => typeof v === 'string')
 
   // Add Expense popup: visibility, form values, saving state, expense being saved or removed, and the expense waiting for delete confirmation
   const [showAdd, setShowAdd] = useState(false)
@@ -154,7 +157,16 @@ export default function Expenses({ embedded = false }) {
     api.auth.associates()
       .then(rows => setAssociates(Array.isArray(rows) ? rows : []))
       .catch(() => setAssociates([]))
+      .finally(() => setAssociatesLoaded(true))
   }, [isAssociate])
+
+  // A remembered associate that is gone (removed, or this account has none) would hide every row with no way to clear it
+  useEffect(() => {
+    if (associateFilter === 'all') return
+    if (isAssociate) { setAssociateFilter('all'); return }
+    if (!associatesLoaded) return
+    if (associateFilter !== 'me' && !associates.some(a => String(a.id) === associateFilter)) setAssociateFilter('all')
+  }, [associateFilter, associates, associatesLoaded, isAssociate, setAssociateFilter])
 
   // Date range for the selected period
   const range = useMemo(
@@ -648,7 +660,7 @@ export default function Expenses({ embedded = false }) {
               {visibleRows.map(exp => (
                 <tr key={exp.id}>
                   {!isAssociate && <td>{exp.submittedByAdvocate ? 'Office' : exp.submittedByName}</td>}
-                  <td>{exp.description}</td>
+                  <td><Linkify text={exp.description} /></td>
                   <td>{formatDateTime(exp.createdAt)}</td>
                   <td>{formatCurrency(exp.amount)}</td>
                   <td>

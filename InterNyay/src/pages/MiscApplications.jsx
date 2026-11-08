@@ -16,6 +16,9 @@ import NextHearingBox from '../components/common/NextHearingBox'
 import useClockTick from '../hooks/useClockTick'
 import { hearingBoxPhase } from '../utils/dateUtils'
 import MiscNextHearingModal from '../components/misc/MiscNextHearingModal'
+import SearchInput from '../components/common/SearchInput'
+import usePersistedState from '../hooks/usePersistedState'
+import useSessionState from '../hooks/useSessionState'
 
 // Status filter buttons as [filter value, label]
 const FILTERS = [['', 'All'], [MISC_PENDING, 'Pending'], [MISC_DISPOSED, 'Disposed Off']]
@@ -40,10 +43,11 @@ export default function MiscApplications() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
+  const [search, setSearch] = useSessionState('misc_search', '')
+  // The status chip and the Allowed / Disallowed chip under it are remembered for this user
+  const [status, setStatus] = usePersistedState('misc_status', '', FILTERS.map(([v]) => v))
   // Allowed or Disallowed, only used while Disposed Off is chosen
-  const [outcome, setOutcome] = useState('')
+  const [outcome, setOutcome] = usePersistedState('misc_outcome', '', OUTCOME_FILTERS.map(([v]) => v))
   const [showAdd, setShowAdd] = useState(false)
   // Totals shown on the chips (not affected by the search): { all, pending, disposed, allowed, disallowed }
   const [counts, setCounts] = useState(null)
@@ -214,18 +218,7 @@ export default function MiscApplications() {
       )}
 
       <div className="list-toolbar">
-        <div className="doc-search-wrap">
-          <span className="doc-search-icon"><Icon name="search" /></span>
-          <input
-            className="form-input doc-search-input"
-            placeholder="Search by application, case, case number or client…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {search && (
-            <button type="button" className="doc-search-clear" aria-label="Clear search" onClick={() => setSearch('')}><Icon name="close" /></button>
-          )}
-        </div>
+        <SearchInput placeholder="Search by application, case, case number or client…" value={search} onChange={setSearch} />
       </div>
 
       {items.length === 0 && !loading && (

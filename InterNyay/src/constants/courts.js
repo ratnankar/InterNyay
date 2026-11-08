@@ -175,11 +175,39 @@ export function useDefaultCourt() {
   }, [table, prefs])
 }
 
-// Hook for pages with a court + district filter. It starts on the user's preferred court (the one with the most cases
-// when several were chosen, or when nothing was chosen the court with the most cases) and falls back to the first court
-// of the table. `ready` turns true once both the court table and the preference are known, so a page loads its data once.
-// Once the user presses a court button themselves their choice stays
-export function useCourtSelection() {
+// The court + district a user last picked on a page, remembered per user and per page (`scope`) in this browser.
+// courts.js cannot import the app context (it is imported by it), so the user id is read from the stored session
+const selectionKey = scope => {
+  let id = 'guest'
+  try { id = JSON.parse(localStorage.getItem('internyay_user') || 'null')?.id ?? 'guest' } catch { /* keep guest */ }
+  return `internyay_pref_${id}_court_selection_${scope}`
+}
+function readSelection(scope) {
+  try {
+    const v = JSON.parse(localStorage.getItem(selectionKey(scope)) || 'null')
+    return v && typeof v.court === 'string' && typeof v.district === 'string' ? v : null
+  } catch { return null }
+}
+function writeSelection(scope, court, district) {
+  try { localStorage.setItem(selectionKey(scope), JSON.stringify({ court, district })) } catch { /* storage unavailable */ }
+}
+// A remembered pick is only used while that court (and district) is still in the court table
+function selectionStillValid(sel, table) {
+  if (!sel) return false
+  if (sel.court === 'All') return true
+  const districts = table.hierarchy[sel.court]
+  if (!districts) return false
+  return sel.district === 'All' || sel.district === '' || districts.includes(sel.district)
+}
+
+// Hook for pages with a court + district filter. It starts on the court the user last picked on this page
+// (remembered per user, as long as that court still exists). With no remembered pick it starts on the user's preferred
+// court (the one with the most cases when several were chosen, or when nothing was chosen the court with the most cases)
+// and falls back to the first court of the table. `ready` turns true once both the court table and the preference are
+// known, so a page loads its data once. Once the user presses a court button themselves their choice stays.
+// `scope` names the page, so each page remembers its own pick. setCourt / setDistrict take a second argument:
+// pass false to move the filter without remembering it (e.g. a jump from another page)
+export function useCourtSelection(scope = 'default') {
   const table = useCourts()
   const prefs = useCourtPreferences()
   const ready = table.loaded && prefs.loaded
@@ -188,16 +216,29 @@ export function useCourtSelection() {
   const [court, setCourtState] = useState(start.court)
   const [district, setDistrictState] = useState(start.district)
   const picked = useRef(false)
+  const current = useRef({ court: start.court, district: start.district })
 
   useEffect(() => {
-    if (ready && !picked.current) {
-      setCourtState(start.court)
-      setDistrictState(start.district)
-    }
-  }, [ready, start.court, start.district])
+    if (!ready || picked.current) return
+    const saved = readSelection(scope)
+    const place = selectionStillValid(saved, table) ? saved : start
+    current.current = { court: place.court, district: place.district }
+    setCourtState(place.court)
+    setDistrictState(place.district)
+  }, [ready, scope, table, start])
 
-  const setCourt = useCallback(c => { picked.current = true; setCourtState(c) }, [])
-  const setDistrict = useCallback(d => { picked.current = true; setDistrictState(d) }, [])
+  const setCourt = useCallback((c, remember = true) => {
+    picked.current = true
+    current.current = { ...current.current, court: c }
+    setCourtState(c)
+    if (remember) writeSelection(scope, current.current.court, current.current.district)
+  }, [scope])
+  const setDistrict = useCallback((d, remember = true) => {
+    picked.current = true
+    current.current = { ...current.current, district: d }
+    setDistrictState(d)
+    if (remember) writeSelection(scope, current.current.court, current.current.district)
+  }, [scope])
 
   return { court, setCourt, district, setDistrict, ready }
 }

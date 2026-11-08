@@ -15,6 +15,7 @@ import { confirmDialog } from '../../utils/confirmDialog'
 import useSessionState from '../../hooks/useSessionState'
 import { beginOrderTask, endOrderTask, usePendingOrders } from '../../utils/pendingOrders'
 import { isActionBusyPath, useBusyPath, useBusyTick } from '../../utils/busyStore'
+import Linkify from './Linkify'
 
 export default function CaseHearings({ caseItem, dashboard = false, onCaseRefreshed }) {
   const {
@@ -339,7 +340,7 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
                 ) : (
                   <>
                     <p className={`hearing-entry__note${note ? '' : ' hearing-entry__note--empty'}`}>
-                      {note || 'No note for this date'}
+                      {note ? <Linkify text={note} /> : 'No note for this date'}
                     </p>
                   </>
                 )}

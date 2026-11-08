@@ -19,6 +19,7 @@ import ModalPortal from '../../components/common/ModalPortal'
 import SearchInput from '../common/SearchInput'
 import ClearableDateInput from '../common/ClearableDateInput'
 import { nameSearchMatches } from '../../utils/judgeMatch'
+import useSessionState from '../../hooks/useSessionState'
 
 const issuedDate = row => row.issuedOn
 
@@ -84,7 +85,7 @@ export default function BailRosterAdmin() {
   // Roster rows, loading flag and search text
   const [rows,    setRows]    = useState([])
   const [loading, setLoading] = useState(false)
-  const [search,  setSearch]  = useState('')
+  const [search,  setSearch]  = useSessionState('admin_bail_search', '')
   // Entry being edited (null when the editor is closed), its validation errors and the saving flag
   const [editing, setEditing] = useState(null)
   const [errors,  setErrors]  = useState({})

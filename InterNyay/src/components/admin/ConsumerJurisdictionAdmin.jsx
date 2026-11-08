@@ -11,6 +11,7 @@ import SeeMore from '../common/SeeMore'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import SearchInput from '../common/SearchInput'
+import useSessionState from '../../hooks/useSessionState'
 
 // Commission types. State and National commissions can exist only once each
 const KINDS = [
@@ -34,7 +35,7 @@ export default function ConsumerJurisdictionAdmin() {
   const { directory, loading, error, reload } = useConsumerJurisdiction()
 
   // Search text, commission being edited (null when closed), validation errors and saving flag
-  const [search,  setSearch]  = useState('')
+  const [search,  setSearch]  = useSessionState('admin_consumer_search', '')
   const [editing, setEditing] = useState(null)
   const [errors,  setErrors]  = useState({})
   const [saving,  setSaving]  = useState(false)

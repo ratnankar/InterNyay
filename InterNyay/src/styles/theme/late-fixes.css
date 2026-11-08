@@ -229,16 +229,20 @@ html { scrollbar-gutter: stable; }
 .search-card,
 .list-toolbar:has(.doc-search-wrap),
 .todo-filter-bar,
+.doc-filter-bar,
 .admin__toolbar:has(.doc-search-wrap) {
   box-sizing: border-box;
   background: #fff;
   border: 1px solid var(--lc-line);
   border-radius: var(--lc-radius);
-  box-shadow: var(--lc-shadow);
+  box-shadow: none;
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
 }
-.search-card .doc-search-wrap { margin-bottom: 0; }
+.search-card .doc-search-wrap,
+.doc-filter-bar > .doc-search-wrap { margin-bottom: 0; }
+/* To-Do uses the same search box as every other page, so it takes the free space like the others */
+.todo-filter-bar .doc-search-wrap { flex: 1 1 260px; min-width: 220px; margin-bottom: 0; }
 .todo-filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
 
 /* The search box inside admin toolbars fills the free space like the user pages (it was a narrow 260px box with no icon) */
@@ -279,8 +283,10 @@ html { scrollbar-gutter: stable; }
   .search-card,
   .list-toolbar:has(.doc-search-wrap),
   .todo-filter-bar,
+  .doc-filter-bar,
   .admin__toolbar:has(.doc-search-wrap) { padding: 0.75rem; }
-  .admin__toolbar .doc-search-wrap { flex-basis: 100%; max-width: none; }
+  .admin__toolbar .doc-search-wrap,
+  .todo-filter-bar .doc-search-wrap { flex-basis: 100%; max-width: none; }
 }
 
 /* ---------- Phones and tablets: search boxes, sort / filter boxes and their labels ----------

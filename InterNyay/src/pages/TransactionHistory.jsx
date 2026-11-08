@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { formatCurrency } from '../utils/formatUtils'
 import { formatDisplayDate } from '../utils/dateUtils'
@@ -17,7 +17,10 @@ import SeeMore from '../components/common/SeeMore'
 
 import Icon from '../components/common/Icon'
 import useSessionState from '../hooks/useSessionState'
+import usePersistedState from '../hooks/usePersistedState'
 import ClearableDateInput from '../components/common/ClearableDateInput'
+import SearchInput from '../components/common/SearchInput'
+import Linkify from '../components/common/Linkify'
 // Payment status filters
 const STATUS_FILTERS = ['All', 'Paid', 'Due']
 // Tabs at the top of the page (transactions and expenses)
@@ -41,22 +44,26 @@ export default function TransactionHistory({ embedded = false }) {
     sendPaymentReminder, whatsappBusy,
   } = useApp()
   // Selected status filter and sub tab
-  const [statusFilter, setStatusFilter] = useState('All')
+  const [statusFilter, setStatusFilter] = usePersistedState('txn_status', 'All', STATUS_FILTERS)
 
-  const [subTab, setSubTab] = useSessionState('transactions_tab', 'transactions')
+  const [subTab, setSubTab] = usePersistedState('transactions_tab', 'transactions', SUB_TABS.map(t => t.key))
   // Tabs the plan includes (Expenses needs the office expenses feature)
   const { can } = usePlanFeatures()
   const visibleTabs = SUB_TABS.filter(t => !t.feature || can(t.feature))
   const showExpenses = can('office_expenses')
+  // A remembered Expenses tab on a plan that does not include it falls back to Fees
+  useEffect(() => {
+    if (subTab !== 'transactions' && !visibleTabs.some(t => t.key === subTab)) setSubTab('transactions')
+  }, [subTab, visibleTabs, setSubTab])
 
   // Client name typed in the search box
-  const [clientSearch, setClientSearch] = useState('')
+  const [clientSearch, setClientSearch] = useSessionState('txn_client_search', '')
 
   // Selected period preset, year and custom from/to dates
-  const [period, setPeriod] = useState(DEFAULT_PERIOD)
-  const [year, setYear] = useState(new Date().getFullYear())
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const [period, setPeriod] = usePersistedState('txn_period', DEFAULT_PERIOD, v => v === 'all' || v === 'year' || v === 'custom' || PERIOD_PRESETS.some(p => p.key === v))
+  const [year, setYear] = usePersistedState('txn_year', new Date().getFullYear(), v => Number.isInteger(v))
+  const [fromDate, setFromDate] = usePersistedState('txn_from', '', v => typeof v === 'string')
+  const [toDate, setToDate] = usePersistedState('txn_to', '', v => typeof v === 'string')
 
   // Date range for the selected period
   const range = useMemo(
@@ -177,23 +184,12 @@ export default function TransactionHistory({ embedded = false }) {
 
       {/* Search transactions by client name */}
       <div className="list-toolbar">
-        <div className="doc-search-wrap">
-          <span className="doc-search-icon"><Icon name="search" /></span>
-          <input
-            className="form-input doc-search-input"
-            type="text"
-            placeholder="Search transactions by client name…"
-            aria-label="Search transactions by client name"
-            value={clientSearch}
-            onChange={e => setClientSearch(e.target.value)}
-          />
-          {/* Button to clear the search text */}
-          {clientSearch && (
-            <button type="button" className="doc-search-clear" aria-label="Clear search" onClick={() => setClientSearch('')}>
-              <Icon name="close" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          placeholder="Search transactions by client name…"
+          aria-label="Search transactions by client name"
+          value={clientSearch}
+          onChange={setClientSearch}
+        />
       </div>
 
       {/* Paid / Due filter buttons */}
@@ -322,7 +318,7 @@ export default function TransactionHistory({ embedded = false }) {
                 <tr key={t.id}>
                   <td>{t.clientName}</td>
                   <td>{t.caseTitle} {t.caseNo && <span className="case-card__info">({t.caseNo})</span>}</td>
-                  <td>{t.description}</td>
+                  <td><Linkify text={t.description} /></td>
                   <td>
                     {/* Fee date, or the day the case was added when the fee has no date of its own */}
                     {t.date ? formatDisplayDate(t.date) : t.recordedOn ? (

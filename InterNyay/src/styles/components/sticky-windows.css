@@ -1,0 +1,127 @@
+.modal {
+  --mp-top: 2rem;
+  --mp-x: 2rem;
+  --mp-bottom: 2rem;
+  --modal-head-h: 4.5rem;
+}
+
+.modal.pdf-modal {
+  --mp-top: 1.25rem;
+  --mp-x: 1.25rem;
+  --mp-bottom: 1.25rem;
+}
+
+.modal.pdf-modal.pdf-modal--fill {
+  --mp-top: 0.6rem;
+  --mp-x: 0.9rem;
+  --mp-bottom: 0.75rem;
+}
+
+.modal.pdf-field-editor {
+  --mp-top: 0px;
+  --mp-x: 0px;
+  --mp-bottom: 0px;
+}
+
+.modal.confirm-dialog {
+  --mp-top: 1.5rem;
+  --mp-x: 1.5rem;
+  --mp-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    --mp-top: 18px;
+    --mp-x: 16px;
+    --mp-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .modal.pdf-modal {
+    --mp-top: 1.25rem;
+    --mp-x: 1.25rem;
+    --mp-bottom: 1.25rem;
+  }
+
+  .modal.pdf-modal.pdf-modal--fill {
+    --mp-top: 0.6rem;
+    --mp-x: 0.9rem;
+    --mp-bottom: 0.75rem;
+  }
+
+  .modal.pdf-field-editor {
+    --mp-top: 0px;
+    --mp-x: 0px;
+    --mp-bottom: 0px;
+  }
+
+  .modal.confirm-dialog {
+    --mp-top: 1.25rem;
+    --mp-x: 1.25rem;
+    --mp-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .modal.modal--loglist {
+    --mp-x: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .modal.misc-modal {
+    --mp-x: 12px;
+  }
+}
+
+.modal > .modal__header,
+.modal > form > .modal__header {
+  position: sticky;
+  top: calc(-1 * var(--mp-top));
+  z-index: 6;
+  margin-top: calc(-1 * var(--mp-top));
+  margin-right: calc(-1 * var(--mp-x));
+  margin-left: calc(-1 * var(--mp-x));
+  padding: var(--mp-top) var(--mp-x) 1rem;
+  background: #fff;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
+.modal.pdf-field-editor > .modal__header {
+  position: static;
+}
+
+.modal__toolbar,
+.modal > .client-search-row {
+  position: sticky;
+  top: calc(var(--modal-head-h) - var(--mp-top));
+  z-index: 5;
+  margin-right: calc(-1 * var(--mp-x));
+  margin-left: calc(-1 * var(--mp-x));
+  padding: 0.5rem var(--mp-x);
+  background: #fff;
+}
+
+.modal__toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.modal__toolbar > :last-child {
+  margin-bottom: 0;
+}
+
+.modal > .client-search-row {
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 641px) {
+  .modal > .form-actions,
+  .modal > form > .form-actions {
+    position: sticky;
+    bottom: calc(-1 * var(--mp-bottom));
+    z-index: 5;
+    margin-right: calc(-1 * var(--mp-x));
+    margin-bottom: calc(-1 * var(--mp-bottom));
+    margin-left: calc(-1 * var(--mp-x));
+    padding: 1rem var(--mp-x) var(--mp-bottom);
+    background: #fff;
+  }
+}

@@ -3,6 +3,7 @@ import api, { publicApi } from '../services/api'
 import PricingCards from '../components/common/PricingCards'
 import BrandMark from '../components/common/BrandMark'
 import Icon from '../components/common/Icon'
+import ScrollToTopButton from '../components/common/ScrollToTopButton'
 import { getErrorMessage } from '../utils/errorMessages'
 
 // Short list under the hero buttons
@@ -294,6 +295,7 @@ export default function LandingPage({ onSignIn, onRegister }) {
 
   return (
     <div className="lp lx">
+      <ScrollToTopButton />
       <a className="lx-skip" href="#main">Skip to content</a>
       {/* Top navigation: brand, section links, Sign in and Get started */}
       <header className={`lx-nav${scrolled ? ' is-scrolled' : ''}${menuOpen ? ' is-menu' : ''}`}>

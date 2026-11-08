@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import Dropdown from '../components/common/Dropdown'
 import Icon from '../components/common/Icon'
 import useFeeRules from '../hooks/useFeeRules'
-import useSessionState from '../hooks/useSessionState'
+import usePersistedState from '../hooks/usePersistedState'
 import { COURT_TYPES } from '../utils/courtFeesAct'
 
 // Format a number as Indian rupees (paise only when present)
@@ -17,11 +17,13 @@ export default function CourtFeeCalculator() {
   const rules = useFeeRules()
   const { ruleOf, matterNeedsValue, chargeableValue, calcFee, consumerForum, jurisdictions, jurisdictionOf, usesJurisdiction } = rules
   // Selected case type, claim value and whether Calculate was clicked
-  const [caseType,    setCaseType]    = useState('civil')
+  // Case type and State are remembered for this user; a remembered type the admin has since removed falls back to civil
+  const [savedType,   setCaseType]    = usePersistedState('fee_calc_type', 'civil')
+  const caseType = ruleOf(savedType) ? savedType : 'civil'
   const [claimValue,  setClaimValue]  = useState('')
   const [calculated,  setCalculated]  = useState(false)
   // State / Union Territory whose ad valorem table applies (remembered for the session; the first listed State is the default)
-  const [stateKey,   setStateKey]   = useSessionState('fee_calc_state', '')
+  const [stateKey,   setStateKey]   = usePersistedState('fee_calc_state', '')
 
   // The fee rule of the chosen case type, whether it needs a claim value, and the claim value as a number
   const matter     = ruleOf(caseType)

@@ -1,0 +1,79 @@
+/* Expenses / Transactions filter area fixes. Keep after sticky-bars.css so these win. */
+
+/* 1. "Associate Payment Details" card: its soft drop shadow reached down into the sticky filter bar below it, and the bar's
+      page-coloured strip (sticky-bars.css) cut that shadow off in a hard-edged band around "Submitted By". The section card
+      now uses a tight shadow that ends inside the gap between the card and the filters, and keeps it on hover / when open. */
+.exp-card--section,
+.exp-card--section:hover,
+.exp-card--section.exp-card--open,
+.exp-card--section.exp-card--open:hover {
+  box-shadow: 0 1px 2px rgba(10, 22, 40, 0.06), 0 3px 6px -3px rgba(10, 22, 40, 0.10);
+}
+.exp-card--section { margin-bottom: 1.5rem; }
+.exp-card--section.exp-card--open,
+.exp-card--section:hover { border-color: var(--color-gold); }
+
+/* 2. Year chip: the generic dropdown-field rules (8-10px corners, 34-42px height, 14px text) beat the pill rules, so Year looked
+      like a square input next to round chips. It now takes the same pill shape, height and text size as the other period chips. */
+.app-main .txn-period__chips .dropdown .dropdown__input.dropdown__input.txn-year-select {
+  box-sizing: border-box;
+  width: 74px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 20px 0 10px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: clip;
+}
+.app-main .txn-period__chips .dropdown { display: inline-flex; align-items: center; padding: 0; width: auto; flex: 0 0 auto; }
+.app-main .txn-period__chips .dropdown .dropdown__chevron { right: 8px; font-size: 0.7rem; }
+
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .app-main .txn-period__chips .dropdown .dropdown__input.dropdown__input.txn-year-select {
+    font-weight: 600;
+  }
+}
+
+/* "Cases without a File Number" window: wider and taller, and each case name opens that case */
+.modal.file-numbers--wide { max-width: 960px; width: 94vw; }
+.file-numbers--wide .file-numbers__list { max-height: min(62vh, 640px); }
+.file-numbers--wide .file-numbers__row { padding: 10px 12px; gap: 14px; }
+.file-numbers--wide .file-numbers__row .form-input { width: 150px !important; }
+.file-numbers__open {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  background: transparent; border: 0; padding: 4px 6px; margin: -4px -6px;
+  border-radius: 8px; cursor: pointer; text-align: left; font-family: inherit; min-width: 0;
+}
+.file-numbers__open:hover { background: var(--color-surface-2, #eef2f8); }
+.file-numbers__open:hover .file-numbers__case { text-decoration: underline; }
+.file-numbers__open .file-numbers__case, .file-numbers__open .file-numbers__meta { max-width: 100%; display: block; }
+@media (max-width: 640px) {
+  .file-numbers--wide .file-numbers__row { flex-wrap: wrap; }
+  .file-numbers--wide .file-numbers__open { flex: 1 1 100%; }
+}
+
+/* "No File No." button sits in the filter row beside Filter */
+.case-filter-menu--nofile { flex: 0 0 auto; }
+
+/* Case window opened from the No File No. window */
+.modal.case-window { max-width: 1240px; width: 96vw; max-height: 95vh; display: flex; flex-direction: column; z-index: 1; }
+.case-window .modal__header { flex: 0 0 auto; align-items: flex-start; gap: 12px; }
+.case-window__heading { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.case-window__title { margin: 0; overflow-wrap: anywhere; }
+.case-window__body { overflow-y: auto; scrollbar-gutter: stable; display: flex; flex-direction: column; gap: 16px; padding: 4px 12px 8px 0; }
+.case-window__body > .case-summary-fields { padding-right: 4px; }
+.case-window__body .case-detail__actions--top { flex-wrap: wrap; gap: 10px; }
+@media (max-width: 640px) { .modal.case-window { width: 100vw; max-height: 100vh; border-radius: 0; } }
+.case-window__body .case-detail {
+  box-sizing: border-box; width: 100%; margin: 0; padding: 18px;
+  background: #fff; border: 1px solid var(--sk-line, #e6ebf3); border-radius: 12px;
+}
+.case-window__body .case-detail__actions--top { margin-top: 0; }
+@media (max-width: 640px) { .case-window__body .case-detail { padding: 12px; } }
+
+/* Cause List No row on the dashboard card: refresh symbol sits after the number */
+.case-fields__with-action { display: inline-flex; align-items: center; gap: 8px; }
+.case-fields__with-action .cause-list-refresh { flex: 0 0 auto; margin: 0; }

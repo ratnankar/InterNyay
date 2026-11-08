@@ -4,7 +4,6 @@ import { formatDisplayDate } from '../../utils/dateUtils'
 import useOverlayClose from '../../hooks/useOverlayClose'
 import { useCourts, caseCourtLabel } from '../../constants/courts'
 
-import BrandMark from '../common/BrandMark'
 import Icon from '../common/Icon'
 import ModalPortal from '../../components/common/ModalPortal'
 // Popup with the invoice of a case's fees
@@ -54,8 +53,8 @@ export default function InvoiceModal() {
           <div className="invoice">
             <div className="invoice__top">
               <div>
-                <p className="invoice__brand"><BrandMark size="md" /><span>InterNyay</span></p>
-                <p className="invoice__brand-tag">Legal Practice Management</p>
+                <p className="invoice__brand"><span>{currentUser?.name || 'Advocate'}</span></p>
+                {currentUser?.chamber && <p className="invoice__brand-tag">{currentUser.chamber}</p>}
               </div>
               <div className="invoice__meta">
                 <p><strong>Invoice No:</strong> {invoiceNo}</p>

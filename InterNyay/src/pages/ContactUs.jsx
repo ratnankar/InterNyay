@@ -18,6 +18,7 @@ import {
 } from '../constants/contact'
 import { getErrorMessage } from '../utils/errorMessages'
 import useSessionState from '../hooks/useSessionState'
+import Linkify from '../components/common/Linkify'
 
 // Contact Us page: send a message to support and read earlier messages and replies
 export default function ContactUs() {
@@ -77,7 +78,9 @@ export default function ContactUs() {
     setOpenId(opening ? m.id : null)
     if (opening && m.unreadReply) {
       setHistory(h => h.map(x => (x.id === m.id ? { ...x, unreadReply: false } : x)))
-      api.contact.markSeen(m.id).catch(() => {})
+      api.contact.markSeen(m.id)
+        .then(() => window.dispatchEvent(new Event('contact-replies-seen')))
+        .catch(() => {})
     }
   }
 
@@ -263,7 +266,7 @@ export default function ContactUs() {
                       <div className="contact-thread">
                         <div className="contact-bubble contact-bubble--me">
                           <div className="contact-bubble__who">You · {formatContactDate(m.createdAt)}</div>
-                          <div className="contact-bubble__text">{m.message}</div>
+                          <div className="contact-bubble__text"><Linkify text={m.message} /></div>
                           <ContactAttachments attachments={m.attachments} loadBlob={api.contact.attachmentBlob} />
                         </div>
                         {replies.length === 0 && (
@@ -274,7 +277,7 @@ export default function ContactUs() {
                             <div className="contact-bubble__who">
                               {r.adminName || 'InterNyay Support'} · {formatContactDate(r.createdAt)}
                             </div>
-                            <div className="contact-bubble__text">{r.body}</div>
+                            <div className="contact-bubble__text"><Linkify text={r.body} /></div>
                           </div>
                         ))}
                       </div>

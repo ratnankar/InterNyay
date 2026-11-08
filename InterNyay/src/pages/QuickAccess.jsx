@@ -1,7 +1,8 @@
-import { Fragment, useState, useEffect, useCallback, useMemo } from 'react'
+import { Fragment, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { onLiveRefresh } from '../utils/liveRefresh'
 import { useApp } from '../context/AppContext'
 import useSessionState from '../hooks/useSessionState'
+import usePersistedState from '../hooks/usePersistedState'
 import api from '../services/api'
 import JudgeCard from '../components/common/JudgeCard'
 import SuccessorCourts from '../components/common/SuccessorCourts'
@@ -48,6 +49,7 @@ import {
 
 import Icon from '../components/common/Icon'
 import { getErrorMessage } from '../utils/errorMessages'
+import Linkify from '../components/common/Linkify'
 
 const rosterIssuedDate = row => row.issuedOn
 
@@ -181,19 +183,20 @@ function GroupHeader({ level, open, onToggle, count, nested, children }) {
 
 // Quick Access: judges list for the selected court and district, with search
 function JudgesList({ initialQuery, jumpName }) {
-  const { court, setCourt, district, setDistrict, ready } = useCourtSelection()
-  const [query,     setQuery]     = useState(initialQuery || '')
+  const { court, setCourt, district, setDistrict, ready } = useCourtSelection('qa_judges')
+  const [query,     setQuery]     = useSessionState('qa_judges_query', initialQuery || '')
   // Coming from "View in Judges List": look in every court, since the judge may sit in a court other than the preferred one
   useEffect(() => {
     if (!jumpName) return
-    setCourt('All')
-    setDistrict('All')
-  }, [jumpName, setCourt, setDistrict])
+    setCourt('All', false)
+    setDistrict('All', false)
+    setQuery(jumpName)
+  }, [jumpName, setCourt, setDistrict, setQuery])
   const [judges,    setJudges]    = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
   // Show only the courts that have no judge at present
-  const [vacantOnly, setVacantOnly] = useState(false)
+  const [vacantOnly, setVacantOnly] = usePersistedState('qa_judges_vacant_only', false, v => typeof v === 'boolean')
   // Keys of the groups the user has closed
   const [closedList, setClosedList] = useSessionState('quick_judges_closed', [])
   const closed = useMemo(() => new Set(closedList), [closedList])
@@ -370,7 +373,7 @@ function LinkCell({ judge }) {
 
 // Quick Access: bail roster table for the selected court and district
 function BailRoster() {
-  const { court, setCourt, district, setDistrict, ready } = useCourtSelection()
+  const { court, setCourt, district, setDistrict, ready } = useCourtSelection('qa_bail')
   const [roster,    setRoster]    = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
@@ -457,7 +460,7 @@ function BailRoster() {
 
 // Quick Access: duty magistrate table for the selected court and district
 function DutyMagistrate() {
-  const { court, setCourt, district, setDistrict, ready } = useCourtSelection()
+  const { court, setCourt, district, setDistrict, ready } = useCourtSelection('qa_duty')
   const [roster,    setRoster]    = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
@@ -537,6 +540,8 @@ function CourtCalendar() {
   const [yearsLoading, setYearsLoading] = useState(true)
   const [yearsError, setYearsError] = useState('')
   const [year, setYear] = useState(null)
+  // The year opened last time, opened again on arrival while that calendar still exists
+  const [savedYear, setSavedYear] = usePersistedState('qa_calendar_year', null, v => v === null || Number.isInteger(v))
   const [pdfUrl, setPdfUrl] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -566,6 +571,7 @@ function CourtCalendar() {
   // Download the PDF for the chosen year and show it, releasing the previous one
   const openYear = useCallback(async (y) => {
     setYear(y)
+    setSavedYear(y)
     setLoading(true)
     setError('')
     setPdfUrl(prev => {
@@ -580,7 +586,15 @@ function CourtCalendar() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [setSavedYear])
+
+  // Open the remembered year once the list of years is known
+  const restoredYear = useRef(false)
+  useEffect(() => {
+    if (restoredYear.current || yearsLoading || !years.length) return
+    restoredYear.current = true
+    if (year === null && savedYear !== null && years.includes(savedYear)) openYear(savedYear)
+  }, [yearsLoading, years, year, savedYear, openYear])
 
   return (
     <div>
@@ -752,7 +766,7 @@ function StationCard({ entry, cawHq, expanded, onToggle }) {
                 <span className="qa-pd-officer__title">{cawHq.post}</span>
               </div>
               <ContactLine label="Office" value={cawHq.address} />
-              {cawHq.note && <p className="qa-pd-hqnote">{cawHq.note}</p>}
+              {cawHq.note && <p className="qa-pd-hqnote"><Linkify text={cawHq.note} /></p>}
             </div>
           )}
 
@@ -771,7 +785,7 @@ function PoliceDirectory() {
   const { directory, loading, error, reload } = usePoliceDirectory()
 
   const [query,      setQuery]      = useSessionState('qa_police_query', '')
-  const [districtId, setDistrictId] = useSessionState('qa_police_district', 'all')
+  const [districtId, setDistrictId] = usePersistedState('qa_police_district', 'all')
   const [openKey,    setOpenKey]    = useSessionState('qa_police_open', null)
 
   const chooseDistrict = id => { setDistrictId(id); setOpenKey(null) }
@@ -784,6 +798,10 @@ function PoliceDirectory() {
     () => searchStations(index, query, districtId),
     [index, query, districtId]
   )
+  // A remembered district that is no longer in the directory goes back to All
+  useEffect(() => {
+    if (directory && districtId !== 'all' && !options.some(o => o.id === districtId)) setDistrictId('all')
+  }, [directory, options, districtId, setDistrictId])
   const stationsStep = 30
   const { visible: shown, remaining: stationsRemaining, showMore: showMoreStations,} =
     useSeeMore(results, `${query}|${districtId}`, stationsStep, openKey ? results.findIndex(r => r.key === openKey) + 1 : 0)
@@ -1338,7 +1356,7 @@ function ConsumerJurisdiction() {
 
 // Quick Access: pick a jurisdiction category. Civil and criminal have no data yet
 function FindJurisdiction() {
-  const [category, setCategory] = useSessionState('qa_jurisdiction_category', 'consumer')
+  const [category, setCategory] = usePersistedState('qa_jurisdiction_category', 'consumer')
 
   return (
     <div>
@@ -1365,7 +1383,8 @@ const MENU_ITEMS = [
 // Quick Access page: a card for each section, the chosen one opens in a panel below
 export default function QuickAccess() {
   const { judgeLeaveJumpQuery, setJudgeLeaveJumpQuery } = useApp()
-  const [active, setActive] = useSessionState('qa_active', null)
+  // The section left open is remembered for this user
+  const [active, setActive] = usePersistedState('qa_active', null, v => v === null || MENU_ITEMS.some(m => m.id === v))
   const [judgeQuery, setJudgeQuery] = useState('')
   const selected = MENU_ITEMS.find(m => m.id === active)
 

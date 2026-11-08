@@ -10,6 +10,7 @@ import {
 } from '../constants/courts'
 
 import Icon from '../components/common/Icon'
+import SearchInput from '../components/common/SearchInput'
 import ImageViewer from '../components/common/ImageViewer'
 import ArchiveTree from '../components/common/ArchiveTree'
 import SeeMoreList from '../components/common/SeeMoreList'
@@ -19,6 +20,7 @@ import { holidayCourtClass, holidayCourtLabel } from '../constants/holidays'
 import { leavesByDate } from '../utils/leaveCounts'
 import ModalPortal from '../components/common/ModalPortal'
 import useSessionState from '../hooks/useSessionState'
+import usePersistedState from '../hooks/usePersistedState'
 import { nameSearchMatches } from '../utils/judgeMatch'
 
 // Each archive entry is dated by the first day of the month it stands for
@@ -413,15 +415,15 @@ function LeaveCalendar({ leaves, holidays, onSelectJudge, todayList, upcomingLis
 // List of judges on leave today and upcoming, with search and court filters
 function JudgesOnLeaveBody({ onSelectJudge }) {
   // Selected court and district, search text, loaded data, loading and error state, and the judge shown in the popup
-  const { court, setCourt, district, setDistrict, ready } = useCourtSelection()
+  const { court, setCourt, district, setDistrict, ready } = useCourtSelection('judges_leave')
   const { holidays } = useApp()
-  const [query,      setQuery]      = useState('')
+  const [query,      setQuery]      = useSessionState('judges_leave_query', '')
   const [data,       setData]       = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
   const [detail,     setDetail]     = useState(null)
   // 'current' shows today and upcoming leave, 'archive' shows the history of ended leave
-  const [view,       setView]       = useSessionState('judges_leave_view', 'current')
+  const [view,       setView]       = usePersistedState('judges_leave_view', 'current', ['current', 'archive'])
 
   // Load judges on leave for the selected court and district
   const fetchData = useCallback(async (silent = false) => {
@@ -553,14 +555,14 @@ function JudgesOnLeaveBody({ onSelectJudge }) {
 
   return (
     <div>
-      {/* Search box */}
-      <input
-        className="qa-search"
-        type="search"
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        placeholder="Search by judge name, court, district or reason"
-      />
+      {/* Search box, kept in view while the page scrolls */}
+      <div className="list-toolbar">
+        <SearchInput
+          placeholder="Search by judge name, court, district or reason"
+          value={query}
+          onChange={setQuery}
+        />
+      </div>
 
       {/* Court and district filters, with the archive button on the same line so no empty row is left above the calendar */}
       <div className="leave-filterbar">

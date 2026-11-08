@@ -22,6 +22,9 @@ import Dropdown from '../components/common/Dropdown'
 
 import Icon from '../components/common/Icon'
 import NextHearingBox from '../components/common/NextHearingBox'
+import NoFileNumberModal, { lacksFileNumber } from '../components/modals/NoFileNumberModal'
+import ModalPortal from '../components/common/ModalPortal'
+import useOverlayClose from '../hooks/useOverlayClose'
 import api from '../services/api'
 import { getErrorMessage } from '../utils/errorMessages'
 import CnrScannerModal from '../components/modals/CnrScannerModal'
@@ -32,7 +35,7 @@ import ToggleSwitch from '../components/common/ToggleSwitch'
 import { confirmDialog } from '../utils/confirmDialog'
 import useSessionState from '../hooks/useSessionState'
 import ClearableDateInput from '../components/common/ClearableDateInput'
-import ScrollToTopButton from '../components/common/ScrollToTopButton'
+import SearchInput from '../components/common/SearchInput'
 // Status filter buttons
 const STATUSES = ['All', 'Pending', 'On Hold', 'Decided', 'Withdrawn']
 
@@ -53,6 +56,7 @@ const CASE_FILTER_FIELDS = [
 // Sort choices as [value, label]
 const SORT_OPTIONS = [
   ['courtNo', 'Case No.'],
+  ['fileNo', 'File No.'],
   ['hearing', 'Next Hearing'],
   ['updated', 'Recently Updated'],
   ['newest', 'Newest First'],
@@ -113,6 +117,16 @@ function compareUpdated(a, b) {
   return y.localeCompare(x)
 }
 
+// Sort by file number in natural order (2 before 10); cases without one go last
+function compareFileNo(a, b) {
+  const x = String(a.fileNo || '').trim()
+  const y = String(b.fileNo || '').trim()
+  if (!x && !y) return 0
+  if (!x) return 1
+  if (!y) return -1
+  return x.localeCompare(y, undefined, { numeric: true, sensitivity: 'base' })
+}
+
 // Sort by court number in natural order (2 before 10); cases without one go last
 function compareCourtNo(a, b) {
   const x = String(a.courtNo || '').trim()
@@ -144,8 +158,7 @@ export default function Cases() {
     selectedCase,
     setSelectedCase,
     showAddCase,
-    setShowAddCase,
-    setScanCnr,
+    openAddCase,
     setUploadDocCaseId,
     openEditCase,
     setTransactionCaseId,
@@ -170,6 +183,13 @@ export default function Cases() {
     bumpHearings,
   } = useApp()
   const [scannerOpen, setScannerOpen] = useState(false)
+  // Window listing the open cases that have no file number, where they can be given one
+  const [noFileOpen, setNoFileOpen] = useState(false)
+  // Case shown in a window over the page (opened from the No File No. window); stored as an id so the window stays current after a save
+  const [windowCaseId, setWindowCaseId] = useState(null)
+  const windowCase = windowCaseId != null ? cases.find(x => x.id === windowCaseId) : null
+  const caseWindowHandlers = useOverlayClose(() => setWindowCaseId(null))
+  const noFileCount = useMemo(() => cases.filter(lacksFileNumber).length, [cases])
 
   // Refresh symbol on a card's next-hearing box: reads the case from eCourts again, the same as the Refresh button in Hearing History
   async function refreshCardHearing(c) {
@@ -257,17 +277,26 @@ export default function Cases() {
   }, [cases])
 
   // Search text, sort order and the values chosen in the Filter menu
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useSessionState('cases_search', '')
   const searchInputRef = useRef(null)
   const [sortBy, setSortBy] = usePersistedState('cases_sort', 'courtNo', SORT_OPTIONS.map(([v]) => v))
-  const [filterCourt, setFilterCourt] = useState('All')
-  const [filterNature, setFilterNature] = useState('All')
-  const [filterRelief, setFilterRelief] = useState('All')
-  const [filterCaseType, setFilterCaseType] = useState('All')
-  const [filterDateFrom, setFilterDateFrom] = useState('')
-  const [filterDateTo, setFilterDateTo] = useState('')
+  // The Filter menu choices are remembered for this user (shown as chips under the toolbar, with Clear all)
+  const [filterCourt, setFilterCourt] = usePersistedState('cases_filter_court', 'All')
+  const [filterNature, setFilterNature] = usePersistedState('cases_filter_nature', 'All')
+  const [filterRelief, setFilterRelief] = usePersistedState('cases_filter_relief', 'All')
+  const [filterCaseType, setFilterCaseType] = usePersistedState('cases_filter_case_type', 'All')
+  const [filterDateFrom, setFilterDateFrom] = usePersistedState('cases_filter_date_from', '')
+  const [filterDateTo, setFilterDateTo] = usePersistedState('cases_filter_date_to', '')
   // Quick range chosen for the hearing date ('' when the dates were typed in)
-  const [filterDatePreset, setFilterDatePreset] = useState('')
+  const [filterDatePreset, setFilterDatePreset] = usePersistedState('cases_filter_date_preset', '')
+  // A remembered quick range ('Today', 'This Week'...) follows today's date, so it never keeps an old day's dates
+  useEffect(() => {
+    if (!filterDatePreset) return
+    if (!DATE_PRESETS.some(([k]) => k === filterDatePreset)) { setFilterDatePreset(''); return }
+    const [from, to] = presetRange(filterDatePreset)
+    if (from !== filterDateFrom) setFilterDateFrom(from)
+    if (to !== filterDateTo) setFilterDateTo(to)
+  }, [filterDatePreset, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, setFilterDatePreset])
   // Filter menu state: open or closed, the field being edited, and where the panel is placed
   const [filterMenuOpen, setFilterMenuOpen] = useState(false)
   const [activeFilterField, setActiveFilterField] = useState(null)
@@ -398,9 +427,10 @@ export default function Cases() {
       list = list.filter(c => c.nextHearing && c.nextHearing <= filterDateTo)
     }
 
-    // Sort by case number, next hearing, last update or filing date
+    // Sort by case number, file number, next hearing, last update or filing date
     return [...list].sort((a, b) => {
       if (sortBy === 'courtNo') return compareCourtNo(a, b) || compareHearing(a, b)
+      if (sortBy === 'fileNo') return compareFileNo(a, b) || compareHearing(a, b)
       if (sortBy === 'updated') return compareUpdated(a, b) || compareHearing(a, b)
       if (sortBy === 'newest' || sortBy === 'oldest') return compareFiled(a, b, sortBy) || compareHearing(a, b)
       return compareHearing(a, b)
@@ -567,6 +597,12 @@ export default function Cases() {
     }
   }
 
+  // From the "No File No." window: show that case in a window over it, without leaving the page or losing the list
+  function openCaseFromNoFile(c) {
+    setOpenSections({ hearings: false, documents: false, evidence: false })
+    setWindowCaseId(c.id)
+  }
+
   // Pick a quick range for the hearing date; picking the same one again turns it off
   function applyDatePreset(key) {
     if (filterDatePreset === key) {
@@ -721,7 +757,7 @@ export default function Cases() {
         <CaseParties caseItem={c} clients={clients} />
 
         {/* Hearing History section (collapsible) */}
-        <div className={`exp-card${openSections.hearings ? ' exp-card--open' : ''} u-mt-16`} >
+        <div className={`exp-card${openSections.hearings ? ' exp-card--open' : ''} u-mt-8`} >
           <button type="button" className="exp-card__head" onClick={e => toggleSection(e, 'hearings')}>
             <div className="exp-card__avatar"><Icon name="calendar" /></div>
             <div className="exp-card__titles">
@@ -972,7 +1008,6 @@ export default function Cases() {
 
   return (
     <div>
-      <ScrollToTopButton />
       {/* Page title and the Add Case button */}
       <div className="page-header">
         <div>
@@ -989,15 +1024,44 @@ export default function Cases() {
           </button>
           <button type="button"
             className="btn-gold"
-            onClick={() => {
-              setSelectedCase(null)
-              setShowAddCase(true)
-            }}
+            onClick={() => openAddCase()}
           >
             + Add Case
           </button>
         </div>
       </div>
+
+      {noFileOpen && (
+        <NoFileNumberModal
+          cases={cases}
+          onClose={() => setNoFileOpen(false)}
+          onOpenCase={openCaseFromNoFile}
+          onSave={(id, fileNo) => handleUpdateCase(id, { fileNo })}
+        />
+      )}
+
+      {windowCase && (
+        <ModalPortal>
+          <div className="overlay" {...caseWindowHandlers}>
+            <div className="modal modal--lg case-window" onClick={e => e.stopPropagation()}>
+              <div className="modal__header">
+                <div className="case-window__heading">
+                  <span className="case-card__status">
+                    <span className="case-card__status-dot" aria-hidden="true" style={{ background: STATUS_COLORS[windowCase.status] || '#999' }} />
+                    {windowCase.status}
+                  </span>
+                  <h2 className="modal__title case-window__title">{windowCase.title}</h2>
+                </div>
+                <button aria-label="Close" title="Close" type="button" className="btn-icon" onClick={() => setWindowCaseId(null)}><Icon name="close" /></button>
+              </div>
+              <div className="case-window__body">
+                <CaseSummaryFields caseItem={windowCase} />
+                <div className="case-detail">{renderCaseDetail(windowCase)}</div>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
 
       {importOpen && (
         <ImportCasesModal
@@ -1009,9 +1073,7 @@ export default function Cases() {
             // Only the CNR is passed on: the Add Case window asks eCourts for the case, and the list comes back after it closes
             backToImport.current = true
             setImportOpen(false)
-            setSelectedCase(null)
-            setScanCnr(item.cnr)
-            setShowAddCase(true)
+            openAddCase(item.cnr)
           }}
         />
       )}
@@ -1021,9 +1083,7 @@ export default function Cases() {
           onClose={() => setScannerOpen(false)}
           onScan={cnr => {
             setScannerOpen(false)
-            setSelectedCase(null)
-            setScanCnr(cnr)
-            setShowAddCase(true)
+            openAddCase(cnr)
           }}
         />
       )}
@@ -1050,21 +1110,13 @@ export default function Cases() {
 
       {/* Search box, Filter menu and sort dropdown */}
       <div className="list-toolbar">
-        <div className="doc-search-wrap">
-          <span className="doc-search-icon"><Icon name="search" /></span>
-          <input
-            ref={searchInputRef}
-            className="form-input doc-search-input"
-            placeholder="Search cases, CNR, court, judge, client…"
-            title="Search by title, case no, file no, CNR, court, judge, client, or opposite party"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {/* Button to clear the search text */}
-          {search && (
-            <button type="button" className="doc-search-clear" onClick={() => setSearch('')}><Icon name="close" /></button>
-          )}
-        </div>
+        <SearchInput
+          ref={searchInputRef}
+          placeholder="Search cases, CNR, court, judge, client…"
+          title="Search by title, case no, file no, CNR, court, judge, client, or opposite party"
+          value={search}
+          onChange={setSearch}
+        />
 
         {/* Filter menu button and its panel */}
         <div className="case-filter-menu" ref={filterMenuRef}>
@@ -1262,6 +1314,14 @@ export default function Cases() {
           )}
         </div>
 
+        {/* Open cases that still need a file number (same wrapper as the Filter button so the two match) */}
+        <div className="case-filter-menu case-filter-menu--nofile">
+          <button type="button" className="btn-outline" onClick={() => setNoFileOpen(true)}
+            title="Open cases that have no file number">
+            <Icon name="file" /> No File No.{noFileCount > 0 ? ` (${noFileCount})` : ''}
+          </button>
+        </div>
+
         <div className="sort-control">
           <label htmlFor="cases-sort">Sort:</label>
           <Dropdown
@@ -1383,7 +1443,7 @@ export default function Cases() {
                 <p className="empty-state__title">No cases yet</p>
                 <p className="empty-state__desc">Add your first case to start tracking hearings and documents.</p>
                 <div className="u-actions-center">
-                  <button type="button" className="btn-gold" onClick={() => { setSelectedCase(null); setShowAddCase(true) }}>+ Add Case</button>
+                  <button type="button" className="btn-gold" onClick={() => openAddCase()}>+ Add Case</button>
                 </div>
               </>
             ) : (
