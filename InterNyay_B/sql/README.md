@@ -68,6 +68,8 @@ and refuses to start if they do not. It never changes the database.
 | `V61__chat_assistant_insights.sql` | `chat_feedback` (a thumbs up or down on an assistant answer, with an optional note) and `chat_runs` (one row per question: lookups used, rounds, time, tokens, outcome), read in Admin > AI Assistant |
 | `V62__scheduler_extra_times.sql` | `scheduler_settings.extra_crons`: further run times of one background job, set in Admin > Schedulers |
 | `V63__scheduler_extra_targets.sql` | `scheduler_settings.extra_targets`: the hearing date choice (same day, next day, previous day ...) of each further run time, in the same order as `extra_crons` |
+| `V64__add_gurugram_court.sql` | Adds the Gurugram court and its district to the courts table |
+| `V65__merge_gurugram_courts.sql` | One Gurugram court instead of two: the plain court from V64 is removed, "Gurugram District Court" is kept and renamed "Gurugram", and everything that pointed at the removed court (cases, judge listings, court preferences, rosters, leave, district PDFs) moves to it |
 
 This folder keeps the scripts that run outside the app: `create_database.sql` (run once), the read-only reports `check_links.sql`, `check_court_codes.sql` and `review_case_data.sql`, and `fix_state_cases_client_side.sql` (an optional one-off data fix that rolls back until you change its last line to COMMIT; take a backup first).
 Fee calculator rules still need no file: the backend saves them itself on the first start (see below).
@@ -77,10 +79,10 @@ Fee calculator rules still need no file: the backend saves them itself on the fi
 Use MySQL 8.0.19 or newer (`V6__plans.sql` uses a row alias in its upsert; MySQL 5.7 and MariaDB do not support it).
 
 1. In MySQL run `create_database.sql`. It creates an empty `internyay` database as `utf8mb4_unicode_ci` and never deletes anything.
-2. Start the backend. Flyway runs V1 to V63, Hibernate validates, and the app is up. That is the whole setup.
+2. Start the backend. Flyway runs V1 to V65, Hibernate validates, and the app is up. That is the whole setup.
 3. Sign out in the browser, register your account, then make it the first administrator (see `docs/ADMIN_SETUP.md`).
 
-Expected: the log shows `Successfully applied 63 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
+Expected: the log shows `Successfully applied 65 migrations`. The row counts below are what V1 to V11 create; the roster migrations V28 to V30 change the courts and judge listings afterwards, so those counts will differ on a full install:
 
 | Table | Rows |
 | --- | --- |

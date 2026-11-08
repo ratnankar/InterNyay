@@ -67,7 +67,9 @@ src/main/java/com/internyay/
 src/main/resources/
 ├── application.properties      settings, with defaults and environment-variable names
 ├── fee-calculator-defaults.json
-└── db/migration/               Flyway migrations V1 ... V60
+├── chat-eval.json              test questions for the AI assistant (Admin > AI Assistant)
+├── legal-knowledge/            .md library the AI assistant searches for legal questions
+└── db/migration/               Flyway migrations V1 ... V65
 captcha-service/                small Python service that reads the eCourts CAPTCHA (see docs/CAPTCHA_SETUP.md)
 sql/                            create_database.sql plus optional check / fix scripts run by hand, and the migration guide
 docs/                           setup guides
@@ -87,6 +89,15 @@ time must be at least 5 minutes apart. The first time is kept in `scheduler_sett
 | `CauseListScheduler` | every hour 17:00-23:00, for the next day | Looks up cause list numbers for the chosen hearing date: Delhi High Court / Supreme Court PDFs and district courts (CAPTCHA read by the solver). Only cases still without a number are tried, so each run completes the last one. Runs are listed in Admin > Cause List (`causelist.auto.*`) |
 | `NextHearingUpdateScheduler` | every hour 17:00-23:00, for the same day | Asks eCourts for the new next hearing date of cases still on the chosen date (`nexthearing.update.*`) |
 | `WhatsAppReminderScheduler` | 10:00 daily | Sends hearing and payment reminders; each case uses its own "days before" (`whatsapp.reminder.cron`) |
+
+## AI assistant
+
+- `POST /api/chat` returns one reply; `POST /api/chat/stream` streams it with live status (server-sent events); `GET /api/chat/brief` returns the daily brief without an AI call.
+- Adding a task, completing a task and adding a hearing note are saved only after the advocate presses Confirm.
+- Legal questions are answered from `src/main/resources/legal-knowledge/*.md` plus any folder set in `CHAT_KNOWLEDGE_DIR`. Add `.md` files there and use "Reload legal library" in Admin > AI Assistant.
+- Thumbs up/down and one log row per question are kept in `chat_feedback` and `chat_runs`. Admin > AI Assistant shows usage, poor answers and failed runs, and runs the test questions in `chat-eval.json`; run them again after changing the model or the prompt.
+- Settings: `CHAT_TIMEOUT_SECONDS`, `CHAT_STREAM_USAGE` (true when the provider supports `stream_options.include_usage`), `CHAT_LOG_QUESTIONS` (false stops storing question text), `CHAT_KNOWLEDGE_DIR`, `CHAT_MAX_RATE_WAIT_SECONDS`.
+- Behind nginx, response buffering must be off for `/api/chat/stream` (the app sends `X-Accel-Buffering: no`, which nginx honours) and `proxy_read_timeout` must be above `CHAT_TIMEOUT_SECONDS`.
 
 ## Database
 

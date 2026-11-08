@@ -60,28 +60,6 @@ public class ScrapingService {
     // An order PDF downloaded from the portal, with the file name eCourts gives it (order-3.pdf)
     public record FetchedOrder(String fileName, byte[] pdf) {}
 
-    // Downloads the order of one hearing date. Empty when eCourts lists no downloadable order for the date, or when the
-    // portal could not be read (never throws); the caller then tells the advocate to try again
-    public Optional<FetchedOrder> fetchOrderForDate(String rawCnr, LocalDate hearingDate) {
-        String cnr = EcourtsCaseService.normalizeCnr(rawCnr);
-        if (cnr == null || hearingDate == null) return Optional.empty();
-
-        if (!solver.available()) {
-            log.info("CNR {}: order for {} not fetched, the automatic CAPTCHA reader is not available", cnr, hearingDate);
-            return Optional.empty();
-        }
-
-        try {
-            Read read = readCaseWithSession(cnr);
-            if (read == null) return Optional.empty();
-
-            return downloadOrder(cnr, read, hearingDate);
-        } catch (IOException | RuntimeException e) {
-            log.warn("CNR {}: eCourts order download for {} failed: {}", cnr, hearingDate, e.getMessage());
-            return Optional.empty();
-        }
-    }
-
     // Downloads the order of the date from a case page that was read on a portal session
     private Optional<FetchedOrder> downloadOrder(String cnr, Read read, LocalDate hearingDate) throws IOException {
         OrderRow row = read.parsed().orders().stream()

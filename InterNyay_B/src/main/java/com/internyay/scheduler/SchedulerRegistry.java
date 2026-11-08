@@ -143,28 +143,10 @@ public class SchedulerRegistry {
         for (String key : new ArrayList<>(jobs.keySet())) apply(key);
     }
 
-    // The saved time of a job, or null when the job is switched off (used by pages that show the next run)
-    public String cronOf(String key) {
-        Setting s = setting(key);
-        return s == null || !s.enabled() ? null : s.cron();
-    }
-
-    // Every saved time of a job (the first one and the extra ones); empty when the job is switched off
-    public List<String> cronsOf(String key) {
-        Setting s = setting(key);
-        return s == null || !s.enabled() ? List.of() : s.allCrons();
-    }
-
     // Every saved time of a job with the date choice of each; empty when the job is switched off
     public List<Timed> timesOf(String key) {
         Setting s = setting(key);
         return s == null || !s.enabled() ? List.of() : s.timed();
-    }
-
-    // The saved date choice of a job (null when it has none)
-    public String targetOf(String key) {
-        Setting s = setting(key);
-        return s == null ? null : s.target();
     }
 
     public List<JobView> list() {
