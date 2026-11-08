@@ -495,7 +495,7 @@
 }
 
 .case-parties {
-  margin: 14px 0 16px;
+  margin: 14px 0 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -637,3 +637,18 @@
   .import-bar__selects { grid-template-columns: minmax(0, 1fr); }
   .modal--import .modal__toolbar { position: static; }
 }
+
+/* Case details: the party cards, Hearing History, Documents and Evidence are one even stack.
+   Same 8px gap between every card and the same light shadow, so no card looks heavier than the next. */
+.case-detail .case-parties { margin: 14px 0 8px !important; gap: 8px; }
+.case-detail .exp-card,
+.case-detail .case-parties .exp-card {
+  margin-top: 0;
+  margin-bottom: 0;
+  box-shadow: 0 1px 2px rgba(10, 22, 40, 0.06);
+}
+.case-detail .exp-card + .exp-card { margin-top: 8px !important; }
+.case-detail > .exp-card { margin-top: 8px !important; }
+.case-detail .case-parties .exp-card + .exp-card { margin-top: 0 !important; }
+.case-detail .exp-card:hover,
+.case-detail .exp-card.exp-card--open { box-shadow: var(--shadow-sm); }

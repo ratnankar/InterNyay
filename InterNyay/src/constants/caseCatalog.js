@@ -17,20 +17,11 @@ const PARTY_SIDES = [
   { value: SIDE_ACCUSED,     label: 'Accused/Respondent/Defendant' },
 ]
 
-// The same two sides worded for the nature of the case: a civil case has no complainant or accused
+// The two sides as shown in the case form and the case details. Every case shows the full wording
+// (Complainant/Petitioner/Plaintiff and Accused/Respondent/Defendant), whatever its nature.
+// The nature argument is kept so existing callers need no change.
+// eslint-disable-next-line no-unused-vars
 export function partySides(nature) {
-  if (nature === 'Civil') {
-    return [
-      { value: SIDE_COMPLAINANT, label: 'Petitioner/Plaintiff' },
-      { value: SIDE_ACCUSED,     label: 'Respondent/Defendant' },
-    ]
-  }
-  if (nature === 'Criminal') {
-    return [
-      { value: SIDE_COMPLAINANT, label: 'Complainant/Petitioner' },
-      { value: SIDE_ACCUSED,     label: 'Accused/Respondent' },
-    ]
-  }
   return PARTY_SIDES
 }
 
