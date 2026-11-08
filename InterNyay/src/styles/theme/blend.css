@@ -147,3 +147,11 @@
   border-radius: 12px;
   min-height: 0;
 }
+
+/* ---------- Sidebar: the item you leave switches off at once ----------
+   A transition uses the settings of the state it moves to. Giving the inactive items no gold fade means the old
+   active item drops its gold straight away, while the new one still fades in. Before, the old item stayed as a dim
+   grey-brown box for a moment (worse when the page was busy loading), which looked like a glitch. */
+.nav-item:not(.active):not(.nav-item--danger) {
+  transition: color 0.12s, transform 0.2s var(--ease-out, ease), background-color 0.12s;
+}

@@ -140,7 +140,13 @@ export default function Dashboard() {
           {/* Panel title and hearing count */}
           <div className="hearings-panel__header">
             <h2 className="section-title">
-              Hearings — {dayWord(calendarDate) && `${dayWord(calendarDate)}, `}{calendarDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              Hearings
+              <span className="hearings-panel__date">
+                {' '}— {dayWord(calendarDate)
+                  ? `${dayWord(calendarDate)}, `
+                  : `${calendarDate.toLocaleDateString('en-IN', { weekday: 'long' })}, `}
+                {calendarDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
             </h2>
             <span className="hearings-panel__count">
               {hearingTotal} hearing{hearingTotal !== 1 ? 's' : ''}
@@ -158,7 +164,16 @@ export default function Dashboard() {
           {sortedRows.map((row, index) => {
             // Court heading before the first hearing of each court (cases and applications share them)
             const heading = showCourtHeadings && (index === 0 || sortedRows[index - 1].court !== row.court)
-              ? <p className="hearings-court">{row.court || 'No court'}</p>
+              ? (() => {
+                  const courtCount = sortedRows.filter(r => r.court === row.court).length
+                  return (
+                    <div className="hearings-court" role="heading" aria-level={3}>
+                      <span className="hearings-court__icon" aria-hidden="true"><Icon name="scale" /></span>
+                      <span className="hearings-court__name" title={row.court || 'No court'}>{row.court || 'No court'}</span>
+                      <span className="hearings-court__count">{courtCount} hearing{courtCount !== 1 ? 's' : ''}</span>
+                    </div>
+                  )
+                })()
               : null
 
             // A misc. application sits in its own court, after that court's cases
