@@ -41,9 +41,7 @@ export default function usePersistedState(name, initial, allowed) {
     if (loadedKey.current !== storageKey) return
     try {
       localStorage.setItem(storageKey, JSON.stringify(value))
-    } catch {
-      return
-    }
+    } catch {}
   }, [storageKey, value])
 
   // Another browser tab changed the same setting

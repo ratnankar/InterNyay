@@ -129,7 +129,6 @@ export default function ChatWidget() {
     if (!open) { voice.cancel(); setSettingsOpen(false); setView('chat') }
     if (open) { wasOpen.current = true; return }
     if (wasOpen.current) { wasOpen.current = false; launcherRef.current?.focus() }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   // Tab and Shift+Tab stay inside the open panel instead of moving to the page behind it

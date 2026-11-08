@@ -52,7 +52,7 @@
   }
 
   /* Search input */
-  :is(.app-main, .admin) :is(.doc-search-wrap, .todo-search-wrap) .form-input:is(.doc-search-input, .todo-search-input).form-input {
+  :is(.app-main, .admin) :is(.doc-search-wrap) .form-input:is(.doc-search-input).form-input {
     height: 36px;
     min-height: 36px;
     font-size: 0.875rem;
@@ -61,7 +61,7 @@
     border-radius: 10px;
     text-overflow: ellipsis;
   }
-  :is(.app-main, .admin) :is(.doc-search-wrap, .todo-search-wrap) .form-input:is(.doc-search-input, .todo-search-input)::placeholder {
+  :is(.app-main, .admin) :is(.doc-search-wrap) .form-input:is(.doc-search-input)::placeholder {
     font-size: 0.875rem;
   }
   :is(.app-main, .admin) .doc-search-wrap .doc-search-icon { left: 12px; font-size: 1rem; }

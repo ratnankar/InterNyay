@@ -125,11 +125,18 @@
     font-size: 0.8125rem; line-height: 1.2; border-radius: 9px;
   }
 
-  .list-toolbar .doc-search-input, .doc-filter-row .doc-search-input, .todo-search-input,
-  .list-toolbar .btn-outline, .doc-filter-row .btn-outline, .case-filter-menu > .btn-outline, .list-toolbar .case-filter-btn,
-  .sort-control .dropdown__input.dropdown__input, .doc-filter-group .dropdown__input.dropdown__input,
-  .doc-filter-group .doc-filter-select.doc-filter-select, .todo-filters .dropdown__input.dropdown__input,
-  .txn-timeline-filter .dropdown__input.dropdown__input, .txn-timeline-filter .form-input {
+  .list-toolbar .doc-search-input,
+.doc-filter-row .doc-search-input,
+.list-toolbar .btn-outline,
+.doc-filter-row .btn-outline,
+.case-filter-menu > .btn-outline,
+.list-toolbar .case-filter-btn,
+.sort-control .dropdown__input.dropdown__input,
+.doc-filter-group .dropdown__input.dropdown__input,
+.doc-filter-group .doc-filter-select.doc-filter-select,
+.todo-filters .dropdown__input.dropdown__input,
+.txn-timeline-filter .dropdown__input.dropdown__input,
+.txn-timeline-filter .form-input {
     height: 36px; min-height: 36px; font-size: 0.875rem;
   }
 
@@ -374,13 +381,6 @@ html.kb-open .chat__launcher { display: none; }
 }
 
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
-  .app-main input.qa-search,
-  .app-main .qa-search input {
-    box-sizing: border-box;
-    height: 34px;
-    min-height: 34px;
-    font-size: 0.8125rem;
-  }
 
   input.form-input::placeholder,
   input.doc-search-input::placeholder {
@@ -498,13 +498,6 @@ html.kb-open .chat__launcher { display: none; }
     height: 32px;
     min-height: 32px;
     padding: 0 14px;
-    font-size: 0.8125rem;
-  }
-
-  .app-main input.qa-search {
-    box-sizing: border-box;
-    height: 34px;
-    min-height: 34px;
     font-size: 0.8125rem;
   }
 }

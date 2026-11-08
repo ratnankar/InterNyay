@@ -653,7 +653,6 @@
 /* Search boxes, dropdowns, Filter / Clear buttons and status chips share the same height */
 .list-toolbar .doc-search-input,
 .doc-filter-row .doc-search-input,
-.todo-search-input,
 .sort-control .dropdown__input,
 .doc-filter-select,
 .todo-filters .dropdown__input,
@@ -675,7 +674,6 @@
 /* Left / right padding stays roomy for the search icon, clear button and dropdown arrow */
 .list-toolbar .doc-search-input,
 .doc-filter-row .doc-search-input { padding-left: 38px; padding-right: 34px; }
-.todo-search-input { padding-left: 12px; padding-right: 34px; }
 .sort-control .dropdown__input,
 .doc-filter-select,
 .todo-filters .dropdown__input { padding-left: 12px; padding-right: 30px; }
@@ -698,8 +696,7 @@
 
 /* The search box takes the free space; sort and filter stay on the right edge */
 .list-toolbar .doc-search-wrap,
-.doc-filter-row .doc-search-wrap,
-.todo-search-wrap { flex: 1 1 260px; min-width: 220px; margin-bottom: 0; }
+.doc-filter-row .doc-search-wrap { flex: 1 1 260px; min-width: 220px; margin-bottom: 0; }
 .doc-filter-row .doc-search-wrap { margin-bottom: 0; }
 
 /* Search icon and clear button stay centred on the taller box */
@@ -711,8 +708,7 @@
 
 @media (max-width: 640px) {
   .list-toolbar .doc-search-wrap,
-  .doc-filter-row .doc-search-wrap,
-  .todo-search-wrap { flex-basis: 100%; }
+.doc-filter-row .doc-search-wrap { flex-basis: 100%; }
   .todo-filters { flex-wrap: wrap; }
 }
 

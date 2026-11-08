@@ -250,8 +250,7 @@ html { scrollbar-gutter: stable; }
 .admin__toolbar .doc-search-wrap .form-input.doc-search-input { max-width: none; width: 100%; }
 
 /* Icon room and one height for every search input (desktop sizing comes from the --ctl-h / --d-ctl rules above) */
-.doc-search-wrap .form-input.doc-search-input,
-.todo-search-wrap .form-input.todo-search-input {
+.doc-search-wrap .form-input.doc-search-input {
   box-sizing: border-box;
   width: 100%;
   height: var(--ctl-h, 40px);
@@ -260,8 +259,7 @@ html { scrollbar-gutter: stable; }
   padding-right: 34px;
 }
 @media (min-width: 769px) and (hover: hover) and (pointer: fine) {
-  .doc-search-wrap .form-input.doc-search-input,
-  .todo-search-wrap .form-input.todo-search-input { height: var(--d-ctl, 36px); min-height: var(--d-ctl, 36px); }
+  .doc-search-wrap .form-input.doc-search-input { height: var(--d-ctl, 36px); min-height: var(--d-ctl, 36px); }
 }
 .doc-search-icon { color: var(--sk-muted, #6b7689); z-index: 1; }
 .doc-search-wrap:focus-within .doc-search-icon { color: var(--ctl-gold-text, var(--color-gold)); }
@@ -294,21 +292,19 @@ html { scrollbar-gutter: stable; }
    so the row no longer mixes small and large text. Placed last so it wins over the older compact rules. */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
   .app-main .doc-search-wrap .form-input.doc-search-input,
-  .app-main .todo-search-wrap .form-input.todo-search-input,
-  .admin .doc-search-wrap .form-input.doc-search-input,
-  .search-card .form-input.doc-search-input,
-  .picker__field input.form-input[type="search"],
-  .client-search-row .form-input,
-  .legal-fill__search > input.form-input,
-  .qa-jur-search-row__input {
+.admin .doc-search-wrap .form-input.doc-search-input,
+.search-card .form-input.doc-search-input,
+.picker__field input.form-input[type="search"],
+.client-search-row .form-input,
+.legal-fill__search > input.form-input,
+.qa-jur-search-row__input {
     height: 42px; min-height: 42px; font-size: 0.9375rem; line-height: 1.25;
     padding-left: 40px; padding-right: 36px; border-radius: 10px;
   }
   .doc-search-wrap .form-input.doc-search-input::placeholder,
-  .todo-search-wrap .form-input.todo-search-input::placeholder,
-  .picker__field input.form-input[type="search"]::placeholder,
-  .client-search-row .form-input::placeholder,
-  .legal-fill__search > input.form-input::placeholder {
+.picker__field input.form-input[type="search"]::placeholder,
+.client-search-row .form-input::placeholder,
+.legal-fill__search > input.form-input::placeholder {
     font-size: 0.9375rem; text-overflow: ellipsis;
   }
   .doc-search-icon { left: 13px; font-size: 1.1rem; }

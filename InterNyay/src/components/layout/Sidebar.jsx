@@ -160,7 +160,6 @@ export default function Sidebar() {
       cancelled = true
       window.removeEventListener('contact-replies-seen', refresh)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeNav, isAdmin, ackKey])
 
   const { can } = usePlanFeatures()

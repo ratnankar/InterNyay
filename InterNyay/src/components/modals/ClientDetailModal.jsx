@@ -84,7 +84,7 @@ export default function ClientDetailModal() {
       startEdit()
       setClientEditRequest(null)
     }
-  }, [selectedClient, clientEditRequest]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedClient, clientEditRequest])
 
   useEffect(() => {
     if (selectedClient) return

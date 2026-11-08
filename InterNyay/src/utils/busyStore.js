@@ -78,11 +78,6 @@ export function isActionBusy(key) {
   return local.has(key) || server.has(key)
 }
 
-// True while any call is running
-export function anyActionBusy() {
-  return local.size > 0 || server.size > 0
-}
-
 // True while any running action (any method) is on this address or below it, e.g. "/hearings/5" covers the hearing's save,
 // delete and order calls, and "/cases/12" everything started on that case. The query part is ignored
 export function isActionBusyPath(path) {
@@ -145,11 +140,6 @@ export function pingOtherTabs() {
   try { localStorage.setItem('internyay_busy_ping', String(Date.now())) } catch { /* storage unavailable */ }
 }
 
-// Ask the server now (e.g. right after signing in)
-export function refreshBusyFromServer() {
-  if (localStorage.getItem('internyay_token')) syncFromServer()
-}
-
 // --- React -----------------------------------------------------------------------------------------------------------
 
 // true while the action (method + address + params, not the body) is running anywhere
@@ -166,9 +156,4 @@ export function useBusyPath(path) {
 // Re-renders the component whenever anything starts or finishes; use with isActionBusy / isActionBusyPath inside loops
 export function useBusyTick() {
   return useSyncExternalStore(subscribe, () => version, () => 0)
-}
-
-// true while anything at all is running
-export function useAnyBusy() {
-  return useSyncExternalStore(subscribe, anyActionBusy, () => false)
 }

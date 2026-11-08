@@ -11,14 +11,13 @@
 @media (min-width: 769px) and (hover: hover) and (pointer: fine) {
   /* ---------- Fields: text boxes, dropdowns, sort and filter boxes ---------- */
   :is(.admin, .app-main, .modal, .drawer) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input, .form-input.dropdown__input):not(textarea),
-  .app-main input.qa-search,
-  .app-main :is(.doc-search-input, .todo-search-input),
-  .sort-control .dropdown__input.dropdown__input,
-  .doc-filter-group :is(.dropdown__input.dropdown__input, .doc-filter-select.doc-filter-select),
-  .todo-filters :is(.dropdown__input.dropdown__input, select),
-  .txn-timeline-filter :is(.dropdown__input.dropdown__input, .form-input),
-  .clients-page .list-toolbar .doc-search-input,
-  .clients-page .sort-control select {
+.app-main :is(.doc-search-input),
+.sort-control .dropdown__input.dropdown__input,
+.doc-filter-group :is(.dropdown__input.dropdown__input, .doc-filter-select.doc-filter-select),
+.todo-filters :is(.dropdown__input.dropdown__input, select),
+.txn-timeline-filter :is(.dropdown__input.dropdown__input, .form-input),
+.clients-page .list-toolbar .doc-search-input,
+.clients-page .sort-control select {
     box-sizing: border-box;
     height: var(--d-ctl);
     min-height: var(--d-ctl);

@@ -31,7 +31,7 @@ export default function AddClientModal() {
   // How the form looked when it was opened, to know whether anything was typed since
   const clientSignature = JSON.stringify(newClientForm)
   const clientBaseline = useRef(null)
-  useEffect(() => { clientBaseline.current = showAddClient ? clientSignature : null }, [showAddClient]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { clientBaseline.current = showAddClient ? clientSignature : null }, [showAddClient])
 
   // Clicking outside never closes the form; the cross asks to save or discard unsaved details
   const { requestClose, dialog, overlayHandlers } = useUnsavedGuard({

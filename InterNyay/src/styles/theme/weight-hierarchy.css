@@ -123,13 +123,26 @@
 
 /* ---------- Fields, search boxes and dropdowns ---------- */
 /* What you type is regular; its placeholder is regular and lighter in colour */
-.form-input, .auth-input, .doc-search-input, .todo-search-input, .qa-jur-search-row__input, .qa-search,
-input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="tel"], input[type="date"], input[type="search"],
-textarea, .contact-textarea {
+.form-input,
+.auth-input,
+.doc-search-input,
+.qa-jur-search-row__input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="search"],
+textarea,
+.contact-textarea {
   font-weight: var(--w-regular);
 }
-.form-input::placeholder, .doc-search-input::placeholder, .todo-search-input::placeholder, .auth-input::placeholder,
-.qa-jur-search-row__input::placeholder, textarea::placeholder {
+.form-input::placeholder,
+.doc-search-input::placeholder,
+.auth-input::placeholder,
+.qa-jur-search-row__input::placeholder,
+textarea::placeholder {
   font-weight: var(--w-regular);
 }
 /* A chosen value in a dropdown or select reads one step heavier than typed text */
@@ -193,15 +206,14 @@ select.form-input, .dropdown__input, .doc-filter-select, .form-input.dropdown__i
 
   /* Fields and search boxes */
   :is(.admin, .app-main, .modal, .drawer) :is(input.form-input, select.form-input, .dropdown__input.dropdown__input, .form-input.dropdown__input):not(textarea),
-  .app-main input.qa-search,
-  .app-main :is(.doc-search-input, .todo-search-input),
-  .sort-control .dropdown__input.dropdown__input,
-  .doc-filter-group :is(.dropdown__input.dropdown__input, .doc-filter-select.doc-filter-select),
-  .todo-filters :is(.dropdown__input.dropdown__input, select),
-  .txn-timeline-filter :is(.dropdown__input.dropdown__input, .form-input),
-  .clients-page .list-toolbar .doc-search-input,
-  .clients-page .sort-control select,
-  :is(.admin, .app-main, .modal, .drawer) textarea.form-input {
+.app-main :is(.doc-search-input),
+.sort-control .dropdown__input.dropdown__input,
+.doc-filter-group :is(.dropdown__input.dropdown__input, .doc-filter-select.doc-filter-select),
+.todo-filters :is(.dropdown__input.dropdown__input, select),
+.txn-timeline-filter :is(.dropdown__input.dropdown__input, .form-input),
+.clients-page .list-toolbar .doc-search-input,
+.clients-page .sort-control select,
+:is(.admin, .app-main, .modal, .drawer) textarea.form-input {
     font-size: var(--d-field-fs);
   }
   .sort-control label, .doc-filter-label { font-size: var(--fs-base); }

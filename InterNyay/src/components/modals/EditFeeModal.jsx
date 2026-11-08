@@ -27,7 +27,7 @@ export default function EditFeeModal() {
   // How the fee form looked when it was opened, to know whether anything was changed since
   const feeSignature = JSON.stringify(feeOnlyForm)
   const feeBaseline = useRef(null)
-  useEffect(() => { feeBaseline.current = feeOnlyCaseId ? feeSignature : null }, [feeOnlyCaseId]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { feeBaseline.current = feeOnlyCaseId ? feeSignature : null }, [feeOnlyCaseId])
 
   // Clicking outside never closes the form; the cross asks to save or discard unsaved fee details
   const { requestClose, dialog, overlayHandlers } = useUnsavedGuard({

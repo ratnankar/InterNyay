@@ -215,9 +215,7 @@ function writeContactSeen(userId, list) {
   try {
     const prev = readContactSeen(userId)
     if (prev === null || maxId > prev) localStorage.setItem(contactSeenKey(userId), String(maxId))
-  } catch {
-    return
-  }
+  } catch {}
 }
 // Messages the admin has not seen yet. Before the tab was ever opened, the messages still marked New are counted
 function countUnseenContact(list, userId) {

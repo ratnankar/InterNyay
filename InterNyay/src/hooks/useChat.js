@@ -67,7 +67,6 @@ export default function useChat() {
     activeIdRef.current = id
     setActiveIdState(id)
     remember(id)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey])
 
   // Ask the backend if the chat assistant is available; on any error treat it as disabled
@@ -118,7 +117,6 @@ export default function useChat() {
     } finally {
       if (mounted.current) setHistoryLoading(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setActive, storageKey])
 
   // Send a question: adds it to the chat, calls the backend with the earlier messages and appends the reply (or an error message)

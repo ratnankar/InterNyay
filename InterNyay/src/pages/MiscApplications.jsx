@@ -165,7 +165,7 @@ export default function MiscApplications() {
     api.miscApplications.get(wantedId).then(setExtra).catch(() => {})
     // The request is used up: clear it so a refresh or Back does not open the window again
     navigate(location.pathname, { replace: true, state: null })
-  }, [wantedId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wantedId])
 
   const opened = items.find(a => a.id === openId) || (extra && extra.id === openId ? extra : null)
 

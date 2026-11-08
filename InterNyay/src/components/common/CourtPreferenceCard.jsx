@@ -16,7 +16,7 @@ export default function CourtPreferenceCard() {
   // Start from what is saved (and follow it when it loads or is saved elsewhere)
   // (keyed on the contents, so a background refresh with the same courts does not wipe a selection not saved yet)
   const savedKey = prefs.saved.join(',')
-  useEffect(() => { if (prefs.loaded) setIds(prefs.saved) }, [prefs.loaded, savedKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (prefs.loaded) setIds(prefs.saved) }, [prefs.loaded, savedKey])
 
   const dirty = prefs.loaded && (ids.length !== prefs.saved.length || ids.some((v, i) => v !== prefs.saved[i]))
 

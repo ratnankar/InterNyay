@@ -8,7 +8,6 @@ import Dropdown from '../common/Dropdown'
 import {
   COURT_TYPES, FEE_KINDS, SCALE_NAMES, DEFAULT_CONFIG, buildFeeRules,
 } from '../../utils/courtFeesAct'
-import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import useSessionState from '../../hooks/useSessionState'
 

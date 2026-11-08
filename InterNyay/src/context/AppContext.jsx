@@ -12,7 +12,7 @@ import { statusChangeQuestion } from '../utils/caseStatus'
 import {
   AUTO_SUBTYPES,
   SIDE_ACCUSED,
-  partySides,
+  PARTY_SIDES,
   SIDE_COMPLAINANT,
   composeCaseTitle,
   renameInCaseTitle,
@@ -770,7 +770,7 @@ export function AppProvider({ children }) {
   // Without a chosen court the default is the court with the most cases, so adding or removing a case can change it
   useEffect(() => {
     if (loggedIn && currentUser?.id && !isAdmin && dataLoaded) loadCourtPreferences(true).catch(() => {})
-  }, [cases.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cases.length])
 
   // Quiet refresh bookkeeping: a refresh result is dropped when the person changed something while it was loading,
   // so a slow answer can never undo what they just did
@@ -2203,7 +2203,7 @@ export function AppProvider({ children }) {
     }
 
     if (newCaseForm.opponents.length === 0 && !optional) {
-      const [first, second] = partySides(newCaseForm.caseNature)
+      const [first, second] = PARTY_SIDES
       return `Please enter the ${(newCaseForm.clientSide === SIDE_ACCUSED ? first : second).label}`
     }
 

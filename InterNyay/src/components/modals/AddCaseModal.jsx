@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import {
   CASE_NATURES,
-  partySides,
+  PARTY_SIDES,
   SIDE_ACCUSED,
   SIDE_COMPLAINANT,
   caseTypeOptions,
@@ -403,8 +403,7 @@ function PartiesSection() {
 
   // Side our client is on (complainant or accused)
   const side = newCaseForm.clientSide
-  const sides = partySides(newCaseForm.caseNature)
-  const [complainantSide, accusedSide] = sides
+  const [complainantSide, accusedSide] = PARTY_SIDES
 
   // A case added by CNR: the title starts as the one eCourts has; client is optional; the opposite parties are filled
   // from eCourts and can be edited like in a case added by hand
@@ -439,7 +438,7 @@ function PartiesSection() {
       <div className="case-parties__side">
         <span className="case-parties__side-label">Our client is the</span>
         <div className="fee-type-toggle case-parties__toggle">
-          {sides.map(p => (
+          {PARTY_SIDES.map(p => (
             <button
               key={p.value}
               type="button"
@@ -705,7 +704,7 @@ export default function AddCaseModal() {
   const [stage, setStage] = useState(0)
 
   // Start from the first question every time the modal is closed
-  useEffect(() => { if (!showAddCase) { setStage(0); setScanCnr('') } }, [showAddCase]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!showAddCase) { setStage(0); setScanCnr('') } }, [showAddCase])
 
   // How the form looked when it was opened, to know whether anything was typed since
   const { fileSeq: _fileSeq, ...formWithoutAutoNumber } = newCaseForm
@@ -713,12 +712,12 @@ export default function AddCaseModal() {
     form: formWithoutAutoNumber, clients: caseClients.map(c => c.id), subTypes: caseClientSubTypes,
   })
   const caseBaseline = useRef(null)
-  useEffect(() => { caseBaseline.current = showAddCase ? caseSignature : null }, [showAddCase, editingCaseId, stage]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { caseBaseline.current = showAddCase ? caseSignature : null }, [showAddCase, editingCaseId, stage])
   useEffect(() => {
     if (!autoFilled.current) return
     autoFilled.current = false
     if (showAddCase) caseBaseline.current = caseSignature
-  }, [caseSignature]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [caseSignature])
 
   // Clicking outside never closes the form; the cross asks to save or discard unsaved details
   const { requestClose, dialog, overlayHandlers } = useUnsavedGuard({

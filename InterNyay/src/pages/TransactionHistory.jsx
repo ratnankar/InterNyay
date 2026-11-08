@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { formatCurrency } from '../utils/formatUtils'
 import { formatDisplayDate } from '../utils/dateUtils'

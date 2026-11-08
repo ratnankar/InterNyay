@@ -43,14 +43,6 @@
   color: var(--color-text-faint);
 }
 
-.todo-search-wrap {
-  position: relative;
-}
-
-.todo-search-input {
-  width: 100%;
-}
-
 .todo-filters select {
   width: auto;
   min-width: 150px;

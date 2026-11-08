@@ -275,7 +275,7 @@ function JobRow({ job, onSaved, onRan }) {
 
   // A new version from the server (after a save or a reload) replaces what is being edited
   const savedKey = `${savedCrons(job).join('|')}#${[job.target, ...(job.extraTargets || [])].join('|')}`
-  useEffect(() => { setForm(fromJob(job)) }, [savedKey, job.enabled]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setForm(fromJob(job)) }, [savedKey, job.enabled])
 
   const set = patch => setForm(f => ({ ...f, ...patch }))
   const setTime = (i, time) => set({ times: form.times.map((t, n) => (n === i ? time : t)) })

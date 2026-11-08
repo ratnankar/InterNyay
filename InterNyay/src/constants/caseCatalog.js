@@ -12,18 +12,10 @@ export const SIDE_COMPLAINANT = 'COMPLAINANT'
 export const SIDE_ACCUSED = 'ACCUSED'
 
 // Options for the "client side" dropdown in the case form
-const PARTY_SIDES = [
+export const PARTY_SIDES = [
   { value: SIDE_COMPLAINANT, label: 'Complainant/Petitioner/Plaintiff' },
   { value: SIDE_ACCUSED,     label: 'Accused/Respondent/Defendant' },
 ]
-
-// The two sides as shown in the case form and the case details. Every case shows the full wording
-// (Complainant/Petitioner/Plaintiff and Accused/Respondent/Defendant), whatever its nature.
-// The nature argument is kept so existing callers need no change.
-// eslint-disable-next-line no-unused-vars
-export function partySides(nature) {
-  return PARTY_SIDES
-}
 
 // Case catalogue: nature -> relief/category -> list of case types, used for the cascading dropdowns
 const CASE_CATALOG = {

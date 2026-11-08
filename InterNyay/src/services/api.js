@@ -210,7 +210,7 @@ async function saveAs(path, fileName) {
 
 // The courts the signed-in user works at: chosen on the profile or right after sign-up.
 // get() also returns the courts to open by default (the chosen ones, or the courts with the most cases when nothing was chosen)
-export const courtPreferences = {
+const courtPreferences = {
   get:  ()           => get('/court-preferences'),
   save: (courtIds)   => put('/court-preferences', { body: { courtIds } }),
 }
@@ -224,7 +224,7 @@ export const ecourtsImport = {
 }
 
 // Court table: courts, districts, buildings and court numbers (single source for every court dropdown)
-export const courts = {
+const courts = {
   list:   ()     => get('/courts'),
   add:    (body) => post('/courts', { body }),
   remove: (id, scope = 'row') => del(`/courts/${id}`, { params: { scope } }),
@@ -239,12 +239,12 @@ export const courts = {
 }
 
 // Quick Access: judges on leave
-export const quickAccess = {
+const quickAccess = {
   getJudgesOnLeave:  (params) => get('/quick-access/judges-on-leave', { params }),
 }
 
 // Quick Access: judges list (create/update use form data because of the photo)
-export const judgesList = {
+const judgesList = {
   list:   (params)   => get('/quick-access/judges-list', { params }),
   search: (params)   => get('/quick-access/judges-list/search', { params }),
   courtNumbers: (params) => get('/quick-access/judges-list/court-numbers', { params }),
@@ -261,7 +261,7 @@ export const judgesList = {
 }
 
 // Judges (name and photo only). A listing in judgesList is where a judge sits
-export const judgeProfiles = {
+const judgeProfiles = {
   list:   ()               => get('/quick-access/judge-profiles'),
   create: (formData)       => postForm('/quick-access/judge-profiles', formData),
   update: (id, formData)   => putForm(`/quick-access/judge-profiles/${id}`, formData),
@@ -270,7 +270,7 @@ export const judgeProfiles = {
 }
 
 // Quick Access: district-wise PDFs uploaded by the admin, per section
-export const districtPdfs = {
+const districtPdfs = {
   list:    (section)           => get('/quick-access/district-pdfs', { params: { section } }),
   // Blob URL of the PDF for a section and district
   fileUrl: (section, district) =>
@@ -287,7 +287,7 @@ export const districtPdfs = {
 }
 
 // Quick Access: bail roster
-export const bailRoster = {
+const bailRoster = {
   list:   (params)   => get('/quick-access/bail-roster', { params }),
   create: (formData) => postForm('/quick-access/bail-roster', formData),
   update: (id, formData) => putForm(`/quick-access/bail-roster/${id}`, formData),
@@ -295,7 +295,7 @@ export const bailRoster = {
 }
 
 // Quick Access: duty magistrate roster
-export const dutyMagistrate = {
+const dutyMagistrate = {
   list:   (params)   => get('/quick-access/duty-magistrate', { params }),
   create: (formData) => postForm('/quick-access/duty-magistrate', formData),
   update: (id, formData) => putForm(`/quick-access/duty-magistrate/${id}`, formData),
@@ -381,7 +381,7 @@ export const tasks = {
 }
 
 // Office expenses (list, add, mark paid, delete)
-export const officeExpenses = {
+const officeExpenses = {
   list:     ()          => get('/office-expenses'),
   create:   (body)      => post('/office-expenses', { body }),
   setPaid:  (id, paid)  => put(`/office-expenses/${id}/paid`, { body: { paid } }),
@@ -449,7 +449,7 @@ export const miscApplications = {
 }
 
 // Court / bar association notifications
-export const notifications = {
+const notifications = {
   list: (params) => get('/notifications', { params }),
 
   // Tiny "last changed" value, checked regularly to know when to reload the list
@@ -498,7 +498,7 @@ export const notifications = {
 }
 
 // WhatsApp reminders
-export const whatsapp = {
+const whatsapp = {
   status: () => get('/whatsapp/status'),
 
   // Turn automatic reminders on/off for a case and set how many days before the hearing
@@ -511,7 +511,7 @@ export const whatsapp = {
 }
 
 // Yearly court calendar PDFs
-export const courtCalendar = {
+const courtCalendar = {
   list: () => get('/court-calendar'),
 
   // Download the calendar PDF for a year
@@ -786,7 +786,7 @@ export const legalForms = {
 }
 
 // Quick Access: police directory (districts, sub-divisions, stations)
-export const police = {
+const police = {
   directory: () => get('/quick-access/police/directory'),
 
   districts: {
@@ -808,7 +808,7 @@ export const police = {
 }
 
 // Quick Access: DRT and consumer commission jurisdiction directories
-export const jurisdiction = {
+const jurisdiction = {
   drt: {
     directory: () => get('/quick-access/jurisdiction/drt'),
     create:    (body)     => post('/quick-access/jurisdiction/drt/tribunals', { body }),
@@ -824,7 +824,7 @@ export const jurisdiction = {
 }
 
 // Admin console endpoints
-export const admin = {
+const admin = {
   stats: () => get('/admin/stats'),
 
   chat: {
@@ -926,7 +926,7 @@ export const publicApi = {
 }
 
 // Court fee calculator rules as saved by the admin 
-export const feeCalculator = {
+const feeCalculator = {
   config: () => get('/fee-calculator/config'),
 }
 
@@ -938,7 +938,7 @@ export const plansApi = {
 }
 
 // Contact Us for logged-in users, including admin replies
-export const contact = {
+const contact = {
   send: (body) => post('/contact', { body }),
   // Message with photos, videos or PDFs: data is the message, files is a list of File objects
   sendWithFiles: (data, files) => {
@@ -1040,7 +1040,7 @@ async function streamChat(messages, conversationId, on, signal) {
 
 // Chat assistant. Every chat is saved on the server: send() and addToHistory() put messages into the chat named by
 // conversationId (empty starts a new chat) and the reply says which chat that is
-export const chat = {
+const chat = {
   status: ()         => get('/chat/status'),
   send:   (messages, conversationId) => post('/chat', { body: { messages, conversationId: conversationId ?? null } }),
   stream: streamChat,

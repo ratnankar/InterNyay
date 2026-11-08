@@ -15,7 +15,6 @@ export default function useSessionState(name, initial) {
     if (loadedKey.current === key) return
     loadedKey.current = key
     setValue(sessionStore.has(key) ? sessionStore.get(key) : initial)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
   useEffect(() => {

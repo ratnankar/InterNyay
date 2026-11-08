@@ -80,7 +80,7 @@ export function CaseAddModePrompt({ onFetched, onFailed, hasCnr, onManual, onClo
     if (!initialCnr || startedFor.current === initialCnr) return
     startedFor.current = initialCnr
     startLookup(initialCnr)
-  }, [initialCnr]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialCnr])
 
   // Sends the typed CAPTCHA
   async function submitCaptcha() {

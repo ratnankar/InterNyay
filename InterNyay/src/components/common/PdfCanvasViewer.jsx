@@ -178,7 +178,7 @@ export default function PdfCanvasViewer({ data, className = '', onFail, autoHeig
         try { doc.destroy() } catch { /* ignore */ }
       }
     }
-  }, [data]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data])
 
   // Fit pages to the width of the viewer, and follow it when the phone turns
   useEffect(() => {

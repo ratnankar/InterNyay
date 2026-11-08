@@ -124,13 +124,6 @@ export function useCourtPreferences() {
   return data
 }
 
-// Label of a court + district place: "Saket · South", "Rouse Avenue" or "Delhi High Court"
-export function placeLabel(place) {
-  if (!place?.court) return ''
-  if (!place.district || isOwnDistrict(place.court, place.district) || isHighCourt(place.court)) return place.court
-  return `${place.court} · ${place.district}`
-}
-
 // Preferred places that still exist in the court table, most cases first. Pass districtOnly to leave out high courts
 // (pages such as Judges on Leave only cover district courts)
 function preferredPlaces(prefs, table, districtOnly) {

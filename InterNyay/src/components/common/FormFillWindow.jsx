@@ -105,7 +105,6 @@ export default function FormFillWindow({ form, initialCaseId = '', standalone = 
     else next.delete('caseId')
     setSearchParams(next, { replace: true })
     // searchParams and setSearchParams change with every URL update: only a new selection should trigger this
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCase, standalone])
 
   // In the standalone tab, set the browser tab title to the form name
