@@ -51,11 +51,15 @@ public final class SupremeCourtCauseListMatcher implements ItemNoFinder {
         return out;
     }
 
+    public static boolean isSearchable(String caseNo) {
+        return CauseListMatcher.isSearchable(clean(caseNo));
+    }
+
     @Override
     public Optional<Integer> findItemNo(String caseNo) {
         String target = CauseListMatcher.normalize(clean(caseNo));
 
-        if (target.length() < 5 || !Character.isLetter(target.charAt(0)) || target.indexOf('/') < 0) {
+        if (!isSearchable(caseNo)) {
             return Optional.empty();
         }
 

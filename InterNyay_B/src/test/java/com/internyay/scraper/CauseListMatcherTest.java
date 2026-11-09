@@ -59,4 +59,14 @@ class CauseListMatcherTest {
         assertTrue(matcher.findItemNo("WPC1234").isEmpty());
         assertTrue(matcher.findItemNo(null).isEmpty());
     }
+
+    @Test
+    void rejectsCaseNumbersThatCannotBeSearched() {
+        assertTrue(!CauseListMatcher.isSearchable(null));
+        assertTrue(!CauseListMatcher.isSearchable("  "));
+        assertTrue(!CauseListMatcher.isSearchable("1234"));
+        assertTrue(!CauseListMatcher.isSearchable("1234/2024"));
+        assertTrue(!CauseListMatcher.isSearchable("WP 1234"));
+        assertTrue(CauseListMatcher.isSearchable("W.P.(C) 1234/2024"));
+    }
 }

@@ -50,22 +50,23 @@ public class DelhiHighCourtCauseListClient {
         this.maxPdfBytes = Math.max(1, maxPdfMb) * 1024L * 1024L;
     }
 
-    public List<CauseListDocument> fetch(LocalDate hearingDate) {
+    public CauseListFetch fetch(LocalDate hearingDate) {
         List<Entry> entries;
 
         try {
             entries = findEntries(hearingDate);
         } catch (IOException | RuntimeException e) {
             log.error("Delhi High Court cause list archive could not be read: {}", e.getMessage());
-            return List.of();
+            throw new CauseListUnavailableException("Delhi High Court cause list archive could not be read", e);
         }
 
         if (entries.isEmpty()) {
             log.info("Delhi High Court: no cause list PDF published yet for {}", hearingDate);
-            return List.of();
+            return CauseListFetch.nothingPublished();
         }
 
         List<CauseListDocument> documents = new ArrayList<>();
+        boolean complete = true;
 
         for (Entry entry : entries) {
             try {
@@ -73,10 +74,15 @@ public class DelhiHighCourtCauseListClient {
                 log.info("Delhi High Court: read '{}' ({} lines)", entry.title(), lines.size());
                 documents.add(new CauseListDocument(entry.title(), lines));
             } catch (IOException | RuntimeException e) {
+                complete = false;
                 log.error("Delhi High Court: could not read '{}': {}", entry.title(), e.getMessage());
             }
         }
-        return documents;
+
+        if (documents.isEmpty()) {
+            throw new CauseListUnavailableException("Delhi High Court cause list PDFs could not be read for " + hearingDate);
+        }
+        return new CauseListFetch(documents, complete);
     }
 
     private List<Entry> findEntries(LocalDate hearingDate) throws IOException {

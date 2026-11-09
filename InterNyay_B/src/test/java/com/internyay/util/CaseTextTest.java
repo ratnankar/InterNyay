@@ -34,6 +34,13 @@ class CaseTextTest {
     }
 
     @Test
+    void caseNumberOfATypeEndingInABracketHasOneFormat() {
+        assertEquals("W.P.(C) 1234/2024", CaseText.normalizeCaseNo("W.P.(C)/1234/2024"));
+        assertEquals("CS(OS) 77/2020", CaseText.normalizeCaseNo("CS(OS) / 77 / 2020"));
+        assertEquals("SLP(C) 13912/2024", CaseText.normalizeCaseNo("SLP(C) 13912/2024"));
+    }
+
+    @Test
     void actsLoseTheTextOfOtherTables() {
         assertEquals("Civil Procedure Code 1908 - Section 104 CPC & U/o. 43",
                 CaseText.cleanActs("Civil Procedure Code 1908 - Section 104 CPC &amp; U/o. 43; Processes; Process ID - Section Process Title; X_1_5"));

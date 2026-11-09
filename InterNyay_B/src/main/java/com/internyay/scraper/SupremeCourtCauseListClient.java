@@ -51,9 +51,10 @@ public class SupremeCourtCauseListClient {
     }
 
     // The cause list PDFs of a date, main list first, then the supplementary lists. Empty while nothing is published
-    public List<CauseListDocument> fetch(LocalDate hearingDate) {
+    public CauseListFetch fetch(LocalDate hearingDate) {
         List<CauseListDocument> documents = new ArrayList<>();
         String folder = baseUrl + hearingDate.format(PATH_DATE) + "/";
+        boolean failed = false;
 
         for (String prefix : prefixes) {
             int misses = 0;
@@ -75,15 +76,20 @@ public class SupremeCourtCauseListClient {
                     documents.add(new CauseListDocument(name, lines));
 
                 } catch (IOException | RuntimeException e) {
+                    failed = true;
                     log.error("Supreme Court: could not read '{}': {}", name, e.getMessage());
                 }
             }
         }
 
+        if (documents.isEmpty() && failed) {
+            throw new CauseListUnavailableException("Supreme Court cause list could not be read for " + hearingDate);
+        }
+
         if (documents.isEmpty()) {
             log.info("Supreme Court: no cause list PDF published yet for {}", hearingDate);
         }
-        return documents;
+        return new CauseListFetch(documents, !failed);
     }
 
     // Null when the file does not exist (or is not a PDF), which is normal for numbers that are not published
@@ -96,6 +102,10 @@ public class SupremeCourtCauseListClient {
                 .maxBodySize(0)
                 .timeout(120_000)
                 .execute();
+
+        if (response.statusCode() >= 500) {
+            throw new IOException("Server answered " + response.statusCode());
+        }
 
         if (response.statusCode() != 200) {
             return null;

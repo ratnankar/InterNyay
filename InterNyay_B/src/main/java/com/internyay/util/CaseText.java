@@ -30,8 +30,8 @@ public final class CaseText {
             ";?\\s*(?:Processes|IA Status|Main Matters|Process ID|IA Number)\\b.*$", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     // Case number as eCourts writes it: type, number, year
-    private static final Pattern SLASHED_TYPE = Pattern.compile("^(.*?[A-Za-z.])\\s*/\\s*(\\d+)\\s*/\\s*(\\d{4})$");
-    private static final Pattern SPACED = Pattern.compile("^(.*?[A-Za-z.])\\s+(\\d+)\\s*/\\s*(\\d{4})$");
+    private static final Pattern SLASHED_TYPE = Pattern.compile("^(.*?[A-Za-z.)])\\s*/\\s*(\\d+)\\s*/\\s*(\\d{4})$");
+    private static final Pattern SPACED = Pattern.compile("^(.*?[A-Za-z.)])\\s+(\\d+)\\s*/\\s*(\\d{4})$");
 
     // Title: single spaces, "v." between the sides, "Ors." for others, normal case when everything was in capitals
     public static String normalizeTitle(String title) {

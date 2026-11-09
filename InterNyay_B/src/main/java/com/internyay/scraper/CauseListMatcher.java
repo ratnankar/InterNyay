@@ -37,10 +37,15 @@ public final class CauseListMatcher implements ItemNoFinder {
         return out.toString();
     }
 
+    public static boolean isSearchable(String caseNo) {
+        String target = normalize(caseNo);
+        return target.length() >= 5 && Character.isLetter(target.charAt(0)) && target.indexOf('/') >= 0;
+    }
+
     @Override
     public Optional<Integer> findItemNo(String caseNo) {
         String target = normalize(caseNo);
-        if (target.length() < 5 || !Character.isLetter(target.charAt(0)) || target.indexOf('/') < 0) {
+        if (!isSearchable(caseNo)) {
             return Optional.empty();
         }
 

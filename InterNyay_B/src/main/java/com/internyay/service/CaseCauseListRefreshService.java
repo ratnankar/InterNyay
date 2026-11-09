@@ -76,7 +76,24 @@ public class CaseCauseListRefreshService {
         try {
             Integer found;
 
+            if (c.getCourtPlace() == null) {
+                return result(c, date, Status.UNSUPPORTED, before, "Select the court of this case to look up the cause list");
+            }
+
+            if (c.getCourtPlace().isHighCourt() && !pdfLists.readsFromPdf(c)) {
+                return result(c, date, Status.UNSUPPORTED, before, "The cause list of this court cannot be looked up here");
+            }
+
             if (pdfLists.readsFromPdf(c)) {
+                if (c.getCaseNo() == null || c.getCaseNo().isBlank()) {
+                    return result(c, date, Status.UNSUPPORTED, before, "Add the case number to look up the cause list");
+                }
+
+                if (!pdfLists.hasSearchableCaseNo(c)) {
+                    return result(c, date, Status.UNSUPPORTED, before,
+                            "The case number needs its type, number and year (like W.P.(C) 1234/2024) to be found in the cause list");
+                }
+
                 CaseLookup lookup = pdfLists.lookUpCase(c, date);
 
                 if (!lookup.listPublished()) {

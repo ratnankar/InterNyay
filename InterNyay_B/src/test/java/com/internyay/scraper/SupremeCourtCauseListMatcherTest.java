@@ -84,4 +84,13 @@ class SupremeCourtCauseListMatcherTest {
         assertTrue(matcher.findItemNo("SLPC13912").isEmpty());
         assertTrue(matcher.findItemNo(null).isEmpty());
     }
+
+    @Test
+    void rejectsCaseNumbersThatCannotBeSearched() {
+        assertTrue(!SupremeCourtCauseListMatcher.isSearchable(null));
+        assertTrue(!SupremeCourtCauseListMatcher.isSearchable(""));
+        assertTrue(!SupremeCourtCauseListMatcher.isSearchable("13912"));
+        assertTrue(SupremeCourtCauseListMatcher.isSearchable("SLP(C) No. 13912/2024"));
+        assertTrue(SupremeCourtCauseListMatcher.isSearchable("Diary No. 37177-2026"));
+    }
 }
