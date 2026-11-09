@@ -36,3 +36,29 @@
   .app-main { padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px)); }
   .chat__launcher { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* ---------- Cases search / filter bar on phones ----------
+   Search on row 1, Filter and No File No. as two equal buttons on row 2, Sort on row 3 with its label at the left and the
+   dropdown filling the row. Before, Sort wrapped onto its own row and sat at the right edge, out of line with the rest */
+@media (max-width: 640px) {
+  .app-main.app-main .list-toolbar:has(.case-filter-menu) > .case-filter-menu {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .app-main .list-toolbar:has(.case-filter-menu) > .case-filter-menu > .btn-outline.btn-outline {
+    width: 100%;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .app-main.app-main .list-toolbar:has(.case-filter-menu) > .sort-control:not(:has(#expense-associate-filter)) {
+    flex: 1 1 100%;
+    margin-left: 0;
+    gap: 8px;
+    align-items: center;
+  }
+  .app-main.app-main .list-toolbar:has(.case-filter-menu) > .sort-control:not(:has(#expense-associate-filter)) .dropdown {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+}
