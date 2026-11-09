@@ -62,3 +62,12 @@
     min-width: 0;
   }
 }
+
+/* ---------- Pinned search / filter bars: nothing shows through above them ----------
+   On phones and tablets the bar pins just under the top bar. The top bar is 48px tall (plus the phone's top safe area),
+   but the pin position was worked out from 56px, leaving a strip about 20px high between the two. The page-coloured cover
+   behind the bar only reaches 13px up, so card text scrolled through the rest. The pin position now uses the real height,
+   so the cover meets the top bar exactly and the strip is closed */
+@media (max-width: 860px) {
+  :root { --sticky-top: calc(48px + env(safe-area-inset-top, 0px) + var(--sticky-gap)); }
+}
