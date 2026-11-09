@@ -138,3 +138,6 @@
 
 /* Expenses / Transactions: shadow band under the payment card, Year chip shape. Keep last */
 @import './styles/pages/expenses-filters.css';
+
+/* Last responsive pass: very narrow phones and phones held sideways. Keep last */
+@import './styles/responsive/final-fixes.css';

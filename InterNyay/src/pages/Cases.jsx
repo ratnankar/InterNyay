@@ -474,8 +474,16 @@ export default function Cases() {
     const t = setTimeout(() => {
       const el = cardEls.current.get(openCardId)
       if (!el) return
+      // The search / filter bar is pinned to the top and is taller on a phone (search, filters and sort wrap onto
+      // several rows), so the card is scrolled to just below it instead of a fixed distance that would hide its title
+      const bar = document.querySelector('.app-main .list-toolbar')
+      const barStyle = bar ? getComputedStyle(bar) : null
+      const clearance = barStyle && barStyle.position === 'sticky'
+        ? (parseFloat(barStyle.top) || 0) + bar.offsetHeight + 12
+        : 72
+      el.style.scrollMarginTop = `${Math.round(clearance)}px`
       const top = el.getBoundingClientRect().top
-      if (top < 0 || top > window.innerHeight * 0.4) {
+      if (top < clearance || top > window.innerHeight * 0.4) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
     }, 80)
