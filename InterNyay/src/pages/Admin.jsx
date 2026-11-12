@@ -20,6 +20,7 @@ import CauseListRelay from '../components/admin/CauseListRelay'
 import DutyMagistrateAdmin from '../components/admin/DutyMagistrateAdmin'
 import SuccessorCourts from '../components/common/SuccessorCourts'
 import DrtJurisdictionAdmin from '../components/admin/DrtJurisdictionAdmin'
+import QuickLinksAdmin from '../components/admin/QuickLinksAdmin'
 import ConsumerJurisdictionAdmin from '../components/admin/ConsumerJurisdictionAdmin'
 import useOverlayClose from '../hooks/useOverlayClose'
 import usePdfViewer from '../hooks/usePdfViewer'
@@ -84,6 +85,7 @@ const TAB_GROUPS = [
     { id: 'police',   label: 'Police Directory' },
     { id: 'consumer', label: 'Consumer Court Jurisdiction' },
     { id: 'drt',      label: 'DRT Jurisdiction' },
+    { id: 'quicklinks', label: 'Important Links' },
   ] },
   { id: 'leave', icon: 'beach', label: 'Judges on Leave', tabs: [
     { id: 'leave', label: 'Judges on Leave' },
@@ -1522,6 +1524,8 @@ export default function Admin() {
       {tab === 'consumer' && <ConsumerJurisdictionAdmin key={refreshKey} />}
 
       {tab === 'drt' && <DrtJurisdictionAdmin key={refreshKey} />}
+
+      {tab === 'quicklinks' && <QuickLinksAdmin key={refreshKey} />}
 
       {tab === 'plans' && <PlansAdmin key={refreshKey} />}
 

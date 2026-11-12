@@ -807,6 +807,21 @@ const police = {
   updateSettings: (body) => put('/quick-access/police/settings', { body }),
 }
 
+const quickLinks = {
+  directory: () => get('/quick-access/links'),
+  admin: {
+    directory:     ()           => get('/admin/quick-links'),
+    createGroup:   (body)       => post('/admin/quick-links/groups', { body }),
+    updateGroup:   (id, body)   => put(`/admin/quick-links/groups/${id}`, { body }),
+    removeGroup:   (id)         => del(`/admin/quick-links/groups/${id}`),
+    reorderGroups: (ids)        => put('/admin/quick-links/groups/order', { body: { ids } }),
+    createLink:    (body)       => post('/admin/quick-links/links', { body }),
+    updateLink:    (id, body)   => put(`/admin/quick-links/links/${id}`, { body }),
+    removeLink:    (id)         => del(`/admin/quick-links/links/${id}`),
+    reorderLinks:  (groupId, ids) => put(`/admin/quick-links/groups/${groupId}/links/order`, { body: { ids } }),
+  },
+}
+
 // Quick Access: DRT and consumer commission jurisdiction directories
 const jurisdiction = {
   drt: {
@@ -1069,5 +1084,5 @@ const captcha = {
 // (utils/busyStore.js). Asked on start, when the tab is shown again, and while something is still listed
 startServerSync(() => get('/in-flight'))
 
-const api = { captcha, publicApi, contact, chat, courts, courtPreferences, quickAccess, police, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
+const api = { captcha, publicApi, contact, chat, courts, courtPreferences, quickAccess, police, quickLinks, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
 export default api

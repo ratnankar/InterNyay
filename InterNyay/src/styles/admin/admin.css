@@ -1076,3 +1076,9 @@ td.admin__actions > * + * { margin-left: 6px; }
 /* Judge picker (Listing, Change judge): the search box and its Search button on one row */
 .change-judge__search { display: flex; gap: var(--space-sm, 8px); align-items: center; }
 .change-judge__search-box { flex: 1 1 auto; min-width: 0; }
+.ql-admin__group { margin-bottom: 1.5rem; }
+.ql-admin__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.ql-admin__title { margin: 0; font-family: var(--font-heading); color: var(--color-navy); font-size: var(--fs-base); }
+.ql-admin__label { display: inline-flex; align-items: center; gap: 6px; }
+.ql-admin__desc { display: block; margin-top: 2px; font-size: var(--fs-xs); color: var(--color-text-muted); }
+.ql-admin__url { overflow-wrap: anywhere; word-break: break-all; }

@@ -50,6 +50,7 @@ import {
 import Icon from '../components/common/Icon'
 import { getErrorMessage } from '../utils/errorMessages'
 import Linkify from '../components/common/Linkify'
+import ImportantLinks from '../components/common/ImportantLinks'
 
 const rosterIssuedDate = row => row.issuedOn
 
@@ -1378,6 +1379,7 @@ const MENU_ITEMS = [
   { id: 'calendar',     icon: 'calendar',  label: 'Court Calendar',         subtitle: 'Yearly court calendar — pick a year'   },
   { id: 'police',       icon: 'shield',  label: 'Police Directory',       subtitle: 'DCP, ACP & CAW — search by police station' },
   { id: 'jurisdiction', icon: 'pin-map',  label: 'Find Jurisdiction',      subtitle: 'Consumer, DRT, Civil & Criminal jurisdiction' },
+  { id: 'links',        icon: 'clip',  label: 'Important Links',        subtitle: 'Court fees, DLSA payments, challans & traffic notices' },
 ]
 
 // Quick Access page: a card for each section, the chosen one opens in a panel below
@@ -1456,6 +1458,7 @@ export default function QuickAccess() {
             {active === 'calendar'   && <CourtCalendar />}
             {active === 'police'     && <PoliceDirectory />}
             {active === 'jurisdiction' && <FindJurisdiction />}
+            {active === 'links'      && <ImportantLinks />}
           </div>
         </div>
       )}

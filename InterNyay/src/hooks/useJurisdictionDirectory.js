@@ -4,7 +4,7 @@ import { getErrorMessage } from '../utils/errorMessages'
 import { onLiveRefresh } from '../utils/liveRefresh'
 
 // Factory that builds a shared, cached "directory" hook (one cache + subscriber list per directory type)
-function createDirectoryHook(fetcher, fallbackMessage) {
+export function createDirectoryHook(fetcher, fallbackMessage) {
   // Last loaded directory, shared by every component that uses the hook
   let cache = null
   // Mounted components listening for updates, so an admin edit refreshes all of them
