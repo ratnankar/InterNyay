@@ -365,3 +365,15 @@
 
 .chat__avatar--bot  { background: var(--color-navy); color: var(--color-gold); }
 .chat__avatar--user { background: #dbe6fb; color: #16386f; }
+
+/* Links in assistant and user messages */
+.chat__link {
+  color: var(--color-navy-mid);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.chat__link:hover { text-decoration-thickness: 2px; }
+.chat__msg--user .chat__link { color: inherit; }

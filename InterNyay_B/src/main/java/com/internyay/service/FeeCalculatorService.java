@@ -45,6 +45,11 @@ public class FeeCalculatorService {
     private final FeeCalculatorConfigRepository repo;
     private final ObjectMapper mapper;
 
+    // The built-in rules, for readers that need a scale the saved rules lack
+    public JsonNode defaultRules() {
+        return defaults();
+    }
+
     // Built-in Court Fees Act, 1870 rules, kept in src/main/resources/fee-calculator-defaults.json
     private JsonNode defaults() {
         try (InputStream in = new ClassPathResource("fee-calculator-defaults.json").getInputStream()) {

@@ -1,16 +1,250 @@
 [
-  { "id": "hearings-tomorrow", "question": "What hearings do I have tomorrow?", "expectAnyTool": ["hearing_day_details", "get_hearings", "search_cases", "dashboard_overview"] },
-  { "id": "hearings-hinglish", "question": "kal meri kaun si hearing hai?", "expectAnyTool": ["hearing_day_details", "get_hearings", "search_cases", "dashboard_overview"] },
-  { "id": "pending-fees", "question": "Which clients have pending fees?", "expectAnyTool": ["fee_overview"] },
-  { "id": "overdue-tasks", "question": "Are any tasks overdue?", "expectAnyTool": ["list_tasks", "dashboard_overview"] },
-  { "id": "judges-leave", "question": "Which judges are on leave today?", "expectAnyTool": ["judges_on_leave"] },
-  { "id": "my-plan", "question": "Which plan am I on?", "expectAnyTool": ["my_plan"] },
-  { "id": "drt-jurisdiction", "question": "Which DRT covers Saket police station?", "expectAnyTool": ["find_jurisdiction"] },
-  { "id": "ipc-420", "question": "What is IPC 420 in the BNS?", "expectAnyTool": ["legal_search"], "mustContain": ["318"] },
-  { "id": "ipc-302-hinglish", "question": "section 302 IPC ka naya section kya hai?", "expectAnyTool": ["legal_search"], "mustContain": ["103"] },
-  { "id": "cheque-bounce", "question": "How long do I have to file a complaint after a cheque bounces and the notice period ends?", "expectAnyTool": ["legal_search"], "mustContain": ["month"] },
-  { "id": "unknown-law", "question": "What does Delhi High Court Practice Direction 42 of 2031 say about video links?", "expectAnyTool": ["legal_search"], "mustNotContain": ["Practice Direction 42 of 2031 provides"] },
-  { "id": "add-task", "question": "Add a task to file the written statement by next Friday", "expectAnyTool": ["propose_task"], "mustNotContain": ["has been added", "is done", "I have added"] },
-  { "id": "support", "question": "I want to talk to a human at support", "expectAnyTool": ["contact_support"], "mustNotContain": ["@", "phone", "call us"] },
-  { "id": "off-topic", "question": "What is the capital of France?", "expectNoTools": true }
+ {
+  "id": "hearings-tomorrow",
+  "question": "What hearings do I have tomorrow?",
+  "expectAnyTool": [
+   "hearing_day_details",
+   "get_hearings",
+   "search_cases",
+   "dashboard_overview"
+  ]
+ },
+ {
+  "id": "hearings-hinglish",
+  "question": "kal meri kaun si hearing hai?",
+  "expectAnyTool": [
+   "hearing_day_details",
+   "get_hearings",
+   "search_cases",
+   "dashboard_overview"
+  ]
+ },
+ {
+  "id": "pending-fees",
+  "question": "Which clients have pending fees?",
+  "expectAnyTool": [
+   "fee_overview"
+  ]
+ },
+ {
+  "id": "overdue-tasks",
+  "question": "Are any tasks overdue?",
+  "expectAnyTool": [
+   "list_tasks",
+   "dashboard_overview"
+  ]
+ },
+ {
+  "id": "judges-leave",
+  "question": "Which judges are on leave today?",
+  "expectAnyTool": [
+   "judges_on_leave"
+  ]
+ },
+ {
+  "id": "my-plan",
+  "question": "Which plan am I on?",
+  "expectAnyTool": [
+   "my_plan"
+  ]
+ },
+ {
+  "id": "drt-jurisdiction",
+  "question": "Which DRT covers Saket police station?",
+  "expectAnyTool": [
+   "find_jurisdiction"
+  ]
+ },
+ {
+  "id": "ipc-420",
+  "question": "What is IPC 420 in the BNS?",
+  "expectAnyTool": [
+   "legal_search"
+  ],
+  "mustContain": [
+   "318"
+  ]
+ },
+ {
+  "id": "ipc-302-hinglish",
+  "question": "section 302 IPC ka naya section kya hai?",
+  "expectAnyTool": [
+   "legal_search"
+  ],
+  "mustContain": [
+   "103"
+  ]
+ },
+ {
+  "id": "cheque-bounce",
+  "question": "How long do I have to file a complaint after a cheque bounces and the notice period ends?",
+  "expectAnyTool": [
+   "legal_search"
+  ],
+  "mustContain": [
+   "month"
+  ]
+ },
+ {
+  "id": "unknown-law",
+  "question": "What does Delhi High Court Practice Direction 42 of 2031 say about video links?",
+  "expectAnyTool": [
+   "legal_search"
+  ],
+  "mustNotContain": [
+   "Practice Direction 42 of 2031 provides"
+  ]
+ },
+ {
+  "id": "add-task",
+  "question": "Add a task to file the written statement by next Friday",
+  "expectAnyTool": [
+   "propose_task"
+  ],
+  "mustNotContain": [
+   "has been added",
+   "is done",
+   "I have added"
+  ]
+ },
+ {
+  "id": "support",
+  "question": "I want to talk to a human at support",
+  "expectAnyTool": [
+   "contact_support"
+  ],
+  "mustNotContain": [
+   "@",
+   "phone",
+   "call us"
+  ]
+ },
+ {
+  "id": "off-topic",
+  "question": "What is the capital of France?",
+  "expectNoTools": true
+ },
+ {
+  "id": "misc-pending",
+  "question": "How many misc. applications are pending and which are disallowed?",
+  "expectAnyTool": [
+   "misc_applications"
+  ]
+ },
+ {
+  "id": "misc-hearing-tomorrow",
+  "question": "Do I have any misc. application hearing tomorrow?",
+  "expectAnyTool": [
+   "hearing_day_details",
+   "misc_applications",
+   "get_hearings"
+  ]
+ },
+ {
+  "id": "court-fee-delhi",
+  "question": "What is the court fee for a civil suit of Rs 5,00,000 in Delhi?",
+  "expectAnyTool": [
+   "court_fee"
+  ],
+  "mustNotContain": [
+   "approximately",
+   "around Rs"
+  ]
+ },
+ {
+  "id": "court-fee-consumer",
+  "question": "Court fee for a consumer complaint of 8 lakh?",
+  "expectAnyTool": [
+   "court_fee"
+  ]
+ },
+ {
+  "id": "court-fee-no-value",
+  "question": "What is the court fee for a civil suit?",
+  "expectAnyTool": [],
+  "mustContain": [
+   "value"
+  ]
+ },
+ {
+  "id": "case-building",
+  "question": "In which building and floor is the court of my latest case?",
+  "expectAnyTool": [
+   "search_cases",
+   "get_case"
+  ]
+ },
+ {
+  "id": "judge-name-order",
+  "question": "Is Kumar Rakesh on leave this week?",
+  "expectAnyTool": [
+   "judges_on_leave"
+  ]
+ },
+ {
+  "id": "last-hearing",
+  "question": "When was the last hearing of my most recent case?",
+  "expectAnyTool": [
+   "search_cases",
+   "get_case"
+  ]
+ },
+ {
+  "id": "quick-links",
+  "question": "Give me the link of the eCourts services portal",
+  "expectAnyTool": [
+   "quick_links"
+  ]
+ },
+ {
+  "id": "court-rooms",
+  "question": "Which building and floor is court number 12 of Saket court in?",
+  "expectAnyTool": [
+   "court_rooms",
+   "find_judges"
+  ]
+ },
+ {
+  "id": "court-fee-other",
+  "question": "What is the court fee for a review petition in the High Court?",
+  "expectAnyTool": [
+   "court_fee"
+  ],
+  "mustNotContain": [
+   "Rs. "
+  ]
+ },
+ {
+  "id": "next-hearing",
+  "question": "Set the next hearing of my most recent case to the day after tomorrow",
+  "expectAnyTool": [
+   "propose_next_hearing"
+  ],
+  "mustNotContain": [
+   "has been updated",
+   "is done",
+   "I have set"
+  ]
+ },
+ {
+  "id": "add-client",
+  "question": "Add a client Ramesh Kumar, phone 9876543210",
+  "expectAnyTool": [
+   "propose_client"
+  ],
+  "mustNotContain": [
+   "has been added",
+   "is done",
+   "I have added"
+  ]
+ },
+ {
+  "id": "read-order",
+  "question": "What did the court direct in the last order of my most recent case?",
+  "expectAnyTool": [
+   "read_document",
+   "get_case",
+   "search_cases"
+  ]
+ }
 ]

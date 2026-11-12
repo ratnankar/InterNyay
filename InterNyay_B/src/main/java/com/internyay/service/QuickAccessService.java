@@ -26,7 +26,7 @@ public class QuickAccessService {
             String court,
             String district) {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Kolkata"));
 
         String courtFilter = nullIfBlank(court);
         String districtFilter = nullIfBlank(district);

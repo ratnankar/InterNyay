@@ -8,13 +8,31 @@ import Linkify from '../common/Linkify'
 const BULLET = /^\s*[-*•]\s+(.*)$/
 const NUMBERED = /^\s*\d+[.)]\s+(.*)$/
 
-// Turns **bold** markers in the assistant's text into <strong> tags
+// Only web, mail and phone addresses are made clickable (never javascript: or data: addresses)
+const SAFE_HREF = /^(?:https?:\/\/|mailto:|tel:)/i
+
+// Pieces of the assistant's text with their own markup: [label](address) links and **bold**
+const MARKUP = /(\[[^\]]+\]\([^)\s]+\)|\*\*[^*]+\*\*)/g
+const MD_LINK = /^\[([^\]]+)\]\(([^)\s]+)\)$/
+
+// Plain text with every address turned into a link that opens in a new tab
+const links = text => <Linkify text={text} className="chat__link" bare />
+
+// Turns **bold**, [label](address) and plain addresses in the assistant's text into <strong> and links
 function inline(text) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith('**') && part.endsWith('**') && part.length > 4
-      ? <strong key={i}>{part.slice(2, -2)}</strong>
-      : <Fragment key={i}><Linkify text={part} /></Fragment>
-  )
+  return text.split(MARKUP).map((part, i) => {
+    const md = part.match(MD_LINK)
+    if (md) {
+      const href = /^www\./i.test(md[2]) ? `https://${md[2]}` : md[2]
+      return SAFE_HREF.test(href)
+        ? <a key={i} className="chat__link" href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">{md[1]}</a>
+        : <Fragment key={i}>{md[1]}</Fragment>
+    }
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return <strong key={i}>{links(part.slice(2, -2))}</strong>
+    }
+    return <Fragment key={i}>{links(part)}</Fragment>
+  })
 }
 
 // Splits the reply into paragraphs and bullet / numbered lists so it can be rendered nicely
@@ -155,7 +173,7 @@ export default function ChatMessage({
     return (
       <div className="chat__row chat__row--user">
         <Avatar role="user" />
-        <div className={className}><p className="chat__text"><Linkify text={content} /></p></div>
+        <div className={className}><p className="chat__text">{links(content)}</p></div>
       </div>
     )
   }
