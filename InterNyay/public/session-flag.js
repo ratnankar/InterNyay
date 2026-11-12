@@ -2,9 +2,9 @@
 // which browsers keep separately per address, so using www.* or www.app.* would always ask for a new login.
 // localhost (development) and the API host are left alone.
 try {
-  var CANON = 'app.internyay.publicvm.com'
+  var CANON = 'internyay.com'
   var host = location.hostname
-  if (host !== CANON && host !== 'api.internyay.publicvm.com' && /(^|\.)internyay\.publicvm\.com$/.test(host)) {
+  if (host !== CANON && host !== 'api.internyay.com' && /(^|\.)internyay\.(com|me|in|online)$/.test(host)) {
     location.replace('https://' + CANON + location.pathname + location.search + location.hash)
   }
 } catch (e) { /* no location */ }
