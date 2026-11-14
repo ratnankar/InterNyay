@@ -28,6 +28,8 @@ export default function CourtFeeCalculator() {
   // The fee rule of the chosen case type, whether it needs a claim value, and the claim value as a number
   const matter     = ruleOf(caseType)
   const needsValue = !!matter && matterNeedsValue(matter)
+  // A fixed fee needs no claim value and no Calculate click: its fee is shown directly
+  const isFixed    = !!matter && !needsValue
   const cv         = parseFloat(claimValue) || 0
 
   // The State chosen, and whether it matters for this case type (only ad valorem fees differ between States)
@@ -36,7 +38,7 @@ export default function CourtFeeCalculator() {
 
   // Court fee for the chosen case type
   const courtFee   = useMemo(() => calcFee(matter, cv, state.key), [matter, cv, state, rules])
-  const isReady    = !!matter && (!needsValue || cv > 0) && calculated
+  const isReady    = !!matter && (isFixed || (cv > 0 && calculated))
 
   // Hide the result so it must be calculated again after any input changes
   const reset = () => setCalculated(false)
@@ -77,6 +79,7 @@ export default function CourtFeeCalculator() {
           <div className="card calc-step">
             {/* Step 2: the fee rule of the case type and the claim value (when needed) */}
             <p className="calc-step__label">Step 2 — Case Details</p>
+            {(byState || !matter || needsValue) && (
             <div className="calc-details-grid">
               {/* State / Union Territory, for the fees that differ between States */}
               {byState && (
@@ -89,13 +92,13 @@ export default function CourtFeeCalculator() {
                 </div>
               )}
 
-              {/* Claim value input, or a 'fixed fee' badge when no value is needed */}
+              {/* Claim value input, only for fees that depend on a value */}
               {!matter ? (
                 <div>
                   <label className="form-label">Fee Type</label>
                   <div className="calc-fixed-badge">No fee set up for this case type</div>
                 </div>
-              ) : needsValue ? (
+              ) : needsValue && (
                 <div>
                   <label className="form-label">{matter.valueLabel || 'Claim / Subject Matter Value (₹)'}</label>
                   <div className="form-input-wrap">
@@ -105,13 +108,9 @@ export default function CourtFeeCalculator() {
                       onChange={e => { setClaimValue(e.target.value); reset() }} />
                   </div>
                 </div>
-              ) : (
-                <div>
-                  <label className="form-label">Fee Type</label>
-                  <div className="calc-fixed-badge">Fixed Fee (no claim value needed)</div>
-                </div>
               )}
             </div>
+            )}
 
             {/* Fee estimate, shown right under the case details with the Calculate button beside it */}
             <div className="calc-estimate">
@@ -135,10 +134,12 @@ export default function CourtFeeCalculator() {
                   </>
                 )}
               </div>
-              <button type="button" className="btn-gold calc-submit-btn calc-estimate__btn" disabled={!matter}
-                onClick={() => setCalculated(true)}>
-                Calculate Court Fee <Icon name="arrow-right" />
-              </button>
+              {(needsValue || !matter) && (
+                <button type="button" className="btn-gold calc-submit-btn calc-estimate__btn" disabled={!matter}
+                  onClick={() => setCalculated(true)}>
+                  Calculate Court Fee <Icon name="arrow-right" />
+                </button>
+              )}
             </div>
           </div>
         </div>

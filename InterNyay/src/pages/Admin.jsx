@@ -257,10 +257,11 @@ export default function Admin() {
   // Options for the account Plan dropdown, taken from the plans table (coming soon plans are left out unless the account is already on one)
   // Only plans shown to this kind of account are offered: ADVOCATE plans for advocates, BUSINESS plans for business
   // accounts, BOTH plans for either. The plan the account is already on always stays in the list
-  const planOptions = (current, role) => {
+  // A corporate firm (registered through the corporate sign-up) is also offered the CORPORATE plans; no other account is
+  const planOptions = (current, role, firm = false) => {
     const wanted = role === 'BUSINESS' ? 'BUSINESS' : 'ADVOCATE'
     const fromDb = planList
-      .filter(p => p.code === current || (p.enabled !== false && !p.comingSoon && [wanted, 'BOTH'].includes(p.audience || 'ADVOCATE')))
+      .filter(p => p.code === current || (p.enabled !== false && !p.comingSoon && [wanted, 'BOTH', ...(firm ? ['CORPORATE'] : [])].includes(p.audience || 'ADVOCATE')))
       .map(p => ({ value: p.code, label: p.name }))
     if (fromDb.length) return fromDb
     // Plans could not be loaded: offer only the account's current plan (or Free) instead of a hard-coded list
@@ -576,6 +577,7 @@ export default function Admin() {
       baseline: JSON.stringify(form),
       isNew: !row,
       role: row?.role || null,
+      corporateFirm: !!row?.corporateFirm,
       advocateName: row?.advocateName || null,
     })
   }
@@ -1592,7 +1594,7 @@ export default function Admin() {
                         <option value="">—</option>
                         {/* Plan options come from the plans table (Admin -> Pricing Plans). Each plan is offered by its "Shown to" setting (Advocates, Business or Both); an account already on a plan keeps showing it so saving never clears it */}
                         {(f.key === 'planCode'
-                          ? planOptions(editing.form.planCode, editing.form.role || editing.role)
+                          ? planOptions(editing.form.planCode, editing.form.role || editing.role, editing.corporateFirm)
                           : f.options.map(o => ({ value: o, label: o }))
                         ).map(({ value, label }) => (
                           <option key={value} value={value}>

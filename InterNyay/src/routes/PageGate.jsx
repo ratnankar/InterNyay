@@ -7,7 +7,7 @@ import TransactionAccessGate from '../components/auth/TransactionAccessGate'
 // Pages that depend on a plan feature: key is the page name, value is the feature flag checked with can()
 const PAGE_FEATURE = {
   transactions: 'transactions', expenses: 'office_expenses', documents: 'documents', miscapps: 'documents',
-  forms: 'legal_forms', calculator: 'court_fee_calculator',
+  forms: 'legal_forms', calculator: 'court_fee_calculator', corporate: 'corporate',
 }
 
 // Shown in place of a page when the user's plan does not include that feature
@@ -23,9 +23,12 @@ function UpgradeNotice() {
 }
 
 export default function PageGate({ id, children }) {
-  const { isAssociate, transactionsUnlocked } = useApp()
+  const { isAssociate, transactionsUnlocked, currentUser } = useApp()
   const { can } = usePlanFeatures()
 
+  // Only a firm sees the corporate view, only a hired advocate sees the allotted cases
+  if (id === 'corporate' && (isAssociate || currentUser?.corporateId)) return <Navigate to="/dashboard" replace />
+  if (id === 'allotted' && !currentUser?.corporateId) return <Navigate to="/dashboard" replace />
   // Associates don't get the transactions page
   if (isAssociate && id === 'transactions') return <Navigate to="/dashboard" replace />
   if (PAGE_FEATURE[id] && !can(PAGE_FEATURE[id])) return <UpgradeNotice />

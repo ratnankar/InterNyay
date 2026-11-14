@@ -36,6 +36,8 @@ const NAV_ITEMS = [
   { id: 'calculator',   icon: 'calculator',  label: 'Fee Calculator' },
   { id: 'judgeleave',   icon: 'beach',  label: 'Judges on Leave' },
   { id: 'quickaccess',  icon: 'bolt',  label: 'Quick Access' },
+  { id: 'corporate',    icon: 'folders',  label: 'Corporate' },
+  { id: 'allotted',     icon: 'file',  label: 'Allotted Cases' },
 ]
 
 // Primary tabs on small screens; the More tab opens the existing drawer for all other pages.
@@ -162,13 +164,16 @@ export default function Sidebar() {
     }
   }, [activeNav, isAdmin, ackKey])
 
-  const { can } = usePlanFeatures()
+  const { can, keys } = usePlanFeatures()
   // Menu items for this user: associates don't see transactions, only advocates see expenses, and plan features can hide items
   const navItems = isAdmin
     ? ADMIN_NAV_ITEMS
     : NAV_ITEMS.filter(item => {
         if (isAssociate && item.id === 'transactions') return false
         if (!isAssociate && item.id === 'expenses') return false
+        // Corporate view: only for a firm on a corporate plan; allotted cases: only for the advocates a firm created
+        if (item.id === 'corporate' && (isAssociate || currentUser?.corporateId || !keys?.includes('corporate'))) return false
+        if (item.id === 'allotted' && !currentUser?.corporateId) return false
         if (NAV_FEATURE[item.id] && !can(NAV_FEATURE[item.id])) return false
         return true
       })

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import AuthBackdrop from './AuthBackdrop'
 import PasswordInput from '../common/PasswordInput'
@@ -17,6 +18,9 @@ const ACCOUNT_TYPES = [
   { value: 'ADVOCATE',  label: 'Advocate'  },
   { value: 'ASSOCIATE', label: 'Associate' },
 ]
+
+// Account types on the register form: corporate firms sign up here too, but only on their own tab
+const REGISTER_TYPES = [...ACCOUNT_TYPES, { value: 'CORPORATE', label: 'Corporate firm' }]
 
 // Login inputs as [label, field name, input type, placeholder]
 const LOGIN_FIELDS = [
@@ -44,6 +48,14 @@ const REGISTER_FIELDS = {
     ['PASSWORD *',      'password',       'password', PASSWORD_HINT],
     ['CONFIRM PASSWORD *', 'confirmPassword', 'password', 'Re-enter password'],
   ],
+  // A corporate firm: the firm's name and contact details, no specialization
+  CORPORATE: [
+    ['FIRM NAME *',     'name',           'text',     'Firm or company name'],
+    ['EMAIL *',         'email',          'email',    'firm@email.com'],
+    ['PHONE *',         'phone',          'tel',      '+91 XXXXX XXXXX'],
+    ['PASSWORD *',      'password',       'password', PASSWORD_HINT],
+    ['CONFIRM PASSWORD *', 'confirmPassword', 'password', 'Re-enter password'],
+  ],
 }
 
 // "or" line between the email form and the Google button
@@ -56,10 +68,10 @@ function OrDivider({ children = 'or' }) {
 }
 
 // Advocate / Associate switch
-function AccountTypeToggle({ value, onChange }) {
+function AccountTypeToggle({ value, onChange, types = ACCOUNT_TYPES }) {
   return (
     <div className="auth-account-type" role="tablist" aria-label="Account type">
-      {ACCOUNT_TYPES.map(t => (
+      {types.map(t => (
         <button
           key={t.value}
           type="button"
@@ -100,6 +112,15 @@ export default function AuthPage({ onBack }) {
     handleSendForgotOtp, handleResetForgottenPassword,
     switchAccount,
   } = useApp()
+
+  // /register?type=corporate (from the landing page's corporate plan) opens the Corporate firm tab
+  useEffect(() => {
+    if (authPage !== 'register') return
+    if (new URLSearchParams(window.location.search).get('type') === 'corporate') {
+      setRegForm(f => (f.accountType === 'CORPORATE' ? f : { ...f, accountType: 'CORPORATE' }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authPage])
 
   // Accounts still signed in on this browser: offered on the sign-in tab so the user can go back to one without a password
   const savedAccounts = !isAdminRoute && authPage === 'login' ? getAccounts() : []
@@ -408,6 +429,7 @@ export default function AuthPage({ onBack }) {
               {authPage === 'register' && (
                 <div className="auth-form auth-form--register">
                   <AccountTypeToggle
+                    types={REGISTER_TYPES}
                     value={regForm.accountType}
                     onChange={accountType => {
                       cancelGooglePending()
@@ -420,6 +442,13 @@ export default function AuthPage({ onBack }) {
                       Ask your advocate for the code shown on their Profile page. It links your
                       account to their practice — you can work on their cases, clients and
                       documents, but not see fees or transactions.
+                    </p>
+                  )}
+                  {/* A firm registers here, then asks for the Corporate plan; its hired advocates get their accounts from the firm */}
+                  {regForm.accountType === 'CORPORATE' && (
+                    <p className="auth-hint">
+                      For firms and companies that hire advocates. You create the advocate accounts and allot cases to them.
+                      After signing up, a request for the Corporate plan is sent to the InterNyay team, who will activate it for you.
                     </p>
                   )}
                   {REGISTER_FIELDS[regForm.accountType].map(([label, key, type, ph]) => key === 'specialization' ? (
@@ -539,7 +568,7 @@ export default function AuthPage({ onBack }) {
                     disabled={!otpVerified}
                     title={otpVerified ? '' : 'Verify your email first'}
                   >
-                    {regForm.accountType === 'ASSOCIATE' ? 'Create Associate Account' : 'Create Practice Account'}
+                    {{ ASSOCIATE: 'Create Associate Account', CORPORATE: 'Create Corporate Account' }[regForm.accountType] || 'Create Practice Account'}
                   </button>
                   {/* Reminder that the email must be verified first */}
                   {!otpVerified && (

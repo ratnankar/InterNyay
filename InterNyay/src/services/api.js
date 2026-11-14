@@ -959,7 +959,7 @@ export const plansApi = {
 }
 
 // Contact Us for logged-in users, including admin replies
-const contact = {
+export const contact = {
   send: (body) => post('/contact', { body }),
   // Message with photos, videos or PDFs: data is the message, files is a list of File objects
   sendWithFiles: (data, files) => {
@@ -1090,5 +1090,28 @@ const captcha = {
 // (utils/busyStore.js). Asked on start, when the tab is shown again, and while something is still listed
 startServerSync(() => get('/in-flight'))
 
-const api = { captcha, publicApi, contact, chat, courts, courtPreferences, quickAccess, police, quickLinks, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, taskCategories, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
+// Corporate view: a firm's hired advocates and the cases it allots to them from its MIS spreadsheets (.xlsx)
+export const corporate = {
+  advocates:      ()                 => get('/corporate/firm/advocates'),
+  createAdvocate: (body)             => post('/corporate/firm/advocates', { body }),
+  setActive:      (id, active)       => put(`/corporate/firm/advocates/${id}/active`, { body: { active } }),
+  resetPassword:  (id, password)     => put(`/corporate/firm/advocates/${id}/password`, { body: { password } }),
+  // Allots every case found in the spreadsheets to one advocate (skipClosed leaves out disposed / withdrawn cases)
+  allot: (advocateId, files, skipClosed = true) => {
+    const fd = new FormData()
+    fd.append('advocateId', advocateId)
+    fd.append('skipClosed', skipClosed ? 'true' : 'false')
+    files.forEach(f => fd.append('files', f))
+    return postForm('/corporate/firm/allot', fd)
+  },
+  allotments:     (params)           => get('/corporate/firm/allotments', { params }),
+  reassign:       (id, advocateId)   => put(`/corporate/firm/allotments/${id}/advocate`, { body: { advocateId } }),
+  remove:         (id)               => del(`/corporate/firm/allotments/${id}`),
+  // For a hired advocate: the cases allotted to them
+  mine:           ()                 => get('/corporate/mine'),
+  // Downloads the spreadsheet an allotment came from
+  downloadSheet:  (id, fileName)     => saveAs(`/corporate/firm/sheet/${id}`, fileName),
+}
+
+const api = { corporate, captcha, publicApi, contact, chat, courts, courtPreferences, quickAccess, police, quickLinks, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, taskCategories, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
 export default api

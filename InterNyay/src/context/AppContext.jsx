@@ -39,8 +39,10 @@ import {
   holidays as holidaysApi,
   noHearingDates as noHearingDatesApi,
   hearingLimits as hearingLimitsApi,
-  miscApplications as miscApplicationsApi
+  miscApplications as miscApplicationsApi,
+  contact as contactApi
 } from '../services/api'
+import { CONTACT_CATEGORY_PLANS } from '../constants/contact'
 import { getErrorMessage } from '../utils/errorMessages'
 import { onLiveRefresh } from '../utils/liveRefresh'
 import { loadOptions, useOptionsVersion } from '../constants/optionsStore'
@@ -1208,8 +1210,10 @@ export function AppProvider({ children }) {
         startSession(res)
         addToast('You already have an account — signed you in')
       } else {
-        startSession(res, { askPlan: !registeringAssociate })
+        const registeringFirm = regForm.accountType === 'CORPORATE'
+        startSession(res, { askPlan: !registeringAssociate && !registeringFirm })
         addToast('Account created — welcome to InterNyay')
+        if (registeringFirm) requestCorporatePlan()
       }
 
     } catch (e) {
@@ -1227,6 +1231,17 @@ export function AppProvider({ children }) {
 
       setAuthError(getErrorMessage(e, 'Google sign-up failed'))
     }
+  }
+
+  // A corporate firm registered through the corporate sign-up: ask the InterNyay team for the Corporate plan (an admin assigns it)
+  // and skip the plan chooser, which does not list the Corporate plan for advocates
+  function requestCorporatePlan() {
+    contactApi.send({
+      category: CONTACT_CATEGORY_PLANS,
+      subject: 'Corporate plan request at sign-up',
+      message: 'I just registered as a corporate firm and would like the Corporate plan. Please let me know the next steps.',
+    }).then(() => addToast('Corporate plan request sent — the InterNyay team will get back to you'))
+      .catch(() => addToast('Could not send the Corporate plan request — you can try again from My Plan', 'error'))
   }
 
   // Registration step 1: validate the email and send a verification code to it
@@ -1330,6 +1345,7 @@ export function AppProvider({ children }) {
     }
 
     const registeringAssociate = regForm.accountType === 'ASSOCIATE'
+    const registeringFirm = regForm.accountType === 'CORPORATE'
 
     if (registeringAssociate && !String(regForm.advocateCode || '').trim()) {
       setAuthError("Enter the advocate code from your advocate's Profile page")
@@ -1347,9 +1363,10 @@ export function AppProvider({ children }) {
       // Clear every field (and the OTP state) after a successful sign up
       resetAuthForms()
 
-      startSession(res, { askPlan: !registeringAssociate })
+      startSession(res, { askPlan: !registeringAssociate && !registeringFirm })
 
       addToast('Account created — welcome to InterNyay')
+      if (registeringFirm) requestCorporatePlan()
 
     } catch (e) {
 

@@ -138,6 +138,7 @@ function PlanFields({ v, patch, isNew, canDisable }) {
             <option value="ADVOCATE">Advocates (landing page and My Plan)</option>
             <option value="BUSINESS">Business accounts only (hidden from advocates)</option>
             <option value="BOTH">Both advocates and business accounts</option>
+            <option value="CORPORATE">Corporate firms only (hidden from advocates)</option>
           </Dropdown></div>
         <div className="plans-admin__grid plans-admin__grid--3 plans-admin__toggles">
           <Toggle checked={!!v.comingSoon} onChange={e => patch({ comingSoon: e.target.checked })}

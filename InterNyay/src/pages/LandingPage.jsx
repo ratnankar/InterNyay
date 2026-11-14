@@ -161,6 +161,9 @@ export default function LandingPage({ onSignIn, onRegister }) {
   // Plans from the public API, shown in the pricing section
   const [plans, setPlans] = useState([])
   const [plansLoaded, setPlansLoaded] = useState(false)
+  // Corporate plans get their own block under the advocate plans
+  const advocatePlans = plans.filter(p => p.audience !== 'CORPORATE')
+  const corporatePlans = plans.filter(p => p.audience === 'CORPORATE')
   useEffect(() => {
     publicApi.plans().then(setPlans).catch(() => setPlans([])).finally(() => setPlansLoaded(true))
   }, [])
@@ -660,7 +663,17 @@ export default function LandingPage({ onSignIn, onRegister }) {
               includes a number of associates.
             </p>
           </div>
-          <PricingCards plans={plans} onSelect={() => onRegister()} cta="Get started" />
+          <PricingCards plans={advocatePlans} onSelect={() => onRegister()} cta="Get started" />
+          {/* Corporate plans are for firms that hire advocates: they sign up on their own tab */}
+          {corporatePlans.length > 0 && (
+            <div className="lx-pricing__corporate">
+              <div className="lx-head">
+                <h2>For corporate firms</h2>
+                <p>Companies and firms that hire advocates: create their accounts, allot cases in bulk and track every hearing in one place.</p>
+              </div>
+              <PricingCards plans={corporatePlans} onSelect={() => onRegister('CORPORATE')} cta="Register as a firm" />
+            </div>
+          )}
           {plansLoaded && !plans.length && (
             <p className="lx-pricing__empty">Plans could not be loaded right now. Please try again shortly, or use the contact form below.</p>
           )}

@@ -179,11 +179,14 @@
 /* Advocate / Associate switch on the register form */
 .auth-account-type {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
+/* Buttons size to their label (so "Corporate firm" stays on one line); on a very narrow screen they wrap to a second row */
 .auth-account-type__btn {
-  flex: 1;
+  flex: 1 1 auto;
+  white-space: nowrap;
   padding: 8px 10px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.18);
