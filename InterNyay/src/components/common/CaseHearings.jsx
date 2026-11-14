@@ -60,6 +60,9 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
   const refreshRunning = useBusyPath(`/cases/${caseId}/refresh-hearing`)
   useBusyTick()
 
+  // Case whose hearing list is already on screen: later reloads (after a download, getting an order, coming back to the
+  // tab) replace the rows in place instead of blanking the list with "Loading hearings…", which looked like a flash
+  const shownFor = useRef(null)
   const load = useCallback((silent = false) => {
     if (!caseId) return
     if (!silent) setLoading(true)
@@ -67,12 +70,13 @@ export default function CaseHearings({ caseItem, dashboard = false, onCaseRefres
       .then(rows => {
         setHearings(Array.isArray(rows) ? rows.filter(h => !isMiscOnlyHearing(h)) : [])
         setError('')
+        shownFor.current = caseId
       })
       .catch(e => { if (!silent) setError(getErrorMessage(e, 'Could not load the hearing history')) })
       .finally(() => { if (!silent) setLoading(false) })
   }, [caseId])
 
-  useEffect(() => { load() }, [load, hearingsVersion])
+  useEffect(() => { load(shownFor.current === caseId) }, [load, hearingsVersion, caseId])
   useEffect(() => onLiveRefresh(() => load(true)), [load])
 
   useEffect(() => {

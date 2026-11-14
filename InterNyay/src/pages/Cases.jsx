@@ -491,9 +491,10 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
   // so there is no scrolling to find it. Waits a moment so the page's own scroll-to-top has finished first
   useEffect(() => {
     if (openCardId == null) return
-    const t = setTimeout(() => {
-      const el = cardEls.current.get(openCardId)
-      if (!el) return
+    let cancelled = false
+    // Brings the opened card's top just below the pinned bar, so the case is read from its top
+    const alignCard = el => {
+      if (cancelled || !el.isConnected) return
       // The search / filter bar is pinned to the top and is taller on a phone (search, filters and sort wrap onto
       // several rows), so the card is scrolled to just below it instead of a fixed distance that would hide its title
       const bar = document.querySelector('.app-main .list-toolbar')
@@ -503,11 +504,19 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
         : 72
       el.style.scrollMarginTop = `${Math.round(clearance)}px`
       const top = el.getBoundingClientRect().top
-      if (top < clearance || top > window.innerHeight * 0.4) {
+      if (Math.abs(top - clearance) > 8) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
+    }
+    const t = setTimeout(() => {
+      const el = cardEls.current.get(openCardId)
+      if (!el) return
+      // The card is still gliding into place while it opens, which skews its measured position: wait for that to end
+      const running = el.getAnimations ? el.getAnimations() : []
+      if (running.length) Promise.allSettled(running.map(a => a.finished)).then(() => alignCard(el))
+      else alignCard(el)
     }, 80)
-    return () => clearTimeout(t)
+    return () => { cancelled = true; clearTimeout(t) }
   }, [openCardId])
 
   function noteCardPositions() {
