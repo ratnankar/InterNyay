@@ -13,6 +13,8 @@ public class Plan {
     public static final String AUDIENCE_ADVOCATE = "ADVOCATE";
     public static final String AUDIENCE_BUSINESS = "BUSINESS";
     public static final String AUDIENCE_BOTH = "BOTH";
+    // Shown only to corporate firms (registered through the corporate sign-up), never to ordinary advocates
+    public static final String AUDIENCE_CORPORATE = "CORPORATE";
 
     // Plan codes
     public static final String FREE = "FREE";

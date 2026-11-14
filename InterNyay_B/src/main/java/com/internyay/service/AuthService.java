@@ -108,6 +108,10 @@ public class AuthService implements UserDetailsService {
             User adv = user.getAdvocate();
             enabled = enabled && adv != null && !Boolean.FALSE.equals(adv.getActive());
         }
+        // A hired advocate is only enabled while the firm that created the account is active too
+        if (user.getCorporate() != null) {
+            enabled = enabled && !Boolean.FALSE.equals(user.getCorporate().getActive());
+        }
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(String.valueOf(user.getId()))
@@ -227,6 +231,8 @@ public class AuthService implements UserDetailsService {
 
         String email = Emails.normalize(req.getEmail());
         boolean associate = "ASSOCIATE".equalsIgnoreCase(req.getAccountType());
+        // A corporate firm is an advocate account that registered through the corporate sign-up
+        boolean firm = "CORPORATE".equalsIgnoreCase(req.getAccountType());
         String role = associate ? User.ASSOCIATE : User.ADVOCATE;
 
         // Registration is blocked until the OTP step has passed
@@ -254,6 +260,7 @@ public class AuthService implements UserDetailsService {
                 .role(role)
                 .advocate(advocate)
                 .advocateCode(associate ? null : newCode())
+                .corporateFirm(firm)
                 .active(true)
                 .build();
 
@@ -344,6 +351,7 @@ public class AuthService implements UserDetailsService {
         String email = Emails.normalize(google.email());
 
         boolean associate = "ASSOCIATE".equalsIgnoreCase(req.getAccountType());
+        boolean firm = "CORPORATE".equalsIgnoreCase(req.getAccountType());
         String role = associate ? User.ASSOCIATE : User.ADVOCATE;
 
         if (userRepo.existsByEmailAndRole(email, User.ADMIN)) {
@@ -376,6 +384,7 @@ public class AuthService implements UserDetailsService {
                 .role(role)
                 .advocate(advocate)
                 .advocateCode(associate ? null : newCode())
+                .corporateFirm(firm)
                 .active(true)
                 .build();
 

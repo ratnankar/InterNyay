@@ -138,7 +138,7 @@ public class AdminService {
                 .specialization(com.internyay.util.Specializations.clean(req.getSpecialization()))
                 .chamber(req.getChamber())
                 .role(newRole)
-                .planCode(resolvePlanCode(req.getPlanCode(), null))
+                .planCode(resolvePlanCode(req.getPlanCode(), null, false))
                 .associateLimit(User.ADVOCATE.equals(newRole) ? checkedAssociateLimit(req.getAssociateLimit()) : null)
                 .active(req.getActive() == null || req.getActive())
                 .build();
@@ -190,7 +190,7 @@ public class AdminService {
         // An admin does not belong to any advocate code
         if (User.ADMIN.equals(targetRole)) user.setAdvocateCode(null);
         if (req.getPlanCode() != null && !req.getPlanCode().isBlank() && !user.isAssociate()) {
-            user.setPlanCode(resolvePlanCode(req.getPlanCode(), user.getPlanCode()));
+            user.setPlanCode(resolvePlanCode(req.getPlanCode(), user.getPlanCode(), user.isCorporateFirm()));
         }
         // Associate limit: an admin-set number overrides the plan, clearing it hands control back to the plan
         if (user.isAdvocate() && User.ADVOCATE.equals(targetRole)) {
@@ -247,7 +247,7 @@ public class AdminService {
 
     // Plan code defaults to FREE and must exist. A coming soon plan or a business-only plan cannot be given to an
     // advocate account, except that an account already on it keeps it (so saving other fields never fails)
-    private String resolvePlanCode(String raw, String currentCode) {
+    private String resolvePlanCode(String raw, String currentCode, boolean firm) {
         if (raw == null || raw.isBlank()) return planService.defaultPlanCode();
         String code = raw.trim().toUpperCase();
         if (!planService.exists(code)) throw new IllegalArgumentException("Unknown plan");
@@ -261,6 +261,9 @@ public class AdminService {
         if (!unchanged && planService.isBusinessOnly(code)) {
             throw new IllegalArgumentException(
                     "This plan is for business accounts only. Set it to Both in Pricing Plans to give it to an advocate");
+        }
+        if (!unchanged && planService.isCorporateOnly(code) && !firm) {
+            throw new IllegalArgumentException("The Corporate plan is only for accounts that registered as a corporate firm");
         }
         return code;
     }

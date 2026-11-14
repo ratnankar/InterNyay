@@ -20,10 +20,12 @@ public class PlanService {
     private final PlanRepository planRepo;
     private final UserRepository userRepo;
 
-    // Plans shown on the landing page: business plans are left out, they are not for advocates
+    // Plans shown on the landing page: business plans are left out; corporate plans are included so the page can show
+    // them in their own "For corporate firms" block (they still cannot be picked by advocates, see choosePlan)
     @Transactional(readOnly = true)
     public List<PlanDto> landingPlans() {
-        return allPlans().stream().filter(p -> p.enabled && !isBusiness(p)).toList();
+        return allPlans().stream()
+                .filter(p -> p.enabled && !Plan.AUDIENCE_BUSINESS.equals(p.audience)).toList();
     }
 
     // All plans in display order
@@ -49,7 +51,7 @@ public class PlanService {
         if (planRepo.findByCode(Plan.FREE).isPresent()) return Plan.FREE;
         List<Plan> all = planRepo.findAllByOrderBySortOrderAsc();
         return all.stream()
-                .filter(p -> p.isEnabled() && !p.isComingSoon() && !Plan.AUDIENCE_BUSINESS.equals(p.getAudience()))
+                .filter(p -> p.isEnabled() && !p.isComingSoon() && !hiddenFromAdvocates(p.getAudience()))
                 .findFirst()
                 .or(() -> all.stream().findFirst())
                 .map(Plan::getCode)
@@ -60,20 +62,28 @@ public class PlanService {
     // The admin list (allPlans) still includes them.
     @Transactional(readOnly = true)
     public List<PlanDto> advocatePlans() {
-        return allPlans().stream().filter(p -> p.enabled && !p.comingSoon && !isBusiness(p)).toList();
+        return allPlans().stream().filter(p -> p.enabled && !p.comingSoon && !hiddenFromAdvocates(p.audience)).toList();
     }
 
-    // True when the plan is meant for business accounts only (BOTH plans are not business-only)
-    private static boolean isBusiness(PlanDto p) {
-        return Plan.AUDIENCE_BUSINESS.equals(p.audience);
+    // Plans a corporate firm can pick from: only the Corporate plans
+    @Transactional(readOnly = true)
+    public List<PlanDto> firmPlans() {
+        return allPlans().stream()
+                .filter(p -> p.enabled && !p.comingSoon && Plan.AUDIENCE_CORPORATE.equals(p.audience)).toList();
     }
 
-    // Audience text from the admin: blank keeps the fallback, anything but ADVOCATE, BUSINESS or BOTH is refused
+    // Business-only and corporate plans are never shown to ordinary advocates (BOTH plans are shown)
+    private static boolean hiddenFromAdvocates(String audience) {
+        return Plan.AUDIENCE_BUSINESS.equals(audience) || Plan.AUDIENCE_CORPORATE.equals(audience);
+    }
+
+    // Audience text from the admin: blank keeps the fallback, anything but ADVOCATE, BUSINESS, CORPORATE or BOTH is refused
     private static String audienceOf(String raw, String fallback) {
         if (raw == null || raw.isBlank()) return fallback;
         String a = raw.trim().toUpperCase();
-        if (!Plan.AUDIENCE_ADVOCATE.equals(a) && !Plan.AUDIENCE_BUSINESS.equals(a) && !Plan.AUDIENCE_BOTH.equals(a)) {
-            throw new IllegalArgumentException("Audience must be ADVOCATE, BUSINESS or BOTH");
+        if (!Plan.AUDIENCE_ADVOCATE.equals(a) && !Plan.AUDIENCE_BUSINESS.equals(a)
+                && !Plan.AUDIENCE_CORPORATE.equals(a) && !Plan.AUDIENCE_BOTH.equals(a)) {
+            throw new IllegalArgumentException("Audience must be ADVOCATE, BUSINESS, CORPORATE or BOTH");
         }
         return a;
     }
@@ -100,6 +110,8 @@ public class PlanService {
     // Plan of an advocate, FREE when none is set
     @Transactional(readOnly = true)
     public Plan planOf(User advocate) {
+        // A hired advocate works on the plan of the firm that created the account
+        if (advocate.getCorporate() != null) advocate = advocate.getCorporate();
         String code = advocate.getPlanCode() == null || advocate.getPlanCode().isBlank()
                 ? defaultPlanCode() : advocate.getPlanCode();
         return planRepo.findByCode(code)
@@ -123,7 +135,7 @@ public class PlanService {
         return MyPlanDto.builder()
                 .current(current)
                 .associatesUsed(userRepo.countByAdvocate_Id(advocate.getId()))
-                .available(advocatePlans())
+                .available(advocate.isCorporateFirm() ? firmPlans() : advocatePlans())
                 .build();
     }
 
@@ -139,6 +151,9 @@ public class PlanService {
         }
         if (Plan.AUDIENCE_BUSINESS.equals(target.getAudience())) {
             throw new IllegalArgumentException("This plan is not available for advocate accounts");
+        }
+        if (Plan.AUDIENCE_CORPORATE.equals(target.getAudience()) && !advocate.isCorporateFirm()) {
+            throw new IllegalArgumentException("This plan is only for corporate firms");
         }
         if (!target.isFreeFor(yearly)) {
             throw new IllegalArgumentException("This plan is not free. Please request it from My Plan");
@@ -174,6 +189,9 @@ public class PlanService {
         }
         if (to.isComingSoon()) {
             throw new IllegalArgumentException("The " + to.getName() + " plan is marked as coming soon and cannot be assigned yet");
+        }
+        if (Plan.AUDIENCE_CORPORATE.equals(to.getAudience())) {
+            throw new IllegalArgumentException("The " + to.getName() + " plan is for corporate firms only and cannot be given to accounts in bulk");
         }
         if (Plan.AUDIENCE_BUSINESS.equals(to.getAudience()) && !Plan.AUDIENCE_BUSINESS.equals(from.getAudience())) {
             throw new IllegalArgumentException(
@@ -224,6 +242,7 @@ public class PlanService {
         CATALOG.put("court_fee_calculator", "Court fee calculator");
         CATALOG.put("whatsapp_reminders", "WhatsApp hearing reminders");
         CATALOG.put("chat_assistant", "AI chat assistant");
+        CATALOG.put("corporate", "Corporate view (hired advocates and bulk allotment)");
     }
 
     // A plan without a feature list gets every feature
@@ -247,6 +266,16 @@ public class PlanService {
         if (userRepo.countByAdvocate_Id(advocate.getId()) >= limit) {
             throw new IllegalArgumentException(
                     "This advocate's plan has reached its associate limit. Ask the advocate to upgrade their plan.");
+        }
+    }
+
+    // Blocks adding a hired advocate once the firm's plan limit is reached, a negative limit means unlimited
+    public void assertCorporateSeat(User firm) {
+        int limit = associateLimitOf(firm, planOf(firm));
+        if (limit < 0) return;
+        if (userRepo.countByCorporate_Id(firm.getId()) >= limit) {
+            throw new IllegalArgumentException(
+                    "Your plan has reached its limit of advocate accounts. Upgrade the plan to add more advocates.");
         }
     }
 
@@ -428,6 +457,13 @@ public class PlanService {
     public boolean isBusinessOnly(String code) {
         return code != null && planRepo.findByCode(code.trim().toUpperCase())
                 .map(p -> Plan.AUDIENCE_BUSINESS.equals(p.getAudience())).orElse(false);
+    }
+
+    // True when the plan exists and is for corporate firms only
+    @Transactional(readOnly = true)
+    public boolean isCorporateOnly(String code) {
+        return code != null && planRepo.findByCode(code.trim().toUpperCase())
+                .map(p -> Plan.AUDIENCE_CORPORATE.equals(p.getAudience())).orElse(false);
     }
 
     // True when the plan code exists

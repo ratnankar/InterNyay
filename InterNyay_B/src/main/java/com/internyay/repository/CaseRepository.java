@@ -22,6 +22,10 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     // Whether the advocate already has a case with this CNR number (stored normalized; deleted cases are hidden)
     boolean existsByUser_IdAndCnrNoIgnoreCase(Long userId, String cnrNo);
 
+    // The CNR numbers (upper case) the given advocates already have as cases, as [advocate id, CNR] pairs; one query for a whole list
+    @Query("SELECT c.user.id, UPPER(c.cnrNo) FROM Case c WHERE c.user.id IN :userIds AND c.cnrNo IS NOT NULL")
+    List<Object[]> cnrNosOfUsers(java.util.Collection<Long> userIds);
+
     // Case list with search, status, nature and client filters
     @Query("""
         SELECT c FROM Case c

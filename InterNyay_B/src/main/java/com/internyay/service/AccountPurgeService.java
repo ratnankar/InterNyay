@@ -25,6 +25,9 @@ public class AccountPurgeService {
     private final OfficeExpenseRepository officeExpenseRepo;
     private final DocumentService documentService;
     private final QrCodeService qrCodeService;
+    private final CorporateAllotmentRepository corporateAllotmentRepo;
+    private final CorporateSheetRepository corporateSheetRepo;
+    private final com.internyay.storage.FileStorage storage;
 
     // Order matters: children first (hearings, tasks, cases, clients, expenses), then the associates (an expense still
     // points at the associate who submitted it), then the user, then stored files
@@ -32,6 +35,13 @@ public class AccountPurgeService {
     public void purge(User advocate) {
 
         Long id = advocate.getId();
+
+        // A corporate firm's hired advocates go with the firm, then its allotments and uploaded sheets
+        for (User hired : userRepo.findByCorporate_IdOrderByNameAsc(id)) purge(hired);
+        corporateAllotmentRepo.deleteByAdvocate_Id(id);
+        corporateAllotmentRepo.deleteByFirmId(id);
+        List<String> sheetKeys = corporateSheetRepo.findByFirmId(id).stream().map(p -> p.getStorageKey()).toList();
+        corporateSheetRepo.deleteByFirmId(id);
 
         // The advocate's associates go with the account
         List<User> associates = userRepo.findByAdvocate_IdOrderByCreatedAtDesc(id);
@@ -58,6 +68,9 @@ public class AccountPurgeService {
         userRepo.flush();
 
         qrCodeService.deleteForUser(id);
+        for (String key : sheetKeys) {
+            try { storage.delete(key); } catch (RuntimeException ignored) { /* a file that is already gone is fine */ }
+        }
         associates.forEach(a -> qrCodeService.deleteForUser(a.getId()));
     }
 }

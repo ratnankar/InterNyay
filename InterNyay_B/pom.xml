@@ -165,6 +165,19 @@
             <version>1.21.1</version>
         </dependency>
 
+        <!-- Apache POI for reading the MIS spreadsheets (.xlsx) a corporate firm allots cases from (streamed, so big sheets are fine) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.4.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <!-- PDFBox for filling the legal forms -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>

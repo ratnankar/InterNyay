@@ -34,6 +34,7 @@ public class PlanFeatureInterceptor implements HandlerInterceptor {
         RULES.put("^/api/fee-calculator(/.*)?$",         "court_fee_calculator");
         RULES.put("^/api/chat(/.*)?$",                   "chat_assistant");
         RULES.put("^/api/whatsapp/(cases|send)(/.*)?$",  "whatsapp_reminders");
+        RULES.put("^/api/corporate/firm(/.*)?$",         "corporate");
     }
 
     // Runs before every /api request

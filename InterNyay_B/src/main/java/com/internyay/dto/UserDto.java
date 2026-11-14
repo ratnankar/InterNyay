@@ -48,6 +48,12 @@ public class UserDto {
     public String advocateName;
     public String advocateBarNo;
 
+    // For a hired advocate, the corporate firm that created the account
+    public Long corporateId;
+    // True for an account that registered as a corporate firm
+    public boolean corporateFirm;
+    public String corporateName;
+
     // Builds the DTO from the user, plan is only set for advocates
     public static UserDto from(User u, String qrImage) {
         User adv = u.getAdvocate();
@@ -71,6 +77,9 @@ public class UserDto {
                 .advocateId(adv != null ? adv.getId() : null)
                 .advocateName(adv != null ? adv.getName() : null)
                 .advocateBarNo(adv != null ? adv.getBarNo() : null)
+                .corporateFirm(u.isCorporateFirm())
+                .corporateId(u.getCorporate() != null ? u.getCorporate().getId() : null)
+                .corporateName(u.getCorporate() != null ? u.getCorporate().getName() : null)
                 .build();
     }
 
