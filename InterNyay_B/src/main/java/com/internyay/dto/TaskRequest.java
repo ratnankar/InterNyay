@@ -8,4 +8,6 @@ public class TaskRequest {
     @NotBlank public String title;
     public String description, status, category;
     public LocalDate dueDate;
+    public Long caseId;
+    public boolean clearCase;
 }

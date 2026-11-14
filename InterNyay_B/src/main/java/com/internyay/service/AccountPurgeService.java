@@ -17,6 +17,7 @@ public class AccountPurgeService {
     private final CaseRepository caseRepo;
     private final ClientRepository clientRepo;
     private final TaskRepository taskRepo;
+    private final TaskCategoryRepository taskCategoryRepo;
     private final HearingRepository hearingRepo;
     private final WhatsAppMessageLogRepository whatsAppMessageLogRepo;
     private final NoHearingDateRepository noHearingDateRepo;
@@ -42,6 +43,7 @@ public class AccountPurgeService {
 
         hearingRepo.deleteByUser_Id(id);
         taskRepo.deleteByUser_Id(id);
+        taskCategoryRepo.deleteByUser_Id(id);
         caseRepo.undeleteAllOfUser(id);
         caseRepo.deleteByUser_Id(id);
         clientRepo.deleteByUser_Id(id);

@@ -28,6 +28,9 @@ public class Task {
     // Date the task is due
     private LocalDate dueDate;
 
+    @Column(name = "case_id")
+    private Long caseId;
+
     // Owner of the task
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

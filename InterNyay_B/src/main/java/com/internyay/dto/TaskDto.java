@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 // Task as sent to the frontend
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class TaskDto {
-    public Long id;
+    public Long id, caseId;
     public String title, description, status, category;
     public LocalDate dueDate;
     public LocalDateTime createdAt, completedAt;
@@ -15,6 +15,6 @@ public class TaskDto {
     public static TaskDto from(Task t) {
         return TaskDto.builder().id(t.getId()).title(t.getTitle()).description(t.getDescription())
             .status(TaskStatuses.normalize(t.getStatus())).category(t.getCategory())
-            .dueDate(t.getDueDate()).createdAt(t.getCreatedAt()).completedAt(t.getCompletedAt()).build();
+            .dueDate(t.getDueDate()).caseId(t.getCaseId()).createdAt(t.getCreatedAt()).completedAt(t.getCompletedAt()).build();
     }
 }

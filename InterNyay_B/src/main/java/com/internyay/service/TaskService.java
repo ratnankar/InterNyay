@@ -17,6 +17,7 @@ public class TaskService {
 
     private final TaskRepository taskRepo;
     private final UserRepository userRepo;
+    private final CaseRepository caseRepo;
 
     // Newest first, optional status filter
     public Page<TaskDto> list(Long userId, String status, int page, int size) {
@@ -30,6 +31,7 @@ public class TaskService {
                 .title(req.getTitle()).description(req.getDescription())
                 .status(TaskStatuses.normalize(req.getStatus())).category(req.getCategory())
                 .dueDate(req.getDueDate())
+                .caseId(ownedCaseId(req.getCaseId(), userId))
                 .user(userRepo.getReferenceById(userId))
                 .build();
         return TaskDto.from(taskRepo.save(t));
@@ -42,6 +44,8 @@ public class TaskService {
         if (req.getDescription() != null) t.setDescription(req.getDescription());
         if (req.getCategory()    != null) t.setCategory(req.getCategory());
         if (req.getDueDate()     != null) t.setDueDate(req.getDueDate());
+        if (req.isClearCase()) t.setCaseId(null);
+        else if (req.getCaseId() != null) t.setCaseId(ownedCaseId(req.getCaseId(), userId));
         if (req.getStatus()      != null) {
             t.setStatus(TaskStatuses.normalize(req.getStatus()));
             t.setCompletedAt(TaskStatuses.COMPLETED.equals(t.getStatus()) ? LocalDateTime.now() : null);
@@ -59,6 +63,13 @@ public class TaskService {
         Task t = taskRepo.findById(id).orElseThrow(() -> new RuntimeException("Task not found"));
         if (!t.getUser().getId().equals(userId)) throw new RuntimeException("Forbidden");
         return t;
+    }
+
+    private Long ownedCaseId(Long caseId, Long userId) {
+        if (caseId == null) return null;
+        Case c = caseRepo.findById(caseId).orElseThrow(() -> new RuntimeException("Case not found"));
+        if (!c.getUser().getId().equals(userId)) throw new RuntimeException("Forbidden");
+        return c.getId();
     }
 
     private String blank(String s) { return (s == null || s.isBlank()) ? null : s; }
