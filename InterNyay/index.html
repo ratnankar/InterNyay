@@ -15,34 +15,77 @@
     <link rel="shortcut icon" href="/favicon.svg" />
     <script src="/session-flag.js"></script>
     <style>html.has-session #root > .lp, html.not-home #root > .lp { display: none; }</style>
-    <title>InterNyay — Practice Management for Delhi Advocates</title>
-    <meta name="description" content="InterNyay is practice management for advocates at the Delhi District Courts, Delhi High Court and Supreme Court: cases, hearings, clients, fees and documents." />
+    <title>InterNyay — Practice Management Software for Delhi Advocates</title>
+    <meta name="description" content="InterNyay is legal practice management software for advocates at the Delhi District Courts, Delhi High Court and Supreme Court: cases, hearings, cause list numbers, clients, fees and documents." />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <link rel="canonical" href="__SITE_URL__/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="InterNyay" />
     <meta property="og:locale" content="en_IN" />
-    <meta property="og:title" content="InterNyay — Practice Management for Delhi Advocates" />
+    <meta property="og:title" content="InterNyay — Practice Management Software for Delhi Advocates" />
     <meta property="og:description" content="Cases, hearings, cause list numbers, clients, fees and documents for advocates at the Delhi District Courts, Delhi High Court and Supreme Court." />
     <meta property="og:url" content="__SITE_URL__/" />
     <meta property="og:image" content="__SITE_URL__/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="InterNyay: practice management for Delhi advocates" />
+    <meta property="og:image:alt" content="InterNyay: practice management software for Delhi advocates" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="InterNyay — Practice Management for Delhi Advocates" />
+    <meta name="twitter:title" content="InterNyay — Practice Management Software for Delhi Advocates" />
     <meta name="twitter:description" content="Cases, hearings, cause list numbers, clients, fees and documents for advocates at the Delhi District Courts, Delhi High Court and Supreme Court." />
     <meta name="twitter:image" content="__SITE_URL__/og-image.png" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "InterNyay",
-        "url": "__SITE_URL__/",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web",
-        "description": "Practice management for advocates at the Delhi District Courts, Delhi High Court and Supreme Court: cases, hearings, cause list numbers, clients, fees and documents.",
-        "areaServed": { "@type": "AdministrativeArea", "name": "Delhi, India" },
-        "audience": { "@type": "Audience", "audienceType": "Advocates" }
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "__SITE_URL__/#organization",
+            "name": "InterNyay",
+            "url": "__SITE_URL__/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "__SITE_URL__/icon-512.png",
+              "width": 512,
+              "height": 512
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "__SITE_URL__/#website",
+            "url": "__SITE_URL__/",
+            "name": "InterNyay",
+            "alternateName": [
+              "Inter Nyay",
+              "InterNyay.com"
+            ],
+            "inLanguage": "en-IN",
+            "publisher": {
+              "@id": "__SITE_URL__/#organization"
+            }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "__SITE_URL__/#app",
+            "name": "InterNyay",
+            "url": "__SITE_URL__/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "inLanguage": "en-IN",
+            "description": "Legal practice management software for advocates at the Delhi District Courts, Delhi High Court and Supreme Court: cases, hearings, cause list numbers, clients, fees and documents.",
+            "image": "__SITE_URL__/og-image.png",
+            "publisher": {
+              "@id": "__SITE_URL__/#organization"
+            },
+            "areaServed": {
+              "@type": "AdministrativeArea",
+              "name": "Delhi, India"
+            },
+            "audience": {
+              "@type": "Audience",
+              "audienceType": "Advocates"
+            }
+          }
+        ]
       }
     </script>
   </head>

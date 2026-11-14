@@ -17,10 +17,16 @@ const STATUSES = ['Pending', 'Completed']
 // Category name used for tasks that have no category
 const UNCATEGORIZED = 'General'
 
+const createdTime = t => new Date(t.createdAt).getTime() || 0
+
 // To-Do List page: add tasks, filter by status, search and category, sort, and tick tasks off
 export default function TodoList() {
   // Task data and actions from the app context
-  const { todos, addTodo, updateTodo, deleteTodo } = useApp()
+  const {
+    todos, addTodo, updateTodo, deleteTodo,
+    taskCategories, addTaskCategory, deleteTaskCategory,
+    cases, openCaseWindow,
+  } = useApp()
   // Add-task form visibility, status and category filters, search text and sort order
   const [showAdd, setShowAdd] = useState(false)
   const [filterStatus, setFilterStatus] = usePersistedState('todos_status', 'All')
@@ -31,11 +37,27 @@ export default function TodoList() {
   // Custom category typing mode in the add form and the typed name
   const [addingCategory, setAddingCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
+  const [sidebarAdding, setSidebarAdding] = useState(false)
+  const [sidebarCategoryName, setSidebarCategoryName] = useState('')
+  const [linkingId, setLinkingId] = useState(null)
 
-  // Unique category names used by existing tasks
   const allCategories = useMemo(() => {
-    return [...new Set(todos.map(t => t.category).filter(Boolean))]
-  }, [todos])
+    const byKey = new Map()
+    for (const name of [...taskCategories.map(c => c.name), ...todos.map(t => t.category)]) {
+      const clean = (name || '').trim()
+      if (clean && clean.toLowerCase() !== UNCATEGORIZED.toLowerCase() && !byKey.has(clean.toLowerCase())) byKey.set(clean.toLowerCase(), clean)
+    }
+    return [...byKey.values()]
+  }, [taskCategories, todos])
+
+  const caseById = useMemo(() => new Map(cases.map(c => [c.id, c])), [cases])
+
+  const categoryOf = useMemo(() => {
+    const canon = new Map(allCategories.map(c => [c.toLowerCase(), c]))
+    return todo => canon.get((todo.category || '').trim().toLowerCase()) || UNCATEGORIZED
+  }, [allCategories])
+
+  const caseOptionLabel = c => `${c.title}${c.caseNo ? ` — ${c.caseNo}` : ''}`
 
   // Values of the add-task form
   const [newTodo, setNewTodo] = useState({
@@ -44,6 +66,7 @@ export default function TodoList() {
     dueDate: '',
     status: 'Pending',
     category: '',
+    caseId: '',
   })
 
   // Typed category name with extra spaces removed
@@ -55,9 +78,9 @@ export default function TodoList() {
   useEffect(() => {
     if (selectedCategory === 'All' || selectedCategory === UNCATEGORIZED) return
     // Tasks still loading: do not mistake an empty list for a removed category and forget the remembered chip
-    if (!todos.length) return
+    if (!todos.length && !taskCategories.length) return
     if (!allCategories.includes(selectedCategory)) setSelectedCategory('All')
-  }, [selectedCategory, allCategories, todos.length, setSelectedCategory])
+  }, [selectedCategory, allCategories, todos.length, taskCategories.length, setSelectedCategory])
 
   // Tasks after the status filter and search text (before the category filter)
   const statusAndSearchFiltered = useMemo(() => {
@@ -65,7 +88,7 @@ export default function TodoList() {
     if (filterStatus !== 'All') items = items.filter(t => t.status === filterStatus)
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      items = items.filter(t => t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q))
+      items = items.filter(t => t.title.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q))
     }
     return items
   }, [todos, filterStatus, searchQuery])
@@ -74,7 +97,7 @@ export default function TodoList() {
   const categoryList = useMemo(() => {
     const counts = new Map()
     for (const todo of statusAndSearchFiltered) {
-      const cat = todo.category || UNCATEGORIZED
+      const cat = categoryOf(todo)
       counts.set(cat, (counts.get(cat) || 0) + 1)
     }
     const names = [...new Set([...allCategories, ...counts.keys()])].filter(c => c !== UNCATEGORIZED)
@@ -83,19 +106,19 @@ export default function TodoList() {
       { name: UNCATEGORIZED, count: counts.get(UNCATEGORIZED) || 0 },
       ...names.map(name => ({ name, count: counts.get(name) || 0 })),
     ]
-  }, [statusAndSearchFiltered, allCategories])
+  }, [statusAndSearchFiltered, allCategories, categoryOf])
 
   // Tasks in the selected category, sorted by due date or newest first
   const filtered = useMemo(() => {
     let items = statusAndSearchFiltered
-    if (selectedCategory !== 'All') items = items.filter(t => (t.category || UNCATEGORIZED) === selectedCategory)
+    if (selectedCategory !== 'All') items = items.filter(t => categoryOf(t) === selectedCategory)
 
     return [...items].sort((a, b) => {
       if (sortBy === 'dueDate') return (a.dueDate || '').localeCompare(b.dueDate || '')
-      if (sortBy === 'oldest') return a.createdAt - b.createdAt
-      return b.createdAt - a.createdAt
+      if (sortBy === 'oldest') return createdTime(a) - createdTime(b)
+      return createdTime(b) - createdTime(a)
     })
-  }, [statusAndSearchFiltered, selectedCategory, sortBy])
+  }, [statusAndSearchFiltered, selectedCategory, sortBy, categoryOf])
 
   // Show the tasks a page at a time; starts again when the filters, category or sort change
   const tasksStep = 20
@@ -106,22 +129,61 @@ export default function TodoList() {
   } = useSeeMore(filtered, [filterStatus, selectedCategory, searchQuery, sortBy].join('|'), tasksStep)
 
   // Add the task from the form, using the typed custom category if one is being entered, then reset the form
-  function handleAddTodo() {
+  async function handleAddTodo() {
     if (!newTodo.title.trim()) return
 
-    const category = addingCategory ? commitTypedCategory() : newTodo.category
+    let category = newTodo.category
+    if (addingCategory) {
+      const typed = commitTypedCategory()
+      category = typed ? await addTaskCategory(typed) : ''
+      if (category === null) return
+    }
 
     addTodo({
       ...newTodo,
       category,
+      caseId: newTodo.caseId ? Number(newTodo.caseId) : null,
       id: Date.now(),
       createdAt: Date.now(),
     })
     closeAdd()
   }
 
+  async function commitCategoryFromForm() {
+    const typed = commitTypedCategory()
+    if (!typed) return
+    const saved = await addTaskCategory(typed)
+    if (saved === null) return
+    setNewTodo(t => ({ ...t, category: saved }))
+    setNewCategoryName('')
+    setAddingCategory(false)
+  }
+
+  async function commitSidebarCategory() {
+    const typed = sidebarCategoryName.trim().replace(/\s+/g, ' ')
+    if (!typed) return
+    const existing = typed.toLowerCase() === UNCATEGORIZED.toLowerCase()
+      ? UNCATEGORIZED
+      : allCategories.find(c => c.toLowerCase() === typed.toLowerCase())
+    const name = existing || await addTaskCategory(typed)
+    if (name === null) return
+    setSelectedCategory(name)
+    setSidebarCategoryName('')
+    setSidebarAdding(false)
+  }
+
+  function closeSidebarAdd() {
+    setSidebarCategoryName('')
+    setSidebarAdding(false)
+  }
+
+  function changeLink(todo, value) {
+    updateTodo(todo.id, value ? { caseId: Number(value) } : { clearCase: true, caseId: null })
+    setLinkingId(null)
+  }
+
   function closeAdd() {
-    setNewTodo({ title: '', description: '', dueDate: '', status: 'Pending', category: '' })
+    setNewTodo({ title: '', description: '', dueDate: '', status: 'Pending', category: '', caseId: '' })
     setAddingCategory(false)
     setNewCategoryName('')
     setShowAdd(false)
@@ -130,10 +192,8 @@ export default function TodoList() {
   // Remove a category after confirming; its tasks move to General instead of being deleted
   async function removeCategory(name) {
     if (!await confirmDialog(`Remove the "${name}" category? Its tasks will move to General — they won't be deleted.`)) return
-    todos
-      .filter(t => (t.category || UNCATEGORIZED) === name)
-      .forEach(t => updateTodo(t.id, { category: '' }))
-    setSelectedCategory('All')
+    const saved = taskCategories.find(c => c.name.trim().toLowerCase() === name.trim().toLowerCase())
+    if (await deleteTaskCategory(name, saved ? saved.id : null)) setSelectedCategory('All')
   }
 
   // Switch a task between Pending and Completed
@@ -227,10 +287,7 @@ export default function TodoList() {
                     onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
-                        const name = commitTypedCategory()
-                        setNewTodo(t => ({ ...t, category: name }))
-                        setNewCategoryName('')
-                        setAddingCategory(false)
+                        commitCategoryFromForm()
                       }
                       if (e.key === 'Escape') { setAddingCategory(false); setNewCategoryName('') }
                     }}
@@ -257,6 +314,19 @@ export default function TodoList() {
               <ClearableDateInput className="form-input" 
                 value={newTodo.dueDate}
                 onChange={e => setNewTodo({ ...newTodo, dueDate: e.target.value })} />
+            </div>
+
+            <div className="form-field-group form-field-group--full">
+              <label className="form-label">Linked Case</label>
+              <Dropdown
+                className="form-input"
+                value={newTodo.caseId}
+                placeholder="No case"
+                onChange={e => setNewTodo({ ...newTodo, caseId: e.target.value })}
+              >
+                <option value="">No case</option>
+                {cases.map(c => <option key={c.id} value={String(c.id)}>{caseOptionLabel(c)}</option>)}
+              </Dropdown>
             </div>
 
             <div className="form-field-group form-field-group--full">
@@ -291,7 +361,35 @@ export default function TodoList() {
       <div className="todo-body">
         {/* Category sidebar */}
         <aside className="todo-sidebar">
-          <p className="todo-sidebar__heading">Categories</p>
+          <div className="todo-sidebar__head">
+            <p className="todo-sidebar__heading">Categories <span className="todo-sidebar__heading-count">{categoryList.length}</span></p>
+            <button
+              type="button"
+              className="btn-outline btn-outline--sm todo-sidebar__add-btn"
+              aria-label="Add category"
+              title="Add category"
+              onClick={() => (sidebarAdding ? closeSidebarAdd() : setSidebarAdding(true))}
+            >
+              {sidebarAdding ? <Icon name="close" /> : '+ Add'}
+            </button>
+          </div>
+          {sidebarAdding && (
+            <div className="todo-sidebar__add">
+              <input
+                className="form-input"
+                autoFocus
+                maxLength={100}
+                placeholder="New category name"
+                value={sidebarCategoryName}
+                onChange={e => setSidebarCategoryName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); commitSidebarCategory() }
+                  if (e.key === 'Escape') closeSidebarAdd()
+                }}
+              />
+              <button type="button" className="btn-gold btn-outline--sm" onClick={commitSidebarCategory}>Add</button>
+            </div>
+          )}
           <nav className="todo-sidebar__nav">
             <button
               className={`todo-sidebar__item${selectedCategory === 'All' ? ' active' : ''}`}
@@ -301,6 +399,7 @@ export default function TodoList() {
               <span className="todo-sidebar__label">All Tasks</span>
               <span className="todo-sidebar__count">{statusAndSearchFiltered.length}</span>
             </button>
+            <div className="todo-sidebar__divider" role="separator" />
 
             {/* One button per category */}
             {categoryList.map(({ name, count }) => (
@@ -310,9 +409,20 @@ export default function TodoList() {
                   onClick={() => setSelectedCategory(name)}
                 >
                   <span className="nav-item__icon">{name === UNCATEGORIZED ? <Icon name="pin" /> : <Icon name="tag" />}</span>
-                  <span className="todo-sidebar__label">{name}</span>
+                  <span className="todo-sidebar__label" title={name}>{name}</span>
                   <span className="todo-sidebar__count">{count}</span>
                 </button>
+                {name !== UNCATEGORIZED && (
+                  <button
+                    type="button"
+                    className="btn-icon btn-icon--danger todo-sidebar__delete"
+                    aria-label={`Delete ${name} category`}
+                    title={`Delete ${name} category`}
+                    onClick={() => removeCategory(name)}
+                  >
+                    <Icon name="trash" />
+                  </button>
+                )}
               </div>
             ))}
           </nav>
@@ -361,7 +471,17 @@ export default function TodoList() {
                     <div className="todo-item__footer">
                       <span className="todo-status">{todo.status}</span>
                       {selectedCategory === 'All' && (
-                        <span className="todo-category-tag">{todo.category || UNCATEGORIZED}</span>
+                        <span className="todo-category-tag">{categoryOf(todo)}</span>
+                      )}
+                      {caseById.get(todo.caseId) && (
+                        <button
+                          type="button"
+                          className="todo-case-tag"
+                          title="Open case details"
+                          onClick={() => openCaseWindow(caseById.get(todo.caseId))}
+                        >
+                          <Icon name="clip" /> {caseById.get(todo.caseId).title}
+                        </button>
                       )}
                       {todo.dueDate && (
                         <span className={`todo-due-date${todo.status !== 'Completed' && new Date(todo.dueDate) < new Date(new Date().toDateString()) ? ' todo-due-date--overdue' : ''}`}>
@@ -369,11 +489,35 @@ export default function TodoList() {
                         </span>
                       )}
                     </div>
+                    {linkingId === todo.id && (
+                      <div className="todo-link-editor">
+                        <Dropdown
+                          className="form-input"
+                          value={todo.caseId ? String(todo.caseId) : ''}
+                          placeholder="No case"
+                          onChange={e => changeLink(todo, e.target.value)}
+                        >
+                          <option value="">No case</option>
+                          {cases.map(c => <option key={c.id} value={String(c.id)}>{caseOptionLabel(c)}</option>)}
+                        </Dropdown>
+                      </div>
+                    )}
                   </div>
 
-                  <button type="button" aria-label="Delete task" title="Delete task" className="btn-icon" onClick={() => deleteTodo(todo.id)}>
-                    <Icon name="trash" />
-                  </button>
+                  <div className="todo-item__actions">
+                    <button
+                      type="button"
+                      aria-label="Link to a case"
+                      title={todo.caseId ? 'Change or remove the linked case' : 'Link to a case'}
+                      className={`btn-icon${linkingId === todo.id ? ' todo-item__link-btn--active' : ''}`}
+                      onClick={() => setLinkingId(linkingId === todo.id ? null : todo.id)}
+                    >
+                      <Icon name="clip" />
+                    </button>
+                    <button type="button" aria-label="Delete task" title="Delete task" className="btn-icon" onClick={() => deleteTodo(todo.id)}>
+                      <Icon name="trash" />
+                    </button>
+                  </div>
                 </div>
               ))}
               <SeeMore remaining={tasksRemaining} onClick={showMoreTasks} />

@@ -35,8 +35,7 @@ export default function ClientDetailModal() {
   const {
     selectedClient, setSelectedClient,
     cases, handleUpdateClient, handleDeleteClient,
-    openEditCase, setTransactionCaseId, isAssociate, openCase,
-    setFilterStatus,
+    openEditCase, setTransactionCaseId, isAssociate, openCaseWindow,
     setUploadDocClientId, handleDeleteClientDocument,
     handleViewDocument, addToast,
     setShowUploadEvidence, setEvidenceCategory, setEvidenceTargetId,
@@ -133,11 +132,9 @@ export default function ClientDetailModal() {
     setForm(null)
   }
 
-  // Close this modal and open the case on the Cases page
+  // Open the case in a window over these client details, which stay open behind it
   function openCaseDetails(c) {
-    close()
-    setFilterStatus('All')
-    openCase(c)
+    openCaseWindow(c, { stay: true })
   }
 
   // Close the modal and reset edit and section state

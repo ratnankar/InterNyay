@@ -146,7 +146,9 @@ function compareHearing(a, b) {
 }
 
 // Cases page: search, filter and sort cases; expand a card to manage its documents, evidence, reminders and fees
-export default function Cases() {
+// windowOnly: used over another page (a client's details): nothing of the Cases page shows, only the case window,
+// and onWindowClose is called when that window is closed
+export default function Cases({ windowOnly = false, onWindowClose }) {
   // Every court in the court table, for the Court filter
   const courtTable = useCourts()
   const {
@@ -181,6 +183,10 @@ export default function Cases() {
     addToast,
     syncCaseNextHearing,
     bumpHearings,
+    todos,
+    updateTodo,
+    caseWindowRequest,
+    setCaseWindowRequest,
   } = useApp()
   const [scannerOpen, setScannerOpen] = useState(false)
   // Window listing the open cases that have no file number, where they can be given one
@@ -189,6 +195,13 @@ export default function Cases() {
   const [windowCaseId, setWindowCaseId] = useState(null)
   const windowCase = windowCaseId != null ? cases.find(x => x.id === windowCaseId) : null
   const caseWindowHandlers = useOverlayClose(() => setWindowCaseId(null))
+  // In windowOnly mode, tell the page underneath once the case window that was opened has gone away
+  const windowWasOpen = useRef(false)
+  useEffect(() => {
+    if (!windowOnly) return
+    if (windowCase) windowWasOpen.current = true
+    else if (windowWasOpen.current) { windowWasOpen.current = false; onWindowClose?.() }
+  }, [windowOnly, windowCase])
   const noFileCount = useMemo(() => cases.filter(lacksFileNumber).length, [cases])
 
   // Refresh symbol on a card's next-hearing box: reads the case from eCourts again, the same as the Refresh button in Hearing History
@@ -305,6 +318,13 @@ export default function Cases() {
   const filterPanelRef = useRef(null)
   // Which sections (hearings, documents, evidence) are open inside an expanded case
   const [openSections, setOpenSections] = useSessionState('cases_open_sections', { hearings: false, documents: false, evidence: false })
+
+  useEffect(() => {
+    if (caseWindowRequest == null) return
+    setOpenSections({ hearings: false, documents: false, evidence: false })
+    setWindowCaseId(caseWindowRequest)
+    setCaseWindowRequest(null)
+  }, [caseWindowRequest])
 
   // Close the Filter menu
   function closeCaseFilterMenu() {
@@ -658,6 +678,11 @@ export default function Cases() {
     // Misc. application documents have their own section, so they are kept out of the case's documents
     const documents = (c.documents || []).filter(d => !isOrderDocument(d) && !isEvidenceDocument(d) && !isMiscDocument(d))
     const miscDocuments = (c.documents || []).filter(isMiscDocument)
+    const caseTodos = todos
+      .filter(t => t.caseId === c.id)
+      .sort((a, b) => (a.status === 'Completed') - (b.status === 'Completed') || (a.dueDate || '9999').localeCompare(b.dueDate || '9999'))
+    const pendingTodos = caseTodos.filter(t => t.status !== 'Completed').length
+    const today = new Date(new Date().toDateString())
 
     // One document row, the same for the case's documents and its misc. application documents
     const renderDocRow = document => (
@@ -932,6 +957,66 @@ export default function Cases() {
           )}
         </div>
 
+        <div className={`exp-card${openSections.todos ? ' exp-card--open' : ''} u-mt-8`} >
+          <button type="button" className="exp-card__head" onClick={e => toggleSection(e, 'todos')}>
+            <div className="exp-card__avatar"><Icon name="clipboard" /></div>
+            <div className="exp-card__titles">
+              <p className="exp-card__primary">To-Do</p>
+              <p className="exp-card__secondary">
+                {caseTodos.length} task{caseTodos.length !== 1 ? 's' : ''}
+                {pendingTodos > 0 ? ` • ${pendingTodos} pending` : ''}
+              </p>
+            </div>
+            <span className="exp-card__arrow">{openSections.todos ? '▲' : '▼'}</span>
+          </button>
+
+          {openSections.todos && (
+            <div className="exp-card__body">
+              {caseTodos.length === 0 ? (
+                <p className="case-card__info">No to-dos linked to this case</p>
+              ) : (
+                caseTodos.map(todo => (
+                  <div
+                    key={todo.id}
+                    className={`case-todo-row${todo.status === 'Completed' ? ' case-todo-row--done' : ''}`}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      className="case-todo-row__check"
+                      aria-label={`Mark "${todo.title}" as ${todo.status === 'Completed' ? 'pending' : 'completed'}`}
+                      checked={todo.status === 'Completed'}
+                      onChange={() => updateTodo(todo.id, { status: todo.status === 'Completed' ? 'Pending' : 'Completed' })}
+                    />
+                    <div className="case-todo-row__body">
+                      <p className="case-todo-row__title">{todo.title}</p>
+                      {todo.description && <p className="case-todo-row__desc">{todo.description}</p>}
+                      <div className="case-todo-row__meta">
+                        <span className="todo-status">{todo.status}</span>
+                        {todo.category && <span className="todo-category-tag">{todo.category}</span>}
+                        {todo.dueDate && (
+                          <span className={`todo-due-date${todo.status !== 'Completed' && new Date(todo.dueDate) < today ? ' todo-due-date--overdue' : ''}`}>
+                            <Icon name="calendar" /> {new Date(todo.dueDate).toLocaleDateString('en-IN')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-icon"
+                      aria-label="Unlink from this case"
+                      title="Unlink from this case"
+                      onClick={() => updateTodo(todo.id, { clearCase: true, caseId: null })}
+                    >
+                      <Icon name="close" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
         {/* WhatsApp reminders: automatic reminder switch, send now button and how many days before the hearing to send it */}
         {!isClosedCase(c) && (
         <div
@@ -1015,7 +1100,7 @@ export default function Cases() {
   }
 
   return (
-    <div>
+    <div style={windowOnly ? { display: 'none' } : undefined}>
       {/* Page title and the Add Case button */}
       <div className="page-header">
         <div>

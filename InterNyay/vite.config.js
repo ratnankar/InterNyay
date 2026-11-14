@@ -40,7 +40,7 @@ function siteFiles(siteUrl) {
       const sitemap = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-        `  <url><loc>${siteUrl}/</loc></url>`,
+        `  <url><loc>${siteUrl}/</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
         '</urlset>',
         '',
       ].join('\n')

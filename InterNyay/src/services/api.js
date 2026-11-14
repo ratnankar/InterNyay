@@ -380,6 +380,12 @@ export const tasks = {
   remove:   (id)       => del(`/tasks/${id}`),
 }
 
+export const taskCategories = {
+  list:     ()     => get('/task-categories'),
+  create:   (name) => post('/task-categories', { body: { name } }),
+  remove:   (id)   => del(`/task-categories/${id}`),
+}
+
 // Office expenses (list, add, mark paid, delete)
 const officeExpenses = {
   list:     ()          => get('/office-expenses'),
@@ -1084,5 +1090,5 @@ const captcha = {
 // (utils/busyStore.js). Asked on start, when the tab is shown again, and while something is still listed
 startServerSync(() => get('/in-flight'))
 
-const api = { captcha, publicApi, contact, chat, courts, courtPreferences, quickAccess, police, quickLinks, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
+const api = { captcha, publicApi, contact, chat, courts, courtPreferences, quickAccess, police, quickLinks, jurisdiction, judgesList, judgeProfiles, districtPdfs, bailRoster, dutyMagistrate, cases, clients, hearings, tasks, taskCategories, documents, miscApplications, notifications, whatsapp, courtCalendar, holidays, noHearingDates, hearingLimits, auth, legalForms, admin, officeExpenses, feeCalculator }
 export default api

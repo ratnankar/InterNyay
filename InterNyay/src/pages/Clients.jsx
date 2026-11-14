@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { caseClientIds, caseHasClient } from '../utils/caseClients'
 import { caseNatureOf } from '../utils/caseClassification'
@@ -12,6 +12,7 @@ import usePersistedState from '../hooks/usePersistedState'
 import useSessionState from '../hooks/useSessionState'
 import SeeMore from '../components/common/SeeMore'
 import SearchInput from '../components/common/SearchInput'
+import { Cases } from '../routes/lazy'
 import { telLink } from '../utils/jurisdiction'
 // Sort choices for the clients list as [value, label] pairs
 const SORT_OPTIONS = [
@@ -23,7 +24,13 @@ const SORT_OPTIONS = [
 
 // Clients page: searchable, sortable grid of client cards
 export default function Clients() {
-  const { clients, cases, setShowAddClient, setSelectedClient } = useApp()
+  const { clients, cases, setShowAddClient, setSelectedClient, caseWindowRequest } = useApp()
+
+  // A case opened from a client's details shows in a window over them; the Cases page itself is not shown
+  const [caseOverlay, setCaseOverlay] = useState(false)
+  useEffect(() => {
+    if (caseWindowRequest != null) setCaseOverlay(true)
+  }, [caseWindowRequest])
 
   // Client whose photo is open full size (null when closed)
   const [viewClient, setViewClient] = useState(null)
@@ -84,6 +91,11 @@ export default function Clients() {
 
   return (
     <div className="clients-page">
+      {caseOverlay && (
+        <Suspense fallback={null}>
+          <Cases windowOnly onWindowClose={() => setCaseOverlay(false)} />
+        </Suspense>
+      )}
       {/* Full-size view of a client's photo */}
       {viewClient && (
         <ImageViewer

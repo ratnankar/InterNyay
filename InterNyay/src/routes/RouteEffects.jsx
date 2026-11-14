@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect } from 'react'
 import { useLocation, useMatches } from 'react-router-dom'
 
-const DEFAULT_TITLE = 'InterNyay — Practice Management for Delhi Advocates'
+const DEFAULT_TITLE = 'InterNyay — Practice Management Software for Delhi Advocates'
 
 // Sets the browser tab title from the matched route's handle.title.
 // A route with handle.keepTitle sets its own title and is left alone.

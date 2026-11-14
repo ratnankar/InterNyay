@@ -33,6 +33,7 @@ import {
   cases as casesApi,
   clients as clientsApi,
   tasks as tasksApi,
+  taskCategories as taskCategoriesApi,
   hearings as hearingsApi,
   documents as documentsApi,
   holidays as holidaysApi,
@@ -294,6 +295,7 @@ export function AppProvider({ children }) {
   const [clients, setClients] = useState([])
   const [cases, setCases] = useState([])
   const [todos, setTodos] = useState([])
+  const [taskCategories, setTaskCategories] = useState([])
   // True while the main data is being loaded
   const [loading, setLoading] = useState(false)
 
@@ -574,6 +576,14 @@ export function AppProvider({ children }) {
     setSelectedCase(c)
     navigate('/cases/' + encodeURIComponent(c.id))
   }
+  const [caseWindowRequest, setCaseWindowRequest] = useState(null)
+  // stay: open the case window over the page the person is on (for example over a client's details) instead of going to the Cases page
+  function openCaseWindow(c, { stay = false } = {}) {
+    setFilterStatus('All')
+    setSelectedCase(null)
+    setCaseWindowRequest(c.id)
+    if (!stay) navigate('/cases')
+  }
   // Case whose invoice modal is open
   const [invoiceCaseId, setInvoiceCaseId] = useState(null)
 
@@ -778,7 +788,7 @@ export function AppProvider({ children }) {
   const applyingRefresh = useRef(false)
   useEffect(() => {
     if (!applyingRefresh.current) lastLocalChange.current = Date.now()
-  }, [cases, clients, todos, advocateDocs])
+  }, [cases, clients, todos, taskCategories, advocateDocs])
 
   // After login: load the saved user, refresh the profile, then fetch all the data
   useEffect(() => {
@@ -836,6 +846,19 @@ export function AppProvider({ children }) {
       return all
     }
 
+    async function loadAllClients() {
+      const size = 200
+      let all = []
+      for (let page = 0; page < 100; page++) {
+        const res = await clientsApi.list({ page, size })
+        if (Array.isArray(res)) return res
+        const batch = res?.content || []
+        all = all.concat(batch)
+        if (res?.last || batch.length === 0 || page + 1 >= (res?.totalPages ?? 1)) break
+      }
+      return all
+    }
+
     // Fetches cases, clients, tasks, documents, holidays, no-hearing dates and hearings in one go
     async function loadData() {
 
@@ -847,7 +870,8 @@ export function AppProvider({ children }) {
         const [
           casesRes,
           clientsRes,
-          tasksRes
+          tasksRes,
+          categoriesRes
         ] = await Promise.all([
 
           // The backend pages the case list (20 per page by default), so read every page
@@ -858,11 +882,14 @@ export function AppProvider({ children }) {
               return []
             }),
 
-          clientsApi
-            .list()
+          loadAllClients()
             .catch(() => []),
 
           tasksApi
+            .list({ size: 1000 })
+            .catch(() => []),
+
+          taskCategoriesApi
             .list()
             .catch(() => [])
         ])
@@ -905,6 +932,7 @@ export function AppProvider({ children }) {
             ? tasksRes
             : tasksRes?.content || []
         )
+        setTaskCategories(Array.isArray(categoriesRes) ? categoriesRes : [])
 
         // Calendar data
         await fetchHolidays()
@@ -940,10 +968,11 @@ export function AppProvider({ children }) {
       const startedAt = Date.now()
       loadOptions().catch(() => {})
 
-      const [casesRes, clientsRes, tasksRes, allDocs, holidayList, noHearingList, hearingRes, me, limitsRes] = await Promise.all([
+      const [casesRes, clientsRes, tasksRes, categoriesRes, allDocs, holidayList, noHearingList, hearingRes, me, limitsRes] = await Promise.all([
         loadAllCases().catch(() => null),
-        clientsApi.list().catch(() => null),
-        tasksApi.list().catch(() => null),
+        loadAllClients().catch(() => null),
+        tasksApi.list({ size: 1000 }).catch(() => null),
+        taskCategoriesApi.list().catch(() => null),
         documentsApi.list().catch(() => null),
         holidaysApi.list().catch(() => null),
         noHearingDatesApi.list().catch(() => null),
@@ -1003,6 +1032,7 @@ export function AppProvider({ children }) {
         }
         if (docs) setAdvocateDocs(docs.filter(d => !d.caseId && !d.clientId))
         if (tasksRes) setTodos(Array.isArray(tasksRes) ? tasksRes : tasksRes?.content || [])
+        if (Array.isArray(categoriesRes)) setTaskCategories(categoriesRes)
       } finally {
         setTimeout(() => { applyingRefresh.current = false }, 200)
       }
@@ -1428,6 +1458,7 @@ export function AppProvider({ children }) {
     setCases([])
     setClients([])
     setTodos([])
+    setTaskCategories([])
     setHolidays([])
     setNoHearingDates(new Set())
     setHearingLimits({ defaultLimit: null, overrides: {} })
@@ -3405,6 +3436,33 @@ export function AppProvider({ children }) {
     }
   }
 
+  async function addTaskCategory(name) {
+    try {
+      const created = await taskCategoriesApi.create(name)
+      setTaskCategories(prev => (prev.some(c => c.id === created.id) ? prev : [...prev, created]))
+      return created.name
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not add the category'), 'error')
+      return null
+    }
+  }
+
+  async function deleteTaskCategory(name, id) {
+    try {
+      if (id != null) await taskCategoriesApi.remove(id)
+      const key = name.trim().toLowerCase()
+      const moved = todos.filter(t => (t.category || '').trim().toLowerCase() === key)
+      if (id == null) await Promise.all(moved.map(t => tasksApi.update(t.id, { category: '' })))
+      setTaskCategories(prev => prev.filter(c => c.id !== id && c.name.trim().toLowerCase() !== key))
+      setTodos(prev => prev.map(t => ((t.category || '').trim().toLowerCase() === key ? { ...t, category: null } : t)))
+      addToast('Category removed')
+      return true
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not remove the category'), 'error')
+      return false
+    }
+  }
+
   // Total / paid / due and the fee items of a case (calculated in feeUtils)
   function getCaseFeeSummary(c) {
     return caseFeeSummary(c)
@@ -3710,6 +3768,9 @@ export function AppProvider({ children }) {
         activeNav,
         setActiveNav,
         openCase,
+        openCaseWindow,
+        caseWindowRequest,
+        setCaseWindowRequest,
         justSignedOut,
 
         // Transactions page lock
@@ -3920,6 +3981,9 @@ export function AppProvider({ children }) {
         addTodo,
         updateTodo,
         deleteTodo,
+        taskCategories,
+        addTaskCategory,
+        deleteTaskCategory,
 
         // Toasts
         toasts,
