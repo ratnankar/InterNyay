@@ -107,6 +107,18 @@ public class PlanService {
         }
     }
 
+    // Why a corporate firm cannot use the app yet, null when it can (and for every account that is not a firm).
+    // A firm has no default plan: it needs one that exists, is enabled and is not "coming soon".
+    // NO_PLAN = no plan assigned yet, PLAN_UNAVAILABLE = the assigned plan was disabled, set to coming soon or deleted
+    @Transactional(readOnly = true)
+    public String firmBlockReason(User account) {
+        if (account == null || !account.isCorporateFirm() || !account.isAdvocate()) return null;
+        String code = account.getPlanCode();
+        if (code == null || code.isBlank()) return "NO_PLAN";
+        boolean usable = planRepo.findByCode(code).filter(p -> p.isEnabled() && !p.isComingSoon()).isPresent();
+        return usable ? null : "PLAN_UNAVAILABLE";
+    }
+
     // Plan of an advocate, FREE when none is set
     @Transactional(readOnly = true)
     public Plan planOf(User advocate) {
@@ -128,6 +140,19 @@ public class PlanService {
     // Current plan and how many associate seats are used
     @Transactional(readOnly = true)
     public MyPlanDto myPlan(User advocate) {
+        // A firm without a usable plan sees the plan screen and nothing else (its current plan is only shown when one is assigned)
+        String blocked = firmBlockReason(advocate);
+        if (blocked != null) {
+            PlanDto assigned = "NO_PLAN".equals(blocked) ? null
+                    : planRepo.findByCode(advocate.getPlanCode()).map(PlanDto::from).orElse(null);
+            return MyPlanDto.builder()
+                    .current(assigned)
+                    .associatesUsed(userRepo.countByAdvocate_Id(advocate.getId()))
+                    .available(firmPlans())
+                    .accessBlocked(true)
+                    .blockReason(blocked)
+                    .build();
+        }
         Plan plan = planOf(advocate);
         PlanDto current = PlanDto.from(plan);
         // The plan card shows this advocate's real limit, including one set by an admin
@@ -154,6 +179,10 @@ public class PlanService {
         }
         if (Plan.AUDIENCE_CORPORATE.equals(target.getAudience()) && !advocate.isCorporateFirm()) {
             throw new IllegalArgumentException("This plan is only for corporate firms");
+        }
+        // A firm cannot pick an advocate plan (for example Free) to get around the plan an admin assigns
+        if (advocate.isCorporateFirm() && !Plan.AUDIENCE_CORPORATE.equals(target.getAudience())) {
+            throw new IllegalArgumentException("Corporate firms can only choose a Corporate plan");
         }
         if (!target.isFreeFor(yearly)) {
             throw new IllegalArgumentException("This plan is not free. Please request it from My Plan");
@@ -248,6 +277,8 @@ public class PlanService {
     // A plan without a feature list gets every feature
     @Transactional(readOnly = true)
     public List<String> enabledFeatures(User advocate) {
+        // A firm without a usable plan has no features at all
+        if (firmBlockReason(advocate) != null) return List.of();
         Plan p = planOf(advocate);
         if (p.getFeatureKeys() == null) return List.copyOf(CATALOG.keySet());
         return PlanDto.from(p).featureKeys;
