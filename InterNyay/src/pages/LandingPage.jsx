@@ -672,6 +672,10 @@ export default function LandingPage({ onSignIn, onRegister }) {
                 <p>Companies and firms that hire advocates: create their accounts, allot cases in bulk and track every hearing in one place.</p>
               </div>
               <PricingCards plans={corporatePlans} onSelect={() => onRegister('CORPORATE')} cta="Register as a firm" />
+              <p className="lx-pricing__firm-signin">
+                Already registered your firm?{' '}
+                <button type="button" className="lx-textbtn" onClick={() => onSignIn('CORPORATE')}>Corporate sign in</button>
+              </p>
             </div>
           )}
           {plansLoaded && !plans.length && (

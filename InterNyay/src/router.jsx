@@ -33,7 +33,7 @@ function RootIndex() {
   const legacyForm = params.get('fillForm')
   if (legacyForm) return <Navigate to={fillFormPath(legacyForm, params.get('caseId'))} replace />
   if (loggedIn) return <Navigate to={destinationAfterLogin(null, role)} replace />
-  return <LandingPage onSignIn={() => navigate('/login')} onRegister={type => navigate(type === 'CORPORATE' ? '/register?type=corporate' : '/register')} />
+  return <LandingPage onSignIn={type => navigate(type === 'CORPORATE' ? '/corporate-login' : '/login')} onRegister={type => navigate(type === 'CORPORATE' ? '/corporate-register' : '/register')} />
 }
 
 // Sign-in / register / forgot-password: the tab comes from the URL (see AppContext)
@@ -75,6 +75,9 @@ const routes = [
           { path: 'login',           element: <AuthRoute />, handle: { title: 'Sign in' } },
           { path: 'register',        element: <AuthRoute />, handle: { title: 'Create account' } },
           { path: 'forgot-password', element: <AuthRoute />, handle: { title: 'Reset password' } },
+          // Corporate firms sign in and register on their own pages
+          { path: 'corporate-login',    element: <AuthRoute />, handle: { title: 'Corporate sign in' } },
+          { path: 'corporate-register', element: <AuthRoute />, handle: { title: 'Corporate firm registration' } },
         ],
       },
 

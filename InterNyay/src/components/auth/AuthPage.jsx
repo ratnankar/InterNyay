@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import AuthBackdrop from './AuthBackdrop'
 import PasswordInput from '../common/PasswordInput'
@@ -18,9 +19,6 @@ const ACCOUNT_TYPES = [
   { value: 'ADVOCATE',  label: 'Advocate'  },
   { value: 'ASSOCIATE', label: 'Associate' },
 ]
-
-// Account types on the register form: corporate firms sign up here too, but only on their own tab
-const REGISTER_TYPES = [...ACCOUNT_TYPES, { value: 'CORPORATE', label: 'Corporate firm' }]
 
 // Login inputs as [label, field name, input type, placeholder]
 const LOGIN_FIELDS = [
@@ -103,7 +101,7 @@ export default function AuthPage({ onBack }) {
     authError, handleLogin, handleRegister,
     handleGoogleLogin, handleGoogleRegister,
     googlePending, cancelGooglePending,
-    isAdminRoute,
+    isAdminRoute, isCorporateRoute,
     otpSent, otpCode, setOtpCode, otpVerified,
     otpSending, otpVerifying, otpResendInSec,
     handleSendOtp, handleVerifyOtp,
@@ -113,14 +111,14 @@ export default function AuthPage({ onBack }) {
     switchAccount,
   } = useApp()
 
-  // /register?type=corporate (from the landing page's corporate plan) opens the Corporate firm tab
+  const navigate = useNavigate()
+
+  // The corporate pages always register a firm, and the normal register page never does
   useEffect(() => {
-    if (authPage !== 'register') return
-    if (new URLSearchParams(window.location.search).get('type') === 'corporate') {
-      setRegForm(f => (f.accountType === 'CORPORATE' ? f : { ...f, accountType: 'CORPORATE' }))
-    }
+    const want = isCorporateRoute ? 'CORPORATE' : (regForm.accountType === 'CORPORATE' ? 'ADVOCATE' : regForm.accountType)
+    if (want !== regForm.accountType) setRegForm(f => ({ ...f, accountType: want }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authPage])
+  }, [isCorporateRoute, regForm.accountType])
 
   // Accounts still signed in on this browser: offered on the sign-in tab so the user can go back to one without a password
   const savedAccounts = !isAdminRoute && authPage === 'login' ? getAccounts() : []
@@ -164,6 +162,14 @@ export default function AuthPage({ onBack }) {
 
         {/* Auth card */}
         <div className={`auth-card${isAdminRoute ? ' auth-card--admin' : ''}`}>
+
+          {/* Heading for the corporate firm pages */}
+          {isCorporateRoute && (
+            <div className="auth-admin-heading auth-admin-heading--gold">
+              <span className="auth-admin-heading__icon"><Icon name="scale" /></span>
+              Corporate Firm
+            </div>
+          )}
 
           {/* Login / Register tabs */}
           {!isAdminRoute && authPage !== 'forgot' && (
@@ -265,11 +271,13 @@ export default function AuthPage({ onBack }) {
               {/* Login form (email + password, forgot password link and Google button) */}
               {authPage === 'login' && (
                 <div className="auth-form">
-                  {/* One email can have both an advocate and an associate account, so ask which one to open */}
-                  <div>
-                    <label className="auth-field-label">SIGN IN AS</label>
-                    <AccountTypeToggle value={loginType} onChange={setLoginType} />
-                  </div>
+                  {/* One email can have both an advocate and an associate account, so ask which one to open (firms have their own page) */}
+                  {!isCorporateRoute && (
+                    <div>
+                      <label className="auth-field-label">SIGN IN AS</label>
+                      <AccountTypeToggle value={loginType} onChange={setLoginType} />
+                    </div>
+                  )}
                   {LOGIN_FIELDS.map(([label, key, type, ph]) => (
                     <div key={key}>
                       <label className="auth-field-label">{label}</label>
@@ -295,7 +303,7 @@ export default function AuthPage({ onBack }) {
                     </div>
                   ))}
                   <button type="button" className="auth-btn" onClick={handleLogin}>
-                    Sign In to Practice
+                    {isCorporateRoute ? 'Sign In to Corporate Account' : 'Sign In to Practice'}
                   </button>
                   <button
                     type="button"
@@ -428,14 +436,16 @@ export default function AuthPage({ onBack }) {
               {/* Registration form: account type, details, email OTP verification and Google sign-up */}
               {authPage === 'register' && (
                 <div className="auth-form auth-form--register">
-                  <AccountTypeToggle
-                    types={REGISTER_TYPES}
-                    value={regForm.accountType}
-                    onChange={accountType => {
-                      cancelGooglePending()
-                      setRegForm(f => ({ ...f, accountType }))
-                    }}
-                  />
+                  {!isCorporateRoute && (
+                    <AccountTypeToggle
+                      types={ACCOUNT_TYPES}
+                      value={regForm.accountType}
+                      onChange={accountType => {
+                        cancelGooglePending()
+                        setRegForm(f => ({ ...f, accountType }))
+                      }}
+                    />
+                  )}
                   {/* Associates enter the advocate code shown on their advocate's profile */}
                   {regForm.accountType === 'ASSOCIATE' && (
                     <p className="auth-hint">
@@ -448,7 +458,7 @@ export default function AuthPage({ onBack }) {
                   {regForm.accountType === 'CORPORATE' && (
                     <p className="auth-hint">
                       For firms and companies that hire advocates. You create the advocate accounts and allot cases to them.
-                      After signing up, a request for the Corporate plan is sent to the InterNyay team, who will activate it for you.
+                      After signing up you choose a Corporate plan, and your account opens once a plan is active on it.
                     </p>
                   )}
                   {REGISTER_FIELDS[regForm.accountType].map(([label, key, type, ph]) => key === 'specialization' ? (
@@ -595,6 +605,24 @@ export default function AuthPage({ onBack }) {
             </>
           )}
         </div>
+
+        {/* Link between the two kinds of sign-in: firms have their own pages */}
+        {!isAdminRoute && authPage !== 'forgot' && (
+          <p className="auth-footer-note">
+            {isCorporateRoute ? 'Advocate or associate? ' : 'Corporate firm? '}
+            <button
+              type="button"
+              className="auth-link-btn"
+              onClick={() => navigate(isCorporateRoute
+                ? (authPage === 'register' ? '/register' : '/login')
+                : (authPage === 'register' ? '/corporate-register' : '/corporate-login'))}
+            >
+              {isCorporateRoute
+                ? (authPage === 'register' ? 'Register here' : 'Sign in here')
+                : (authPage === 'register' ? 'Register your firm' : 'Sign in here')}
+            </button>
+          </p>
+        )}
 
         {/* Footer */}
         <p className="auth-footer-note">Secured & Encrypted</p>
