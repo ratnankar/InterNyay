@@ -858,7 +858,7 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
               {/* Upload Document button */}
               <div className="case-detail__actions">
                 <button type="button"
-                  className="btn-outline"
+                  className="btn-outline btn-outline--sm"
                   onClick={e => {
                     e.stopPropagation()
                     setUploadDocCaseId(c.id)
@@ -966,6 +966,8 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
           )}
         </div>
 
+        {/* To-Do section: only when the case has linked to-dos */}
+        {caseTodos.length > 0 && (
         <div className={`exp-card${openSections.todos ? ' exp-card--open' : ''} u-mt-8`} >
           <button type="button" className="exp-card__head" onClick={e => toggleSection(e, 'todos')}>
             <div className="exp-card__avatar"><Icon name="clipboard" /></div>
@@ -1025,6 +1027,7 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
             </div>
           )}
         </div>
+        )}
 
         {/* WhatsApp reminders: automatic reminder switch, send now button and how many days before the hearing to send it */}
         {!isClosedCase(c) && (

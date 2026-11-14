@@ -63,7 +63,13 @@ function FormPage({ pdf, lib, number, width }) {
         canvas.height = Math.floor(sharp.height)
         canvas.style.width = `${width}px`
         canvas.style.height = `${Math.floor(viewport.height)}px`
-        task = page.render({ canvasContext: canvas.getContext('2d'), viewport: sharp })
+        // ENABLE_FORMS (2): the picture leaves the form boxes out, because the typing boxes laid over it draw their values;
+        // otherwise every filled value is drawn twice and overlaps itself
+        task = page.render({
+          canvasContext: canvas.getContext('2d'),
+          viewport: sharp,
+          annotationMode: lib.AnnotationMode?.ENABLE_FORMS ?? 2,
+        })
         await task.promise
         if (cancelled) return
 

@@ -427,23 +427,29 @@
 .todo-sidebar__item.active .todo-sidebar__count { background: rgba(10, 22, 40, 0.14); color: var(--sk-ink, #0a1628); opacity: 1; }
 .todo-sidebar__item.active { box-shadow: 0 4px 12px rgba(191, 154, 58, 0.32); }
 
-/* Delete button: overlays the right end of the row (takes no space), replacing the count pill on hover or focus */
+/* Delete button: sits over the right end of the row (takes no space) and slides in from the right on hover or focus,
+   while the count pill slides left to make room for it */
 .todo-sidebar .todo-sidebar__delete {
-  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  position: absolute; right: 6px; top: 50%;
   min-width: 0; min-height: 0; width: 30px; height: 30px; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 8px; background: #fff; opacity: 0; pointer-events: none;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  border-radius: 8px; background: transparent; color: #c0504d;
+  opacity: 0; pointer-events: none; transform: translate(14px, -50%);
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.18s ease, background 0.15s ease;
 }
-.todo-sidebar .todo-sidebar__delete:hover { transform: translateY(-50%); background: rgba(192, 80, 77, 0.12); }
+.todo-sidebar .todo-sidebar__delete:hover { transform: translate(0, -50%); background: rgba(192, 80, 77, 0.14); }
+.todo-sidebar .todo-sidebar__count { transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .todo-sidebar .todo-sidebar__row:hover .todo-sidebar__delete,
-.todo-sidebar .todo-sidebar__delete:focus-visible { opacity: 1; pointer-events: auto; }
-.todo-sidebar .todo-sidebar__row:hover .todo-sidebar__count,
-.todo-sidebar .todo-sidebar__row:has(.todo-sidebar__delete:focus-visible) .todo-sidebar__count { opacity: 0; }
+.todo-sidebar .todo-sidebar__delete:focus-visible {
+  opacity: 1; pointer-events: auto; transform: translate(0, -50%);
+}
+.todo-sidebar .todo-sidebar__row:has(.todo-sidebar__delete):hover .todo-sidebar__count,
+.todo-sidebar .todo-sidebar__row:has(.todo-sidebar__delete:focus-visible) .todo-sidebar__count {
+  transform: translateX(-34px);
+}
 @media (hover: none), (pointer: coarse) {
-  .todo-sidebar .todo-sidebar__delete { opacity: 0.85; pointer-events: auto; }
-  .todo-sidebar .todo-sidebar__row:hover .todo-sidebar__count { opacity: 1; }
-  .todo-sidebar .todo-sidebar__item { padding-right: 42px; }
+  .todo-sidebar .todo-sidebar__delete { opacity: 0.85; pointer-events: auto; transform: translate(0, -50%); }
+  .todo-sidebar .todo-sidebar__row:has(.todo-sidebar__delete) .todo-sidebar__count { transform: translateX(-34px); }
 }
 @media (max-width: 720px) {
   .todo-sidebar { width: 100%; }
