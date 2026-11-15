@@ -395,6 +395,14 @@ public class PdfFormService {
             // NeedAppearances must be OFF while values are set: with it on, PDFBox skips drawing each field's
             // appearance, so the saved PDF holds the values but shows blank boxes once downloaded
             form.setNeedAppearances(false);
+            // A field left on "auto" size would be fitted to its own box height by PDFBox, so boxes of different heights got
+            // different text sizes in the downloaded / printed form. Auto fields get the default size, like on screen
+            for (PDField any : form.getFieldTree()) {
+                if (any instanceof PDTextField tf && fontSizeOfDa(tf.getDefaultAppearance()) == 0f) {
+                    String da = tf.getDefaultAppearance();
+                    if (da != null) tf.setDefaultAppearance(da.replaceFirst("(/\\w+\\s+)0(?:\\.0*)?(\\s+Tf)", "$1" + DEFAULT_FONT + "$2"));
+                }
+            }
             for (Map.Entry<String, String> e : values.entrySet()) {
                 if (e.getValue() == null || e.getValue().isBlank()) continue;
                 PDField f = form.getField(e.getKey());

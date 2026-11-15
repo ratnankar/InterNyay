@@ -3,6 +3,7 @@ package com.internyay.service;
 import com.internyay.dto.*;
 import com.internyay.entity.Case;
 import com.internyay.entity.DocumentMeta;
+import com.internyay.entity.Hearing;
 import com.internyay.entity.MiscApplication;
 import com.internyay.entity.MiscApplicationHearing;
 import com.internyay.repository.HearingRepository;
@@ -230,6 +231,14 @@ public class MiscApplicationService {
             portal.setTitle(clean(req.getCaseTitle()));
             portal.setClientId(req.getClientId());
             portal.setNextHearing(req.getHearingDate());
+            // The rest of the case details can be edited too. Only what is sent changes; the CNR cannot be cleared here
+            // (the application is read from eCourts by it), so an empty one is left as it is
+            if (req.getCaseNo() != null) portal.setCaseNo(req.getCaseNo());
+            if (clean(req.getCnrNo()) != null) portal.setCnrNo(clean(req.getCnrNo()));
+            if (clean(req.getCourt()) != null) {
+                portal.setCourt(clean(req.getCourt()));
+                portal.setDistrict(req.getDistrict());
+            }
             caseService.update(a.getLegalCase().getId(), portal, userId);
             return toDto(repo.save(a));
         }
@@ -237,6 +246,7 @@ public class MiscApplicationService {
         // The case: another case for an application filed in an existing one, or the details of the case that was created with it
         if (a.isCaseCreatedHere()) {
             editOwnCase(a, req, userId);
+            adoptCnr(a, userId);
         } else if (req.getCaseId() != null && !req.getCaseId().equals(a.getLegalCase().getId())) {
             moveToCase(a, req.getCaseId(), userId);
         }
@@ -482,6 +492,35 @@ public class MiscApplicationService {
         cr.setDistrict(req.getDistrict());
         cr.setIdsOptional(true);
         caseService.update(a.getLegalCase().getId(), cr, userId);
+    }
+
+    // A CNR added later to the case that was created with the application: from now on the application reads its next hearing
+    // date, hearing history and status from eCourts through that case, like an application added by CNR. The dates the advocate
+    // had written into the application's own history are kept in the case's history (the date still to come stays the next hearing
+    // date), so nothing is lost. The page then runs the eCourts refresh right away, so the history fills in by itself.
+    private void adoptCnr(MiscApplication a, Long userId) {
+        if (a.isPortalSynced()) return;
+        Case c = caseRepo.findById(a.getLegalCase().getId()).orElse(null);
+        if (c == null || c.getCnrNo() == null || c.getCnrNo().isBlank()) return;
+
+        LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Kolkata"));
+        LocalDate upcoming = a.getHearingDate();
+        for (MiscApplicationHearing h : hearingRepo.findByMiscApplicationIdInOrderByHearingDateDesc(List.of(a.getId()))) {
+            LocalDate day = h.getHearingDate();
+            if (day == null || !day.isBefore(today) || day.equals(upcoming)) continue;
+            Hearing entry = caseHearingRepo.findByLegalCase_IdAndUser_IdAndDate(c.getId(), userId, day).orElse(null);
+            if (entry == null) {
+                entry = Hearing.builder().date(day).legalCase(c).user(userRepo.getReferenceById(userId)).build();
+            }
+            if (entry.getNotes() == null || entry.getNotes().isBlank()) entry.setNotes(h.getNote());
+            caseHearingRepo.save(entry);
+        }
+
+        if (c.getNextHearing() == null && upcoming != null) {
+            c.setNextHearing(upcoming);
+            caseRepo.save(c);
+        }
+        a.setPortalSynced(true);
     }
 
     // Adds the application's next hearing date to its own hearing history (a date already there is not added twice).
