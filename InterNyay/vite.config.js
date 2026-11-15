@@ -33,7 +33,7 @@ function siteFiles(siteUrl) {
     generateBundle() {
       const robots = [
         'User-agent: *',
-        ...PRIVATE_PATHS.map(path => `Disallow: ${path}`),
+        ...PRIVATE_PATHS.flatMap(path => [`Disallow: ${path}$`, `Disallow: ${path}/`]),
         `Sitemap: ${siteUrl}/sitemap.xml`,
         '',
       ].join('\n')
@@ -79,7 +79,7 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,woff2,svg,webp,png}'],
           globIgnores: ['**/pdf.worker*'],
           navigateFallback: '/index.html',
-          navigateFallbackDenylist: [/^\/api/],
+          navigateFallbackDenylist: [/^\/api/, /^\/robots\.txt$/, /^\/sitemap\.xml$/],
           runtimeCaching: [
             { urlPattern: ({ url }) => url.pathname.startsWith('/api'), handler: 'NetworkOnly' },
           ],
