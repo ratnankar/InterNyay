@@ -758,3 +758,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--sk-ink); }
 .spec-chip__x:hover { background: rgba(127, 127, 127, 0.28); }
 .spec-other { display: flex; gap: 8px; margin-top: 8px; }
 .spec-other input { flex: 1; min-width: 0; }
+/* Links between the advocate and the corporate sign-in pages */
+.auth-container > .auth-footer-note a { color: #e3c36a; font-weight: 600; text-decoration: none; }
+.auth-container > .auth-footer-note a:hover { text-decoration: underline; }

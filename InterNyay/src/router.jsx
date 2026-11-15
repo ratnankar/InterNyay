@@ -2,6 +2,7 @@
 //
 //   /                         landing page (signed out) -> dashboard (signed in)
 //   /login /register /forgot-password   sign-in screens (signed out only)
+//   /corporate-login /corporate-register /corporate-forgot-password   the same for corporate accounts
 //   /dashboard /cases /cases/:caseId /clients /clients/:clientId /transactions /expenses /notifications
 //   /documents /misc-applications /forms /todos /calculator /quick-access /judges-on-leave /contact /profile /my-plan   (signed in)
 //                             (the old /quickaccess /judgeleave /myplan addresses redirect to the new ones)
@@ -75,6 +76,10 @@ const routes = [
           { path: 'login',           element: <AuthRoute />, handle: { title: 'Sign in' } },
           { path: 'register',        element: <AuthRoute />, handle: { title: 'Create account' } },
           { path: 'forgot-password', element: <AuthRoute />, handle: { title: 'Reset password' } },
+          // Corporate accounts sign in and register on their own screens
+          { path: 'corporate-login',           element: <AuthRoute />, handle: { title: 'Corporate sign in' } },
+          { path: 'corporate-register',        element: <AuthRoute />, handle: { title: 'Corporate registration' } },
+          { path: 'corporate-forgot-password', element: <AuthRoute />, handle: { title: 'Reset password' } },
         ],
       },
 

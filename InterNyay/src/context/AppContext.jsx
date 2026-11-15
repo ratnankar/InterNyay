@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { isMiscOnlyHearing } from '../components/misc/miscUtils'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AUTH_PATHS, authTabFromPath, isAdminPath, navToPath, parseNavPath } from '../routes/paths'
+import { AUTH_PATHS, CORPORATE_AUTH_PATHS, authTabFromPath, isAdminPath, isCorporatePath, navToPath, parseNavPath } from '../routes/paths'
 import { caseCreatedDate, formatDate, hearingDateProblem } from '../utils/dateUtils'
 import { indianPhoneError, emailError } from '../utils/validators'
 import { passwordProblem } from '../utils/passwordPolicy'
@@ -101,8 +101,11 @@ export function AppProvider({ children }) {
   // Which tab of the auth page is open (login, register or forgot): it is part of the URL (/login, /register, /forgot-password)
   const authPage = authTabFromPath(location.pathname)
   // Switch tab by changing the URL; the page the visitor originally asked for (location.state.from) is kept
+  // Corporate accounts have their own set of sign-in screens (/corporate-login ...); switching tab stays on that set
+  const isCorporateRoute = isCorporatePath(location.pathname)
   const setAuthPage = useCallback(tab => {
-    navigate(AUTH_PATHS[tab] || AUTH_PATHS.login, { replace: true, state: locationRef.current.state })
+    const paths = isCorporatePath(locationRef.current.pathname) ? CORPORATE_AUTH_PATHS : AUTH_PATHS
+    navigate(paths[tab] || paths.login, { replace: true, state: locationRef.current.state })
   }, [navigate])
   const [authError, setAuthError] = useState(() => {
     // After a session expires the API layer leaves a note so the login page can explain why
@@ -160,6 +163,14 @@ export function AppProvider({ children }) {
     setLoginTypeState(type)
     try { localStorage.setItem('internyay_login_type', type) } catch { /* storage unavailable */ }
   }
+
+  // The corporate register page always registers a corporate account; the normal one never does
+  useEffect(() => {
+    setRegForm(f => {
+      const wanted = isCorporatePath(location.pathname) ? 'CORPORATE' : (f.accountType === 'CORPORATE' ? 'ADVOCATE' : f.accountType)
+      return f.accountType === wanted ? f : { ...f, accountType: wanted }
+    })
+  }, [location.pathname])
 
   // Registration form fields (advocate or associate account)
   const [regForm, setRegForm] = useState({
@@ -1045,6 +1056,15 @@ export function AppProvider({ children }) {
   // Reload everything whenever the user logs in
   }, [loggedIn])
 
+  // A message when this account is signing in on the wrong page: corporate accounts use /corporate-login, the others /login
+  function wrongSignInPage(res) {
+    if (isAdminRoute || String(res.user?.role || '').toUpperCase() === 'ADMIN') return ''
+    const corporate = !!res.user?.corporateAccount
+    if (isCorporateRoute && !corporate) return 'This is not a corporate account. Use the Advocate / Associate sign in instead.'
+    if (!isCorporateRoute && corporate) return 'This is a corporate account. Please sign in on the Corporate sign-in page.'
+    return ''
+  }
+
   // Sign in with email and password; the admin route only accepts admin accounts
   async function handleLogin() {
 
@@ -1053,7 +1073,7 @@ export function AppProvider({ children }) {
     try {
 
       const res = await authApi.login(
-        { ...loginForm, accountType: isAdminRoute ? 'ADMIN' : loginType }
+        { ...loginForm, accountType: isAdminRoute ? 'ADMIN' : isCorporateRoute ? 'ADVOCATE' : loginType }
       )
 
       // Role of the account that just logged in
@@ -1064,6 +1084,13 @@ export function AppProvider({ children }) {
         setAuthError(
           'This account does not have administrator access'
         )
+        return
+      }
+
+      // Corporate accounts sign in on their own page, everyone else on the normal one
+      const wrongPage = wrongSignInPage(res)
+      if (wrongPage) {
+        setAuthError(wrongPage)
         return
       }
 
@@ -1121,7 +1148,13 @@ export function AppProvider({ children }) {
 
     try {
 
-      startSession(await authApi.googleLogin({ idToken, accountType: loginType }))
+      const res = await authApi.googleLogin({ idToken, accountType: isCorporateRoute ? 'ADVOCATE' : loginType })
+      const wrongPage = wrongSignInPage(res)
+      if (wrongPage) {
+        setAuthError(wrongPage)
+        return
+      }
+      startSession(res)
 
     } catch (e) {
 
@@ -3748,6 +3781,7 @@ export function AppProvider({ children }) {
         // Role flags
         isAdmin,
         isAdminRoute,
+        isCorporateRoute,
         isAssociate,
 
         // Document viewing helpers

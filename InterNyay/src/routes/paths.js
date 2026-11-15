@@ -16,6 +16,8 @@ export const ADMIN_PATH = '/admin'
 
 // Sign-in screens: each tab of the auth page has its own URL
 export const AUTH_PATHS = { login: '/login', register: '/register', forgot: '/forgot-password' }
+// Corporate accounts have their own sign-in screens, separate from the advocate and associate ones
+export const CORPORATE_AUTH_PATHS = { login: '/corporate-login', register: '/corporate-register', forgot: '/corporate-forgot-password' }
 
 // Normalised path: lowercase, no trailing slash
 const clean = pathname => String(pathname || '/').replace(/\/+$/, '').toLowerCase() || '/'
@@ -26,14 +28,17 @@ export const isAdminPath = pathname => /^\/admin(\/|$)/.test(clean(pathname))
 // True for the landing and sign-in screens (never a place to send a signed-in user back to)
 export function isPublicPath(pathname) {
   const p = clean(pathname)
-  return p === '/' || p === '/home' || Object.values(AUTH_PATHS).includes(p)
+  return p === '/' || p === '/home' || Object.values(AUTH_PATHS).includes(p) || Object.values(CORPORATE_AUTH_PATHS).includes(p)
 }
+
+// True on the corporate sign-in screens
+export const isCorporatePath = pathname => Object.values(CORPORATE_AUTH_PATHS).includes(clean(pathname))
 
 // Which auth tab a URL stands for
 export function authTabFromPath(pathname) {
   const p = clean(pathname)
-  if (p === AUTH_PATHS.register) return 'register'
-  if (p === AUTH_PATHS.forgot) return 'forgot'
+  if (p === AUTH_PATHS.register || p === CORPORATE_AUTH_PATHS.register) return 'register'
+  if (p === AUTH_PATHS.forgot || p === CORPORATE_AUTH_PATHS.forgot) return 'forgot'
   return 'login'
 }
 

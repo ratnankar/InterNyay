@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
+import { AUTH_PATHS, CORPORATE_AUTH_PATHS } from '../../routes/paths'
 import AuthBackdrop from './AuthBackdrop'
 import PasswordInput from '../common/PasswordInput'
 import { starLabel } from '../common/Req'
@@ -17,9 +19,6 @@ const ACCOUNT_TYPES = [
   { value: 'ADVOCATE',  label: 'Advocate'  },
   { value: 'ASSOCIATE', label: 'Associate' },
 ]
-
-// Account types on the register form: corporate accounts sign up here too, but only on their own tab
-const REGISTER_TYPES = [...ACCOUNT_TYPES, { value: 'CORPORATE', label: 'Corporate' }]
 
 // Login inputs as [label, field name, input type, placeholder]
 const LOGIN_FIELDS = [
@@ -102,7 +101,7 @@ export default function AuthPage({ onBack }) {
     authError, handleLogin, handleRegister,
     handleGoogleLogin, handleGoogleRegister,
     googlePending, cancelGooglePending,
-    isAdminRoute,
+    isAdminRoute, isCorporateRoute,
     otpSent, otpCode, setOtpCode, otpVerified,
     otpSending, otpVerifying, otpResendInSec,
     handleSendOtp, handleVerifyOtp,
@@ -111,6 +110,9 @@ export default function AuthPage({ onBack }) {
     handleSendForgotOtp, handleResetForgottenPassword,
     switchAccount,
   } = useApp()
+
+  // On the corporate pages the register form is always the corporate one
+  const regType = isCorporateRoute ? 'CORPORATE' : regForm.accountType
 
   // Accounts still signed in on this browser: offered on the sign-in tab so the user can go back to one without a password
   const savedAccounts = !isAdminRoute && authPage === 'login' ? getAccounts() : []
@@ -148,7 +150,7 @@ export default function AuthPage({ onBack }) {
           {isAdminRoute ? (
             <div className="auth-admin-badge"><Icon name="lock" /> Restricted Access · Administrators Only</div>
           ) : (
-            <p className="auth-logo__tagline">Legal Practice Management</p>
+            <p className="auth-logo__tagline">{isCorporateRoute ? 'Corporate Account' : 'Legal Practice Management'}</p>
           )}
         </div>
 
@@ -256,10 +258,12 @@ export default function AuthPage({ onBack }) {
               {authPage === 'login' && (
                 <div className="auth-form">
                   {/* One email can have both an advocate and an associate account, so ask which one to open */}
-                  <div>
-                    <label className="auth-field-label">SIGN IN AS</label>
-                    <AccountTypeToggle value={loginType} onChange={setLoginType} />
-                  </div>
+                  {!isCorporateRoute && (
+                    <div>
+                      <label className="auth-field-label">SIGN IN AS</label>
+                      <AccountTypeToggle value={loginType} onChange={setLoginType} />
+                    </div>
+                  )}
                   {LOGIN_FIELDS.map(([label, key, type, ph]) => (
                     <div key={key}>
                       <label className="auth-field-label">{label}</label>
@@ -299,7 +303,7 @@ export default function AuthPage({ onBack }) {
                     <>
                       <OrDivider />
                       <p className="auth-hint auth-hint--center">
-                        Signing in with Google to your {loginType === 'ASSOCIATE' ? 'associate' : 'advocate'} account
+                        Signing in with Google to your {isCorporateRoute ? 'corporate' : loginType === 'ASSOCIATE' ? 'associate' : 'advocate'} account
                       </p>
                       <GoogleButton onCredential={handleGoogleLogin} />
                     </>
@@ -310,10 +314,12 @@ export default function AuthPage({ onBack }) {
               {/* Forgot password: enter email, receive a code, then set a new password */}
               {authPage === 'forgot' && (
                 <div className="auth-form">
-                  <AccountTypeToggle
-                    value={forgotForm.accountType}
-                    onChange={accountType => setForgotForm(f => ({ ...f, accountType }))}
-                  />
+                  {!isCorporateRoute && (
+                    <AccountTypeToggle
+                      value={forgotForm.accountType}
+                      onChange={accountType => setForgotForm(f => ({ ...f, accountType }))}
+                    />
+                  )}
 
                   <div>
                     <label className="auth-field-label">EMAIL</label>
@@ -418,16 +424,17 @@ export default function AuthPage({ onBack }) {
               {/* Registration form: account type, details, email OTP verification and Google sign-up */}
               {authPage === 'register' && (
                 <div className="auth-form auth-form--register">
-                  <AccountTypeToggle
-                    types={REGISTER_TYPES}
-                    value={regForm.accountType}
-                    onChange={accountType => {
-                      cancelGooglePending()
-                      setRegForm(f => ({ ...f, accountType }))
-                    }}
-                  />
+                  {!isCorporateRoute && (
+                    <AccountTypeToggle
+                      value={regForm.accountType}
+                      onChange={accountType => {
+                        cancelGooglePending()
+                        setRegForm(f => ({ ...f, accountType }))
+                      }}
+                    />
+                  )}
                   {/* Associates enter the advocate code shown on their advocate's profile */}
-                  {regForm.accountType === 'ASSOCIATE' && (
+                  {regType === 'ASSOCIATE' && (
                     <p className="auth-hint">
                       Ask your advocate for the code shown on their Profile page. It links your
                       account to their practice — you can work on their cases, clients and
@@ -435,13 +442,13 @@ export default function AuthPage({ onBack }) {
                     </p>
                   )}
                   {/* A corporate account registers here, then asks for the Corporate plan; its advocates get their accounts from it */}
-                  {regForm.accountType === 'CORPORATE' && (
+                  {regType === 'CORPORATE' && (
                     <p className="auth-hint">
                       For companies and organisations that hire advocates. You create the advocate accounts and allot cases to them.
                       After signing up, a request for the Corporate plan is sent to the InterNyay team, who will activate it for you.
                     </p>
                   )}
-                  {REGISTER_FIELDS[regForm.accountType].map(([label, key, type, ph]) => key === 'specialization' ? (
+                  {REGISTER_FIELDS[regType].map(([label, key, type, ph]) => key === 'specialization' ? (
                     <div key={key}>
                       <label className="auth-field-label">{starLabel(label)}</label>
                       <SpecializationSelect
@@ -558,7 +565,7 @@ export default function AuthPage({ onBack }) {
                     disabled={!otpVerified}
                     title={otpVerified ? '' : 'Verify your email first'}
                   >
-                    {{ ASSOCIATE: 'Create Associate Account', CORPORATE: 'Create Corporate Account' }[regForm.accountType] || 'Create Practice Account'}
+                    {{ ASSOCIATE: 'Create Associate Account', CORPORATE: 'Create Corporate Account' }[regType] || 'Create Practice Account'}
                   </button>
                   {/* Reminder that the email must be verified first */}
                   {!otpVerified && (
@@ -574,7 +581,7 @@ export default function AuthPage({ onBack }) {
                       <GoogleButton onCredential={handleGoogleRegister} />
                       <p className="auth-hint auth-hint--center">
                         Uses your Google name and email — no password or emailed code needed.
-                        {regForm.accountType === 'ASSOCIATE'
+                        {regType === 'ASSOCIATE'
                           ? ' New associates will be asked for their mobile number and advocate code in the next step.'
                           : ' New accounts will be asked for their mobile number in the next step.'}
                       </p>
@@ -587,6 +594,14 @@ export default function AuthPage({ onBack }) {
         </div>
 
         {/* Footer */}
+        {/* Corporate accounts have their own pages: a link each way */}
+        {!isAdminRoute && (
+          <p className="auth-footer-note">
+            {isCorporateRoute
+              ? <>Not a corporate account? <Link to={AUTH_PATHS[authPage] || AUTH_PATHS.login}>Advocate / Associate {authPage === 'register' ? 'registration' : 'sign in'}</Link></>
+              : <>Registering a company or organisation? <Link to={CORPORATE_AUTH_PATHS[authPage] || CORPORATE_AUTH_PATHS.login}>Corporate {authPage === 'register' ? 'registration' : 'sign in'}</Link></>}
+          </p>
+        )}
         <p className="auth-footer-note">Secured & Encrypted</p>
       </div>
 
