@@ -134,11 +134,13 @@
 }
 
 /* iOS Safari zooms the page when a field under 16px gets focus. Pinch-zoom is
-   now allowed (accessibility), so keep every touch-screen field at 16px. */
+   now allowed (accessibility), so keep every touch-screen field at 16px.
+   The boxes drawn over a legal form (.annotationLayer, see PdfFormViewer) are left out: pdf.js sizes their text
+   to the form page, so forcing 16px made the pre-filled text far bigger than its box on phones. */
 @media (pointer: coarse) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-  select,
-  textarea {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(.annotationLayer *),
+  select:not(.annotationLayer *),
+  textarea:not(.annotationLayer *) {
     font-size: 16px !important;
   }
 }

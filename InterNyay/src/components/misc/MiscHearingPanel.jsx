@@ -28,9 +28,14 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
   const refreshing = refreshingNow || refreshRunning
   useBusyTick()
 
-  const rows = app.hearings || []
   const pending = !isDisposed(app)
   const portal = !!app.portalSynced
+  // An application read from eCourts keeps its next date on the case, apart from the past hearings: it is listed first, with the
+  // "Next" mark, like the next date of the other applications (which is in their own history)
+  const history = app.hearings || []
+  const rows = portal && app.hearingDate && !history.some(h => h.date === app.hearingDate)
+    ? [{ id: 'next', date: app.hearingDate, note: '' }, ...history]
+    : history
 
   // Hands the changed application to the page and refreshes the counts and the dashboard
   function applied(updated) {
@@ -85,6 +90,14 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
     }
   }
 
+  // Refresh from eCourts: the symbol alone, next to the next hearing date it refreshes (it spins while eCourts is being read)
+  const refreshButton = (
+    <button type="button" className="btn-outline btn-outline--sm hearing-history__refresh-btn" disabled={refreshing} onClick={refresh}
+      title="Read the next hearing date, history and status from eCourts again" aria-label={refreshing ? 'Refreshing…' : 'Refresh from eCourts'}>
+      <Icon name="refresh" className={`hearing-history__refresh-icon${refreshing ? ' hearing-history__refresh-icon--spin' : ''}`} />
+    </button>
+  )
+
   return (
     <div className="hearing-history" onClick={e => e.stopPropagation()}>
       {/* Same header as a case's Hearing History: the toggle on the left, Next Hearing and Update on the right */}
@@ -94,13 +107,7 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
           Hearing History{rows.length > 0 ? ` (${rows.length})` : ''}
         </button>
         <div className="hearing-history__actions">
-          {portal && (
-            <button type="button" className="btn-outline btn-outline--sm" disabled={refreshing} onClick={refresh}
-              title="Read the next hearing date, history and status from eCourts again">
-              <Icon name="refresh" /> {refreshing ? 'Refreshing…' : 'Refresh'}
-            </button>
-          )}
-          {(pending || portal) && <MiscHearingUpdate app={app} onChange={onChange} />}
+          {(pending || portal) && <MiscHearingUpdate app={app} onChange={onChange} beforeUpdate={portal && refreshButton} />}
         </div>
       </div>
 

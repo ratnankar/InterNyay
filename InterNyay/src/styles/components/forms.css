@@ -291,6 +291,16 @@
 .pdf-form__page .annotationLayer { position: absolute; inset: 0; }
 .pdf-form__page .annotationLayer .textWidgetAnnotation input,
 .pdf-form__page .annotationLayer .textWidgetAnnotation textarea { background: rgba(255, 244, 179, 0.55); }
+/* The text in the boxes is sized by pdf.js to the form page (inline font-size times --scale-factor), so it shrinks and grows
+   with the page. Keep the page's own padding/line-height/text-size-adjust rules off it so no global input rule resizes it. */
+.pdf-form__page .annotationLayer :is(input, textarea) {
+  box-sizing: border-box;
+  max-width: none;
+  line-height: normal;
+  padding-block: 0;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
 .pdf-modal--fill .pdf-modal__frame {
   flex: 1 1 auto;
   width: 100%;
@@ -298,10 +308,11 @@
   min-height: 0;
   background: #fff;
 }
-/* Phones: bigger touch targets for the boxes, and a case picker and buttons that fit */
+/* Phones: a case picker and buttons that fit. The boxes keep the size of the form's own fields (no minimum height,
+   which pushed small fields out of line with the page); the zoom buttons make them bigger when needed */
 @media (max-width: 640px) {
   .pdf-form__page .annotationLayer .textWidgetAnnotation input,
-  .pdf-form__page .annotationLayer .textWidgetAnnotation textarea { min-height: 24px; touch-action: manipulation; }
+  .pdf-form__page .annotationLayer .textWidgetAnnotation textarea { touch-action: manipulation; }
   .pdf-modal--fill .pdf-modal__actions { flex-wrap: wrap; gap: 6px; }
   .legal-fill__search { flex-basis: 100%; }
 }

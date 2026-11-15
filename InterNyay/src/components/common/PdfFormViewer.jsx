@@ -23,6 +23,21 @@ const linkService = {
   isPageCached() { return true },
 }
 
+// Text size of the typing boxes. pdf.js draws a box's text at the smaller of its font size and what fits the box height, so boxes
+// with the same font size but different heights (or a size left on "auto") showed different text sizes. Every text box now gets
+// the font size set for it in the form (10, the field editor's default, when it is on auto), whatever its height.
+const AUTO_FIELD_FONT = 10
+
+function evenOutFieldSizes(layerDiv, annotations) {
+  for (const a of annotations) {
+    if (a.fieldType !== 'Tx' || !a.defaultAppearanceData) continue
+    const el = layerDiv.querySelector(`[data-annotation-id="${CSS.escape(String(a.id))}"] :is(input, textarea)`)
+    if (!el) continue
+    const size = a.defaultAppearanceData.fontSize || AUTO_FIELD_FONT
+    el.style.fontSize = `calc(${size}px * var(--total-scale-factor))`
+  }
+}
+
 // Puts the typed digits into a date layout such as dd/mm/yyyy ("1203" becomes "12/03")
 function applyDateFormat(digits, format) {
   let out = ''
@@ -99,6 +114,7 @@ function FormPage({ pdf, lib, number, width }) {
           hasJSActions: false,
           fieldObjects: null,
         })
+        if (!cancelled) evenOutFieldSizes(layerDiv, annotations)
       } catch (e) {
         if (e?.name !== 'RenderingCancelledException' && !cancelled) console.warn('Form page failed', number, e)
       }

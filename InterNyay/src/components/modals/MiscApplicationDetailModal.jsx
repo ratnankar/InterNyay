@@ -141,9 +141,11 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
     if (ownCase) {
       if (!draft.clientId) { addToast('Choose the client', 'error'); return }
       if (!draft.caseTitle.trim()) { addToast('Enter the case title', 'error'); return }
-      if (!portal && draft.cnrNo.trim() && !isValidCnr(draft.cnrNo)) { addToast('The CNR number must be 16 characters', 'error'); return }
-      if (!portal && !draft.court) { addToast('Choose the court', 'error'); return }
-      if (!portal && hasNamedDistricts(draft.court) && !draft.district) { addToast('Choose the district', 'error'); return }
+      // An application read from eCourts always has its CNR; for the others it is optional
+      if (portal && !draft.cnrNo.trim()) { addToast('Enter the 16-character CNR number', 'error'); return }
+      if (draft.cnrNo.trim() && !isValidCnr(draft.cnrNo)) { addToast('The CNR number must be 16 characters', 'error'); return }
+      if (!draft.court) { addToast('Choose the court', 'error'); return }
+      if (hasNamedDistricts(draft.court) && !draft.district) { addToast('Choose the district', 'error'); return }
     } else if (!draft.caseId) {
       addToast('Choose the case the application is filed in', 'error'); return
     }
@@ -153,9 +155,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
       filingDate: draft.filingDate || null,
       // The hearing date has its own Update button, so it is sent back as it is
       hearingDate: app.hearingDate || null,
-      ...(portal
-        ? { caseTitle: draft.caseTitle.trim(), clientId: draft.clientId }
-        : ownCase
+      ...(ownCase
         ? {
             caseTitle: draft.caseTitle.trim(),
             // Empty clears them: the case number and CNR are optional
@@ -174,6 +174,26 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
       // Hearing lists show the case, so they are read again when the case changed
       if (Number(updated.caseId) !== Number(app.caseId) || ownCase) bumpHearings(updated.caseId)
       addToast('Application updated')
+      // A CNR added later makes the application read its hearing history from eCourts: fill it in right away
+      // (also when the CNR of an application that already reads from eCourts was changed)
+      const cnrOf = v => String(v || '').replace(/[\s-]/g, '').toUpperCase()
+      if (ownCase && updated.portalSynced && (!portal || cnrOf(updated.cnrNo) !== cnrOf(app.cnrNo))) await refreshFromEcourts(updated)
+    }
+  }
+
+  // Reads the next hearing date, hearing history and status from eCourts (asks for the CAPTCHA when it cannot be read by itself),
+  // then loads the application again so the history shows
+  async function refreshFromEcourts(updated) {
+    setBusy('ecourts')
+    try {
+      const res = await api.cases.refreshHearing(updated.caseId)
+      onChange(await api.miscApplications.get(updated.id))
+      bumpHearings(updated.caseId)
+      addToast(res?.message || 'Hearing history updated from eCourts')
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not read the hearing history from eCourts, use Refresh in the hearing history to try again'), 'error')
+    } finally {
+      setBusy('')
     }
   }
 
@@ -337,7 +357,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                     <p className="misc-link__meta">{app.linkedCaseNo || '—'}</p>
                   </div>
                   <div className="misc-link__actions">
-                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => setLinkOpen(true)} disabled={busy === 'link'}>Change</button>
+                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => setLinkOpen(true)} disabled={busy === 'link'}>Replace</button>
                     <button type="button" className="btn-outline btn-outline--sm" onClick={() => linkTo(null)} disabled={busy === 'link'}>Unlink</button>
                   </div>
                 </div>
@@ -345,7 +365,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                 <div className="misc-link__row">
                   <p className="misc-link__meta">Not linked to a case yet.</p>
                   <div className="misc-link__actions">
-                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => setLinkOpen(true)}>Link to a case</button>
+                    <button type="button" className="btn-outline btn-outline--sm" onClick={() => setLinkOpen(true)}>Add case</button>
                   </div>
                 </div>
               )}
@@ -414,14 +434,13 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                     <input className="form-input" maxLength={500} value={draft.caseTitle}
                       onChange={e => setDraft(d => ({ ...d, caseTitle: e.target.value }))} />
                   </div>
-                  {!portal && (<>
                   <div>
                     <label className="form-label">Case number</label>
                     <input className="form-input" maxLength={255} placeholder="e.g. CC 1234/2026" value={draft.caseNo}
                       onChange={e => setDraft(d => ({ ...d, caseNo: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="form-label">CNR number</label>
+                    <label className="form-label">CNR number{portal && <Req />}</label>
                     <input className="form-input" maxLength={24} placeholder="16-character CNR" value={draft.cnrNo}
                       onChange={e => setDraft(d => ({ ...d, cnrNo: e.target.value }))} />
                   </div>
@@ -458,7 +477,6 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                       {hasNamedDistricts(draft.court) && getDistricts(draft.court).map(d => <option key={d} value={d}>{d}</option>)}
                     </Dropdown>
                   </div>
-                  </>)}
                 </>
               )}
               <div className="misc-grid__wide form-actions">

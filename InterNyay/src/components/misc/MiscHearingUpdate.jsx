@@ -6,7 +6,8 @@ import MiscNextHearingModal from './MiscNextHearingModal'
 // The next hearing date of one misc. application with its own Update button, which opens the Update Next Hearing window. The date of the application is kept apart
 // from the case's own next hearing date, so changing one never changes the other.
 // showName puts the application's name in front (used in the case page, where several applications are listed)
-export default function MiscHearingUpdate({ app, onChange, showName = false, showLabel = true }) {
+// beforeUpdate: something shown between the date and the Update button (the eCourts refresh symbol)
+export default function MiscHearingUpdate({ app, onChange, showName = false, showLabel = true, beforeUpdate = null }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -17,6 +18,7 @@ export default function MiscHearingUpdate({ app, onChange, showName = false, sho
       <div className="hearing-history__next">
         {showLabel && <span className="hearing-history__next-label">Next Hearing</span>}
         <strong className="hearing-history__next-date">{app.hearingDate ? formatDisplayDate(app.hearingDate) : '—'}</strong>
+        {beforeUpdate}
         <button type="button" className="btn-outline btn-outline--sm" onClick={() => setOpen(true)}>
           <Icon name="edit" /> {app.hearingDate ? 'Update' : 'Add date'}
         </button>

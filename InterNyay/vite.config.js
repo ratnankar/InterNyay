@@ -1,12 +1,12 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import { AUTH_PATHS, NAV_IDS, NAV_SLUGS } from './src/routes/paths.js'
+import { AUTH_PATHS, CORPORATE_AUTH_PATHS, NAV_IDS, NAV_SLUGS } from './src/routes/paths.js'
 
 // Every address the app answers to, built from the same lists the router uses (src/routes/paths.js), so a new page
 // is picked up here without a second edit. Pages with an id behind them (/cases/12, /forms/fill/3) get a trailing /*
 const APP_PATHS = [
-  '/home', ...Object.values(AUTH_PATHS), '/admin',
+  '/home', ...Object.values(AUTH_PATHS), ...Object.values(CORPORATE_AUTH_PATHS), '/admin',
   ...NAV_IDS.flatMap(id => (NAV_SLUGS[id] ? [`/${id}`, `/${NAV_SLUGS[id]}`] : [`/${id}`])),
 ]
 const APP_PATH_PREFIXES = ['/admin', '/cases', '/clients', '/forms']
