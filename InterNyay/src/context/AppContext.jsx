@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { isMiscOnlyHearing } from '../components/misc/miscUtils'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AUTH_PATHS, CORPORATE_AUTH_PATHS, authTabFromPath, isAdminPath, isCorporateAuthPath, navToPath, parseNavPath } from '../routes/paths'
+import { AUTH_PATHS, authTabFromPath, isAdminPath, navToPath, parseNavPath } from '../routes/paths'
 import { caseCreatedDate, formatDate, hearingDateProblem } from '../utils/dateUtils'
 import { indianPhoneError, emailError } from '../utils/validators'
 import { passwordProblem } from '../utils/passwordPolicy'
@@ -39,8 +39,10 @@ import {
   holidays as holidaysApi,
   noHearingDates as noHearingDatesApi,
   hearingLimits as hearingLimitsApi,
-  miscApplications as miscApplicationsApi
+  miscApplications as miscApplicationsApi,
+  contact as contactApi
 } from '../services/api'
+import { CONTACT_CATEGORY_PLANS } from '../constants/contact'
 import { getErrorMessage } from '../utils/errorMessages'
 import { onLiveRefresh } from '../utils/liveRefresh'
 import { loadOptions, useOptionsVersion } from '../constants/optionsStore'
@@ -88,8 +90,6 @@ export function AppProvider({ children }) {
 
   // True on /admin and below, which shows the admin sign-in instead of the normal one
   const isAdminRoute = isAdminPath(location.pathname)
-  // True on /corporate-login and /corporate-register, the separate sign-in pages for corporate firms
-  const isCorporateRoute = isCorporateAuthPath(location.pathname)
 
   // Logged in if a token is saved in the browser from a previous login
   const [loggedIn, setLoggedIn] = useState(
@@ -102,9 +102,7 @@ export function AppProvider({ children }) {
   const authPage = authTabFromPath(location.pathname)
   // Switch tab by changing the URL; the page the visitor originally asked for (location.state.from) is kept
   const setAuthPage = useCallback(tab => {
-    // On the corporate pages Sign In / Register stay on the corporate pages; forgot-password is shared
-    const paths = isCorporateAuthPath(locationRef.current.pathname) && CORPORATE_AUTH_PATHS[tab] ? CORPORATE_AUTH_PATHS : AUTH_PATHS
-    navigate(paths[tab] || AUTH_PATHS.login, { replace: true, state: locationRef.current.state })
+    navigate(AUTH_PATHS[tab] || AUTH_PATHS.login, { replace: true, state: locationRef.current.state })
   }, [navigate])
   const [authError, setAuthError] = useState(() => {
     // After a session expires the API layer leaves a note so the login page can explain why
@@ -1055,7 +1053,7 @@ export function AppProvider({ children }) {
     try {
 
       const res = await authApi.login(
-        { ...loginForm, accountType: isAdminRoute ? 'ADMIN' : isCorporateRoute ? 'CORPORATE' : loginType }
+        { ...loginForm, accountType: isAdminRoute ? 'ADMIN' : loginType }
       )
 
       // Role of the account that just logged in
@@ -1123,7 +1121,7 @@ export function AppProvider({ children }) {
 
     try {
 
-      startSession(await authApi.googleLogin({ idToken, accountType: isCorporateRoute ? 'CORPORATE' : loginType }))
+      startSession(await authApi.googleLogin({ idToken, accountType: loginType }))
 
     } catch (e) {
 
@@ -1212,9 +1210,10 @@ export function AppProvider({ children }) {
         startSession(res)
         addToast('You already have an account — signed you in')
       } else {
-        const registeringFirm = regForm.accountType === 'CORPORATE'
-        startSession(res, { askPlan: !registeringAssociate && !registeringFirm })
+        const registeringCorporate = regForm.accountType === 'CORPORATE'
+        startSession(res, { askPlan: !registeringAssociate && !registeringCorporate })
         addToast('Account created — welcome to InterNyay')
+        if (registeringCorporate) requestCorporatePlan()
       }
 
     } catch (e) {
@@ -1232,6 +1231,17 @@ export function AppProvider({ children }) {
 
       setAuthError(getErrorMessage(e, 'Google sign-up failed'))
     }
+  }
+
+  // A corporate account registered through the corporate sign-up: ask the InterNyay team for the Corporate plan (an admin assigns it)
+  // and skip the plan chooser, which does not list the Corporate plan for advocates
+  function requestCorporatePlan() {
+    contactApi.send({
+      category: CONTACT_CATEGORY_PLANS,
+      subject: 'Corporate plan request at sign-up',
+      message: 'I just registered as a corporate account and would like the Corporate plan. Please let me know the next steps.',
+    }).then(() => addToast('Corporate plan request sent — the InterNyay team will get back to you'))
+      .catch(() => addToast('Could not send the Corporate plan request — you can try again from My Plan', 'error'))
   }
 
   // Registration step 1: validate the email and send a verification code to it
@@ -1335,7 +1345,7 @@ export function AppProvider({ children }) {
     }
 
     const registeringAssociate = regForm.accountType === 'ASSOCIATE'
-    const registeringFirm = regForm.accountType === 'CORPORATE'
+    const registeringCorporate = regForm.accountType === 'CORPORATE'
 
     if (registeringAssociate && !String(regForm.advocateCode || '').trim()) {
       setAuthError("Enter the advocate code from your advocate's Profile page")
@@ -1353,9 +1363,10 @@ export function AppProvider({ children }) {
       // Clear every field (and the OTP state) after a successful sign up
       resetAuthForms()
 
-      startSession(res, { askPlan: !registeringAssociate && !registeringFirm })
+      startSession(res, { askPlan: !registeringAssociate && !registeringCorporate })
 
       addToast('Account created — welcome to InterNyay')
+      if (registeringCorporate) requestCorporatePlan()
 
     } catch (e) {
 
@@ -3737,7 +3748,6 @@ export function AppProvider({ children }) {
         // Role flags
         isAdmin,
         isAdminRoute,
-        isCorporateRoute,
         isAssociate,
 
         // Document viewing helpers

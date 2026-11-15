@@ -14,9 +14,9 @@ const TABS = [
 
 const EMPTY_FORM = { name: '', email: '', phone: '', barNo: '', password: '' }
 
-// Corporate view for a firm on a corporate plan: create accounts for the hired advocates, allot cases to them in bulk from your MIS spreadsheets
+// Corporate view for a corporate account on a corporate plan: create accounts for the hired advocates, allot cases to them in bulk from your MIS spreadsheets
 // and see who holds which case
-export default function CorporateFirm() {
+export default function CorporateHub() {
   const [tab, setTab] = useState('advocates')
   const [advocates, setAdvocates] = useState([])
   const [loaded, setLoaded] = useState(false)
@@ -34,7 +34,7 @@ export default function CorporateFirm() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Corporate</h1>
+          <h1 className="page-title">Corporate Hub</h1>
           <p className="page-subtitle">Create accounts for your hired advocates and allot cases to them in bulk from your MIS spreadsheets</p>
         </div>
       </div>

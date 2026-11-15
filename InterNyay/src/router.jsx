@@ -18,7 +18,7 @@ import { useApp } from './context/AppContext'
 
 import LandingPage        from './pages/LandingPage'
 import {
-  AuthPage, AppLayout, Dashboard, Cases, CorporateFirm, AllottedCases, Clients, TransactionHistory, Expenses, NotificationsPage, Documents, MiscApplications,
+  AuthPage, AppLayout, Dashboard, Cases, CorporateHub, AllottedCases, Clients, TransactionHistory, Expenses, NotificationsPage, Documents, MiscApplications,
   LegalForms, TodoList, CourtFeeCalculator, QuickAccess, JudgesOnLeave, ContactUs, Profile, MyPlan, Admin, FillFormPage,
 } from './routes/lazy'
 import { MISC_APP_NAME } from './constants/data'
@@ -33,7 +33,7 @@ function RootIndex() {
   const legacyForm = params.get('fillForm')
   if (legacyForm) return <Navigate to={fillFormPath(legacyForm, params.get('caseId'))} replace />
   if (loggedIn) return <Navigate to={destinationAfterLogin(null, role)} replace />
-  return <LandingPage onSignIn={type => navigate(type === 'CORPORATE' ? '/corporate-login' : '/login')} onRegister={type => navigate(type === 'CORPORATE' ? '/corporate-register' : '/register')} />
+  return <LandingPage onSignIn={() => navigate('/login')} onRegister={() => navigate('/register')} />
 }
 
 // Sign-in / register / forgot-password: the tab comes from the URL (see AppContext)
@@ -75,9 +75,6 @@ const routes = [
           { path: 'login',           element: <AuthRoute />, handle: { title: 'Sign in' } },
           { path: 'register',        element: <AuthRoute />, handle: { title: 'Create account' } },
           { path: 'forgot-password', element: <AuthRoute />, handle: { title: 'Reset password' } },
-          // Corporate firms sign in and register on their own pages
-          { path: 'corporate-login',    element: <AuthRoute />, handle: { title: 'Corporate sign in' } },
-          { path: 'corporate-register', element: <AuthRoute />, handle: { title: 'Corporate firm registration' } },
         ],
       },
 
@@ -118,7 +115,7 @@ const routes = [
               { path: 'judges-on-leave', element: page('judgeleave', JudgesOnLeave),       handle: { title: 'Judges on Leave' } },
               { path: 'contact',       element: page('contact', ContactUs),              handle: { title: 'Contact Us' } },
               { path: 'profile',       element: page('profile', Profile),                handle: { title: 'Profile' } },
-              { path: 'corporate',    element: page('corporate', CorporateFirm),         handle: { title: 'Corporate' } },
+              { path: 'corporate',    element: page('corporate', CorporateHub),         handle: { title: 'Corporate Hub' } },
               { path: 'allotted-cases', element: page('allotted', AllottedCases),       handle: { title: 'Allotted Cases' } },
               { path: 'my-plan',       element: page('myplan', MyPlan),                  handle: { title: 'My Plan' } },
               { path: '*',             element: <NotFound embedded />,                            handle: { title: 'Page not found' } },

@@ -5,7 +5,7 @@ import SearchInput from '../components/common/SearchInput'
 import SeeMore from '../components/common/SeeMore'
 import useSeeMore from '../hooks/useSeeMore'
 
-// For an advocate a firm created: the cases the firm allotted to them. A case is added with its CNR number; once it is in the
+// For an advocate a corporate account created: the cases the corporate account allotted to them. A case is added with its CNR number; once it is in the
 // advocate's own Cases list it shows as added
 export default function AllottedCases() {
   const { currentUser, openAddCase } = useApp()
@@ -40,7 +40,7 @@ export default function AllottedCases() {
         <div>
           <h1 className="page-title">Allotted Cases</h1>
           <p className="page-subtitle">
-            Cases {currentUser?.corporateName || 'your firm'} allotted to you{loaded ? ` • ${pending} not added yet` : ''}
+            Cases {currentUser?.corporateName || 'your corporate'} allotted to you{loaded ? ` • ${pending} not added yet` : ''}
           </p>
         </div>
       </div>

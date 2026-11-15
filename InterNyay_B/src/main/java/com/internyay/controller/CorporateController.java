@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-// Corporate view. /firm/** is for the firm (an account on a corporate plan), /mine for its hired advocates
+// Corporate view. /corporate/** is for the corporate account (an account on a corporate plan), /mine for its hired advocates
 @RestController
 @RequestMapping("/api/corporate")
 @RequiredArgsConstructor
@@ -24,55 +24,55 @@ public class CorporateController {
     private final CorporateService service;
     private final AuthHelper auth;
 
-    private User firm() { return service.requireFirm(auth.currentAccount()); }
+    private User corporate() { return service.requireCorporate(auth.currentAccount()); }
 
-    // ----- Firm -----
+    // ----- Corporate account -----
 
-    @GetMapping("/firm/advocates")
+    @GetMapping("/manage/advocates")
     public ResponseEntity<List<CorporateService.AdvocateRow>> advocates() {
-        return ResponseEntity.ok(service.advocates(firm()));
+        return ResponseEntity.ok(service.advocates(corporate()));
     }
 
-    @PostMapping("/firm/advocates")
+    @PostMapping("/manage/advocates")
     public ResponseEntity<CorporateService.AdvocateRow> createAdvocate(@RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(service.createAdvocate(firm(), body.get("name"), body.get("email"),
+        return ResponseEntity.ok(service.createAdvocate(corporate(), body.get("name"), body.get("email"),
                 body.get("phone"), body.get("barNo"), body.get("password")));
     }
 
-    @PutMapping("/firm/advocates/{id}/active")
+    @PutMapping("/manage/advocates/{id}/active")
     public ResponseEntity<CorporateService.AdvocateRow> setActive(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
-        return ResponseEntity.ok(service.setActive(firm(), id, Boolean.TRUE.equals(body.get("active"))));
+        return ResponseEntity.ok(service.setActive(corporate(), id, Boolean.TRUE.equals(body.get("active"))));
     }
 
-    @PutMapping("/firm/advocates/{id}/password")
+    @PutMapping("/manage/advocates/{id}/password")
     public ResponseEntity<Void> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        service.resetPassword(firm(), id, body.get("password"));
+        service.resetPassword(corporate(), id, body.get("password"));
         return ResponseEntity.noContent().build();
     }
 
     // Upload one or more MIS spreadsheets and allot every case found in them to one advocate
-    @PostMapping(value = "/firm/allot", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/manage/allot", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CorporateService.AllotResult> allot(@RequestParam Long advocateId,
                                                               @RequestParam("files") List<MultipartFile> files,
                                                               @RequestParam(defaultValue = "true") boolean skipClosed) {
-        return ResponseEntity.ok(service.allot(firm(), advocateId, files, skipClosed));
+        return ResponseEntity.ok(service.allot(corporate(), advocateId, files, skipClosed));
     }
 
-    @GetMapping("/firm/allotments")
+    @GetMapping("/manage/allotments")
     public ResponseEntity<List<CorporateService.AllotmentRow>> allotments(@RequestParam(required = false) Long advocateId,
                                                                           @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(service.firmAllotments(firm(), advocateId, search));
+        return ResponseEntity.ok(service.corporateAllotments(corporate(), advocateId, search));
     }
 
-    @PutMapping("/firm/allotments/{id}/advocate")
+    @PutMapping("/manage/allotments/{id}/advocate")
     public ResponseEntity<Void> reassign(@PathVariable Long id, @RequestBody Map<String, Long> body) {
-        service.reassign(firm(), id, body.get("advocateId"));
+        service.reassign(corporate(), id, body.get("advocateId"));
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/firm/allotments/{id}")
+    @DeleteMapping("/manage/allotments/{id}")
     public ResponseEntity<Void> remove(@PathVariable Long id) {
-        service.remove(firm(), id);
+        service.remove(corporate(), id);
         return ResponseEntity.noContent().build();
     }
 
@@ -83,11 +83,11 @@ public class CorporateController {
         return ResponseEntity.ok(service.mine(service.requireHired(auth.currentAccount())));
     }
 
-    // ----- Uploaded spreadsheet (the firm that uploaded it) -----
+    // ----- Uploaded spreadsheet (the corporate account that uploaded it) -----
 
-    @GetMapping("/firm/sheet/{id}")
+    @GetMapping("/manage/sheet/{id}")
     public ResponseEntity<byte[]> sheet(@PathVariable Long id) {
-        CorporateSheet sheet = service.sheetFor(firm(), id);
+        CorporateSheet sheet = service.sheetFor(corporate(), id);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .header(HttpHeaders.CONTENT_DISPOSITION,

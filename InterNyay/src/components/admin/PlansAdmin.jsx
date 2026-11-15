@@ -138,7 +138,7 @@ function PlanFields({ v, patch, isNew, canDisable }) {
             <option value="ADVOCATE">Advocates (landing page and My Plan)</option>
             <option value="BUSINESS">Business accounts only (hidden from advocates)</option>
             <option value="BOTH">Both advocates and business accounts</option>
-            <option value="CORPORATE">Corporate firms only (hidden from advocates)</option>
+            <option value="CORPORATE">Corporate accounts only (hidden from advocates)</option>
           </Dropdown></div>
         <div className="plans-admin__grid plans-admin__grid--3 plans-admin__toggles">
           <Toggle checked={!!v.comingSoon} onChange={e => patch({ comingSoon: e.target.checked })}
@@ -274,10 +274,10 @@ export default function PlansAdmin() {
   const toggleOpen = code => {
     setOpenCodes(o => ({ ...o, [code]: !o[code] }))
     // Collapsing a card also cancels a half-finished "Remove plan" confirmation on it
-    setConfirmId(null)
+    setConcorporateId(null)
   }
   // Plan waiting for a "Yes, remove" click, and the one being removed
-  const [confirmId, setConfirmId] = useState(null)
+  const [concorporateId, setConcorporateId] = useState(null)
   const [removingId, setRemovingId] = useState(null)
   // Plan the accounts of the plan being removed are moved to
   const [moveTo, setMoveTo] = useState('')
@@ -409,7 +409,7 @@ export default function PlansAdmin() {
   }
 
   // Opens the remove confirmation for a plan
-  const askRemove = p => { setConfirmId(p.id); setMoveTo('') }
+  const askRemove = p => { setConcorporateId(p.id); setMoveTo('') }
 
   // Removes a plan. Advocates on it are first moved to the chosen plan; the backend refuses the last plan left
   async function remove(p) {
@@ -420,12 +420,12 @@ export default function PlansAdmin() {
     try {
       await api.admin.plans.remove(p.id, p.usersCount > 0 ? moveTo : undefined)
       setPlans(ps => ps.filter(x => x.id !== p.id))
-      setConfirmId(null)
+      setConcorporateId(null)
       addToast(p.usersCount > 0 ? `${p.name} plan removed, its accounts moved to ${plans.find(x => x.code === moveTo)?.name || moveTo}` : `${p.name} plan removed`)
       if (p.usersCount > 0) loadPlans()
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not remove the plan'), 'error')
-      setConfirmId(null)
+      setConcorporateId(null)
     } finally {
       setRemovingId(null)
     }
@@ -472,7 +472,7 @@ export default function PlansAdmin() {
                 </span>
               </button>
               {/* Every plan can be removed except the last one left; the button only shows once the card is expanded */}
-              {openCodes[p.code] && plans.length > 1 && (confirmId === p.id ? (
+              {openCodes[p.code] && plans.length > 1 && (concorporateId === p.id ? (
                 <div className="plans-admin__confirm">
                   <span>
                     {p.usersCount > 0
@@ -486,7 +486,7 @@ export default function PlansAdmin() {
                         .map(x => <option key={x.code} value={x.code}>{planLabel(x, plans)}</option>)}
                     </Dropdown>
                   )}
-                  <button type="button" className="btn-outline" onClick={() => setConfirmId(null)} disabled={removingId === p.id}>Cancel</button>
+                  <button type="button" className="btn-outline" onClick={() => setConcorporateId(null)} disabled={removingId === p.id}>Cancel</button>
                   <button type="button" className="btn-danger" onClick={() => remove(p)} disabled={removingId === p.id}>
                     {removingId === p.id ? 'Removing…' : (p.usersCount > 0 ? 'Move and remove' : 'Yes, remove')}
                   </button>

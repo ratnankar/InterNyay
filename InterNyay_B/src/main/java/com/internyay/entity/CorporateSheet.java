@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-// An MIS spreadsheet (.xlsx) a corporate firm uploaded to allot cases; the CNR numbers read from it are kept as allotments
+// An MIS spreadsheet (.xlsx) a corporate account uploaded to allot cases; the CNR numbers read from it are kept as allotments
 @Entity
 @Table(name = "corporate_sheets")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -15,9 +15,9 @@ public class CorporateSheet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // The corporate firm that uploaded the sheet
+    // The corporate account that uploaded the sheet
     @Column(name = "firm_id", nullable = false)
-    private Long firmId;
+    private Long corporateId;
 
     @Column(nullable = false)
     private String fileName;

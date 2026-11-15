@@ -252,7 +252,7 @@ export default function Profile() {
       {/* Page title and, for admins, a button back to the admin page */}
       <div className="page-header">
         <h1 className="page-title">
-          {isAdmin ? 'Admin Profile' : isAssociate ? 'Associate Profile' : 'Advocate Profile'}
+          {isAdmin ? 'Admin Profile' : isAssociate ? 'Associate Profile' : currentUser?.corporateAccount ? 'Corporate Profile' : 'Advocate Profile'}
         </h1>
         <div className="page-header__actions">
           {isAdmin && (
@@ -278,7 +278,7 @@ export default function Profile() {
           />
           <div className="profile-card__identity">
             <p className="profile-card__name">
-              {name || (isAdmin ? 'Administrator' : isAssociate ? 'Associate' : 'Advocate')}
+              {name || (isAdmin ? 'Administrator' : isAssociate ? 'Associate' : currentUser?.corporateAccount ? 'Corporate' : 'Advocate')}
             </p>
             <p className="profile-card__email">{email}</p>
             {currentUser?.profilePicture && (

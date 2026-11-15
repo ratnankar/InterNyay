@@ -34,13 +34,7 @@ public class PlanFeatureInterceptor implements HandlerInterceptor {
         RULES.put("^/api/fee-calculator(/.*)?$",         "court_fee_calculator");
         RULES.put("^/api/chat(/.*)?$",                   "chat_assistant");
         RULES.put("^/api/whatsapp/(cases|send)(/.*)?$",  "whatsapp_reminders");
-        RULES.put("^/api/corporate/firm(/.*)?$",         "corporate");
-    }
-
-    // Endpoints a firm without a plan can still use: sign-in and account, the plan screen, the contact form, public data
-    private static boolean firmMayCall(String path) {
-        return path.startsWith("/api/auth/") || path.startsWith("/api/plans/") || path.startsWith("/api/public/")
-                || path.equals("/api/contact") || path.startsWith("/api/contact/");
+        RULES.put("^/api/corporate/manage(/.*)?$",         "corporate");
     }
 
     // Runs before every /api request
@@ -49,19 +43,6 @@ public class PlanFeatureInterceptor implements HandlerInterceptor {
         // Preflight requests are always allowed
         if ("OPTIONS".equalsIgnoreCase(req.getMethod())) return true;
         String path = req.getRequestURI();
-
-        // A corporate firm without a usable plan (none assigned yet, or the plan is disabled / coming soon) is locked out of
-        // the whole API except sign-in, its own account, the plan screen and the contact form
-        Authentication who = SecurityContextHolder.getContext().getAuthentication();
-        boolean signedIn = who != null && who.isAuthenticated() && !"anonymousUser".equals(who.getPrincipal());
-        if (signedIn && !firmMayCall(path)) {
-            User account = auth.currentAccount();
-            if (!account.isAdmin() && plans.firmBlockReason(account) != null) {
-                throw new AccessDeniedException(
-                        "Your corporate account has no active plan yet. Choose a plan to start using InterNyay.");
-            }
-        }
-
         // Find the feature this URL belongs to
         String key = null;
         for (var e : RULES.entrySet()) {

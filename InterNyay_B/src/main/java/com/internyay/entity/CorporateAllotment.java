@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-// A case a corporate firm allotted to one of its hired advocates (a CNR number is allotted to one advocate at a time)
+// A case a corporate account allotted to one of its hired advocates (a CNR number is allotted to one advocate at a time)
 @Entity
 @Table(name = "corporate_allotments")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -16,7 +16,7 @@ public class CorporateAllotment {
     private Long id;
 
     @Column(name = "firm_id", nullable = false)
-    private Long firmId;
+    private Long corporateId;
 
     // The hired advocate the case went to
     @ManyToOne(fetch = FetchType.EAGER, optional = false)

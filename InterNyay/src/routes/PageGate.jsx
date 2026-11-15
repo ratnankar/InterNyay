@@ -26,7 +26,7 @@ export default function PageGate({ id, children }) {
   const { isAssociate, transactionsUnlocked, currentUser } = useApp()
   const { can } = usePlanFeatures()
 
-  // Only a firm sees the corporate view, only a hired advocate sees the allotted cases
+  // Only a corporate account sees the corporate view, only a hired advocate sees the allotted cases
   if (id === 'corporate' && (isAssociate || currentUser?.corporateId)) return <Navigate to="/dashboard" replace />
   if (id === 'allotted' && !currentUser?.corporateId) return <Navigate to="/dashboard" replace />
   // Associates don't get the transactions page

@@ -35,10 +35,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Number of associates, checked against the plan limit
     long countByAdvocate_Id(Long advocateId);
 
-    // Hired advocates of a corporate firm
-    long countByCorporate_Id(Long firmId);
+    // Hired advocates of a corporate account
+    long countByCorporate_Id(Long corporateId);
 
-    List<User> findByCorporate_IdOrderByNameAsc(Long firmId);
+    List<User> findByCorporate_IdOrderByNameAsc(Long corporateId);
 
     // Advocate accounts on a plan. Accounts with no plan code count as FREE
     @Query("SELECT u FROM User u WHERE u.role = 'ADVOCATE' AND (UPPER(u.planCode) = :code "

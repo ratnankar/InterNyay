@@ -24,7 +24,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-// Reads the MIS spreadsheets (.xlsx) a corporate firm keeps its cases in (the Hero Fincorp NI 138 MIS and similar). Every sheet that
+// Reads the MIS spreadsheets (.xlsx) a corporate account keeps its cases in (the Hero Fincorp NI 138 MIS and similar). Every sheet that
 // has a CNR column is read (its header is found by name, because the sheets call it CNRNO, CRN NO or CRN NUMBER); the other sheets,
 // like pivot tables, are left out. The sheet is streamed row by row, so a sheet with tens of thousands of rows stays light on memory.
 public final class CorporateSheetReader {

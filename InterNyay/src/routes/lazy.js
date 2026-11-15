@@ -28,7 +28,7 @@ export const ChooseCourts = lazyPage(() => import('../components/auth/ChooseCour
 export const AppLayout = lazyPage(() => import('./AppLayout'))
 export const Dashboard = lazyPage(() => import('../pages/Dashboard'))
 export const Cases = lazyPage(() => import('../pages/Cases'))
-export const CorporateFirm = lazyPage(() => import('../pages/CorporateFirm'))
+export const CorporateHub = lazyPage(() => import('../pages/CorporateHub'))
 export const AllottedCases = lazyPage(() => import('../pages/AllottedCases'))
 export const Clients = lazyPage(() => import('../pages/Clients'))
 export const TransactionHistory = lazyPage(() => import('../pages/TransactionHistory'))

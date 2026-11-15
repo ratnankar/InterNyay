@@ -36,12 +36,12 @@ public class AccountPurgeService {
 
         Long id = advocate.getId();
 
-        // A corporate firm's hired advocates go with the firm, then its allotments and uploaded sheets
+        // A corporate account's hired advocates go with the corporate account, then its allotments and uploaded sheets
         for (User hired : userRepo.findByCorporate_IdOrderByNameAsc(id)) purge(hired);
         corporateAllotmentRepo.deleteByAdvocate_Id(id);
-        corporateAllotmentRepo.deleteByFirmId(id);
-        List<String> sheetKeys = corporateSheetRepo.findByFirmId(id).stream().map(p -> p.getStorageKey()).toList();
-        corporateSheetRepo.deleteByFirmId(id);
+        corporateAllotmentRepo.deleteByCorporateId(id);
+        List<String> sheetKeys = corporateSheetRepo.findByCorporateId(id).stream().map(p -> p.getStorageKey()).toList();
+        corporateSheetRepo.deleteByCorporateId(id);
 
         // The advocate's associates go with the account
         List<User> associates = userRepo.findByAdvocate_IdOrderByCreatedAtDesc(id);

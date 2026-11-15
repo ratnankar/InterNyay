@@ -1,4 +1,4 @@
-/* Corporate view: firm page (advocates, allot from PDFs, allotments) and the hired advocate's allotted cases */
+/* Corporate view: corporate page (advocates, allot from PDFs, allotments) and the hired advocate's allotted cases */
 .corp-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
 .corp-tab {
   padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid var(--color-border, #d9d9d9);

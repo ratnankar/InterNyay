@@ -3,17 +3,11 @@ import { Navigate, Outlet, useLocation, useMatches } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import NotFound from '../pages/NotFound'
 import { AuthPage, AppLayout, ChoosePlan, ChooseCourts } from './lazy'
-import FirmPlanGate from '../components/auth/FirmPlanGate'
 import { ADMIN_PATH, HOME_PATH, destinationAfterLogin } from './paths'
 
 // Role saved with the last session; known immediately after a reload, before the profile has been fetched again
 function cachedRole() {
   try { return String(JSON.parse(localStorage.getItem('internyay_user') || '{}').role || '').toUpperCase() } catch { return '' }
-}
-
-// Whether the last saved session belonged to a corporate firm (known right after a reload, before the profile is fetched again)
-function cachedFirm() {
-  try { return !!JSON.parse(localStorage.getItem('internyay_user') || '{}').corporateFirm } catch { return false }
 }
 
 // Role of the signed-in user ('' when signed out)
@@ -34,7 +28,7 @@ export function PublicOnly() {
 
 // The whole signed-in app. Signed-out visitors go to the sign-in page and come back to the page they asked for afterwards
 export function RequireAuth() {
-  const { loggedIn, justSignedOut, planPromptOpen, courtPromptOpen, currentUser } = useApp()
+  const { loggedIn, justSignedOut, planPromptOpen, courtPromptOpen } = useApp()
   const location = useLocation()
   const role = useSessionRole()
 
@@ -55,12 +49,6 @@ export function RequireAuth() {
   if (role === 'ADMIN') return <Navigate to={ADMIN_PATH} replace />
   // New advocates must choose a plan before they can use the app (associates skip this)
   if (planPromptOpen && role !== 'ASSOCIATE') return <ChoosePlan />
-  // A corporate firm has no default plan: it sees its plan screen until a usable plan is active on the account
-  // (an admin assigns one, or it picks one), and again whenever that plan is disabled or set to coming soon
-  const isFirm = role === 'ADVOCATE' && (currentUser?.corporateFirm ?? cachedFirm())
-  if (isFirm) {
-    return <FirmPlanGate>{courtPromptOpen ? <ChooseCourts /> : <Outlet />}</FirmPlanGate>
-  }
   // Then every new account says which courts it works at (it can be skipped and changed later on the Profile page)
   if (courtPromptOpen) return <ChooseCourts />
   return <Outlet />

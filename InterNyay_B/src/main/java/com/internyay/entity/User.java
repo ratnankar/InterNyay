@@ -97,15 +97,15 @@ public class User {
     @JoinColumn(name = "advocate_id")
     private User advocate;
 
-    // For a hired advocate, the corporate firm that created the account (such an account is an ordinary advocate account)
+    // For a hired advocate, the corporate account that created the account (such an account is an ordinary advocate account)
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "corporate_id")
     private User corporate;
 
-    // True for an account that registered as a corporate firm (it can be given the Corporate plan, which advocates never see)
+    // True for an account that registered as a corporate account (it can be given the Corporate plan, which advocates never see)
     @Builder.Default
-    @Column(name = "corporate_firm", nullable = false)
-    private boolean corporateFirm = false;
+    @Column(name = "corporate_account", nullable = false)
+    private boolean corporateAccount = false;
 
     // Associates this advocate may add, set by an admin. null = use the plan's limit, -1 = unlimited
     @Column(name = "associate_limit")

@@ -11,8 +11,4 @@ public class MyPlanDto {
     // Associate seats already used
     public long associatesUsed;
     public List<PlanDto> available;
-    // Corporate firms only: true while the firm has no usable plan, so the app stays locked
-    public boolean accessBlocked;
-    // NO_PLAN (no plan assigned yet) or PLAN_UNAVAILABLE (the plan is disabled, coming soon or gone); null when not blocked
-    public String blockReason;
 }

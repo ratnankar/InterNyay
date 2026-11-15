@@ -108,7 +108,7 @@ public class AuthService implements UserDetailsService {
             User adv = user.getAdvocate();
             enabled = enabled && adv != null && !Boolean.FALSE.equals(adv.getActive());
         }
-        // A hired advocate is only enabled while the firm that created the account is active too
+        // A hired advocate is only enabled while the corporate account that created the account is active too
         if (user.getCorporate() != null) {
             enabled = enabled && !Boolean.FALSE.equals(user.getCorporate().getActive());
         }
@@ -175,11 +175,6 @@ public class AuthService implements UserDetailsService {
         return true;
     }
 
-    private static final String FIRM_ONLY_MESSAGE =
-            "This is a corporate firm account. Please sign in from the Corporate firm sign-in page";
-    private static final String NOT_A_FIRM_MESSAGE =
-            "This is not a corporate firm account. Please sign in from the Advocate / Associate sign-in page";
-
     // The same email can exist under different roles, so every allowed role is tried
     private User authenticate(LoginRequest req) {
 
@@ -189,18 +184,13 @@ public class AuthService implements UserDetailsService {
 
         List<String> roles = switch (type) {
             case "ADVOCATE"  -> List.of(User.ADVOCATE);
-            // Corporate firms are advocate accounts that sign in on their own page
-            case "CORPORATE" -> List.of(User.ADVOCATE);
             case "ASSOCIATE" -> List.of(User.ASSOCIATE);
             case "ADMIN"     -> List.of(User.ADMIN);
             // The normal sign-in page never logs in an admin, admins use /admin which sends accountType ADMIN
             default          -> List.of(User.ADVOCATE, User.ASSOCIATE);
         };
-        // Firms sign in on the corporate page only; every other page refuses them (and the corporate page refuses everyone else)
-        boolean firmPortal = "CORPORATE".equals(type);
 
         boolean emailKnown = false;
-        String wrongPortal = null;
         List<User> matches = new java.util.ArrayList<>();
 
         for (String role : roles) {
@@ -209,18 +199,8 @@ public class AuthService implements UserDetailsService {
 
             emailKnown = true;
             if (passwordEncoder.matches(req.getPassword(), candidate.getPassword())) {
-                if (candidate.isCorporateFirm() != firmPortal) {
-                    wrongPortal = candidate.isCorporateFirm() ? FIRM_ONLY_MESSAGE : NOT_A_FIRM_MESSAGE;
-                    continue;
-                }
                 matches.add(candidate);
             }
-        }
-
-        // The right password, but on the wrong sign-in page: say where to go instead of "invalid email or password"
-        if (matches.isEmpty() && wrongPortal != null) {
-            loginLimiter.reset(email);
-            throw new IllegalArgumentException(wrongPortal);
         }
 
         // The password fits both an advocate and an associate account and the user did not say which one: ask, never guess
@@ -251,8 +231,8 @@ public class AuthService implements UserDetailsService {
 
         String email = Emails.normalize(req.getEmail());
         boolean associate = "ASSOCIATE".equalsIgnoreCase(req.getAccountType());
-        // A corporate firm is an advocate account that registered through the corporate sign-up
-        boolean firm = "CORPORATE".equalsIgnoreCase(req.getAccountType());
+        // A corporate account is an advocate account that registered through the corporate sign-up
+        boolean corporate = "CORPORATE".equalsIgnoreCase(req.getAccountType());
         String role = associate ? User.ASSOCIATE : User.ADVOCATE;
 
         // Registration is blocked until the OTP step has passed
@@ -280,7 +260,7 @@ public class AuthService implements UserDetailsService {
                 .role(role)
                 .advocate(advocate)
                 .advocateCode(associate ? null : newCode())
-                .corporateFirm(firm)
+                .corporateAccount(corporate)
                 .active(true)
                 .build();
 
@@ -325,20 +305,14 @@ public class AuthService implements UserDetailsService {
 
         List<String> roles = switch (type) {
             case "ADVOCATE"  -> List.of(User.ADVOCATE);
-            case "CORPORATE" -> List.of(User.ADVOCATE);
             case "ASSOCIATE" -> List.of(User.ASSOCIATE);
             case ""          -> List.of(User.ADVOCATE, User.ASSOCIATE);
             default          -> throw new IllegalArgumentException("Google sign-in is not available for that account type");
         };
-        // Firms use the corporate sign-in page only, and the corporate page is only for firms
-        boolean firmPortal = "CORPORATE".equals(type);
 
         List<User> found = new java.util.ArrayList<>();
         for (String role : roles) {
-            userRepo.findByEmailAndRole(email, role).ifPresent(u -> {
-                if (u.isCorporateFirm() == firmPortal) found.add(u);
-                else throw new IllegalArgumentException(u.isCorporateFirm() ? FIRM_ONLY_MESSAGE : NOT_A_FIRM_MESSAGE);
-            });
+            userRepo.findByEmailAndRole(email, role).ifPresent(found::add);
         }
 
         // The same Google email has both an advocate and an associate account and no type was chosen: ask, never guess
@@ -377,7 +351,7 @@ public class AuthService implements UserDetailsService {
         String email = Emails.normalize(google.email());
 
         boolean associate = "ASSOCIATE".equalsIgnoreCase(req.getAccountType());
-        boolean firm = "CORPORATE".equalsIgnoreCase(req.getAccountType());
+        boolean corporate = "CORPORATE".equalsIgnoreCase(req.getAccountType());
         String role = associate ? User.ASSOCIATE : User.ADVOCATE;
 
         if (userRepo.existsByEmailAndRole(email, User.ADMIN)) {
@@ -410,7 +384,7 @@ public class AuthService implements UserDetailsService {
                 .role(role)
                 .advocate(advocate)
                 .advocateCode(associate ? null : newCode())
-                .corporateFirm(firm)
+                .corporateAccount(corporate)
                 .active(true)
                 .build();
 

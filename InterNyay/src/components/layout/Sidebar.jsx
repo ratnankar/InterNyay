@@ -24,6 +24,8 @@ const NAV_FEATURE = {
 }
 // Menu shown to advocates and associates (id matches the page name in AppContext); Contact Us lives in the account pop-up
 const NAV_ITEMS = [
+  // Only a corporate account on the Corporate plan sees this; it sits first because it is that account's main workspace
+  { id: 'corporate',    icon: 'folders',  label: 'Corporate Hub' },
   { id: 'dashboard',    icon: 'bank',  label: 'Dashboard' },
   { id: 'cases',        icon: 'folder',  label: 'Cases' },
   { id: 'clients',      icon: 'user',  label: 'Clients' },
@@ -36,7 +38,6 @@ const NAV_ITEMS = [
   { id: 'calculator',   icon: 'calculator',  label: 'Fee Calculator' },
   { id: 'judgeleave',   icon: 'beach',  label: 'Judges on Leave' },
   { id: 'quickaccess',  icon: 'bolt',  label: 'Quick Access' },
-  { id: 'corporate',    icon: 'folders',  label: 'Corporate' },
   { id: 'allotted',     icon: 'file',  label: 'Allotted Cases' },
 ]
 
@@ -171,7 +172,7 @@ export default function Sidebar() {
     : NAV_ITEMS.filter(item => {
         if (isAssociate && item.id === 'transactions') return false
         if (!isAssociate && item.id === 'expenses') return false
-        // Corporate view: only for a firm on a corporate plan; allotted cases: only for the advocates a firm created
+        // Corporate view: only for a corporate account on a corporate plan; allotted cases: only for the advocates a corporate account created
         if (item.id === 'corporate' && (isAssociate || currentUser?.corporateId || !keys?.includes('corporate'))) return false
         if (item.id === 'allotted' && !currentUser?.corporateId) return false
         if (NAV_FEATURE[item.id] && !can(NAV_FEATURE[item.id])) return false
@@ -182,6 +183,8 @@ export default function Sidebar() {
 
   const name    = currentUser?.name    || ''
   const barNo   = String(currentUser?.barNo || '').trim()
+  // A corporate account is not shown as an advocate
+  const isCorporate = !!currentUser?.corporateAccount && !isAssociate
 
   // Close the drawer and the account pop-up (the links themselves do the navigating)
   const closeMenus = () => {
@@ -341,7 +344,7 @@ export default function Sidebar() {
                   <span className="sidebar__account-text">
                     <span className="sidebar__account-name">{account.user?.name || 'Account'}</span>
                     <span className="sidebar__account-sub">
-                      {String(account.user?.role || '').toUpperCase() === 'ASSOCIATE' ? 'Associate' : 'Advocate'}
+                      {String(account.user?.role || '').toUpperCase() === 'ASSOCIATE' ? 'Associate' : account.user?.corporateAccount ? 'Corporate' : 'Advocate'}
                       {account.user?.email ? ` · ${account.user.email}` : ''}
                     </span>
                   </span>
@@ -363,7 +366,7 @@ export default function Sidebar() {
             onClick={() => (hasUserMenu ? setUserMenuOpen(o => !o) : goTo('profile'))}
             aria-haspopup={hasUserMenu ? 'menu' : undefined}
             aria-expanded={hasUserMenu ? userMenuOpen : undefined}
-            title={isAssociate ? 'Profile and contact us' : hasUserMenu ? 'Profile, plan and contact us' : 'View / edit advocate profile'}
+            title={isAssociate ? 'Profile and contact us' : hasUserMenu ? 'Profile, plan and contact us' : isCorporate ? 'View / edit corporate profile' : 'View / edit advocate profile'}
           >
             <Avatar
               key={currentUser?.profilePicture || 'none'}
@@ -371,11 +374,11 @@ export default function Sidebar() {
             />
             <div className="sidebar__user-text">
               <div className="sidebar__user-name-row">
-                <p className="sidebar__user-name">{name || (isAssociate ? 'Associate' : 'Advocate')}</p>
+                <p className="sidebar__user-name">{name || (isAssociate ? 'Associate' : isCorporate ? 'Corporate' : 'Advocate')}</p>
                 {hasUserMenu && <span className={`sidebar__user-caret${userMenuOpen ? ' is-open' : ''}`} aria-hidden="true" />}
               </div>
               <p className="sidebar__user-bar">
-                {isAdmin ? 'ADMINISTRATOR' : (barNo || (isAssociate ? 'ASSOCIATE' : 'ADVOCATE'))}
+                {isAdmin ? 'ADMINISTRATOR' : (isCorporate ? 'CORPORATE' : barNo || (isAssociate ? 'ASSOCIATE' : 'ADVOCATE'))}
               </p>
             </div>
             {hasUserMenu && !userMenuOpen && unreadBadge}

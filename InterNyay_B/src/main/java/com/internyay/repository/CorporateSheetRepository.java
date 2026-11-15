@@ -9,9 +9,9 @@ import java.util.List;
 
 public interface CorporateSheetRepository extends JpaRepository<CorporateSheet, Long> {
 
-    List<CorporateSheet> findByFirmId(Long firmId);
+    List<CorporateSheet> findByCorporateId(Long corporateId);
 
-    void deleteByFirmId(Long firmId);
+    void deleteByCorporateId(Long corporateId);
 
     // File names without loading anything else
     @Query("SELECT s.id, s.fileName FROM CorporateSheet s WHERE s.id IN :ids")

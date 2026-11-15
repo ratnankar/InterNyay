@@ -8,13 +8,13 @@ import java.util.Optional;
 
 public interface CorporateAllotmentRepository extends JpaRepository<CorporateAllotment, Long> {
 
-    List<CorporateAllotment> findByFirmIdOrderByIdDesc(Long firmId);
+    List<CorporateAllotment> findByCorporateIdOrderByIdDesc(Long corporateId);
 
-    List<CorporateAllotment> findByFirmId(Long firmId);
+    List<CorporateAllotment> findByCorporateId(Long corporateId);
 
     List<CorporateAllotment> findByAdvocate_IdOrderByIdDesc(Long advocateId);
 
-    Optional<CorporateAllotment> findByFirmIdAndCnrNo(Long firmId, String cnrNo);
+    Optional<CorporateAllotment> findByCorporateIdAndCnrNo(Long corporateId, String cnrNo);
 
     long countByAdvocate_Id(Long advocateId);
 
@@ -22,5 +22,5 @@ public interface CorporateAllotmentRepository extends JpaRepository<CorporateAll
 
     void deleteByAdvocate_Id(Long advocateId);
 
-    void deleteByFirmId(Long firmId);
+    void deleteByCorporateId(Long corporateId);
 }

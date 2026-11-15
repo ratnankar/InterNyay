@@ -639,10 +639,3 @@
 
 /* ---------- Section links are real links (/#pricing): same look as the buttons they replaced ---------- */
 .lx :is(.lx-nav__links, .lx-menu, .lx-footer__col) a { text-decoration: none; cursor: pointer; display: inline-block; }
-
-/* Corporate plans block under the advocate plans */
-.lx-pricing__corporate { margin-top: 4rem; }
-/* Corporate cards keep a normal card width and sit centred (one plan would otherwise stretch across the whole row) */
-.lx .lx-pricing__corporate .pricing-grid { display: flex; flex-wrap: wrap; justify-content: center; max-width: none; }
-.lx .lx-pricing__corporate .pricing-card { flex: 0 1 380px; min-width: 0; }
-.lx .lx-pricing__firm-signin { margin-top: 1.25rem; text-align: center; color: var(--color-text-muted); font-size: var(--fs-base); }

@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-// Corporate view: a firm on a corporate plan creates accounts for its hired advocates and allots cases to them in bulk by
+// Corporate view: a corporate account on a corporate plan creates accounts for its hired advocates and allots cases to them in bulk by
 // uploading its MIS spreadsheets (.xlsx). The hired advocate works in a normal advocate account and sees the allotted cases in their own list
 @Service
 @RequiredArgsConstructor
@@ -60,26 +60,26 @@ public class CorporateService {
 
     // ----- Who may do what -----
 
-    // The firm behind the signed-in account: an advocate account on a plan with the corporate feature, not a hired advocate
-    public User requireFirm(User me) {
+    // The corporate behind the signed-in account: an advocate account on a plan with the corporate feature, not a hired advocate
+    public User requireCorporate(User me) {
         if (me == null || !me.isAdvocate() || me.getCorporate() != null || !planService.hasFeature(me, "corporate")) {
             throw new AccessDeniedException("The corporate view needs a corporate plan");
         }
         return me;
     }
 
-    // A hired advocate (an account a firm created)
+    // A hired advocate (an account a corporate account created)
     public User requireHired(User me) {
         if (me == null || !me.isAdvocate() || me.getCorporate() == null) {
-            throw new AccessDeniedException("This account was not created by a corporate firm");
+            throw new AccessDeniedException("This account was not created by a corporate account");
         }
         return me;
     }
 
-    private User ownedAdvocate(User firm, Long advocateId) {
+    private User ownedAdvocate(User corporate, Long advocateId) {
         User a = userRepo.findById(advocateId).orElseThrow(() -> new NoSuchElementException("Advocate not found"));
-        if (a.getCorporate() == null || !a.getCorporate().getId().equals(firm.getId())) {
-            throw new AccessDeniedException("This advocate does not belong to your firm");
+        if (a.getCorporate() == null || !a.getCorporate().getId().equals(corporate.getId())) {
+            throw new AccessDeniedException("This advocate does not belong to your corporate account");
         }
         return a;
     }
@@ -87,9 +87,9 @@ public class CorporateService {
     // ----- Hired advocate accounts -----
 
     @Transactional(readOnly = true)
-    public List<AdvocateRow> advocates(User firm) {
+    public List<AdvocateRow> advocates(User corporate) {
         List<AdvocateRow> rows = new ArrayList<>();
-        for (User u : userRepo.findByCorporate_IdOrderByNameAsc(firm.getId())) {
+        for (User u : userRepo.findByCorporate_IdOrderByNameAsc(corporate.getId())) {
             rows.add(new AdvocateRow(u.getId(), u.getName(), u.getEmail(), u.getPhone(), u.getBarNo(),
                     !Boolean.FALSE.equals(u.getActive()), allotRepo.countByAdvocate_Id(u.getId())));
         }
@@ -97,12 +97,12 @@ public class CorporateService {
     }
 
     @Transactional
-    public AdvocateRow createAdvocate(User firm, String name, String rawEmail, String phone, String barNo, String password) {
+    public AdvocateRow createAdvocate(User corporate, String name, String rawEmail, String phone, String barNo, String password) {
         if (name == null || name.isBlank()) throw new IllegalArgumentException("Enter the advocate's name");
         String email = Emails.normalize(rawEmail);
         if (email.isEmpty() || !email.contains("@")) throw new IllegalArgumentException("Enter a valid email");
         PasswordPolicy.require(password, email);
-        planService.assertCorporateSeat(firm);
+        planService.assertCorporateSeat(corporate);
         if (userRepo.existsByEmailAndRole(email, User.ADMIN) || userRepo.existsByEmailAndRole(email, User.ADVOCATE)) {
             throw new IllegalArgumentException("An advocate account already exists for this email");
         }
@@ -113,7 +113,7 @@ public class CorporateService {
                 .phone(phone == null ? null : phone.trim())
                 .barNo(barNo == null || barNo.isBlank() ? null : barNo.trim())
                 .role(User.ADVOCATE)
-                .corporate(firm)
+                .corporate(corporate)
                 .active(true)
                 .build();
         try {
@@ -125,16 +125,16 @@ public class CorporateService {
     }
 
     @Transactional
-    public AdvocateRow setActive(User firm, Long advocateId, boolean active) {
-        User a = ownedAdvocate(firm, advocateId);
+    public AdvocateRow setActive(User corporate, Long advocateId, boolean active) {
+        User a = ownedAdvocate(corporate, advocateId);
         a.setActive(active);
         userRepo.save(a);
         return new AdvocateRow(a.getId(), a.getName(), a.getEmail(), a.getPhone(), a.getBarNo(), active, allotRepo.countByAdvocate_Id(a.getId()));
     }
 
     @Transactional
-    public void resetPassword(User firm, Long advocateId, String password) {
-        User a = ownedAdvocate(firm, advocateId);
+    public void resetPassword(User corporate, Long advocateId, String password) {
+        User a = ownedAdvocate(corporate, advocateId);
         PasswordPolicy.require(password, a.getEmail());
         a.setPassword(passwordEncoder.encode(password));
         a.setPasswordChangedAt(java.time.LocalDateTime.now());
@@ -143,19 +143,19 @@ public class CorporateService {
 
     // ----- Bulk allotment from the MIS spreadsheets -----
 
-    // Reads the case rows of every spreadsheet and allots each CNR number to the advocate. A CNR the firm already allotted to
+    // Reads the case rows of every spreadsheet and allots each CNR number to the advocate. A CNR the corporate account already allotted to
     // someone else is moved to this advocate; one already with this advocate stays (its MIS details are refreshed). Rows without a
     // usable CNR are reported, not guessed: the case is added later by its CNR number, so a CC number alone is not enough
     @Transactional
-    public AllotResult allot(User firm, Long advocateId, List<MultipartFile> files, boolean skipClosed) {
-        User advocate = ownedAdvocate(firm, advocateId);
+    public AllotResult allot(User corporate, Long advocateId, List<MultipartFile> files, boolean skipClosed) {
+        User advocate = ownedAdvocate(corporate, advocateId);
         if (Boolean.FALSE.equals(advocate.getActive())) throw new IllegalArgumentException("This advocate account is deactivated");
         if (files == null || files.isEmpty()) throw new IllegalArgumentException("Choose at least one spreadsheet");
 
         String batchId = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
-        // One query for everything the firm already allotted, so a sheet of 17,000 rows does not mean 17,000 look-ups
+        // One query for everything the corporate account already allotted, so a sheet of 17,000 rows does not mean 17,000 look-ups
         Map<String, CorporateAllotment> existing = new HashMap<>();
-        for (CorporateAllotment a : allotRepo.findByFirmId(firm.getId())) existing.put(a.getCnrNo(), a);
+        for (CorporateAllotment a : allotRepo.findByCorporateId(corporate.getId())) existing.put(a.getCnrNo(), a);
 
         List<FileResult> results = new ArrayList<>();
         int allotted = 0, moved = 0, unchanged = 0, duplicates = 0, skipped = 0, failed = 0;
@@ -163,7 +163,7 @@ public class CorporateService {
         for (MultipartFile f : files) {
             String name = f.getOriginalFilename() == null || f.getOriginalFilename().isBlank() ? "file.xlsx" : f.getOriginalFilename();
             try {
-                FileResult r = allotFile(firm, advocate, f, name, batchId, skipClosed, existing);
+                FileResult r = allotFile(corporate, advocate, f, name, batchId, skipClosed, existing);
                 allotted += r.allotted(); moved += r.moved(); unchanged += r.unchanged();
                 duplicates += r.duplicates(); skipped += r.skipped();
                 results.add(r);
@@ -175,7 +175,7 @@ public class CorporateService {
         return new AllotResult(batchId, advocate.getName(), allotted, moved, unchanged, duplicates, skipped, failed, results);
     }
 
-    private FileResult allotFile(User firm, User advocate, MultipartFile f, String name, String batchId, boolean skipClosed,
+    private FileResult allotFile(User corporate, User advocate, MultipartFile f, String name, String batchId, boolean skipClosed,
                                  Map<String, CorporateAllotment> existing) {
         if (f.isEmpty()) throw new IllegalArgumentException("The file is empty");
         if (f.getSize() > MAX_SHEET_BYTES) throw new IllegalArgumentException("The file is larger than 30 MB");
@@ -200,7 +200,7 @@ public class CorporateService {
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         CorporateSheet saved;
         try {
-            saved = sheetRepo.save(CorporateSheet.builder().firmId(firm.getId()).fileName(name).storageKey(key).build());
+            saved = sheetRepo.save(CorporateSheet.builder().corporateId(corporate.getId()).fileName(name).storageKey(key).build());
         } catch (RuntimeException e) {
             storage.delete(key);
             throw e;
@@ -231,7 +231,7 @@ public class CorporateService {
 
             CorporateAllotment cur = existing.get(row.cnr());
             if (cur == null) {
-                CorporateAllotment n = CorporateAllotment.builder().firmId(firm.getId()).advocate(advocate)
+                CorporateAllotment n = CorporateAllotment.builder().corporateId(corporate.getId()).advocate(advocate)
                         .sheetId(saved.getId()).cnrNo(row.cnr()).batchId(batchId).build();
                 fill(n, row);
                 fresh.add(n);
@@ -288,12 +288,12 @@ public class CorporateService {
 
     // ----- Allotment lists -----
 
-    // The firm's allotments, newest first; filtered by advocate and by search text (CNR or CC number, accused, court, advocate, file)
+    // The corporate account's allotments, newest first; filtered by advocate and by search text (CNR or CC number, accused, court, advocate, file)
     @Transactional(readOnly = true)
-    public List<AllotmentRow> firmAllotments(User firm, Long advocateId, String search) {
+    public List<AllotmentRow> corporateAllotments(User corporate, Long advocateId, String search) {
         List<CorporateAllotment> all = advocateId == null
-                ? allotRepo.findByFirmIdOrderByIdDesc(firm.getId())
-                : allotRepo.findByFirmIdOrderByIdDesc(firm.getId()).stream()
+                ? allotRepo.findByCorporateIdOrderByIdDesc(corporate.getId())
+                : allotRepo.findByCorporateIdOrderByIdDesc(corporate.getId()).stream()
                         .filter(a -> a.getAdvocate().getId().equals(advocateId)).toList();
         List<AllotmentRow> rows = rowsOf(all);
         String q = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
@@ -336,11 +336,11 @@ public class CorporateService {
         return rows;
     }
 
-    // Moves an allotted case to another hired advocate of the firm
+    // Moves an allotted case to another hired advocate of the corporate account
     @Transactional
-    public void reassign(User firm, Long allotmentId, Long advocateId) {
-        CorporateAllotment a = firmAllotment(firm, allotmentId);
-        User advocate = ownedAdvocate(firm, advocateId);
+    public void reassign(User corporate, Long allotmentId, Long advocateId) {
+        CorporateAllotment a = corporateAllotment(corporate, allotmentId);
+        User advocate = ownedAdvocate(corporate, advocateId);
         if (Boolean.FALSE.equals(advocate.getActive())) throw new IllegalArgumentException("This advocate account is deactivated");
         a.setAdvocate(advocate);
         allotRepo.save(a);
@@ -348,13 +348,13 @@ public class CorporateService {
 
     // Takes an allotment back (a case the advocate already added stays in their list)
     @Transactional
-    public void remove(User firm, Long allotmentId) {
-        allotRepo.delete(firmAllotment(firm, allotmentId));
+    public void remove(User corporate, Long allotmentId) {
+        allotRepo.delete(corporateAllotment(corporate, allotmentId));
     }
 
-    private CorporateAllotment firmAllotment(User firm, Long id) {
+    private CorporateAllotment corporateAllotment(User corporate, Long id) {
         CorporateAllotment a = allotRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Allotment not found"));
-        if (!a.getFirmId().equals(firm.getId())) throw new AccessDeniedException("Not your allotment");
+        if (!a.getCorporateId().equals(corporate.getId())) throw new AccessDeniedException("Not your allotment");
         return a;
     }
 
@@ -369,11 +369,11 @@ public class CorporateService {
         }
     }
 
-    // A stored spreadsheet, only for the firm that uploaded it
+    // A stored spreadsheet, only for the corporate account that uploaded it
     @Transactional(readOnly = true)
-    public CorporateSheet sheetFor(User firm, Long sheetId) {
+    public CorporateSheet sheetFor(User corporate, Long sheetId) {
         CorporateSheet sheet = sheetRepo.findById(sheetId).orElseThrow(() -> new NoSuchElementException("Spreadsheet not found"));
-        if (!sheet.getFirmId().equals(firm.getId())) throw new AccessDeniedException("Not your spreadsheet");
+        if (!sheet.getCorporateId().equals(corporate.getId())) throw new AccessDeniedException("Not your spreadsheet");
         return sheet;
     }
 }
