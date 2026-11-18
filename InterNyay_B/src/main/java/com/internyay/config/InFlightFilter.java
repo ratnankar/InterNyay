@@ -29,7 +29,8 @@ public class InFlightFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         boolean writes = "POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)
                 || "PATCH".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method);
-        return !writes || request.getRequestURI().startsWith("/api/chat");
+        return !writes || request.getRequestURI().startsWith("/api/chat")
+                || request.getRequestURI().startsWith("/api/whatsapp/webhook");
     }
 
     @Override

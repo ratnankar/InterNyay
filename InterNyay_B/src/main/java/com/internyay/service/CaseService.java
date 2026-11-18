@@ -323,6 +323,11 @@ public class CaseService {
         return toDto(saved);
     }
 
+    @Transactional
+    public List<CaseDto> exchangeFileNumber(Long id, int seq, Long userId) {
+        return fileNumbers.exchange(id, userId, seq).stream().map(this::toDto).toList();
+    }
+
     // Soft delete: documents and hearings go, the case row stays hidden so history and file numbers survive
     @Transactional
     public void delete(Long id, Long userId) {
@@ -356,7 +361,7 @@ public class CaseService {
         }
 
         if (typed != null) {
-            applyTypedFileNo(c, typed, userId);
+            applyTypedFileNo(c, typed, userId, Boolean.TRUE.equals(req.getExchangeFileNo()));
             return;
         }
 
@@ -371,7 +376,7 @@ public class CaseService {
 
     // Keeps a typed file number as typed. A plain number (25, 1043) joins the running sequence, so it can't be given
     // twice and the next automatic number moves past it; anything else (FILE/2024/045, 12-A, 007) stays text only
-    private void applyTypedFileNo(Case c, String typed, Long userId) {
+    private void applyTypedFileNo(Case c, String typed, Long userId, boolean exchange) {
 
         Integer seq = plainFileSeq(typed);
 
@@ -381,7 +386,7 @@ public class CaseService {
             return;
         }
 
-        fileNumbers.assignTyped(c, userId, seq);
+        fileNumbers.assignTypedOrExchange(c, userId, seq, exchange);
     }
 
     // The sequence number a typed file number stands for: a whole number from 1, no leading zeros, small enough for an
@@ -414,7 +419,7 @@ public class CaseService {
         if (wasCorporatePanel || typed == null) return;
         if (typed.equals(c.getFileNo())) return;
 
-        applyTypedFileNo(c, typed, userId);
+        applyTypedFileNo(c, typed, userId, Boolean.TRUE.equals(req.getExchangeFileNo()));
     }
 
     // Re-number only when needed: left corporate panel, or a reopened case clashing with an open one
@@ -448,7 +453,7 @@ public class CaseService {
             // still gets a fresh sequence number, its old panel reference is not a sequence number)
             Integer typedSeq = wasCorporatePanel ? null : plainFileSeq(req.getFileNo());
 
-            if (typedSeq != null) fileNumbers.assignTyped(c, userId, typedSeq);
+            if (typedSeq != null) fileNumbers.assignTypedOrExchange(c, userId, typedSeq, Boolean.TRUE.equals(req.getExchangeFileNo()));
             else fileNumbers.assign(c, userId, req.getFileSeq());
         } else if (reopenedIntoClash) {
             fileNumbers.assign(c, userId, null);

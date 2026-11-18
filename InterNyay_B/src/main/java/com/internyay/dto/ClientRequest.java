@@ -3,6 +3,7 @@ package com.internyay.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 // Body to create or update a client
@@ -34,6 +35,16 @@ public class ClientRequest {
     public String additionalPhone;
 
     public String address;
+
+    // S/o, D/o, W/o, H/o or C/o and the relative's name
+    @Pattern(regexp = "^$|^(S/o|D/o|W/o|H/o|C/o)$", message = "Relation must be S/o, D/o, W/o, H/o or C/o")
+    public String relationType;
+    @Size(max = 255)
+    public String relationName;
+
+    // Other names the client is known by
+    public java.util.List<@Size(max = 255) String> otherNames;
+
     public String profilePicture;
     // Client type text, checked in the service
     public String type;

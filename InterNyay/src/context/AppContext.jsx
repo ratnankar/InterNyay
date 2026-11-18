@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { AUTH_PATHS, CORPORATE_AUTH_PATHS, authTabFromPath, isAdminPath, isCorporatePath, navToPath, parseNavPath } from '../routes/paths'
 import { caseCreatedDate, formatDate, hearingDateProblem } from '../utils/dateUtils'
 import { indianPhoneError, emailError } from '../utils/validators'
+import { isSameClient, cleanOtherNames } from '../utils/clientMatch'
 import { passwordProblem } from '../utils/passwordPolicy'
 import useWhatsApp from '../hooks/useWhatsApp'
 import { isHighCourt, isJuvenileBoard, splitCaseCourt, loadCourts, resetCourts, loadCourtPreferences, resetCourtPreferences } from '../constants/courts'
@@ -74,6 +75,9 @@ const EMPTY_CLIENT_FORM = {
   whatsappPhone: '',
   additionalPhone: '',
   address: '',
+  relationType: 'S/o',
+  relationName: '',
+  otherNames: [],
   type: 'INDIVIDUAL',
   customLabel: '',
   profilePicture: ''
@@ -625,6 +629,8 @@ export function AppProvider({ children }) {
     fileNoManual: false,
     // True when the file number field was emptied on purpose: the case is saved without a file number
     noFileNo: false,
+    // True when the typed number is held by another open case and the two should swap numbers on saving
+    exchangeFileNo: false,
     // The number a saved case had when it was opened
     fileNoOriginal: '',
 
@@ -2120,6 +2126,7 @@ export function AppProvider({ children }) {
       fileNoManual:   false,
       // A saved case with no file number stays without one unless a number is typed or picked
       noFileNo:       !(c.fileNo || '').trim() && !c.fileSeq,
+      exchangeFileNo: false,
       fileNoOriginal: c.fileNo         || '',
       cnrNo:          c.cnrNo          || '',
       filingDate:     c.filingDate     || '',
@@ -2392,6 +2399,8 @@ export function AppProvider({ children }) {
       // Typed for a new case, or a changed number on a saved case: a plain number joins the sequence, other text stays as typed
       payload.fileNo = typedFileNo
       payload.fileSeq = /^[1-9]\d{0,8}$/.test(typedFileNo) ? Number(typedFileNo) : null
+      // A plain number held by another open case is swapped with that case instead of being refused
+      if (newCaseForm.exchangeFileNo && payload.fileSeq != null) payload.exchangeFileNo = true
     } else {
       // Nothing typed: the suggested number is only a request, the server gives the next free one if it was taken
       if (newCaseForm.fileNoOrigin === 'new') payload.fileNo = ''
@@ -2400,6 +2409,7 @@ export function AppProvider({ children }) {
     delete payload.fileNoOrigin
     delete payload.fileNoManual
     delete payload.noFileNo
+    if (!payload.exchangeFileNo) delete payload.exchangeFileNo
     delete payload.fileNoOriginal
 
     // FIR details only apply to police challan cases
@@ -2775,7 +2785,9 @@ export function AppProvider({ children }) {
       ...EMPTY_CLIENT_FORM,
       name: nonClient.name || '',
       whatsappPhone: nonClient.phone || '',
-      address: nonClient.address || ''
+      address: nonClient.address || '',
+      // The father's name given for the person becomes the "son of" name
+      relationName: nonClient.fatherName || ''
     })
     setShowAddClient('markNonClient')
   }
@@ -2798,7 +2810,9 @@ export function AppProvider({ children }) {
     if (!c) return
 
     await handleUpdateCase(caseId, {
-      additionalClientIds: [...(c.additionalClients || []).map(x => x.id), created.id],
+      additionalClientIds: caseHasClient(c, created.id)
+        ? (c.additionalClients || []).map(x => x.id)
+        : [...(c.additionalClients || []).map(x => x.id), created.id],
       clientSubTypes: nonClient.subType ? { [created.id]: nonClient.subType } : undefined,
       nonClients: nonClientsOf(c).filter(n => n.id !== nonClient.id).map(toRequestParty),
     })
@@ -2843,12 +2857,23 @@ export function AppProvider({ children }) {
       return
     }
 
+    // The same client is never added twice: same name and same "son of" name
+    const twin = clients.find(c => isSameClient(c, newClientForm))
+    if (twin) {
+      addToast(`"${twin.name}" is already in your clients. Use that client instead.`, 'error')
+      return
+    }
+
     try {
 
       const created =
-        await clientsApi.create(
-          newClientForm
-        )
+        await clientsApi.create({
+          ...newClientForm,
+          name: newClientForm.name.trim(),
+          relationType: newClientForm.relationName?.trim() ? (newClientForm.relationType || 'S/o') : '',
+          relationName: (newClientForm.relationName || '').trim(),
+          otherNames: cleanOtherNames(newClientForm.otherNames, newClientForm.name),
+        })
 
       setClients(prev => [
         ...prev,
@@ -2879,6 +2904,18 @@ export function AppProvider({ children }) {
         'error'
       )
     }
+  }
+
+  // The person being registered is already a saved client: that client is used instead of adding a copy
+  async function attachExistingClient(existing) {
+    if (showAddClient === 'markNonClient' && markTarget) {
+      await finishMarkAsClient(existing)
+    } else if (showAddClient === 'fromCase') {
+      selectClient(existing)
+    }
+    setShowAddClient(false)
+    setNewClientForm({ ...EMPTY_CLIENT_FORM })
+    addToast(`${existing.name} is already your client, so that client was used`)
   }
 
   // Update a client; falls back to saving locally if the backend call fails
@@ -3956,6 +3993,7 @@ export function AppProvider({ children }) {
         setNewClientForm,
 
         handleAddClient,
+        attachExistingClient,
         handleUpdateClient,
         handleDeleteClient,
 

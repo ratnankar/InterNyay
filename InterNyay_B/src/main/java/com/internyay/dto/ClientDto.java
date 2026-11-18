@@ -18,10 +18,20 @@ public class ClientDto {
     public String whatsappPhone;
     public String additionalPhone;
     public String address;
+    public String relationType;
+    public String relationName;
+    public java.util.List<String> otherNames;
     public String profilePicture;
     public String type;
     public String customLabel;
     public LocalDateTime createdAt;
+
+    // Other names are stored one per line
+    public static java.util.List<String> splitNames(String stored) {
+        if (stored == null || stored.isBlank()) return java.util.List.of();
+        return java.util.Arrays.stream(stored.split("\\R"))
+                .map(String::trim).filter(s -> !s.isEmpty()).toList();
+    }
 
     // Builds the DTO from the entity, enums are sent as their display text
     public static ClientDto from(Client c) {
@@ -32,6 +42,9 @@ public class ClientDto {
                 .whatsappPhone(c.getWhatsapp_phone())
                 .additionalPhone(c.getAdditional_phone())
                 .address(c.getAddress())
+                .relationType(c.getRelationType())
+                .relationName(c.getRelationName())
+                .otherNames(splitNames(c.getOtherNames()))
                 .profilePicture(c.getProfilePicture())
                 .type(c.getType() != null ? c.getType().getValue() : null)
                 .customLabel(c.getCustomLabel() != null ? c.getCustomLabel().getValue() : null)

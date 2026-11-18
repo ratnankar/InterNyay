@@ -6,6 +6,7 @@ import ModalPortal from '../../components/common/ModalPortal'
 import { useBusyPath } from '../../utils/busyStore'
 import api from '../../services/api'
 import { getErrorMessage } from '../../utils/errorMessages'
+import { relationText } from '../../utils/clientMatch'
 
 // How many recently added clients are suggested before anything is typed
 const SUGGESTION_COUNT = 5
@@ -311,6 +312,8 @@ export function ClientSearchPrompt({ onClose }) {
 
     const matchesQuery = c =>
       c.name?.toLowerCase().includes(q) ||
+      c.relationName?.toLowerCase().includes(q) ||
+      (c.otherNames || []).some(n => n.toLowerCase().includes(q)) ||
       c.email?.toLowerCase().includes(q) ||
       c.whatsappPhone?.includes(q) ||
       c.additionalPhone?.includes(q)
@@ -361,7 +364,7 @@ export function ClientSearchPrompt({ onClose }) {
               <div key={c.id} className="client-result" onClick={() => choose(c)}>
                 <div className="client-result__info">
                   <p className="client-result__name">{c.name}</p>
-                  <p className="client-result__meta">{c.email}</p>
+                  <p className="client-result__meta">{[relationText(c), c.email].filter(Boolean).join(' · ')}</p>
                 </div>
                 <button type="button" className="btn-gold client-result__select" onClick={e => { e.stopPropagation(); choose(c) }}>
                   Select

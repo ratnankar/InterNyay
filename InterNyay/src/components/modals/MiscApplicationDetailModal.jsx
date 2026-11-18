@@ -329,7 +329,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
             </div>
           )}
 
-          {portal && !editing && (
+          {(portal || ownCase) && !editing && (
             <div className="misc-link">
               <p className="misc-details__label">Linked case</p>
               {linkOpen ? (

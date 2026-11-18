@@ -67,8 +67,21 @@ public class ClientService {
         Client.CustomLabel customLabel =
                 parseCustomLabel(req.getCustomLabel());
 
+        String name = clean(req.getName());
+        String relationName = clean(req.getRelationName());
+
+        // The same person is never added twice: same name and the same "son of" name
+        Client existing = findDuplicate(userId, name, relationName, null);
+        if (existing != null) {
+            throw new IllegalArgumentException(
+                    "\"" + existing.getName() + "\" is already in your clients. Use that client instead of adding the same one again.");
+        }
+
         Client client = Client.builder()
-                .name(req.getName())
+                .name(name)
+                .relationType(relationName.isEmpty() ? null : blank(req.getRelationType()))
+                .relationName(relationName.isEmpty() ? null : relationName)
+                .otherNames(joinNames(req.getOtherNames(), name))
                 .email(cleanEmail(req.getEmail()))
                 .whatsapp_phone(req.getWhatsappPhone())
                 .additional_phone(req.getAdditionalPhone())
@@ -92,7 +105,24 @@ public class ClientService {
         String oldName = client.getName();
 
         if (req.getName() != null && !req.getName().isBlank()) {
-            client.setName(req.getName());
+            client.setName(clean(req.getName()));
+        }
+
+        // "Son of" relation and other names: an empty value clears them
+        if (req.getRelationName() != null || req.getRelationType() != null) {
+            String relName = req.getRelationName() != null ? clean(req.getRelationName()) : clean(client.getRelationName());
+            client.setRelationName(relName.isEmpty() ? null : relName);
+            client.setRelationType(relName.isEmpty() ? null : blank(req.getRelationType() != null ? req.getRelationType() : client.getRelationType()));
+        }
+        if (req.getOtherNames() != null) {
+            client.setOtherNames(joinNames(req.getOtherNames(), client.getName()));
+        }
+
+        // Renaming (or changing the "son of" name) must not turn this client into a copy of another one
+        Client twin = findDuplicate(userId, client.getName(), clean(client.getRelationName()), client.getId());
+        if (twin != null) {
+            throw new IllegalArgumentException(
+                    "\"" + twin.getName() + "\" is already in your clients with the same name.");
         }
 
         // Email is optional, so an empty value clears it
@@ -159,6 +189,35 @@ public class ClientService {
                 caseRepo.save(c);
             }
         }
+    }
+
+    // Trimmed text with inner runs of spaces collapsed, never null
+    private String clean(String s) {
+        return s == null ? "" : s.trim().replaceAll("\\s+", " ");
+    }
+
+    // Same name (and same relative's name) among the advocate's other clients, or null
+    private Client findDuplicate(Long userId, String name, String relationName, Long ignoreId) {
+        if (name == null || name.isBlank()) return null;
+        for (Client c : clientRepo.findByUser_Id(userId)) {
+            if (ignoreId != null && ignoreId.equals(c.getId())) continue;
+            boolean sameName = clean(c.getName()).equalsIgnoreCase(name)
+                    || ClientDto.splitNames(c.getOtherNames()).stream().anyMatch(n -> clean(n).equalsIgnoreCase(name));
+            if (sameName && clean(c.getRelationName()).equalsIgnoreCase(relationName)) return c;
+        }
+        return null;
+    }
+
+    // Other names, cleaned, without repeats and without the main name, one per line
+    private String joinNames(List<String> names, String mainName) {
+        if (names == null) return null;
+        List<String> out = new java.util.ArrayList<>();
+        for (String n : names) {
+            String c = clean(n);
+            if (c.isEmpty() || c.equalsIgnoreCase(mainName)) continue;
+            if (out.stream().noneMatch(x -> x.equalsIgnoreCase(c))) out.add(c);
+        }
+        return out.isEmpty() ? null : String.join("\n", out);
     }
 
     // Email is optional: blank becomes an empty string so the existing NOT NULL column keeps working

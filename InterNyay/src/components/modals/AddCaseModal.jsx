@@ -517,8 +517,11 @@ function PartiesSection() {
 }
 
 function FileNumberField({ form, setForm }) {
-  const { caseClients } = useApp()
+  const { caseClients, editingCaseId, cases, setCases, addToast } = useApp()
   const [windowOpen, setWindowOpen] = useState(false)
+  // Open cases and the numbers they hold, to tell when a typed number is already taken
+  const [holders, setHolders] = useState([])
+  const [swapping, setSwapping] = useState(false)
 
   const panel = hasCorporatePanelClient(caseClients)
   const kept = !panel && (form.fileNoOrigin === 'auto' || form.fileNoOrigin === 'legacy')
@@ -527,17 +530,19 @@ function FileNumberField({ form, setForm }) {
   const none = !panel && !!form.noFileNo
 
   useEffect(() => {
-    if (!numbered) return undefined
+    if (panel) return undefined
 
     let alive = true
     api.cases.fileNumbers()
       .then(res => {
-        if (alive) setForm(f => (f.fileSeq ? f : { ...f, fileSeq: res.nextNumber }))
+        if (!alive) return
+        setHolders(res.occupied || [])
+        if (numbered) setForm(f => (f.fileSeq ? f : { ...f, fileSeq: res.nextNumber }))
       })
       .catch(() => { })
 
     return () => { alive = false }
-  }, [numbered, setForm])
+  }, [panel, numbered, setForm, editingCaseId])
 
   if (panel) {
     return (
@@ -570,10 +575,47 @@ function FileNumberField({ form, setForm }) {
 
   function pick(number) {
     setForm(f => (numbered && number === f.fileSeq
-      ? { ...f, fileNo: '', fileNoManual: false, noFileNo: false }
-      : { ...f, fileNo: String(number), fileNoManual: true, noFileNo: false }))
+      ? { ...f, fileNo: '', fileNoManual: false, noFileNo: false, exchangeFileNo: false }
+      : { ...f, fileNo: String(number), fileNoManual: true, noFileNo: false, exchangeFileNo: false }))
     setWindowOpen(false)
   }
+
+  const editingCase = editingCaseId ? cases.find(c => c.id === editingCaseId) : null
+  const isClosed = !!editingCase && /^(decided|withdrawn)$/i.test((editingCase.status || '').trim())
+  // A saved, numbered case swaps straight away; a new case (or one with no number yet) swaps when it is saved
+  const hasOwnNumber = !!editingCase && editingCase.fileSeq != null
+  const canExchange = !isClosed
+
+  // Another open case that holds the number now in the field
+  const taken = typedNumber != null && selected === typedNumber
+    ? holders.find(h => h.number === typedNumber && h.caseId !== editingCaseId)
+    : undefined
+  const takenByPicked = !!form.exchangeFileNo && typedNumber != null
+    ? holders.find(h => h.number === typedNumber && h.caseId !== editingCaseId)
+    : undefined
+  const heldBy = takenByPicked || taken
+
+  async function exchangeNow(number) {
+    const updated = await api.cases.exchangeFileNumber(editingCaseId, number)
+    setCases(prev => prev.map(c => updated.find(u => u.id === c.id) || c))
+    const mine = updated.find(u => u.id === editingCaseId)
+    setForm(f => ({ ...f, fileNo: String(mine.fileSeq), fileSeq: mine.fileSeq, fileNoOrigin: 'auto', fileNoManual: false, noFileNo: false, exchangeFileNo: false }))
+    api.cases.fileNumbers().then(res => setHolders(res.occupied || [])).catch(() => { })
+    addToast(`File number ${number} exchanged`)
+  }
+
+  async function exchangeTyped() {
+    if (!heldBy) return
+    if (hasOwnNumber) {
+      setSwapping(true)
+      try { await exchangeNow(heldBy.number) } catch (e) { addToast(getErrorMessage(e, 'Could not exchange the file number'), 'error') } finally { setSwapping(false) }
+    } else {
+      setForm(f => ({ ...f, exchangeFileNo: !f.exchangeFileNo }))
+    }
+  }
+
+  // The number the held case will move to when this case is saved
+  const handOver = hasOwnNumber ? editingCase.fileSeq : (holders.reduce((m, h) => Math.max(m, h.number), 0) + 1)
 
   return (
     <div>
@@ -588,7 +630,7 @@ function FileNumberField({ form, setForm }) {
           maxLength={255}
           value={shownNumber}
           placeholder={none ? 'No file number' : 'e.g. 25 or FILE/2024/045'}
-          onChange={e => setForm(f => ({ ...f, fileNo: e.target.value, fileNoManual: true, noFileNo: false }))}
+          onChange={e => setForm(f => ({ ...f, fileNo: e.target.value, fileNoManual: true, noFileNo: false, exchangeFileNo: false }))}
           onBlur={() => setForm(f => (f.fileNoManual && !(f.fileNo || '').trim()
             ? { ...f, fileNo: '', fileNoManual: false, noFileNo: true } : f))}
         />
@@ -596,6 +638,27 @@ function FileNumberField({ form, setForm }) {
           File numbers
         </button>
       </div>
+
+      {heldBy && (
+        <div className="file-no-clash">
+          {form.exchangeFileNo ? (
+            <span>
+              File number {heldBy.number} is held by <strong>{heldBy.caseTitle}</strong>
+              {heldBy.caseNo ? ` (${heldBy.caseNo})` : ''}. On saving, that case moves to number {handOver}.
+            </span>
+          ) : (
+            <span>
+              File number {heldBy.number} is already held by <strong>{heldBy.caseTitle}</strong>
+              {heldBy.caseNo ? ` (${heldBy.caseNo})` : ''}.
+            </span>
+          )}
+          {canExchange && (
+            <button type="button" className="btn-outline btn-outline--sm" disabled={swapping} onClick={exchangeTyped}>
+              {swapping ? 'Exchanging…' : form.exchangeFileNo ? 'Undo exchange' : 'Exchange numbers'}
+            </button>
+          )}
+        </div>
+      )}
 
       {windowOpen && (
         <FileNumbersModal

@@ -54,7 +54,8 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
                 || "PATCH".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method);
         String type = request.getContentType();
         boolean jsonOrEmpty = type == null || type.toLowerCase().startsWith(MediaType.APPLICATION_JSON_VALUE);
-        return !writes || !jsonOrEmpty || request.getRequestURI().startsWith("/api/chat");
+        return !writes || !jsonOrEmpty || request.getRequestURI().startsWith("/api/chat")
+                || request.getRequestURI().startsWith("/api/whatsapp/webhook");
     }
 
     @Override

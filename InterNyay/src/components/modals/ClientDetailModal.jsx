@@ -1,5 +1,5 @@
 import { starLabel } from '../common/Req'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import useOverlayClose from '../../hooks/useOverlayClose'
 import useUnsavedGuard from '../../hooks/useUnsavedGuard'
@@ -19,6 +19,7 @@ import DocInfoButton from '../common/DocInfoButton'
 import { confirmDialog } from '../../utils/confirmDialog'
 import ModalPortal from '../../components/common/ModalPortal'
 import { telLink } from '../../utils/jurisdiction'
+import { relationText, RELATION_TYPES, cleanOtherNames } from '../../utils/clientMatch'
 // Edit form inputs as [label, field name, input type, placeholder]
 const FIELDS = [
   ['Full Name *',      'name',            'text', "Client's full legal name"],
@@ -110,6 +111,9 @@ export default function ClientDetailModal() {
       whatsappPhone: cl.whatsappPhone || cl.phone || '',
       additionalPhone: cl.additionalPhone || '',
       address: cl.address || '',
+      relationType: cl.relationType || 'S/o',
+      relationName: cl.relationName || '',
+      otherNames: [...(cl.otherNames || [])],
       type: cl.type || 'INDIVIDUAL',
       // The Blacklisted label has been removed, so it is dropped when the client is edited
       customLabel: cl.customLabel === 'Blacklisted' ? '' : (cl.customLabel || ''),
@@ -127,7 +131,12 @@ export default function ClientDetailModal() {
 
   // Save the draft and leave edit mode
   function saveEdit() {
-    handleUpdateClient(cl.id, form)
+    handleUpdateClient(cl.id, {
+      ...form,
+      relationType: form.relationName?.trim() ? (form.relationType || 'S/o') : '',
+      relationName: (form.relationName || '').trim(),
+      otherNames: cleanOtherNames(form.otherNames, form.name),
+    })
     setIsEditing(false)
     setForm(null)
   }
@@ -159,6 +168,8 @@ export default function ClientDetailModal() {
 
   // Contact details to show, skipping any that are empty
   const infoItems = [
+    ['Son of / Daughter of', relationText(cl)],
+    ['Other names',      (cl.otherNames || []).join(', ')],
     ['Email',            cl.email],
     ['WhatsApp Phone',   cl.whatsappPhone || cl.phone],
     ['Additional Phone', cl.additionalPhone],
@@ -247,7 +258,8 @@ export default function ClientDetailModal() {
             <>
               <div className="client-form">
                 {FIELDS.map(([label, key, type, ph]) => (
-                  <div key={key}>
+                  <Fragment key={key}>
+                  <div>
                     <label className="form-label">{starLabel(label)}</label>
                     <input
                       className="form-input"
@@ -263,6 +275,68 @@ export default function ClientDetailModal() {
                       } : {})}
                     />
                   </div>
+
+                  {key === 'name' && (
+                    <>
+                      <div>
+                        <label className="form-label">Son of / Daughter of / Wife of</label>
+                        <div className="client-relation">
+                          <Dropdown
+                            className="form-input client-relation__type"
+                            value={form.relationType || 'S/o'}
+                            onChange={e => setForm(f => ({ ...f, relationType: e.target.value }))}
+                          >
+                            {RELATION_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                          </Dropdown>
+                          <input
+                            className="form-input"
+                            placeholder="Father's / husband's name (optional)"
+                            maxLength={255}
+                            autoComplete="off"
+                            value={form.relationName || ''}
+                            onChange={e => setForm(f => ({ ...f, relationName: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="form-label">Other names (optional)</label>
+                        {(form.otherNames || []).map((n, i) => (
+                          <div className="client-other-name" key={i}>
+                            <input
+                              className="form-input"
+                              placeholder="Another name this person is known by"
+                              maxLength={255}
+                              autoComplete="off"
+                              value={n}
+                              onChange={e => setForm(f => ({
+                                ...f,
+                                otherNames: (f.otherNames || []).map((x, j) => (j === i ? e.target.value : x)),
+                              }))}
+                            />
+                            <button
+                              type="button"
+                              className="btn-outline"
+                              onClick={() => setForm(f => ({
+                                ...f,
+                                otherNames: (f.otherNames || []).filter((_, j) => j !== i),
+                              }))}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="btn-outline client-add-more"
+                          onClick={() => setForm(f => ({ ...f, otherNames: [...(f.otherNames || []), ''] }))}
+                        >
+                          + Add another name
+                        </button>
+                      </div>
+                    </>
+                  )}
+                  </Fragment>
                 ))}
 
                 <div>

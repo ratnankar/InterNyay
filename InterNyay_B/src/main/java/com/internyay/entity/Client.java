@@ -27,6 +27,15 @@ public class Client {
     private String additional_phone;
     private String address;
 
+    // "Son of" style relation: S/o, D/o, W/o, H/o or C/o, with the relative's name
+    @Column(length = 10)
+    private String relationType;
+    private String relationName;
+
+    // Other names the client is known by, one per line
+    @Column(columnDefinition = "TEXT")
+    private String otherNames;
+
     // Photo stored as base64 text
     @Column(columnDefinition = "LONGTEXT")
     private String profilePicture;

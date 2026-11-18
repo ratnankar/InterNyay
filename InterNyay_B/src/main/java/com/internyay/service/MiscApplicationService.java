@@ -146,20 +146,34 @@ public class MiscApplicationService {
     @Transactional
     public MiscApplicationDto linkCase(Long id, Long caseId, Long userId) {
         MiscApplication a = findOwned(id, userId);
-        if (!a.isPortalSynced()) throw new IllegalArgumentException("Only an application with its own CNR can be linked to a case");
+        if (!a.isPortalSynced() && !a.isCaseCreatedHere()) throw new IllegalArgumentException("Only an application with its own case can be linked to a case");
         if (caseId == null) {
             a.setLinkedCaseId(null);
         } else {
-            Case c = ownedCase(caseId, userId);
-            if (c.isMiscPortal() || c.getId().equals(a.getLegalCase().getId())) throw new IllegalArgumentException("Choose a case");
+            Case c = linkableCase(caseId, userId);
+            if (c.getId().equals(a.getLegalCase().getId())) throw new IllegalArgumentException("Choose a case");
             a.setLinkedCaseId(c.getId());
         }
         return toDto(repo.save(a));
     }
 
+    // A case of the advocate that an application can be linked to: a real case, not another application read from eCourts
+    private Case linkableCase(Long caseId, Long userId) {
+        Case c = ownedCase(caseId, userId);
+        if (c.isMiscPortal()) throw new IllegalArgumentException("Choose a case");
+        return c;
+    }
+
     private List<MiscHearingDto> portalHearingsOf(MiscApplication a) {
         return caseHearingRepo.findByLegalCase_IdAndUser_IdOrderByDateDesc(a.getLegalCase().getId(), a.getUser().getId()).stream()
-                .map(h -> MiscHearingDto.builder().id(h.getId()).date(h.getDate().toString()).note(h.getNotes()).build())
+                .map(h -> {
+                    HearingDto order = HearingDto.from(h);
+                    return MiscHearingDto.builder().id(h.getId()).date(h.getDate().toString()).note(h.getNotes())
+                            .orderDocId(order.getOrderDocId()).orderDocName(order.getOrderDocName())
+                            .orderOnEcourts(order.isOrderOnEcourts()).orderDue(order.isOrderDue())
+                            .noOrderOnRecord(order.isNoOrderOnRecord())
+                            .build();
+                })
                 .toList();
     }
 
@@ -188,6 +202,9 @@ public class MiscApplicationService {
         if (filing == null) filing = LocalDate.now();
         LocalDate hearing = parseDate("Next hearing date", req.getHearingDate());
 
+        // The case to link to is checked before the new case is created, so nothing is saved when it is refused
+        Case linkTarget = req.isNewCase() && req.getLinkedCaseId() != null ? linkableCase(req.getLinkedCaseId(), userId) : null;
+
         Case legalCase = req.isNewCase() ? createCase(req, userId) : ownedCase(req.getCaseId(), userId);
 
         // Checked before anything is saved: a closed day or a full day stops the whole request
@@ -201,9 +218,16 @@ public class MiscApplicationService {
                 .hearingDate(hearing)
                 .status(MiscApplication.PENDING)
                 .caseCreatedHere(req.isNewCase())
+                .linkedCaseId(linkTarget == null ? null : linkTarget.getId())
                 .build());
 
         recordHearing(saved);
+        // Added with a CNR: from the start the application reads its hearing history, orders and status from eCourts through
+        // its case, whether or not it is linked to another case
+        if (req.isNewCase()) {
+            adoptCnr(saved, userId);
+            saved = repo.save(saved);
+        }
         return toDto(saved);
     }
 

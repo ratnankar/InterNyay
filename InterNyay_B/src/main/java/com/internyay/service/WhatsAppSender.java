@@ -23,7 +23,9 @@ import java.util.Map;
 public class WhatsAppSender {
 
     // Result of one send: status and error
-    public record Outcome(Status status, String error) {
+    public record Outcome(Status status, String error, String messageId) {
+        public Outcome(Status status, String error) { this(status, error, null); }
+
         public boolean ok() { return status == Status.SENT || status == Status.DRY_RUN; }
 
         static Outcome failed(String error) { return new Outcome(Status.FAILED, error); }
@@ -108,15 +110,15 @@ public class WhatsAppSender {
                         "components", List.of(Map.of("type", "body", "parameters", parameters))));
 
         try {
-            http.post()
+            JsonNode response = http.post()
                     .uri("/{id}/messages", phoneNumberId)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()
-                    .toBodilessEntity();
+                    .body(JsonNode.class);
 
-            return new Outcome(Status.SENT, null);
+            return new Outcome(Status.SENT, null, messageId(response));
 
         } catch (RestClientResponseException ex) {
             String detail = extractError(ex);
@@ -141,6 +143,12 @@ public class WhatsAppSender {
         if (digits.length() >= 11 && digits.length() <= 15) return digits;
 
         return null;
+    }
+
+    private static String messageId(JsonNode response) {
+        if (response == null) return null;
+        String id = response.path("messages").path(0).path("id").asText("");
+        return id.isBlank() ? null : id;
     }
 
     // Template parameters can't be empty or too long

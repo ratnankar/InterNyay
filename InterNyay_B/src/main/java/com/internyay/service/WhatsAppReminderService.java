@@ -190,6 +190,8 @@ public class WhatsAppReminderService {
             row.setKind(kind);
             row.setOrigin(origin);
             row.setStatus(out.status());
+            row.setWaMessageId(out.messageId());
+            row.setDeliveryStatus(out.messageId() != null ? "SENT" : null);
             row.setHearingDate(hearingDate);
             row.setError(out.error() != null && out.error().length() > 500
                     ? out.error().substring(0, 500) : out.error());

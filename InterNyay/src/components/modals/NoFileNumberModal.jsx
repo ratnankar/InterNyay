@@ -23,11 +23,13 @@ export default function NoFileNumberModal({ cases, onClose, onSave, onOpenCase }
   const [savingId, setSavingId] = useState(null)
   const [pickFor, setPickFor] = useState(null)
   const [next, setNext] = useState(null)
+  // Open cases and the numbers they hold, to tell when a typed number is already taken
+  const [holders, setHolders] = useState([])
   const [error, setError] = useState('')
 
   function loadNext() {
     return api.cases.fileNumbers()
-      .then(res => setNext(res?.nextNumber ?? null))
+      .then(res => { setNext(res?.nextNumber ?? null); setHolders(res?.occupied || []) })
       .catch(e => setError(getErrorMessage(e, 'Could not load the next file number')))
   }
   useEffect(() => { loadNext() }, [])
@@ -43,12 +45,19 @@ export default function NoFileNumberModal({ cases, onClose, onSave, onOpenCase }
 
   const setDraft = (id, value) => setDrafts(d => ({ ...d, [id]: value }))
 
+  // The open case holding the number typed in a row, if any
+  const heldBy = value => holders.find(h => String(h.number) === String(value || '').trim())
+
+  // The number the holding case moves to when the two exchange: the next number after the highest one in use
+  const handOver = holders.reduce((m, h) => Math.max(m, h.number), 0) + 1
+
   async function save(c) {
     const value = String(drafts[c.id] || '').trim()
     if (!value || savingId) return
+    const holder = heldBy(value)
     setSavingId(c.id)
     setError('')
-    const ok = await onSave(c.id, value)
+    const ok = await onSave(c.id, value, holder ? { exchange: true, holder, handOver } : undefined)
     setSavingId(null)
     if (ok) {
       setDrafts(d => { const { [c.id]: _gone, ...rest } = d; return rest })
@@ -79,6 +88,7 @@ export default function NoFileNumberModal({ cases, onClose, onSave, onOpenCase }
               {missing.map(c => {
                 const value = drafts[c.id] || ''
                 const busy = savingId === c.id
+                const held = heldBy(value)
                 return (
                   <div key={c.id} className="file-numbers__row">
                     <button
@@ -105,7 +115,16 @@ export default function NoFileNumberModal({ cases, onClose, onSave, onOpenCase }
                     <button type="button" className="btn-outline btn-outline--sm"
                       title="Pick from the released numbers" onClick={() => setPickFor(c.id)}>Released</button>
                     <button type="button" className="btn-gold btn-outline--sm" disabled={!value.trim() || busy}
-                      onClick={() => save(c)}>{busy ? 'Saving…' : 'Save'}</button>
+                      onClick={() => save(c)}>
+                      {held ? (busy ? 'Exchanging…' : 'Exchange') : (busy ? 'Saving…' : 'Save')}
+                    </button>
+
+                    {held && (
+                      <p className="file-numbers__meta file-numbers__clash">
+                        {held.number} is held by <strong>{held.caseTitle}</strong>{held.caseNo ? ` (${held.caseNo})` : ''}.
+                        Exchange gives it to this case and moves that case to {handOver}.
+                      </p>
+                    )}
                   </div>
                 )
               })}

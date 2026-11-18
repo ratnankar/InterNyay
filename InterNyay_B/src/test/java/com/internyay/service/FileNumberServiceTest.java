@@ -84,4 +84,79 @@ class FileNumberServiceTest {
         assertThat(CaseService.plainFileSeq("")).isNull();
         assertThat(CaseService.plainFileSeq(null)).isNull();
     }
+
+    @Test
+    void exchangeSwapsNumbersBetweenTwoOpenCases() {
+        com.internyay.entity.User owner = new com.internyay.entity.User();
+        owner.setId(USER);
+        Case mine = Case.builder().id(10L).user(owner).status("Pending").fileSeq(3).fileNo("3").build();
+        Case other = Case.builder().id(11L).user(owner).status("Pending").fileSeq(7).fileNo("7").build();
+        when(caseRepo.findById(10L)).thenReturn(java.util.Optional.of(mine));
+        when(caseRepo.openHolders(USER, 7, 10L)).thenReturn(java.util.List.of(other));
+
+        service.exchange(10L, USER, 7);
+
+        assertThat(mine.getFileSeq()).isEqualTo(7);
+        assertThat(mine.getFileNo()).isEqualTo("7");
+        assertThat(other.getFileSeq()).isEqualTo(3);
+        assertThat(other.getFileNo()).isEqualTo("3");
+    }
+
+    @Test
+    void exchangeIsRefusedWhenNoOpenCaseHoldsTheNumber() {
+        com.internyay.entity.User owner = new com.internyay.entity.User();
+        owner.setId(USER);
+        Case mine = Case.builder().id(10L).user(owner).status("Pending").fileSeq(3).fileNo("3").build();
+        when(caseRepo.findById(10L)).thenReturn(java.util.Optional.of(mine));
+        when(caseRepo.openHolders(USER, 9, 10L)).thenReturn(java.util.List.of());
+
+        assertThatThrownBy(() -> service.exchange(10L, USER, 9))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(mine.getFileSeq()).isEqualTo(3);
+    }
+
+    @Test
+    void exchangeIsRefusedForAClosedCase() {
+        com.internyay.entity.User owner = new com.internyay.entity.User();
+        owner.setId(USER);
+        Case closed = Case.builder().id(10L).user(owner).status("Decided").fileSeq(3).fileNo("3").build();
+        when(caseRepo.findById(10L)).thenReturn(java.util.Optional.of(closed));
+
+        assertThatThrownBy(() -> service.exchange(10L, USER, 7))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void newCaseExchangingATakenNumberGivesTheHolderTheNextFreeNumber() {
+        Case holder = Case.builder().id(5L).status("Pending").fileSeq(4).fileNo("4").build();
+        when(caseRepo.openHolders(USER, 4, -1L)).thenReturn(java.util.List.of(holder));
+        when(caseRepo.maxOpenFileSeq(USER)).thenReturn(9);
+        Case c = Case.builder().build();
+
+        service.assignTypedOrExchange(c, USER, 4, true);
+
+        assertThat(c.getFileSeq()).isEqualTo(4);
+        assertThat(holder.getFileSeq()).isEqualTo(10);
+        assertThat(holder.getFileNo()).isEqualTo("10");
+    }
+
+    @Test
+    void savedCaseExchangingATakenNumberSwapsNumbersWithTheHolder() {
+        Case holder = Case.builder().id(5L).status("Pending").fileSeq(4).fileNo("4").build();
+        when(caseRepo.openHolders(USER, 4, 10L)).thenReturn(java.util.List.of(holder));
+        Case c = Case.builder().id(10L).status("Pending").fileSeq(7).fileNo("7").build();
+
+        service.assignTypedOrExchange(c, USER, 4, true);
+
+        assertThat(c.getFileSeq()).isEqualTo(4);
+        assertThat(holder.getFileSeq()).isEqualTo(7);
+    }
+
+    @Test
+    void withoutTheExchangeFlagATakenNumberIsStillRefused() {
+        when(caseRepo.countOpenHolders(eq(USER), eq(4), anyLong())).thenReturn(1L);
+
+        assertThatThrownBy(() -> service.assignTypedOrExchange(Case.builder().build(), USER, 4, false))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }

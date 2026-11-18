@@ -11,11 +11,13 @@ import SeeMoreList from '../common/SeeMoreList'
 import { isDisposed } from './miscUtils'
 import MiscHearingUpdate from './MiscHearingUpdate'
 import Linkify from '../common/Linkify'
+import { beginOrderTask, endOrderTask, usePendingOrders } from '../../utils/pendingOrders'
 
 // Hearing history of one misc. application: opens and closes, holds the "next hearing date" with its Update button
 // (while the application is pending), and lets each date be edited or deleted
 export default function MiscHearingPanel({ app, onChange, defaultOpen = false }) {
-  const { addToast, bumpHearings } = useApp()
+  const { addToast, bumpHearings, handleViewDocument } = useApp()
+  const pendingOrders = usePendingOrders()
 
   const [open, setOpen] = useState(defaultOpen)
   const [editingId, setEditingId] = useState(null)
@@ -69,6 +71,20 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
       addToast(getErrorMessage(e, 'Could not read the application from eCourts'), 'error')
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  // The "Get order" button: an order is only downloaded from eCourts when asked for
+  async function getOrder(h) {
+    if (!beginOrderTask(h.id)) return
+    try {
+      await api.hearings.fetchOrder(h.id)
+      applied(await api.miscApplications.get(app.id))
+      addToast('Order downloaded')
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not download the order from eCourts'), 'error')
+    } finally {
+      endOrderTask(h.id)
     }
   }
 
@@ -155,6 +171,28 @@ export default function MiscHearingPanel({ app, onChange, defaultOpen = false })
                     </p>
                   )}
                 </div>
+
+                {portal && (h.orderDocId ? (
+                  <div className="hearing-entry__order">
+                    <span className="hearing-entry__order-icon"><Icon name="file" /></span>
+                    <span className="hearing-entry__order-name">Order - {formatDisplayDate(h.date)}</span>
+                    <button type="button" className="btn-outline btn-outline--sm" title="Open in this tab"
+                      onClick={() => handleViewDocument({ id: h.orderDocId, name: h.orderDocName })}>
+                      <Icon name="eye" /> Open
+                    </button>
+                  </div>
+                ) : h.orderOnEcourts ? (
+                  <div className="hearing-entry__order-actions">
+                    <button type="button" className="btn-outline btn-outline--sm" title="Download the order of this date from eCourts"
+                      disabled={pendingOrders.has(h.id)} onClick={() => getOrder(h)}>
+                      <Icon name="download" /> {pendingOrders.has(h.id) ? 'Getting order…' : 'Get order'}
+                    </button>
+                  </div>
+                ) : h.orderDue && h.noOrderOnRecord ? (
+                  <div className="hearing-entry__order-actions">
+                    <span className="hearing-entry__order-note">No order for this date</span>
+                  </div>
+                ) : null)}
 
                 {!editing && !portal && (
                   <div className="hearing-entry__actions">

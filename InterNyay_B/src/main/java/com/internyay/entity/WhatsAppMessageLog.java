@@ -45,5 +45,13 @@ public class WhatsAppMessageLog {
     @Column(length = 500)
     private String error;
 
+    @Column(length = 128)
+    private String waMessageId;
+
+    @Column(length = 16)
+    private String deliveryStatus;
+
+    private LocalDateTime deliveryUpdatedAt;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }

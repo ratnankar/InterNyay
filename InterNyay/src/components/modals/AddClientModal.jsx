@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import useUnsavedGuard from '../../hooks/useUnsavedGuard'
 import useImageCrop from '../../hooks/useImageCrop'
 import Dropdown from '../common/Dropdown'
 import { starLabel } from '../common/Req'
+import { findClientMatches, relationText, RELATION_TYPES } from '../../utils/clientMatch'
+import { caseClientIds } from '../../utils/caseClients'
 
 import Icon from '../common/Icon'
 // Client form inputs as [label, field name, input type, placeholder]
@@ -26,7 +28,29 @@ export default function AddClientModal() {
     handleAddClient,
     markTarget,
     addToast,
+    clients,
+    caseClients,
+    cases,
+    attachExistingClient,
   } = useApp()
+
+  // Saved clients that look like the one being registered (same name, other name or phone)
+  const matches = useMemo(
+    () => (showAddClient ? findClientMatches(clients, newClientForm) : []),
+    [showAddClient, clients, newClientForm.name, newClientForm.relationName, newClientForm.otherNames,
+      newClientForm.whatsappPhone, newClientForm.additionalPhone]
+  )
+  // Clients already on the case being worked on, so they are shown as added
+  const onCaseIds = useMemo(() => {
+    if (showAddClient === 'fromCase') return new Set((caseClients || []).map(c => Number(c.id)))
+    if (showAddClient === 'markNonClient' && markTarget?.caseId != null) {
+      const c = (cases || []).find(x => x.id === markTarget.caseId)
+      return new Set(c ? caseClientIds(c) : [])
+    }
+    if (showAddClient === 'markNonClient') return new Set((caseClients || []).map(c => Number(c.id)))
+    return new Set()
+  }, [showAddClient, caseClients, cases, markTarget])
+  const hasExact = matches.some(m => m.exact)
 
   // How the form looked when it was opened, to know whether anything was typed since
   const clientSignature = JSON.stringify(newClientForm)
@@ -121,7 +145,8 @@ export default function AddClientModal() {
           </div>
 
           {FIELDS.map(([label, key, type, ph]) => (
-            <div key={key}>
+            <Fragment key={key}>
+            <div>
               <label className="form-label">{starLabel(label)}</label>
               <input
                 className="form-input"
@@ -142,6 +167,103 @@ export default function AddClientModal() {
                 } : {})}
               />
             </div>
+
+            {key === 'name' && (
+              <>
+                <div>
+                  <label className="form-label">Son of / Daughter of / Wife of</label>
+                  <div className="client-relation">
+                    <Dropdown
+                      className="form-input client-relation__type"
+                      value={newClientForm.relationType || 'S/o'}
+                      onChange={e => setNewClientForm(f => ({ ...f, relationType: e.target.value }))}
+                    >
+                      {RELATION_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                    </Dropdown>
+                    <input
+                      className="form-input"
+                      placeholder="Father's / husband's name (optional)"
+                      maxLength={255}
+                      autoComplete="off"
+                      value={newClientForm.relationName || ''}
+                      onChange={e => setNewClientForm(f => ({ ...f, relationName: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">Other names (optional)</label>
+                  {(newClientForm.otherNames || []).map((n, i) => (
+                    <div className="client-other-name" key={i}>
+                      <input
+                        className="form-input"
+                        placeholder="Another name this person is known by"
+                        maxLength={255}
+                        autoComplete="off"
+                        value={n}
+                        onChange={e => setNewClientForm(f => ({
+                          ...f,
+                          otherNames: (f.otherNames || []).map((x, j) => (j === i ? e.target.value : x)),
+                        }))}
+                      />
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        aria-label="Remove this name"
+                        title="Remove this name"
+                        onClick={() => setNewClientForm(f => ({
+                          ...f,
+                          otherNames: (f.otherNames || []).filter((_, j) => j !== i),
+                        }))}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn-outline client-add-more"
+                    onClick={() => setNewClientForm(f => ({ ...f, otherNames: [...(f.otherNames || []), ''] }))}
+                  >
+                    + Add another name
+                  </button>
+                </div>
+
+                {matches.length > 0 && (
+                  <div className="client-dup" role="status">
+                    <p className="client-dup__title">
+                      {hasExact ? 'This client is already added' : 'Similar clients already in your list'}
+                    </p>
+                    {matches.map(({ client: c, exact }) => {
+                      const onCase = onCaseIds.has(Number(c.id))
+                      return (
+                        <div className="client-dup__row" key={c.id}>
+                          <div className="client-dup__info">
+                            <p className="client-dup__name">
+                              {c.name}{exact && <span className="client-selected__tag">Same client</span>}
+                            </p>
+                            <p className="client-dup__meta">
+                              {[relationText(c), c.whatsappPhone, c.email].filter(Boolean).join(' · ') || 'No other details'}
+                            </p>
+                          </div>
+                          {showAddClient === 'fromCase' || showAddClient === 'markNonClient' ? (
+                            <button
+                              type="button"
+                              className="btn-outline"
+                              disabled={onCase}
+                              onClick={() => attachExistingClient(c)}
+                            >
+                              {onCase ? 'Already on this case' : 'Use this client'}
+                            </button>
+                          ) : null}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+            </Fragment>
           ))}
 
           <div>
@@ -202,6 +324,8 @@ export default function AddClientModal() {
 
           <button type="button"
             className="btn-gold"
+            disabled={hasExact}
+            title={hasExact ? 'This client is already in your list' : undefined}
             onClick={() => handleAddClient(fromCase)}
           >
             Register Client

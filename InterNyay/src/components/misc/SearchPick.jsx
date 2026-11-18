@@ -5,7 +5,7 @@ import Req from '../common/Req'
 const LIST_LIMIT = 6
 
 // Picks one item of a list by searching it; shows the chosen one with a Change button
-export default function SearchPick({ label, placeholder, items, selectedId, onSelect, onClear, renderMain, renderMeta, matches, extra, emptyText }) {
+export default function SearchPick({ label, placeholder, items, selectedId, onSelect, onClear, renderMain, renderMeta, matches, extra, emptyText, optional = false }) {
   const [query, setQuery] = useState('')
   // Suggestions are shown only after the search box is clicked, and hidden again after a pick or a click outside
   const [open, setOpen] = useState(false)
@@ -26,7 +26,7 @@ export default function SearchPick({ label, placeholder, items, selectedId, onSe
 
   return (
     <div className="misc-pick" ref={box}>
-      <label className="form-label">{label}<Req /></label>
+      <label className="form-label">{label}{!optional && <Req />}</label>
 
       {selected ? (
         <div className="misc-pick__chosen">

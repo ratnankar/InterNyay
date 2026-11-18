@@ -39,7 +39,7 @@
 
 /* "Cases without a File Number" window: wider and taller, and each case name opens that case */
 .modal.file-numbers--wide { max-width: 960px; width: 94vw; }
-.file-numbers--wide .file-numbers__list { max-height: min(62vh, 640px); }
+.file-numbers--wide .file-numbers__list { max-height: min(62vh, 640px); overflow-y: auto; }
 .file-numbers--wide .file-numbers__row { padding: 10px 12px; gap: 14px; }
 .file-numbers--wide .file-numbers__row .form-input { width: 150px !important; }
 .file-numbers__open {

@@ -109,6 +109,9 @@ public class SecurityConfig {
                         // Public: plans shown on the landing page and registration
                         .requestMatchers(HttpMethod.GET, "/api/public/plans", "/api/public/options").permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/api/whatsapp/webhook").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/whatsapp/webhook").permitAll()
+
                         // Preflight requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 

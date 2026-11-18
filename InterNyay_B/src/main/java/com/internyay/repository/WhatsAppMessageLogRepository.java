@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Optional;
 
 // Log of WhatsApp messages sent to clients
 public interface WhatsAppMessageLogRepository extends JpaRepository<WhatsAppMessageLog, Long> {
@@ -21,6 +22,8 @@ public interface WhatsAppMessageLogRepository extends JpaRepository<WhatsAppMess
     // How many messages a user has sent after a time
     long countByUserIdAndOriginAndStatusAndCreatedAtAfter(
             Long userId, Origin origin, Status status, LocalDateTime after);
+
+    Optional<WhatsAppMessageLog> findFirstByWaMessageId(String waMessageId);
 
     // Removes the log of a user
     void deleteByUserId(Long userId);

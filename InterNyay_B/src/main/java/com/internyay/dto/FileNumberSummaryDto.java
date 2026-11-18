@@ -23,6 +23,8 @@ public class FileNumberSummaryDto {
     // Numbers freed by closed cases
     public List<Released> released;
 
+    public List<Occupied> occupied;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -31,6 +33,18 @@ public class FileNumberSummaryDto {
 
         public int number;
 
+        public String caseTitle;
+        public String caseNo;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Occupied {
+
+        public int number;
+
+        public long caseId;
         public String caseTitle;
         public String caseNo;
     }

@@ -22,6 +22,10 @@ public class MiscApplicationRequest {
     public String court;
     public String district;
 
+    // Add (new case) only, optional: an existing case of the advocate to link the application to. The application still
+    // reads its own hearing history and orders from eCourts by its CNR
+    public Long linkedCaseId;
+
     // Edit only: for an application filed in an existing case, caseId moves it to another case. For one added together with
     // a new case, caseTitle / caseNo / cnrNo / clientId / court / district edit that case (an empty caseNo or cnrNo clears it)
 

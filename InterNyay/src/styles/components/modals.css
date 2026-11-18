@@ -143,15 +143,22 @@
   border-radius: var(--border-radius-md);
 }
 
+/* The whole dialog body scrolls as one; the lists inside never shrink, scroll or overlap each other */
+.file-numbers__body { display: block; }
+.file-numbers__body > * { flex-shrink: 0; }
+
 .file-numbers__list {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 6px;
-  max-height: 300px;
-  overflow-y: auto;
+  margin-bottom: 1.25rem;
 }
 
+.file-numbers__title { margin-top: 0.25rem; }
+
 .file-numbers__row {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -161,7 +168,10 @@
   border-radius: var(--border-radius-md);
 }
 
+.file-numbers__row .btn-outline { flex-shrink: 0; white-space: nowrap; }
+
 .file-numbers__num {
+  flex-shrink: 0;
   min-width: 44px;
   font-weight: 700;
   font-size: var(--fs-lg);
@@ -652,3 +662,50 @@
 .case-detail .case-parties .exp-card + .exp-card { margin-top: 0 !important; }
 .case-detail .exp-card:hover,
 .case-detail .exp-card.exp-card--open { box-shadow: var(--shadow-sm); }
+/* Client form: "son of" selector with the relative's name, other names, already-added clients */
+.client-relation { display: flex; gap: 8px; }
+.client-relation__type { flex: 0 0 11rem; min-width: 0; }
+.client-relation .form-input { min-width: 0; }
+.client-other-name { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.client-other-name .form-input { flex: 1 1 auto; min-width: 0; }
+.client-other-name .btn-outline { flex: 0 0 auto; }
+.client-dup {
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.35));
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.client-dup__title { font-weight: 600; font-size: 0.9rem; margin: 0; }
+.client-dup__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.client-dup__info { min-width: 0; }
+.client-dup__name { margin: 0; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.client-dup__meta { margin: 0; font-size: 0.82rem; opacity: 0.75; overflow-wrap: anywhere; }
+.client-dup__row .btn-outline { flex: 0 0 auto; }
+@media (max-width: 520px) {
+  .client-relation { flex-direction: column; }
+  .client-relation__type { flex-basis: auto; }
+  .client-dup__row { flex-direction: column; align-items: stretch; }
+}
+
+/* Notice under the file number field when the typed number is held by another case */
+.file-no-clash {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  font-size: var(--fs-sm);
+  color: var(--color-navy);
+  background: var(--color-surface-alt);
+  border: var(--border-default);
+  border-radius: var(--border-radius-md);
+}
+.file-no-clash span { flex: 1 1 200px; min-width: 0; }
+.file-no-clash .btn-outline { flex-shrink: 0; white-space: nowrap; }
+
+/* Row note: the typed number is held by another case */
+.file-numbers__row { flex-wrap: wrap; }
+.file-numbers__clash { flex: 1 1 100%; margin: 0; color: var(--color-navy); }

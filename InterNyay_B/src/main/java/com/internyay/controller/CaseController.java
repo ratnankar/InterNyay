@@ -96,6 +96,13 @@ public class CaseController {
         return ResponseEntity.ok(feesFor(caseService.update(id, req, auth.currentUserId())));
     }
 
+    @PostMapping("/{id}/file-number/exchange")
+    public ResponseEntity<List<CaseDto>> exchangeFileNumber(
+            @PathVariable Long id, @Valid @RequestBody FileNumberExchangeRequest body) {
+        List<CaseDto> result = caseService.exchangeFileNumber(id, body.fileSeq(), auth.currentUserId());
+        return ResponseEntity.ok(result.stream().map(this::feesFor).toList());
+    }
+
     private CaseDto feesFor(CaseDto dto) {
         return feesHidden() ? dto.withoutFees() : dto;
     }

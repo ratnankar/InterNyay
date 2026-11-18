@@ -187,6 +187,7 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
     updateTodo,
     caseWindowRequest,
     setCaseWindowRequest,
+    setCases,
   } = useApp()
   const [scannerOpen, setScannerOpen] = useState(false)
   // Window listing the open cases that have no file number, where they can be given one
@@ -1141,7 +1142,15 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
           cases={cases}
           onClose={() => setNoFileOpen(false)}
           onOpenCase={openCaseFromNoFile}
-          onSave={(id, fileNo) => handleUpdateCase(id, { fileNo })}
+          onSave={async (id, fileNo, swap) => {
+            const ok = await handleUpdateCase(id, swap ? { fileNo, exchangeFileNo: true } : { fileNo })
+            // The case that held the number moved to the next free one
+            if (ok && swap) {
+              setCases(prev => prev.map(c => (c.id === swap.holder.caseId
+                ? { ...c, fileNo: String(swap.handOver), fileSeq: swap.handOver } : c)))
+            }
+            return ok
+          }}
         />
       )}
 

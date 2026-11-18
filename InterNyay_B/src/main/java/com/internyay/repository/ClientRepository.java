@@ -17,7 +17,9 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
         SELECT c FROM Client c
         WHERE c.user.id = :userId
         AND (:search IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%',:search,'%'))
-             OR LOWER(c.email) LIKE LOWER(CONCAT('%',:search,'%')))
+             OR LOWER(c.email) LIKE LOWER(CONCAT('%',:search,'%'))
+             OR LOWER(c.relationName) LIKE LOWER(CONCAT('%',:search,'%'))
+             OR LOWER(c.otherNames) LIKE LOWER(CONCAT('%',:search,'%')))
         AND (:type IS NULL OR c.type = :type)
         """)
     Page<Client> findByFilters(Long userId, String search, Client.ClientType type, Pageable pageable);

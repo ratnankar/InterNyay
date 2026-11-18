@@ -19,6 +19,7 @@ import ClearableDateInput from '../common/ClearableDateInput'
 const emptyForm = () => ({
   mode: 'EXISTING',          // EXISTING: a case the advocate already has. NEW: the case is created with the application
   caseId: null,
+  linkedCaseId: null,  // New case only, optional: an existing case to link the application to
   clientId: null,
   caseTitle: '',
   caseNo: '',
@@ -40,6 +41,7 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
   const [form, setForm] = useState(emptyForm)
   const [applicationFile, setApplicationFile] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [reading, setReading] = useState(false)
 
   const startSignature = useRef(JSON.stringify(emptyForm()))
   const set = patch => setForm(f => ({ ...f, ...patch }))
@@ -117,6 +119,7 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
         cnrNo: isNew ? (form.cnrNo.trim() || null) : null,
         court: isNew ? form.court : null,
         district: isNew ? form.district : null,
+        linkedCaseId: isNew ? form.linkedCaseId : null,
         applicationType: chosenType,
         filingDate: form.filingDate || null,
         hearingDate: form.hearingDate || null,
@@ -141,11 +144,27 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
     if (isNew) await addNewCaseToList(app)
     if (form.hearingDate) bumpHearings(app.caseId)
 
+    // Added with a CNR: the hearing history and the orders are read from eCourts right away (also when the application is
+    // linked to a case). If eCourts cannot be read now, the Refresh button in the hearing history does it later
+    let readNote = ''
+    if (isNew && app.portalSynced) {
+      setReading(true)
+      try {
+        await api.cases.refreshHearing(app.caseId)
+        app = await api.miscApplications.get(app.id)
+        bumpHearings(app.caseId)
+      } catch {
+        readNote = 'Application added, but eCourts could not be read now. Use Refresh in its hearing history to try again.'
+      } finally {
+        setReading(false)
+      }
+    }
+
     setSaving(false)
     onCreated(app)
     addToast(failed
       ? 'Application added, but the file could not be uploaded. Open it to add it again.'
-      : 'Application added', failed ? 'error' : undefined)
+      : readNote || 'Application added', failed || readNote ? 'error' : undefined)
   }
 
   // Loads the case that was just created, with the same fee rules as every other case screen
@@ -246,6 +265,22 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
                       value={form.cnrNo} onChange={e => set({ cnrNo: e.target.value })} />
                   </div>
 
+                  <div className="misc-grid__wide">
+                    <SearchPick
+                      label="Case"
+                      optional
+                      placeholder="Search by case title or number…"
+                      items={caseChoices}
+                      selectedId={form.linkedCaseId}
+                      onSelect={c => set({ linkedCaseId: Number(c.id) })}
+                      onClear={() => set({ linkedCaseId: null })}
+                      matches={(c, q) => (c.title || '').toLowerCase().includes(q) || (c.caseNo || '').toLowerCase().includes(q)}
+                      renderMain={c => c.title}
+                      renderMeta={c => [c.caseNo, c.clientName].filter(Boolean).join(' • ')}
+                      emptyText="You have no cases yet."
+                    />
+                  </div>
+
                   <div>
                     <label className="form-label">Court<Req /></label>
                     <Dropdown className="form-input" value={form.court}
@@ -333,7 +368,7 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
 
             <div className="form-actions">
               <button type="button" className="btn-outline" onClick={requestClose} disabled={saving}>Cancel</button>
-              <button type="button" className="btn-gold" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Add Application'}</button>
+              <button type="button" className="btn-gold" onClick={save} disabled={saving}>{reading ? 'Reading eCourts…' : saving ? 'Saving…' : 'Add Application'}</button>
             </div>
           </div>
         </div>

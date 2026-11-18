@@ -32,6 +32,10 @@ public class CaseRequest {
     // (and a saved case gives its number up) instead of getting the next free one
     public Boolean noFileNumber;
 
+    // True when the advocate chose to exchange: a typed file number held by another open case is swapped with that case
+    // (it takes the number this case had, or the next free number for a new case) instead of being refused
+    public Boolean exchangeFileNo;
+
     public String cnrNo;
 
     public String filingDate;

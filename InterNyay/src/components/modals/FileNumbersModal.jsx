@@ -43,6 +43,7 @@ export default function FileNumbersModal({ onClose, onPick, selected }) {
           {loading && <p className="file-numbers__note">Loading…</p>}
           {error && <p className="file-numbers__note file-numbers__note--error">{error}</p>}
 
+          <div className="file-numbers__body">
           {data && (
             <>
               <div className="file-numbers__stats">
@@ -110,6 +111,7 @@ export default function FileNumbersModal({ onClose, onPick, selected }) {
               )}
             </>
           )}
+          </div>
 
           <div className="form-actions">
             <button type="button" className="btn-outline" onClick={onClose}>Close</button>

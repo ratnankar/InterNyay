@@ -312,6 +312,7 @@ export const cases = {
 
   // File numbers already in use, so new cases can pick a free one
   fileNumbers: ()           => get('/cases/file-numbers'),
+  exchangeFileNumber: (id, fileSeq) => post(`/cases/${id}/file-number/exchange`, { body: { fileSeq } }),
 
   // Hearing history of one case
   hearings:  (id)           => get(`/cases/${id}/hearings`),

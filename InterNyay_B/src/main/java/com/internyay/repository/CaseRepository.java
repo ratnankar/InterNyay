@@ -156,6 +156,21 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
         """)
     long countOpenHolders(Long userId, Integer seq, Long excludeId);
 
+    @Query("""
+        SELECT c.fileSeq, c.id, c.title, c.caseNo FROM Case c
+        WHERE c.user.id = :userId AND c.fileSeq IS NOT NULL
+        AND (c.status IS NULL OR c.status NOT IN ('Decided', 'Withdrawn'))
+        ORDER BY c.fileSeq ASC, c.id ASC
+        """)
+    List<Object[]> openFileHolders(Long userId);
+
+    @Query("""
+        SELECT c FROM Case c
+        WHERE c.user.id = :userId AND c.fileSeq = :seq AND c.id <> :excludeId
+        AND (c.status IS NULL OR c.status NOT IN ('Decided', 'Withdrawn'))
+        """)
+    List<Case> openHolders(Long userId, Integer seq, Long excludeId);
+
     // Admin stats: cases per status
     @Query("SELECT c.status, COUNT(c) FROM Case c GROUP BY c.status")
     List<Object[]> countGroupedByStatus();
