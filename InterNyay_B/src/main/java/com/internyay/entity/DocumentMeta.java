@@ -74,4 +74,22 @@ public class DocumentMeta {
 
     @Column(name = "uploaded_at")
     private LocalDateTime uploadedAt;
+
+    @Column(length = 20)
+    private String source;
+
+    @Column(name = "page_count")
+    private Integer pageCount;
+
+    @Column(name = "client_upload_id", length = 64)
+    private String clientUploadId;
+
+    @Column(name = "ocr_status", length = 20)
+    private String ocrStatus;
+
+    @Column(name = "ocr_language", length = 20)
+    private String ocrLanguage;
+
+    @Column(name = "ocr_confidence")
+    private Double ocrConfidence;
 }

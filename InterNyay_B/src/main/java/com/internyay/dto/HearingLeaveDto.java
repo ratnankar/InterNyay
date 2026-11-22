@@ -20,6 +20,7 @@ public class HearingLeaveDto {
     private LocalDate hearingDate;
 
     private String judgeName;
+    private String vcLink;
     // True when the judge is on leave that day
     private boolean onLeave;
     private LocalDate leaveFrom;
@@ -40,18 +41,20 @@ public class HearingLeaveDto {
     }
 
     // Judge is sitting
-    public static HearingLeaveDto sitting(Case c, LocalDate hearingDate, String judgeName, Integer causeListNo) {
+    public static HearingLeaveDto sitting(Case c, LocalDate hearingDate, String judgeName, String vcLink, Integer causeListNo) {
         return base(c, hearingDate, causeListNo)
                 .judgeName(judgeName)
+                .vcLink(vcLink)
                 .onLeave(false)
                 .build();
     }
 
     // Judge is on leave
-    public static HearingLeaveDto onLeave(Case c, LocalDate hearingDate, String judgeName,
+    public static HearingLeaveDto onLeave(Case c, LocalDate hearingDate, String judgeName, String vcLink,
                                           JudgeOnLeave leave, Integer causeListNo) {
         return base(c, hearingDate, causeListNo)
                 .judgeName(judgeName)
+                .vcLink(vcLink)
                 .onLeave(true)
                 .leaveFrom(leave.getLeaveFrom())
                 .leaveTo(leave.getLeaveTo())

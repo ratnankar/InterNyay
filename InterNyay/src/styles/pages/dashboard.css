@@ -101,6 +101,12 @@
   color: var(--color-navy);
 }
 
+.hearing-row__vc {
+  margin-top: 2px;
+  font-size: var(--fs-base);
+  color: var(--color-text-mid);
+}
+
 .hearing-row__side {
   display: flex;
   align-items: center;
@@ -272,6 +278,7 @@
 .hearing-row__meta,
 .hearing-row__chips,
 .hearing-row__judge,
+.hearing-row__vc,
 .hearing-row__leave { margin-left: 16px; }
 
 @media (min-width: 641px) {
@@ -298,6 +305,7 @@
   .hearing-row__meta  { margin-top: 4px; }
   .hearing-row__chips { margin-top: 6px; }
   .hearing-row__judge { margin-top: 6px; }
+  .hearing-row__vc { margin-top: 6px; }
   .hearing-row__leave { margin-top: 6px; }
 }
 

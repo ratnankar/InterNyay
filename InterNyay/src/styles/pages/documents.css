@@ -355,3 +355,13 @@
   padding: 12px 1.25rem;
 }
 .doc-group .exp-card--evidence .doc-group__evidence-empty { padding: 14px 1.25rem; }
+
+/* Smaller + Upload button, only on the Documents page (own class, shared button styles untouched) */
+.upload-menu .upload-menu__btn {
+  min-height: var(--ctl-h-xs, 28px);
+  padding: 0 12px;
+  font-size: var(--fs-xs);
+}
+@media (pointer: coarse) {
+  .upload-menu .upload-menu__btn { min-height: 34px; }
+}

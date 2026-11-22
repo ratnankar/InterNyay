@@ -4,6 +4,9 @@ import com.internyay.dto.DocumentDto;
 import com.internyay.entity.DocumentMeta;
 import com.internyay.repository.HearingRepository;
 import com.internyay.service.DocumentService;
+import com.internyay.service.ScanDocumentService;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -16,7 +19,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 // Document list, download and delete across cases, clients and advocate files
 @RestController
@@ -25,6 +30,7 @@ import java.util.List;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final ScanDocumentService scanService;
     private final HearingRepository hearingRepo;
     private final AuthHelper auth;
 
@@ -55,6 +61,47 @@ public class DocumentController {
 
         return ResponseEntity.ok(
                 documentService.uploadForAdvocate(file, name, type, auth.currentUserId()));
+    }
+
+    public record TextBody(String text) {}
+
+    @PostMapping(value = "/scan", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DocumentDto> scan(
+            @RequestParam("pages") List<MultipartFile> pages,
+            @RequestParam String name,
+            @RequestParam String uploadId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Long caseId,
+            @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) String ocr) throws IOException {
+
+        return ResponseEntity.ok(
+                scanService.create(pages, name, type, caseId, clientId, uploadId, ocr, auth.currentUserId()));
+    }
+
+    @GetMapping("/scans")
+    public ResponseEntity<Page<DocumentDto>> scans(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long caseId,
+            @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        return ResponseEntity.ok(
+                documentService.searchScans(auth.currentUserId(), q, caseId, clientId, type, from, to, page, size));
+    }
+
+    @GetMapping("/{id}/text")
+    public ResponseEntity<Map<String, String>> text(@PathVariable String id) {
+        return ResponseEntity.ok(Map.of("text", documentService.getText(id, auth.currentUserId())));
+    }
+
+    @PutMapping("/{id}/text")
+    public ResponseEntity<DocumentDto> updateText(@PathVariable String id, @RequestBody TextBody body) {
+        return ResponseEntity.ok(documentService.updateText(id, body.text(), auth.currentUserId()));
     }
 
     // Download as an attachment

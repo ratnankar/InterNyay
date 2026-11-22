@@ -50,6 +50,7 @@ public class CaseDto {
 
     // Judge of the court room, filled in by the service
     public String judgeName;
+    public String vcLink;
 
     // Civil or Criminal
     public String caseNature;

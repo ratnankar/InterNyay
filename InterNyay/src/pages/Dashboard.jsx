@@ -8,6 +8,7 @@ import CaseHearings from '../components/common/CaseHearings'
 import { isClosedCase, caseAccentColor } from '../constants/data'
 import { formatDisplayDate } from '../utils/dateUtils'
 import CaseFields from '../components/common/CaseFields'
+import HearingLink from '../components/common/HearingLink'
 import { caseNatureOf } from '../utils/caseClassification'
 import useHearingLeave from '../hooks/useHearingLeave'
 import CauseListRefreshButton from '../components/common/CauseListRefreshButton'
@@ -306,6 +307,11 @@ export default function Dashboard() {
                             Judge: <strong>{info.judgeName}</strong>
                           </p>
                         )}
+                        {(info?.vcLink || c.vcLink) && (
+                          <p className="hearing-row__vc">
+                            VC Link: <HearingLink href={info?.vcLink || c.vcLink} />
+                          </p>
+                        )}
                       </>
                     )}
 
@@ -332,7 +338,7 @@ export default function Dashboard() {
                     <CaseFields
                       caseItem={c}
                       clients={clients}
-                      hearing={{ causeListNo, judgeName: info?.judgeName }}
+                      hearing={{ causeListNo, judgeName: info?.judgeName, vcLink: info?.vcLink }}
                       causeListAction={!isClosedCase(c)
                         ? <CauseListRefreshButton caseId={c.id} dateKey={calendarDateKey} onDone={reloadHearingInfo} />
                         : null}

@@ -34,6 +34,13 @@ public class DocumentDto {
     // Hearing date of an order document as yyyy-MM-dd
     public String orderDate;
 
+    public String source;
+    public Integer pageCount;
+    public String ocrStatus;
+    public String ocrLanguage;
+    public Double ocrConfidence;
+    public String uploadedAt;
+
     // Builds the DTO from the database record
     public static DocumentDto from(DocumentMeta d) {
         return DocumentDto.builder()
@@ -51,6 +58,12 @@ public class DocumentDto {
                 .mimeType(d.getMimeType())
                 .orderSeq(d.getOrderSeq())
                 .orderDate(d.getOrderDate() != null ? d.getOrderDate().toString() : null)
+                .source(d.getSource())
+                .pageCount(d.getPageCount())
+                .ocrStatus(d.getOcrStatus())
+                .ocrLanguage(d.getOcrLanguage())
+                .ocrConfidence(d.getOcrConfidence())
+                .uploadedAt(d.getUploadedAt() != null ? d.getUploadedAt().toString() : null)
                 .date(d.getUploadedAt() != null
                         ? d.getUploadedAt().toLocalDate().toString()
                         : null)

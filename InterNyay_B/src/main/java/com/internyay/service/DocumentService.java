@@ -4,18 +4,25 @@ import com.internyay.dto.DocumentDto;
 import com.internyay.entity.Case;
 import com.internyay.entity.Client;
 import com.internyay.entity.DocumentMeta;
+import com.internyay.entity.DocumentText;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.ClientRepository;
 import com.internyay.repository.DocumentRepository;
+import com.internyay.repository.DocumentTextRepository;
 import com.internyay.repository.MiscApplicationRepository;
 import com.internyay.storage.FileStorage;
 import com.internyay.storage.StorageCleaner;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,6 +38,12 @@ public class DocumentService {
     private final CaseRepository caseRepo;
     private final ClientRepository clientRepo;
     private final MiscApplicationRepository miscRepo;
+    private final DocumentTextRepository textRepo;
+
+    private static final int MAX_TEXT = 2_000_000;
+
+    public record ScanMeta(String uploadId, int pageCount, String ocrStatus, String ocrLanguage, Double ocrConfidence) {
+    }
 
     // Documents of a case, newest first. Only for the owner of the case: someone else's case answers
     // "not found" (404), the same as a case that does not exist, so ids cannot be probed one by one
@@ -247,6 +260,92 @@ public class DocumentService {
             storage.delete(key);
             throw e;
         }
+    }
+
+    @Transactional
+    public DocumentDto storeScan(byte[] pdf, String fileName, String name, String type,
+                                 Long caseId, Long clientId, Long userId, ScanMeta scan, String text) {
+
+        if (pdf == null || pdf.length == 0) {
+            throw new IllegalArgumentException("File is empty");
+        }
+
+        String key = FileStorage.newKey("documents");
+        storage.put(key, new java.io.ByteArrayInputStream(pdf), pdf.length, "application/pdf");
+        cleaner.deleteOnRollback(key);
+
+        DocumentMeta meta = DocumentMeta.builder()
+                .name(cut(name, 512))
+                .type(cut(type, 255))
+                .fileName(cut(fileName, 512))
+                .mimeType("application/pdf")
+                .sizeBytes(pdf.length)
+                .storageKey(key)
+                .caseId(caseId)
+                .clientId(clientId)
+                .userId(userId)
+                .uploadedAt(LocalDateTime.now())
+                .source("MOBILE_SCAN")
+                .pageCount(scan.pageCount())
+                .clientUploadId(scan.uploadId())
+                .ocrStatus(scan.ocrStatus())
+                .ocrLanguage(scan.ocrLanguage())
+                .ocrConfidence(scan.ocrConfidence())
+                .build();
+
+        try {
+            DocumentMeta saved = docRepo.save(meta);
+            if (text != null && !text.isBlank()) {
+                textRepo.save(new DocumentText(saved.getId(), text, LocalDateTime.now()));
+            }
+            return DocumentDto.from(saved);
+        } catch (RuntimeException e) {
+            storage.delete(key);
+            throw e;
+        }
+    }
+
+    public String getText(String id, Long userId) {
+        DocumentMeta meta = getMeta(id);
+        checkOwner(meta, userId);
+        return textRepo.findById(id).map(DocumentText::getText).orElse("");
+    }
+
+    @Transactional
+    public DocumentDto updateText(String id, String text, Long userId) {
+        DocumentMeta meta = getMeta(id);
+        checkOwner(meta, userId);
+
+        String value = text == null ? "" : text;
+        if (value.length() > MAX_TEXT) {
+            throw new IllegalArgumentException("Text is too long");
+        }
+
+        if (value.isBlank()) {
+            textRepo.deleteById(id);
+            meta.setOcrStatus("NONE");
+        } else {
+            textRepo.save(new DocumentText(id, value, LocalDateTime.now()));
+            meta.setOcrStatus("DONE");
+        }
+        return DocumentDto.from(docRepo.save(meta));
+    }
+
+    public Page<DocumentDto> searchScans(Long userId, String q, Long caseId, Long clientId, String type,
+                                         LocalDate from, LocalDate to, int page, int size) {
+
+        String term = q == null ? "" : q.trim().toLowerCase().replace("%", "").replace("_", "");
+        String pattern = term.isEmpty() ? null : "%" + term + "%";
+        String docType = type == null || type.isBlank() ? null : type.trim();
+
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100),
+                Sort.by(Sort.Direction.DESC, "uploadedAt"));
+
+        return docRepo.searchScans(userId, pattern, caseId, clientId, docType,
+                        from == null ? null : from.atStartOfDay(),
+                        to == null ? null : to.plusDays(1).atStartOfDay(),
+                        pageable)
+                .map(DocumentDto::from);
     }
 
     // Sets the order number and the hearing date on a hearing order document

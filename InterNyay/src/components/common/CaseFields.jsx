@@ -7,6 +7,7 @@ import { formatDisplayDate } from '../../utils/dateUtils'
 import useLastHearingDate from '../../hooks/useLastHearingDate'
 import { formatCurrency } from '../../utils/formatUtils'
 import Linkify from './Linkify'
+import HearingLink from './HearingLink'
 
 // Text values show their web and e-mail addresses as links; numbers and elements stay as they are
 const linked = v => (typeof v === 'string' ? <Linkify text={v} /> : v)
@@ -32,9 +33,11 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null, 
   // Hearing-specific details override the case's own judge where present
   const causeListNo = hearing?.causeListNo
   const judge = hearing?.judgeName || c.judgeName
+  const vcLink = hearing?.vcLink || c.vcLink
 
   // Small helper to build a label/value row for the table
   const row = (label, value, opts = {}) => ({ label, value, ...opts })
+  const vcRow = row('VC Link', vcLink ? <HearingLink href={vcLink} /> : '')
 
   // People on our side who are not saved as clients, with their role
   const nonClients = nonClientsOf(c).map(n => (n.subType ? `${n.name} (${n.subType})` : n.name))
@@ -55,6 +58,7 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null, 
     row('Building',       building),
     row('Cause List No',  causeListNo != null && causeListNo !== '' ? causeListNo : '', causeListAction ? { always: true, prefix: causeListAction } : {}),
     row('Judge',          judge),
+    vcRow,
   ]
 
   // Main case details table; empty values are filtered out when rendering
@@ -81,6 +85,7 @@ export default function CaseFields({ caseItem: c, clients = [], hearing = null, 
       row('Court No',    c.courtNo),
       row('Building',    building),
       row('Judge',       judge),
+      vcRow,
     ]),
     row('Decision Date',  c.decisionDate ? formatDisplayDate(c.decisionDate) : ''),
     row('Nature of Disposal', c.disposalNature),

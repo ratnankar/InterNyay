@@ -86,9 +86,16 @@ public class JudgeService {
 
     // Matches cases to judges through court and court number
     public Map<Long, String> judgeNamesFor(Collection<Case> cases) {
+        Map<Long, String> names = new HashMap<>();
+        judgeMatchesFor(cases).forEach((id, judge) -> names.put(id, judge.judgeName()));
+        return names;
+    }
+
+    // Judge listing (name and virtual court link included) matched to each case through court and court number
+    public Map<Long, JudgeCourtNoDto> judgeMatchesFor(Collection<Case> cases) {
 
         Map<String, List<JudgeCourtNoDto>> directory = new HashMap<>();
-        Map<Long, String> names = new HashMap<>();
+        Map<Long, JudgeCourtNoDto> matches = new HashMap<>();
 
         for (Case c : cases) {
             if (c.getCourt() == null || CourtMatch.courtNo(c.getCourtNo()) == null) continue;
@@ -99,12 +106,11 @@ public class JudgeService {
 
             judges.stream()
                     .filter(j -> CourtMatch.sameCourtNo(c.getCourtNo(), j.courtRoomNo()))
-                    .map(JudgeCourtNoDto::judgeName)
                     .findFirst()
-                    .ifPresent(name -> names.put(c.getId(), name));
+                    .ifPresent(judge -> matches.put(c.getId(), judge));
         }
 
-        return names;
+        return matches;
     }
 
     // The portal court code (CL_court_no) of the live listing in this court room, or null when the listing has none

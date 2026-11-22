@@ -851,6 +851,7 @@ pre, code {
 
   .hearing-row__meta,
   .hearing-row__judge,
+  .hearing-row__vc,
   .hearing-row__leave {
     margin-top: 4px;
     font-size: var(--fs-sm);

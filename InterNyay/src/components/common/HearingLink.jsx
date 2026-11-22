@@ -7,7 +7,7 @@ export default function HearingLink({ href, empty = '—' }) {
 
   return (
     <span className="qa-hearing">
-      <a className="qa-link" href={href} target="_blank" rel="noopener noreferrer">Join hearing</a>
+      <a className="qa-link" href={href} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>Join hearing</a>
       <CopyButton text={href} label="Copy link" title="Copy virtual hearing link" />
     </span>
   )

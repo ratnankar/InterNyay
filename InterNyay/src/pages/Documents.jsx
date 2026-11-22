@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { caseTypeLabel } from '../utils/caseClassification'
-import { documentTitle, documentTypeLabel, isEvidenceDocument, isMiscDocument, evidenceOwnerOf, evidenceTitle } from '../utils/documentUtils'
+import { documentTitle, documentTypeLabel, isEvidenceDocument, isOrderDocument, isMiscDocument, evidenceOwnerOf, evidenceTitle } from '../utils/documentUtils'
 import MiscDocsSection from '../components/misc/MiscDocsSection'
 import Dropdown from '../components/common/Dropdown'
 
@@ -74,7 +74,7 @@ function UploadMenuButton({ menuKey, openKey, setOpenKey, onDocument, onEvidence
   return (
     <div className="upload-menu">
       <button type="button"
-        className="btn-outline"
+        className="btn-outline upload-menu__btn"
         onClick={() => setOpenKey(isOpen ? null : menuKey)}
       >
         + Upload
@@ -354,7 +354,7 @@ function CaseDocGroup({
             {' • '}
             {group.client}
 
-            <span className="doc-group__tag">{group.caseType}</span>
+            {group.caseType && <span className="doc-group__tag">{group.caseType}</span>}
 
           </p>
         </div>
@@ -516,7 +516,7 @@ export default function Documents() {
   const allDocs = useMemo(() => {
     return cases.flatMap(c => {
       const documents = (Array.isArray(c.documents) ? c.documents : [])
-        .filter(d => !isEvidenceDocument(d))
+        .filter(d => !isEvidenceDocument(d) && !isOrderDocument(d))
 
       return documents.map(d => {
         const client =
@@ -620,7 +620,7 @@ export default function Documents() {
   const allClientDocs = useMemo(() => {
     return clients.flatMap(cl => {
       const documents = (Array.isArray(cl.documents) ? cl.documents : [])
-        .filter(d => !isEvidenceDocument(d))
+        .filter(d => !isEvidenceDocument(d) && !isOrderDocument(d))
 
       return documents.map(d => {
         const name = d.name || 'Unnamed document'
@@ -685,7 +685,7 @@ export default function Documents() {
   // Advocate documents (evidence excluded) with size, extension and date filled in
   const normalizedAdvocateDocs = useMemo(() => {
     return advocateDocs
-      .filter(d => !isEvidenceDocument(d))
+      .filter(d => !isEvidenceDocument(d) && !isOrderDocument(d))
       .map(d => {
         const name = d.name || 'Unnamed document'
         return {
@@ -775,7 +775,7 @@ export default function Documents() {
     return map
   }, [allEvidence])
 
-  // Case groups to show, adding cases that have evidence but no documents when no search is active
+  // Case groups to show, adding every other case (no documents, only orders, or only evidence) when no search is active
   const caseGroups = useMemo(() => {
     const groups = [...groupedByCase]
     if (searchQuery.trim()) return groups
@@ -783,7 +783,7 @@ export default function Documents() {
     const listed = new Set(groups.map(([id]) => String(id)))
     cases.forEach(c => {
       const key = String(c.id)
-      if (listed.has(key) || !evidenceByCaseId[key]?.length) return
+      if (listed.has(key)) return
       const client = clients.find(cl => Number(cl.id) === Number(c.clientId))
       groups.push([key, {
         caseName: c.title || 'Unknown Case',

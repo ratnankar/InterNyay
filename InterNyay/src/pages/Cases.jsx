@@ -682,6 +682,22 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
     clearCaseFilters()
   }
 
+  // A case was opened (for example "Open in Cases" on the dashboard) but the remembered search text, filters or status
+  // chip hide it: clear them so the case is shown. Runs only when the opened case changes, so searching or filtering
+  // while a case is open does not wipe the person's choices.
+  const hiddenCheck = useRef({})
+  hiddenCheck.current = { searchedCases, cases, search }
+  useEffect(() => {
+    if (!selectedCase) return
+    const { searchedCases: shown, cases: all } = hiddenCheck.current
+    if (!all.some(c => c.id === selectedCase.id)) return
+    if (shown.some(c => c.id === selectedCase.id)) return
+    setSearch('')
+    setFilterStatus('All')
+    clearCaseFilters()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCase?.id, selectedCase != null && cases.some(c => c.id === selectedCase.id)])
+
   // Expanded view of one case
   function renderCaseDetail(c) {
     // Case documents (without orders and evidence) and the evidence items

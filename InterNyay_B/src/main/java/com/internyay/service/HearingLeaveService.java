@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -103,7 +104,7 @@ public class HearingLeaveService {
             Integer causeListNo = h.getCauseListNo() != null ? h.getCauseListNo() : causeListNoFor(c, date);
 
             if (judge != null) {
-                result.add(HearingLeaveDto.sitting(c, date, judge, causeListNo));
+                result.add(HearingLeaveDto.sitting(c, date, judge, vcLinkFor(c, judge, lookup), causeListNo));
             } else if (causeListNo != null) {
                 result.add(HearingLeaveDto.listingOnly(c, date, causeListNo));
             }
@@ -127,6 +128,22 @@ public class HearingLeaveService {
                 .filter(j -> CourtMatch.sameCourtNo(c.getCourtNo(), j.courtRoomNo()))
                 .map(JudgeCourtNoDto::judgeName)
                 .findFirst();
+    }
+
+    private String vcLinkFor(Case c, String judgeName, Lookup lookup) {
+        if (c.getCourt() == null || CourtMatch.courtNo(c.getCourtNo()) == null) return null;
+
+        return lookup.judgesIn(c).stream()
+                .filter(j -> CourtMatch.sameCourtNo(c.getCourtNo(), j.courtRoomNo()))
+                .filter(j -> judgeName == null || CourtMatch.sameJudge(judgeName, j.judgeName()))
+                .map(j -> blankToNull(j.virtualCourtLink()))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     // Cause list number only counts for the date it was listed
@@ -169,7 +186,7 @@ public class HearingLeaveService {
                 if (CourtMatch.sameJudge(judge.judgeName(), leave.getName())) {
                     log.debug("Hearing {} case {}: {} is ON LEAVE ({} - {})",
                             date, c.getId(), judge.judgeName(), leave.getLeaveFrom(), leave.getLeaveTo());
-                    return Optional.of(HearingLeaveDto.onLeave(c, date, judge.judgeName(), leave, causeListNo));
+                    return Optional.of(HearingLeaveDto.onLeave(c, date, judge.judgeName(), blankToNull(judge.virtualCourtLink()), leave, causeListNo));
                 }
             }
         }
@@ -181,7 +198,7 @@ public class HearingLeaveService {
                 leaves.isEmpty() ? " (none scraped for that date)"
                         : ", none matching by name: " + leaves.stream().map(JudgeOnLeave::getName).toList());
 
-        return Optional.of(HearingLeaveDto.sitting(c, date, sitting.judgeName(), causeListNo));
+        return Optional.of(HearingLeaveDto.sitting(c, date, sitting.judgeName(), blankToNull(sitting.virtualCourtLink()), causeListNo));
     }
 
     // Whether leave counts on this date for the case's court. Never on a Sunday; a District holiday removes District Court

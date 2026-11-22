@@ -64,7 +64,7 @@ public class CaseService {
         Map<Long, List<DocumentDto>> docs = documentService.mapByCaseIds(
                 cases.getContent().stream().map(Case::getId).toList());
 
-        Map<Long, String> judges = judgeService.judgeNamesFor(cases.getContent());
+        Map<Long, JudgeCourtNoDto> judges = judgeService.judgeMatchesFor(cases.getContent());
 
         return cases.map(c -> withJudge(
                 CaseDto.from(c, docs.getOrDefault(c.getId(), List.of())), judges.get(c.getId())));
@@ -679,12 +679,14 @@ public class CaseService {
     // Case plus its documents and the judge matched by court number
     private CaseDto toDto(Case c) {
         return withJudge(CaseDto.from(c, documentService.listForOwnedCase(c.getId())),
-                judgeService.judgeNamesFor(List.of(c)).get(c.getId()));
+                judgeService.judgeMatchesFor(List.of(c)).get(c.getId()));
     }
 
     // Adds the judge name to the DTO
-    private CaseDto withJudge(CaseDto dto, String judgeName) {
-        dto.setJudgeName(judgeName);
+    private CaseDto withJudge(CaseDto dto, JudgeCourtNoDto judge) {
+        if (judge == null) return dto;
+        dto.setJudgeName(judge.judgeName());
+        dto.setVcLink(judge.virtualCourtLink() == null || judge.virtualCourtLink().isBlank() ? null : judge.virtualCourtLink().trim());
         return dto;
     }
 
