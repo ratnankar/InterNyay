@@ -60,7 +60,7 @@ export default function DashboardMiscHearing({ app, dateKey, caseItem }) {
           {!open && (
             <div className="hearing-row__chips">
               {(caseItem?.courtNo || app.courtNo) && <span className="hearing-row__court-no" title="Court number">Court No. {caseItem?.courtNo || app.courtNo}</span>}
-              {app.portalSynced && hasCauseListNo && <span className="hearing-row__file-no" title="Cause list number">Cause List No. {app.causeListNo}</span>}
+              {app.portalSynced && hasCauseListNo && <span className="hearing-row__cause-list-no" title="Serial number in the cause list">Cause List No. {app.causeListNo}</span>}
               {canLookUpCauseList && (
                 <CauseListRefreshButton caseId={app.caseId} dateKey={dateKey} hasNumber={hasCauseListNo} onDone={() => bumpHearings(app.caseId)} />
               )}

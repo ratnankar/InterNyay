@@ -6,15 +6,16 @@ import { formatDisplayDate } from '../../utils/dateUtils'
 export default function MiscSummaryFields({ app: a }) {
   const { district, court } = caseCourtParts({ court: a.court, district: a.district })
 
+  // Two per line: case / case no, client / CNR, court / district, court no / cause list no, then the dates
   const rows = [
     { label: 'Case', value: a.caseTitle },
     { label: 'Case No', value: a.caseNo || '—', always: true },
-    { label: 'CNR No', value: a.portalSynced ? a.cnrNo : '' },
-    { label: 'Court No', value: a.courtNo || '' },
-    { label: 'Cause List No', value: a.portalSynced && a.causeListNo != null && a.listingDate === a.hearingDate ? a.causeListNo : '' },
     { label: 'Client', value: a.clientName },
+    { label: 'CNR No', value: a.cnrNo || '' },
     { label: 'Court', value: court },
     { label: 'District', value: district },
+    { label: 'Court No', value: a.courtNo || '' },
+    { label: 'Cause List No', value: a.portalSynced && a.causeListNo != null && a.listingDate === a.hearingDate ? a.causeListNo : '' },
     { label: 'Filing Date', value: a.filingDate ? formatDisplayDate(a.filingDate) : '' },
     { label: 'Disposed On', value: a.status === MISC_DISPOSED && a.disposedOn ? formatDisplayDate(a.disposedOn) : '' },
   ].filter(f => f.always || (f.value !== '' && f.value != null))
