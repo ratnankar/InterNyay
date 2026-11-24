@@ -96,6 +96,11 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     @Query(value = "UPDATE cases SET deleted = 0 WHERE user_id = :userId AND deleted = 1", nativeQuery = true)
     int undeleteAllOfUser(Long userId);
 
+    @Transactional
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "UPDATE cases SET case_no = NULL, cnr_no = NULL, deleted = 0 WHERE user_id = :userId AND deleted = 1", nativeQuery = true)
+    int releaseKeysAndUndeleteAllOfUser(Long userId);
+
     // Ids of deleted cases of a client, including cases where the client is an additional client
     @Query(value = """
         SELECT c.id FROM cases c
@@ -119,6 +124,11 @@ public interface CaseRepository extends JpaRepository<Case, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "UPDATE cases SET deleted = 0 WHERE id IN (:ids)", nativeQuery = true)
     int undelete(List<Long> ids);
+
+    @Transactional
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "UPDATE cases SET case_no = NULL, cnr_no = NULL, deleted = 0 WHERE id IN (:ids)", nativeQuery = true)
+    int releaseKeysAndUndelete(List<Long> ids);
 
     // File numbers used by open cases, a closed case frees its number
     @Query("""

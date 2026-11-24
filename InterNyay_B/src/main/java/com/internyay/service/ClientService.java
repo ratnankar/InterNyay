@@ -240,7 +240,7 @@ public class ClientService {
 
         List<Long> hidden = caseRepo.deletedCaseIdsOfClient(id);
         if (!hidden.isEmpty()) {
-            caseRepo.undelete(hidden);
+            caseRepo.releaseKeysAndUndelete(hidden);
             caseRepo.deleteAllById(hidden);
         }
 

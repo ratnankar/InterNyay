@@ -54,7 +54,7 @@ public class AccountPurgeService {
         hearingRepo.deleteByUser_Id(id);
         taskRepo.deleteByUser_Id(id);
         taskCategoryRepo.deleteByUser_Id(id);
-        caseRepo.undeleteAllOfUser(id);
+        caseRepo.releaseKeysAndUndeleteAllOfUser(id);
         caseRepo.deleteByUser_Id(id);
         clientRepo.deleteByUser_Id(id);
         officeExpenseRepo.deleteByUser_Id(id);

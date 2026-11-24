@@ -328,6 +328,11 @@ public class CaseService {
         return fileNumbers.exchange(id, userId, seq).stream().map(this::toDto).toList();
     }
 
+    @Transactional
+    public CaseDto changeFileNumber(Long id, int seq, Long userId) {
+        return toDto(fileNumbers.change(id, userId, seq));
+    }
+
     // Soft delete: documents and hearings go, the case row stays hidden so history and file numbers survive
     @Transactional
     public void delete(Long id, Long userId) {

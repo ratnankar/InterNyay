@@ -177,4 +177,24 @@ public class FileNumberService {
         caseRepo.saveAll(List.of(current, other));
         return List.of(current, other);
     }
+
+    @Transactional
+    public Case change(Long caseId, Long userId, int seq) {
+
+        userRepo.findByIdForUpdate(userId);
+
+        Case current = caseRepo.findById(caseId).orElseThrow(() -> new IllegalArgumentException("Case not found"));
+        if (!current.getUser().getId().equals(userId)) throw new IllegalArgumentException("Case not found");
+
+        if (CaseStatuses.isClosed(current.getStatus())) {
+            throw new IllegalArgumentException("The file number of a closed case cannot be changed");
+        }
+
+        if (current.getFileSeq() != null && current.getFileSeq() == seq) {
+            throw new IllegalArgumentException("This case already has file number " + seq);
+        }
+
+        assignTyped(current, userId, seq);
+        return caseRepo.save(current);
+    }
 }
