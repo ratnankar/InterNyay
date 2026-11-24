@@ -177,7 +177,7 @@
   width: fit-content;
   max-width: 100%;
   margin-top: 4px;
-  align-self: flex-start;
+  align-self: flex-end;   /* box sits at the right edge of the card */
 }
 /* Text inside the hearing box: label, date and countdown stacked, left aligned, same as the opened card */
 .case-card__hearing-text,
