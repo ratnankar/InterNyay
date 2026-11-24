@@ -145,3 +145,28 @@
     line-height: 1;
   }
 }
+
+@media (max-width: 768px) {
+  .hearings-panel .hearing-row__side {
+    align-items: center;
+  }
+  .hearings-panel .hearing-row__side .wa-icon-btn {
+    box-sizing: border-box;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    flex: 0 0 36px;
+    padding: 0;
+  }
+  .hearings-panel .hearing-row__side button.wa-remind-btn.wa-remind-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    gap: 6px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0 14px;
+    line-height: 1;
+  }
+}
