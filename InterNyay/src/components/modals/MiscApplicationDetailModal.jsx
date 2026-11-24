@@ -362,8 +362,23 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
           {/* Details: read-only until Edit is pressed */}
           {!editing && (
             <div className="misc-details">
+              <div><p className="misc-details__label">Application</p><p>{app.applicationType || '—'}</p></div>
               <div><p className="misc-details__label">Filing date</p><p>{app.filingDate ? formatDisplayDate(app.filingDate) : '—'}</p></div>
-              {portal && <div><p className="misc-details__label">CNR number</p><p>{app.cnrNo || '—'}</p></div>}
+              <div><p className="misc-details__label">Case title</p><p>{app.caseTitle || '—'}</p></div>
+              <div><p className="misc-details__label">Case number</p><p>{app.caseNo || '—'}</p></div>
+              <div><p className="misc-details__label">CNR number</p><p>{app.cnrNo || '—'}</p></div>
+              <div><p className="misc-details__label">Client</p><p>{app.clientName || '—'}</p></div>
+              <div><p className="misc-details__label">Court</p><p>{app.court || '—'}</p></div>
+              <div><p className="misc-details__label">District</p><p>{app.district || '—'}</p></div>
+              <div>
+                <p className="misc-details__label">Court No.</p>
+                <p>{app.courtNo ? [`Court No. ${app.courtNo}`, app.building, app.floor].filter(Boolean).join(', ') : '—'}</p>
+              </div>
+              <div><p className="misc-details__label">Next hearing</p><p>{app.hearingDate ? formatDisplayDate(app.hearingDate) : '—'}</p></div>
+              <div><p className="misc-details__label">Status</p><p>{[app.status, disposed && app.disposalOutcome].filter(Boolean).join(' — ') || '—'}</p></div>
+              {disposed && app.disposedOn && (
+                <div><p className="misc-details__label">Disposed off on</p><p>{formatDisplayDate(app.disposedOn)}</p></div>
+              )}
               {portal && app.causeListNo != null && app.listingDate === app.hearingDate && (
                 <div><p className="misc-details__label">Cause list no.</p><p>{app.causeListNo}</p></div>
               )}

@@ -1027,9 +1027,21 @@ public class DistrictCauseListRelayService {
         groups.computeIfAbsent(key, k -> new ArrayList<>()).add(c);
     }
 
+    // Civil or criminal list of a case. The case nature decides; a case saved without one (a misc. application's own case, for
+    // example) is told by the type in its case number: "Misc Crl. 4052/2026" is a criminal case, so its list is the criminal one
     private static String kind(Case c) {
         String nature = c.getCaseNature();
-        return nature != null && nature.toLowerCase(Locale.ROOT).contains("crim") ? "cri" : "civ";
+        if (nature != null && !nature.isBlank()) {
+            return nature.toLowerCase(Locale.ROOT).contains("crim") ? "cri" : "civ";
+        }
+        return criminalType(c.getCaseNo()) ? "cri" : "civ";
+    }
+
+    // True when the type of a case number (the letters before the number, "Misc Crl.", "Bail Appln.", "CC NI ACT") is a criminal one
+    static boolean criminalType(String caseNo) {
+        String type = CaseKey.parse(caseNo).map(CaseKey::type).orElse("");
+        return type.startsWith("CRL") || type.startsWith("CRIM") || type.startsWith("MISCCR") || type.startsWith("BAIL")
+                || type.startsWith("CRCASES") || type.startsWith("CC") || type.startsWith("NIACT") || type.startsWith("ANTICIP");
     }
 
     // Portal courts that look a little like the judge's name, so a spelling difference or a transfer can be seen
