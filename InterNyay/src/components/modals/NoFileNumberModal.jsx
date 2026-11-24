@@ -4,6 +4,7 @@ import useOverlayClose from '../../hooks/useOverlayClose'
 import Icon from '../common/Icon'
 import ModalPortal from '../common/ModalPortal'
 import FileNumbersModal from './FileNumbersModal'
+import ChangeHolderNumber from './ChangeHolderNumber'
 import { isClosedCase } from '../../constants/data'
 import { getErrorMessage } from '../../utils/errorMessages'
 
@@ -124,6 +125,13 @@ export default function NoFileNumberModal({ cases, onClose, onSave, onOpenCase }
                         {held.number} is held by <strong>{held.caseTitle}</strong>{held.caseNo ? ` (${held.caseNo})` : ''}.
                         Exchange gives it to this case and moves that case to {handOver}.
                       </p>
+                    )}
+                    {held && (
+                      <ChangeHolderNumber
+                        holder={{ caseId: held.caseId, caseTitle: held.caseTitle }}
+                        suggested={handOver}
+                        onChanged={loadNext}
+                      />
                     )}
                   </div>
                 )

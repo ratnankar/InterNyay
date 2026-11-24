@@ -71,3 +71,29 @@
 @media (max-width: 860px) {
   :root { --sticky-top: calc(48px + env(safe-area-inset-top, 0px) + var(--sticky-gap)); }
 }
+
+.qa-hearing .qa-copy-btn {
+  box-sizing: border-box;
+  height: 22px;
+  min-height: 0;
+  padding: 0 8px;
+  font-size: 0.6875rem;
+  line-height: 1;
+  gap: 3px;
+}
+.qa-hearing .qa-copy-btn .icon {
+  width: 11px;
+  height: 11px;
+}
+
+.file-no-change {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.file-no-change .file-no-change__input {
+  flex: 0 0 auto;
+  width: 96px;
+  min-width: 0;
+}

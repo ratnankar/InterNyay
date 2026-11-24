@@ -36,7 +36,7 @@ export default function ClientDetailModal() {
   const {
     selectedClient, setSelectedClient,
     cases, handleUpdateClient, handleDeleteClient,
-    openEditCase, setTransactionCaseId, isAssociate, openCaseWindow,
+    openEditCase, openAddCaseForClient, setTransactionCaseId, isAssociate, openCaseWindow,
     setUploadDocClientId, handleDeleteClientDocument,
     handleViewDocument, addToast,
     setShowUploadEvidence, setEvidenceCategory, setEvidenceTargetId,
@@ -152,6 +152,12 @@ export default function ClientDetailModal() {
     setIsEditing(false)
     setForm(null)
     setOpenSections({ documents: false, evidence: false })
+  }
+
+  function addCaseForClient() {
+    const client = cl
+    close()
+    openAddCaseForClient(client)
   }
 
   // Ask for confirmation (mentioning linked cases if any) before deleting the client
@@ -374,9 +380,14 @@ export default function ClientDetailModal() {
 
           {!isEditing && (
             <div className="client-detail__cases">
-              <p className="case-detail__docs-label u-mt-24">
-                Cases ({clientCases.length})
-              </p>
+              <div className="case-detail__docs-label-row u-mt-24">
+                <p className="case-detail__docs-label u-mt-0">
+                  Cases ({clientCases.length})
+                </p>
+                <button type="button" className="btn-gold btn-outline--sm" onClick={addCaseForClient}>
+                  + Add Case
+                </button>
+              </div>
 
               {clientCases.length === 0 && (
                 <p className="fee-hearing-empty">No cases linked to this client yet.</p>

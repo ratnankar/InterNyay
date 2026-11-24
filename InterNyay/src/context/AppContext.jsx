@@ -2066,6 +2066,15 @@ export function AppProvider({ children }) {
     setShowAddCase(true)
   }
 
+  function openAddCaseForClient(client) {
+    resetCaseModal()
+    setSelectedCase(null)
+    setScanCnr('')
+    setCaseClients([client])
+    setCaseClientSubTypes({ [client.id]: sideSubType(EMPTY_CASE_FORM.clientSide, EMPTY_CASE_FORM.caseNature) })
+    setShowAddCase(true)
+  }
+
   // Fills the case form with an existing case and opens it for editing
   function openEditCase(c) {
 
@@ -3955,6 +3964,7 @@ export function AppProvider({ children }) {
         setPrimaryCaseClient,
         resetCaseModal,
         openAddCase,
+        openAddCaseForClient,
 
         editingCaseId,
         openEditCase,

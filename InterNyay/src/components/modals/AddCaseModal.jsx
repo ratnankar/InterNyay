@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import ChangeHolderNumber from './ChangeHolderNumber'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import {
@@ -656,6 +657,13 @@ function FileNumberField({ form, setForm }) {
             <button type="button" className="btn-outline btn-outline--sm" disabled={swapping} onClick={exchangeTyped}>
               {swapping ? 'Exchanging…' : form.exchangeFileNo ? 'Undo exchange' : 'Exchange numbers'}
             </button>
+          )}
+          {!form.exchangeFileNo && (
+            <ChangeHolderNumber
+              holder={{ caseId: heldBy.caseId, caseTitle: heldBy.caseTitle }}
+              suggested={holders.reduce((m, h) => Math.max(m, h.number), 0) + 1}
+              onChanged={() => api.cases.fileNumbers().then(res => setHolders(res.occupied || [])).catch(() => { })}
+            />
           )}
         </div>
       )}
