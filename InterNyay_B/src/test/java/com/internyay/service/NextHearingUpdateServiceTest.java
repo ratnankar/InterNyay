@@ -1,9 +1,11 @@
 package com.internyay.service;
 
 import com.internyay.entity.Case;
+import com.internyay.entity.MiscApplication;
 import com.internyay.entity.User;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.CaseRepository.HearingDateDue;
+import com.internyay.repository.MiscApplicationRepository;
 import com.internyay.service.NextHearingUpdateService.Result;
 import com.internyay.service.ScrapingService.CaseOutlook;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +42,7 @@ class NextHearingUpdateServiceTest {
     @Mock ScrapingService scraping;
     @Mock HearingService hearingService;
     @Mock TransactionTemplate tx;
+    @Mock MiscApplicationRepository miscRepo;
 
     private NextHearingUpdateService service;
 
@@ -268,5 +271,61 @@ class NextHearingUpdateServiceTest {
         assertThat(res.nextHearing()).isNull();
         assertThat(res.message()).contains("left as it is").contains("2 missing hearing dates added");
         verify(caseRepo, never()).save(any());
+    }
+
+    // ---- misc. applications read by their own CNR: filing date and court room come from the eCourts page ----------
+
+    private Case miscCase() {
+        Case c = Case.builder().id(8L).cnrNo("M1").status("Pending").nextHearing(TODAY.plusDays(10)).miscPortal(true)
+                .user(User.builder().id(1L).build()).build();
+        when(caseRepo.findById(8L)).thenReturn(Optional.of(c));
+        return c;
+    }
+
+    @Test
+    void refreshFillsTheFilingDateAndCourtRoomOfAMiscApplication() {
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "miscRepo", miscRepo);
+        Case c = miscCase();
+        LocalDate filed = LocalDate.of(2026, 9, 14);
+
+        MiscApplication placeholder = MiscApplication.builder().id(1L).legalCase(c).portalSynced(true)
+                .createdAt(java.time.LocalDateTime.of(2026, 11, 20, 10, 0)).filingDate(LocalDate.of(2026, 11, 20)).build();
+        MiscApplication edited = MiscApplication.builder().id(2L).legalCase(c).portalSynced(true)
+                .createdAt(java.time.LocalDateTime.of(2026, 11, 20, 10, 0)).filingDate(LocalDate.of(2026, 10, 1)).build();
+        when(miscRepo.findByLegalCase_Id(8L)).thenReturn(List.of(placeholder, edited));
+        when(scraping.lookUpOutlook("M1")).thenReturn(Optional.of(
+                new CaseOutlook(false, TODAY.plusDays(10), null, filed, "12")));
+
+        service.refreshSingleCase(8L, 1L);
+
+        assertThat(c.getFilingDate()).isEqualTo(filed);
+        assertThat(c.getCourtNo()).isEqualTo("12");
+        // The form's default day is replaced, a date the advocate changed is kept
+        assertThat(placeholder.getFilingDate()).isEqualTo(filed);
+        assertThat(edited.getFilingDate()).isEqualTo(LocalDate.of(2026, 10, 1));
+    }
+
+    @Test
+    void refreshKeepsTheCourtRoomAMiscApplicationAlreadyHas() {
+        Case c = miscCase();
+        c.setCourtNo("7");
+        when(scraping.lookUpOutlook("M1")).thenReturn(Optional.of(
+                new CaseOutlook(false, TODAY.plusDays(10), null, null, "12")));
+
+        service.refreshSingleCase(8L, 1L);
+
+        assertThat(c.getCourtNo()).isEqualTo("7");
+    }
+
+    @Test
+    void refreshLeavesARegularCaseFilingDateAndRoomAlone() {
+        Case c = openCase(TODAY.plusDays(10));
+        when(scraping.lookUpOutlook("C1")).thenReturn(Optional.of(
+                new CaseOutlook(false, TODAY.plusDays(10), null, LocalDate.of(2026, 9, 14), "12")));
+
+        service.refreshSingleCase(7L, 1L);
+
+        assertThat(c.getFilingDate()).isNull();
+        assertThat(c.getCourtNo()).isNull();
     }
 }

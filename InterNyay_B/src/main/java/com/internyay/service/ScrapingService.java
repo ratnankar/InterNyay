@@ -84,8 +84,14 @@ public class ScrapingService {
     //  nextHearing - the "Next Hearing Date" of the page, null when it shows none
     //  disposed    - the page says the case is disposed
     //  history     - every past hearing date and order file on the page (null when not read)
-    public record CaseOutlook(boolean disposed, LocalDate nextHearing, EcourtsCaseService.Snapshot history) {
-        public CaseOutlook(boolean disposed, LocalDate nextHearing) { this(disposed, nextHearing, null); }
+    //  filingDate  - the "Filing Date" of the page (null when it shows none)
+    //  courtNo     - the court room of the "Court Number and Judge" line (null or empty when it shows none)
+    public record CaseOutlook(boolean disposed, LocalDate nextHearing, EcourtsCaseService.Snapshot history,
+                              LocalDate filingDate, String courtNo) {
+        public CaseOutlook(boolean disposed, LocalDate nextHearing, EcourtsCaseService.Snapshot history) {
+            this(disposed, nextHearing, history, null, null);
+        }
+        public CaseOutlook(boolean disposed, LocalDate nextHearing) { this(disposed, nextHearing, null, null, null); }
     }
 
     // The next hearing date eCourts shows for the case. Empty when it could not be read: no automatic CAPTCHA reader,
@@ -108,8 +114,7 @@ public class ScrapingService {
                     parsed.nextHearing() == null ? "none" : parsed.nextHearing(),
                     parsed.disposed() ? " (disposed)" : "");
 
-            return Optional.of(new CaseOutlook(parsed.disposed(), parsed.nextHearing(),
-                    EcourtsCaseService.snapshotOf(parsed)));
+            return Optional.of(outlookOf(parsed));
         } catch (IOException | RuntimeException e) {
             log.warn("CNR {}: eCourts next hearing date lookup failed: {}", cnr, e.getMessage());
             return Optional.empty();
@@ -210,8 +215,12 @@ public class ScrapingService {
     }
 
     private CaseOutlook outlookOf(Read read) {
-        ParsedCase parsed = read.parsed();
-        return new CaseOutlook(parsed.disposed(), parsed.nextHearing(), EcourtsCaseService.snapshotOf(parsed));
+        return outlookOf(read.parsed());
+    }
+
+    private static CaseOutlook outlookOf(ParsedCase parsed) {
+        return new CaseOutlook(parsed.disposed(), parsed.nextHearing(), EcourtsCaseService.snapshotOf(parsed),
+                parsed.filingDate(), parsed.courtNo());
     }
 
     // The order of one hearing date, or the session to ask the user's CAPTCHA on. value and manual are both null when it failed

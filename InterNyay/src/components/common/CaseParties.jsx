@@ -73,6 +73,9 @@ export default function CaseParties({ caseItem: c, clients = [] }) {
                     {entry.subType && <span className="client-selected__tag client-selected__tag--muted">{entry.subType}</span>}
                   </p>
                   {entry.phone && <p className="client-selected__email">{entry.phone}</p>}
+                  {entry.clientName && entry.clientName !== entry.name && (
+                    <p className="client-selected__email">Saved as {entry.clientName} in your clients</p>
+                  )}
                 </div>
               </div>
             ))}

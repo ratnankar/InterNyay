@@ -1,7 +1,9 @@
 package com.internyay.service;
 
 import com.internyay.entity.Case;
+import com.internyay.entity.MiscApplication;
 import com.internyay.repository.CaseRepository;
+import com.internyay.repository.MiscApplicationRepository;
 import com.internyay.repository.CaseRepository.HearingDateDue;
 import com.internyay.util.CaseStatuses;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +83,10 @@ public class NextHearingUpdateService {
     // Window for the CAPTCHA when the automatic reader cannot read it (null in unit tests: they get the old message)
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ManualCaptchaDesk captchaDesk;
+
+    // Misc. applications read from eCourts by their own CNR (null in unit tests that do not need them)
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private MiscApplicationRepository miscRepo;
 
     private final Map<LocalDate, Set<Long>> disposedToday = new ConcurrentHashMap<>();
 
@@ -183,6 +189,7 @@ public class NextHearingUpdateService {
                     pause();
                     continue;
                 }
+                fillMiscDetails(c.getId(), outlook.get());
                 if (moved) {
                     updated++;
                     // Notes which dates have an order on eCourts (nothing is downloaded: "Get order" does that)
@@ -280,7 +287,59 @@ public class NextHearingUpdateService {
             log.warn("[refresh] case {}: hearing history could not be synced: {}", caseId, e.getMessage());
         }
 
+        // The filing date and court room of a misc. application read by its CNR (also an independent step)
+        fillMiscDetails(caseId, outlook);
+
         return decideNextHearing(c, outlook, today).withHistory(added, orders);
+    }
+
+    // A misc. application that has its own CNR is a case of its own that the advocate did not type in full: the filing date
+    // and the court room come from the eCourts page. The court room is what the cause list lookup needs to find the
+    // application, so without it no cause list number is ever read. Only what is still empty is filled in, and the filing
+    // date of the application itself is replaced only while it is empty or just the day the application was added here
+    // (the form's default), so a date the advocate changed is kept. Never throws: it must not block the hearing date logic
+    private void fillMiscDetails(Long caseId, ScrapingService.CaseOutlook outlook) {
+        if (outlook == null || (outlook.filingDate() == null && isBlank(outlook.courtNo()))) return;
+
+        try {
+            tx.executeWithoutResult(status -> {
+                Case c = caseRepo.findById(caseId).orElse(null);
+                if (c == null || !c.isMiscPortal()) return;
+
+                boolean changed = false;
+                LocalDate filing = outlook.filingDate();
+
+                if (filing != null && c.getFilingDate() == null) {
+                    c.setFilingDate(filing);
+                    changed = true;
+                }
+
+                if (isBlank(c.getCourtNo()) && !isBlank(outlook.courtNo())) {
+                    String room = outlook.courtNo().trim();
+                    c.setCourtNo(room.length() > 30 ? room.substring(0, 30) : room);
+                    changed = true;
+                }
+                if (changed) caseRepo.save(c);
+
+                if (filing == null || miscRepo == null) return;
+                for (MiscApplication a : miscRepo.findByLegalCase_Id(caseId)) {
+                    if (!a.isPortalSynced() || filing.equals(a.getFilingDate())) continue;
+
+                    boolean unset = a.getFilingDate() == null
+                            || (a.getCreatedAt() != null && a.getFilingDate().equals(a.getCreatedAt().toLocalDate()));
+                    if (!unset) continue;
+
+                    a.setFilingDate(filing);
+                    miscRepo.save(a);
+                }
+            });
+        } catch (RuntimeException e) {
+            log.warn("[refresh] case {}: misc. application details could not be filled in: {}", caseId, e.getMessage());
+        }
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 
     // The next hearing date part of the Refresh button (unchanged rules, see the comments inside)

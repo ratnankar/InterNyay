@@ -1,5 +1,6 @@
 package com.internyay.controller;
 
+import com.internyay.dto.NoHearingDateDto;
 import com.internyay.dto.NoHearingDateRequest;
 import com.internyay.service.HearingDayService;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +22,14 @@ public class NoHearingDateController {
 
     // Marked dates
     @GetMapping
-    public ResponseEntity<List<LocalDate>> list() {
-        return ResponseEntity.ok(hearingDays.list(auth.currentUserId()));
+    public ResponseEntity<List<NoHearingDateDto>> list() {
+        return ResponseEntity.ok(hearingDays.listWithReasons(auth.currentUserId()));
     }
 
     // Mark a date
     @PostMapping
     public ResponseEntity<LocalDate> mark(@RequestBody NoHearingDateRequest req) {
-        return ResponseEntity.ok(hearingDays.mark(req.getDate(), auth.currentUserId()));
+        return ResponseEntity.ok(hearingDays.mark(req.getDate(), req.getReason(), auth.currentUserId()));
     }
 
     // Unmark a date

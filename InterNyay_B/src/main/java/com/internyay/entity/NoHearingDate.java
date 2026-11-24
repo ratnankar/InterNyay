@@ -22,9 +22,19 @@ public class NoHearingDate {
     @Column(name = "blocked_date", nullable = false)
     private LocalDate blockedDate;
 
+    // Why the date was marked (optional)
+    @Column(name = "reason", length = 255)
+    private String reason;
+
     // Shortcut to create a row
     public NoHearingDate(Long userId, LocalDate blockedDate) {
         this.userId = userId;
         this.blockedDate = blockedDate;
+    }
+
+    // Shortcut to create a row with a reason
+    public NoHearingDate(Long userId, LocalDate blockedDate, String reason) {
+        this(userId, blockedDate);
+        this.reason = reason;
     }
 }

@@ -5,6 +5,7 @@ import com.internyay.entity.Hearing;
 import com.internyay.entity.HearingDayLimit;
 import com.internyay.entity.NoHearingDate;
 import com.internyay.dto.HearingLimitsDto;
+import com.internyay.dto.NoHearingDateDto;
 import com.internyay.repository.CaseRepository;
 import com.internyay.repository.HearingDayLimitRepository;
 import com.internyay.repository.HearingRepository;
@@ -37,6 +38,9 @@ public class HearingDayService {
 
     // Highest daily limit that can be set
     public static final int MAX_DAILY_LIMIT = 200;
+
+    // Longest reason that can be given for a no-hearing date
+    public static final int MAX_REASON_LENGTH = 255;
 
     private final NoHearingDateRepository repo;
     private final HearingDayLimitRepository limitRepo;
@@ -167,16 +171,46 @@ public class HearingDayService {
                 .toList();
     }
 
+    // Dates the advocate has blocked, with the reason given for each
+    public List<NoHearingDateDto> listWithReasons(Long userId) {
+        return repo.findByUserIdOrderByBlockedDateAsc(userId).stream()
+                .map(n -> new NoHearingDateDto(n.getBlockedDate(), n.getReason()))
+                .toList();
+    }
+
     // Block a date
     @Transactional
     public LocalDate mark(LocalDate date, Long userId) {
+        return mark(date, null, userId);
+    }
+
+    // Block a date with an optional reason; marking a date that is already blocked just updates its reason
+    @Transactional
+    public LocalDate mark(LocalDate date, String reason, Long userId) {
         if (date == null) throw new IllegalArgumentException("Date is required");
+        String cleaned = cleanReason(reason);
         // A no-hearing date is a date with a limit of 0, so a limit set earlier for it is dropped
         limitRepo.deleteByUserIdAndLimitDate(userId, date);
         if (!repo.existsByUserIdAndBlockedDate(userId, date)) {
-            repo.save(new NoHearingDate(userId, date));
+            repo.save(new NoHearingDate(userId, date, cleaned));
+        } else if (reason != null) {
+            repo.findByUserIdAndBlockedDate(userId, date).ifPresent(n -> {
+                n.setReason(cleaned);
+                repo.save(n);
+            });
         }
         return date;
+    }
+
+    // Trims the reason; blank means none
+    private String cleanReason(String reason) {
+        if (reason == null) return null;
+        String r = reason.trim();
+        if (r.isEmpty()) return null;
+        if (r.length() > MAX_REASON_LENGTH) {
+            throw new IllegalArgumentException("The reason can be at most " + MAX_REASON_LENGTH + " characters");
+        }
+        return r;
     }
 
     // Unblock a date

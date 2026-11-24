@@ -28,7 +28,7 @@ import {
 import { caseFeeSummary, cleanHearingFees, cleanStageFees } from '../utils/feeUtils'
 import { hasCorporatePanelClient, caseClientNames, caseHasClient } from '../utils/caseClients'
 import { toFormParty, toRequestParty, nonClientsOf } from '../utils/caseParties'
-import { cnrCaseTitle, cnrOpponents, cnrOurSide, detectSide, sameName } from '../utils/cnrPrefill'
+import { cnrCaseTitle, cnrOpponents, cnrOurSide, detectSide, sameName, courtNameOf } from '../utils/cnrPrefill'
 import {
   auth as authApi,
   cases as casesApi,
@@ -326,6 +326,16 @@ export function AppProvider({ children }) {
 
   // Dates the advocate has crossed out as "no hearing" (kept in a Set for quick lookups)
   const [noHearingDates, setNoHearingDates] = useState(() => new Set())
+  // Reason given for each no-hearing date (date -> text), only for the dates that have one
+  const [noHearingReasons, setNoHearingReasons] = useState(() => new Map())
+
+  // Fills both the Set and the reasons Map from the list the server sends: [{ date, reason }] (plain date strings also work)
+  function applyNoHearingList(list) {
+    const rows = Array.isArray(list) ? list : []
+    const dates = rows.map(r => (typeof r === 'string' ? r : r?.date)).filter(Boolean)
+    setNoHearingDates(new Set(dates))
+    setNoHearingReasons(new Map(rows.filter(r => r && typeof r === 'object' && r.reason).map(r => [r.date, r.reason])))
+  }
 
   // Most hearings the advocate takes on a day: the usual limit (null = no limit) and the limits of particular dates
   const [hearingLimits, setHearingLimits] = useState({ defaultLimit: null, overrides: {} })
@@ -440,20 +450,19 @@ export function AppProvider({ children }) {
   // Load the no-hearing dates saved by this advocate
   async function fetchNoHearingDates() {
     try {
-      const data = await noHearingDatesApi.list()
-      setNoHearingDates(new Set(Array.isArray(data) ? data : []))
+      applyNoHearingList(await noHearingDatesApi.list())
     } catch (e) {
-      setNoHearingDates(new Set())
+      applyNoHearingList([])
     }
   }
 
-  // Mark or unmark a date as a no-hearing date and update the local Set
-  async function toggleNoHearingDate(dateStr) {
+  // Mark or unmark a date as a no-hearing date and update the local Set; a reason can be given when marking
+  async function toggleNoHearingDate(dateStr, reason) {
     const wasMarked = noHearingDates.has(dateStr)
 
     try {
       if (wasMarked) await noHearingDatesApi.unmark(dateStr)
-      else           await noHearingDatesApi.mark(dateStr)
+      else           await noHearingDatesApi.mark(dateStr, reason)
 
       setNoHearingDates(prev => {
         const next = new Set(prev)
@@ -461,13 +470,41 @@ export function AppProvider({ children }) {
         else           next.add(dateStr)
         return next
       })
+      setNoHearingReasons(prev => {
+        const next = new Map(prev)
+        const text = (reason || '').trim()
+        if (!wasMarked && text) next.set(dateStr, text)
+        else                    next.delete(dateStr)
+        return next
+      })
 
       // Crossing a date out drops a limit that was set for it
       if (!wasMarked) fetchHearingLimits()
 
       addToast(wasMarked ? 'Cross removed — hearings can be set on this date again' : 'Marked as a no-hearing date')
+      return true
     } catch (e) {
       addToast(getErrorMessage(e, 'Could not update the calendar'), 'error')
+      return false
+    }
+  }
+
+  // Change the reason of a date that is already marked (an empty text clears it)
+  async function updateNoHearingReason(dateStr, reason) {
+    try {
+      const text = (reason || '').trim()
+      await noHearingDatesApi.mark(dateStr, text)
+      setNoHearingReasons(prev => {
+        const next = new Map(prev)
+        if (text) next.set(dateStr, text)
+        else      next.delete(dateStr)
+        return next
+      })
+      addToast(text ? 'Reason saved' : 'Reason removed')
+      return true
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not save the reason'), 'error')
+      return false
     }
   }
 
@@ -618,6 +655,12 @@ export function AppProvider({ children }) {
     // Opposite parties, and people on our side who are not saved as clients (see utils/caseParties.js)
     opponents: [],
     nonClients: [],
+    // People marked as a client from this form (client id -> the party they were), so the mark can be undone,
+    // also automatically when the side of the case is switched. Never sent
+    markedParties: {},
+    // Name the court lists each picked client under when it differs from the client's own name (client id -> name).
+    // Saved with the case so it shows the court's spelling
+    clientCaseNames: {},
 
     caseNo: '',
 
@@ -1002,7 +1045,7 @@ export function AppProvider({ children }) {
 
       // Calendar data and the profile do not depend on what the person is editing
       if (Array.isArray(holidayList)) setHolidays(holidayList)
-      if (Array.isArray(noHearingList)) setNoHearingDates(new Set(noHearingList))
+      if (Array.isArray(noHearingList)) applyNoHearingList(noHearingList)
       if (limitsRes) applyHearingLimits(limitsRes)
       if (hearingRes) { setHearingRecords(hearingRes); setHearingsVersion(v => v + 1) }
       // Application hearing dates too, so the calendar and the history counts stay right when they change elsewhere
@@ -1517,6 +1560,7 @@ export function AppProvider({ children }) {
     setTaskCategories([])
     setHolidays([])
     setNoHearingDates(new Set())
+    setNoHearingReasons(new Map())
     setHearingLimits({ defaultLimit: null, overrides: {} })
     setNextHearingCaseId(null)
     setExpandedHearingCaseId(null)
@@ -1957,7 +2001,7 @@ export function AppProvider({ children }) {
   function selectClient(client) {
     // A case read from eCourts: the first client chosen tells which side we are on, when the client is named there
     const detected = newCaseForm.addMode === 'CNR' && caseClients.length === 0
-      ? detectSide(newCaseForm.cnrDetail, client.name)
+      ? detectSide(newCaseForm.cnrDetail, courtNameOf(newCaseForm.cnrDetail, client) || client.name)
       : null
     const side = detected || newCaseForm.clientSide
     if (detected && detected !== newCaseForm.clientSide) changeClientSide(detected)
@@ -1967,12 +2011,17 @@ export function AppProvider({ children }) {
     )
 
     // A client picked from the names eCourts listed on our side takes that person's place; the others stay non-clients
+    // The name eCourts has for the client (found by their name or other names) is kept as the name in the case
     if (newCaseForm.addMode === 'CNR') {
+      const courtName = courtNameOf(newCaseForm.cnrDetail, client)
       setNewCaseForm(f => {
-        const gone = f.nonClients.find(n => sameName(n.name, client.name))
-        if (!gone) return f
+        const gone = f.nonClients.find(n => sameName(n.name, client.name) || (courtName && sameName(n.name, courtName)))
+        const keepName = courtName && courtName.trim().toLowerCase() !== String(client.name || '').trim().toLowerCase()
+        const names = keepName ? { ...(f.clientCaseNames || {}), [client.id]: courtName } : f.clientCaseNames
+        if (!gone) return keepName ? { ...f, clientCaseNames: names } : f
         return {
           ...f,
+          clientCaseNames: names,
           nonClients: f.nonClients.filter(n => n !== gone),
           titleLead: f.titleLead === gone.key ? null : f.titleLead,
         }
@@ -2004,12 +2053,39 @@ export function AppProvider({ children }) {
       delete next[id]
       return next
     })
+    setNewCaseForm(f => {
+      const { [id]: _name, ...names } = f.clientCaseNames || {}
+      const next = { ...f, clientCaseNames: names }
+      if (!f.markedParties?.[id]) return next
+      const { [id]: _gone, ...rest } = f.markedParties
+      return { ...next, markedParties: rest }
+    })
   }
 
-  // When the side or nature changes, update roles that were set automatically but keep roles the user typed in manually
-  function remapClientSubTypes(side, nature) {
+  // Undo "Mark as client" in the case form: the person is taken off the clients and is back among the people on our
+  // side who are not clients. The client record that was registered for them stays in the Clients page
+  function unmarkCaseClient(id) {
+    const party = newCaseForm.markedParties?.[id]
+    if (!party) return
+    setCaseClients(prev => prev.filter(c => Number(c.id) !== Number(id)))
+    setCaseClientSubTypes(prev => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setNewCaseForm(f => {
+      const { [id]: _gone, ...rest } = f.markedParties || {}
+      const { fromSide: _side, ...back } = party
+      return { ...f, markedParties: rest, nonClients: [...f.nonClients, { ...back, subType: sideSubType(f.clientSide, f.caseNature) }] }
+    })
+  }
+
+  // When the side or nature changes, update roles that were set automatically but keep roles the user typed in manually.
+  // dropIds are clients that are leaving the case with this change
+  function remapClientSubTypes(side, nature, dropIds = []) {
+    const staying = caseClients.filter(cl => !dropIds.some(d => Number(d) === Number(cl.id)))
     setCaseClientSubTypes(prev =>
-      Object.fromEntries(caseClients.map(cl => {
+      Object.fromEntries(staying.map(cl => {
         const current = prev[cl.id] || ''
         return [cl.id, !current || AUTO_SUBTYPES.includes(current) ? sideSubType(side, nature) : current]
       }))
@@ -2028,25 +2104,52 @@ export function AppProvider({ children }) {
   function changeClientSide(side) {
     if (side === newCaseForm.clientSide) return
 
+    // A case read from eCourts: someone marked as a client from the names on the side we just left is on the other
+    // side now, so they stop being a client and go back with the names that move over
+    const marked = newCaseForm.addMode === 'CNR' && newCaseForm.cnrDetail ? newCaseForm.markedParties || {} : {}
+    const unmarkIds = Object.keys(marked).filter(id => caseClients.some(c => String(c.id) === id))
+    if (unmarkIds.length > 0) {
+      setCaseClients(prev => prev.filter(c => !unmarkIds.includes(String(c.id))))
+      setCaseClientSubTypes(prev => {
+        const next = { ...prev }
+        unmarkIds.forEach(id => delete next[id])
+        return next
+      })
+      const names = unmarkIds.map(id => caseClients.find(c => String(c.id) === id)?.name).filter(Boolean)
+      addToast(`${names.join(', ')} ${names.length > 1 ? 'are' : 'is'} on the other side now, so they are no longer marked as ${names.length > 1 ? 'clients' : 'a client'}`)
+    }
+
     setNewCaseForm(f => {
       // A case read from eCourts: names still as eCourts listed them move to the other side with our client,
-      // so both sides stay visible. Opposite parties that were edited, and non-clients that were edited or
-      // marked as clients, stay where they are
+      // so both sides stay visible. Opposite parties that were edited, and non-clients that were edited,
+      // stay where they are
       const plain = p => !p.fatherName && !p.address && !p.phone
       const sameNames = (list, from) => JSON.stringify(list.map(p => p.name)) === JSON.stringify(from.map(p => p.name))
       const byCnr = f.addMode === 'CNR' && f.cnrDetail
 
+      // The people just unmarked rejoin our old side's list in the order eCourts gave the names
+      let ours = f.nonClients
+      if (byCnr && unmarkIds.length > 0) {
+        const order = cnrOurSide(f.cnrDetail, f.clientSide).map(p => p.name)
+        const back = unmarkIds.map(id => f.markedParties[id]).filter(Boolean).map(({ fromSide: _s, ...p }) => p)
+        const rank = p => { const i = order.indexOf(p.name); return i < 0 ? order.length : i }
+        ours = [...ours, ...back].sort((a, b) => rank(a) - rank(b))
+      }
+      const keptMarks = Object.fromEntries(Object.entries(f.markedParties || {}).filter(([id]) => !unmarkIds.includes(id)))
+
       const opponentsUntouched = byCnr && f.opponents.every(plain) && sameNames(f.opponents, cnrOpponents(f.cnrDetail, f.clientSide))
-      const nonClientsUntouched = byCnr && f.nonClients.every(plain) && sameNames(f.nonClients, cnrOurSide(f.cnrDetail, f.clientSide))
+      const nonClientsUntouched = byCnr && ours.every(plain) && sameNames(ours, cnrOurSide(f.cnrDetail, f.clientSide))
 
       return {
         ...f,
         clientSide: side,
+        nonClients: ours,
+        markedParties: keptMarks,
         ...(opponentsUntouched ? { opponents: cnrOpponents(f.cnrDetail, side), opponentLead: null } : {}),
         ...(nonClientsUntouched ? { nonClients: cnrOurSide(f.cnrDetail, side, f.caseNature), titleLead: null } : {}),
       }
     })
-    remapClientSubTypes(side, newCaseForm.caseNature)
+    remapClientSubTypes(side, newCaseForm.caseNature, unmarkIds)
   }
 
   // Clear the add/edit case form and everything attached to it
@@ -2125,6 +2228,7 @@ export function AppProvider({ children }) {
     setNewCaseForm({
       title:          c.title          || '',
       titleEdited:    !!savedTitle && savedTitle !== composedTitle,
+      clientCaseNames: { ...(c.clientCaseNames || {}) },
       clientSide,
       opponents: formOpponents,
       nonClients: formNonClients,
@@ -2356,6 +2460,7 @@ export function AppProvider({ children }) {
 
       opponents: newCaseForm.opponents.map(toRequestParty),
       nonClients: newCaseForm.nonClients.map(toRequestParty),
+      markedParties: undefined,
 
       // First client is the main one, the rest are sent as additional clients with their roles
       clientId: caseClientId,
@@ -2808,7 +2913,11 @@ export function AppProvider({ children }) {
 
     // In the case form: the client replaces the non-client there and is saved together with the case
     if (caseId == null) {
-      setNewCaseForm(f => ({ ...f, nonClients: f.nonClients.filter(n => n.key !== nonClient.key) }))
+      setNewCaseForm(f => ({
+        ...f,
+        nonClients: f.nonClients.filter(n => n.key !== nonClient.key),
+        markedParties: { ...(f.markedParties || {}), [created.id]: { ...nonClient, fromSide: f.clientSide } },
+      }))
       selectClient(created)
       if (nonClient.subType) setCaseClientSubTypes(prev => ({ ...prev, [created.id]: nonClient.subType }))
       return
@@ -3894,7 +4003,9 @@ export function AppProvider({ children }) {
         holidays,
 
         noHearingDates,
+        noHearingReasons,
         toggleNoHearingDate,
+        updateNoHearingReason,
 
         // Modal visibility and the selected case
         showAddCase,
@@ -3961,6 +4072,7 @@ export function AppProvider({ children }) {
         changeClientSide,
         remapClientSubTypes,
         removeCaseClient,
+        unmarkCaseClient,
         setPrimaryCaseClient,
         resetCaseModal,
         openAddCase,

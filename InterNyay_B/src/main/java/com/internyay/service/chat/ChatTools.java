@@ -959,8 +959,9 @@ public class ChatTools {
                         .put("appliesTo", h.getCourtType()).map())
                 .toList();
 
-        List<LocalDate> blocked = hearingDayService.list(ctx.userId()).stream()
-                .filter(d -> !d.isBefore(from) && !d.isAfter(to))
+        List<Object> blocked = hearingDayService.listWithReasons(ctx.userId()).stream()
+                .filter(d -> !d.date().isBefore(from) && !d.date().isAfter(to))
+                .map(d -> (Object) Rec.of().always("date", d.date()).put("reason", d.reason()).map())
                 .toList();
 
         return Rec.of()

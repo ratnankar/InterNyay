@@ -506,7 +506,8 @@ export default function Cases({ windowOnly = false, onWindowClose }) {
       el.style.scrollMarginTop = `${Math.round(clearance)}px`
       const top = el.getBoundingClientRect().top
       if (Math.abs(top - clearance) > 8) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        // Jumps straight to the card (no visible scrolling), also when the page's CSS asks for smooth scrolling
+        el.scrollIntoView({ behavior: 'instant', block: 'start' })
       }
     }
     const t = setTimeout(() => {

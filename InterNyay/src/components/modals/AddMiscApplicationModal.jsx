@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import { MISC_TYPE_MANUAL } from '../../constants/data'
-import { useCourts, useDefaultCourt, getDistricts, hasNamedDistricts, isHighCourt } from '../../constants/courts'
+import { useCourts, useDefaultCourt, getDistricts, getCourtNosByBuilding, buildingWithFloor, hasNamedDistricts, isHighCourt } from '../../constants/courts'
+import { judgesForRoom } from '../../utils/courtMatch'
 import { getErrorMessage } from '../../utils/errorMessages'
 import { formatDate } from '../../utils/dateUtils'
 import { APPLICATION_CHOICES, isValidCnr, resolveApplicationType } from '../misc/miscUtils'
@@ -13,7 +14,13 @@ import Icon from '../common/Icon'
 import ModalPortal from '../common/ModalPortal'
 import Req from '../common/Req'
 import SearchPick from '../misc/SearchPick'
+import { CaseAddModePrompt } from './NewCasePrompts'
+import { cnrCaseTitle, cnrDetailToForm } from '../../utils/cnrPrefill'
 import ClearableDateInput from '../common/ClearableDateInput'
+
+// A court no. in the dropdown is identified by building, floor and number, because the same number can be used in several buildings
+const KEY_SEP = '\u0001'
+const roomKey = (building, floor, courtNo) => [building || '', floor || '', courtNo || ''].join(KEY_SEP)
 
 // Form values when the popup opens
 const emptyForm = () => ({
@@ -26,6 +33,9 @@ const emptyForm = () => ({
   cnrNo: '',
   court: '',
   district: '',
+  courtNo: '',
+  building: '',
+  floor: '',
   applicationChoice: '',
   applicationCustom: '',
   filingDate: formatDate(new Date()),
@@ -45,6 +55,102 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
 
   const startSignature = useRef(JSON.stringify(emptyForm()))
   const set = patch => setForm(f => ({ ...f, ...patch }))
+
+  // Court rooms (with the judge sitting in each) of the chosen court and district, for the Court No. / Judge field.
+  // The cause list is looked up by court room, so an application with a CNR needs it
+  const [courtNumbers, setCourtNumbers] = useState([])
+  const [judgesLoading, setJudgesLoading] = useState(false)
+  const roomCourt = form.court
+  const roomDistrict = form.district
+  useEffect(() => {
+    if (form.mode !== 'NEW' || !roomCourt || (hasNamedDistricts(roomCourt) && !roomDistrict)) {
+      setCourtNumbers([])
+      setJudgesLoading(false)
+      return undefined
+    }
+    let alive = true
+    setJudgesLoading(true)
+    api.judgesList.courtNumbers({ court: roomCourt, district: roomDistrict })
+      .then(rows => { if (alive) setCourtNumbers(Array.isArray(rows) ? rows : []) })
+      .catch(() => { if (alive) setCourtNumbers([]) })
+      .finally(() => { if (alive) setJudgesLoading(false) })
+    return () => { alive = false }
+  }, [form.mode, roomCourt, roomDistrict])
+
+  const courtNoGroups = useMemo(() => getCourtNosByBuilding(roomCourt, roomDistrict), [roomCourt, roomDistrict, courtNumbers])
+
+  // "Court No." and the number, then the judge(s) sitting in that room
+  function roomLabel(g, r) {
+    const names = [...new Set(
+      judgesForRoom(courtNumbers, { courtNo: r.courtNo, building: g.building, floor: r.floor })
+        .map(j => (j.judgeName || '').trim())
+        .filter(Boolean)
+    )]
+    return names.length ? `Court No. ${r.courtNo} — ${names.join(' / ')}` : `Court No. ${r.courtNo}`
+  }
+
+  // CNR typed in the New case form: once it is complete, eCourts is asked for the case and its details fill the form.
+  // looking: the CNR being read now. fetched: what the last read of eCourts filled in, so a changed CNR can take it back
+  const [looking, setLooking] = useState('')
+  const [fetched, setFetched] = useState(null)
+  const askedFor = useRef('')
+  const cleanCnr = text => String(text || '').toUpperCase().replace(/[\s-]/g, '')
+
+  function changeCnr(value) {
+    const next = cleanCnr(value)
+    setForm(f => {
+      const patch = { cnrNo: value }
+      // The CNR no longer is the one that was read: what it filled in goes again (what was edited since stays)
+      if (fetched && next !== fetched.cnr) {
+        if (f.caseTitle === fetched.caseTitle) patch.caseTitle = ''
+        if (f.caseNo === fetched.caseNo) patch.caseNo = ''
+        if (fetched.court && f.court === fetched.court && f.district === fetched.district) {
+          patch.court = preferred.court || ''
+          patch.district = preferred.court ? preferred.district : ''
+          patch.courtNo = ''
+          patch.building = ''
+          patch.floor = ''
+        }
+      }
+      return { ...f, ...patch }
+    })
+    if (fetched && next !== fetched.cnr) setFetched(null)
+    // A CNR that is being read and is changed is not wanted any more
+    if (looking && next !== looking) setLooking('')
+    if (next !== askedFor.current) askedFor.current = ''
+    if (isValidCnr(next) && next !== askedFor.current && next !== fetched?.cnr) {
+      askedFor.current = next
+      setLooking(next)
+    }
+  }
+
+  // eCourts gave the case: its title, number and court fill the form
+  function onCnrFetched(detail) {
+    const filled = cnrDetailToForm(detail)
+    const next = {
+      caseTitle: cnrCaseTitle(detail) || '',
+      caseNo: detail.caseNo || '',
+      court: filled.court || '',
+      district: filled.court ? (filled.district || '') : '',
+      courtNo: filled.court ? (filled.courtNo || '') : '',
+      building: filled.court ? (filled.building || '') : '',
+      floor: filled.court ? (filled.floor || '') : '',
+    }
+    setForm(f => ({
+      ...f,
+      caseTitle: next.caseTitle || f.caseTitle,
+      caseNo: next.caseNo || f.caseNo,
+      ...(next.court ? { court: next.court, district: next.district, courtNo: next.courtNo, building: next.building, floor: next.floor } : {}),
+    }))
+    setFetched({ cnr: cleanCnr(looking), ...next })
+    setLooking('')
+  }
+
+  // eCourts could not give the case: the form stays as it is, to be filled by hand
+  function onCnrFailed(cnr, message) {
+    addToast(`${message || 'Could not fetch the case from eCourts'}. Fill in the case details manually.`, 'error')
+    setLooking('')
+  }
 
   // A new case starts on the court the advocate usually works at
   const prefilled = useRef(false)
@@ -119,6 +225,9 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
         cnrNo: isNew ? (form.cnrNo.trim() || null) : null,
         court: isNew ? form.court : null,
         district: isNew ? form.district : null,
+        courtNo: isNew ? (form.courtNo || null) : null,
+        building: isNew ? (form.building || null) : null,
+        floor: isNew ? (form.floor || null) : null,
         linkedCaseId: isNew ? form.linkedCaseId : null,
         applicationType: chosenType,
         filingDate: form.filingDate || null,
@@ -248,6 +357,14 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
 
                 <div className="misc-grid u-mt-12">
                   <div className="misc-grid__wide">
+                    <label className="form-label">CNR number</label>
+                    <input className="form-input" maxLength={24} placeholder="16-character CNR"
+                      autoComplete="off" value={form.cnrNo} onChange={e => changeCnr(e.target.value)} />
+                    {looking && <p className="form-hint">Reading the case from eCourts…</p>}
+                    {!looking && fetched && <p className="form-hint">Details taken from eCourts. Check them before adding.</p>}
+                  </div>
+
+                  <div className="misc-grid__wide">
                     <label className="form-label">Case title<Req /></label>
                     <input className="form-input" maxLength={500} placeholder="e.g. Ramesh Kumar vs State"
                       value={form.caseTitle} onChange={e => set({ caseTitle: e.target.value })} />
@@ -257,12 +374,6 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
                     <label className="form-label">Case number</label>
                     <input className="form-input" maxLength={255} placeholder="e.g. CC 1234/2026"
                       value={form.caseNo} onChange={e => set({ caseNo: e.target.value })} />
-                  </div>
-
-                  <div>
-                    <label className="form-label">CNR number</label>
-                    <input className="form-input" maxLength={24} placeholder="16-character CNR"
-                      value={form.cnrNo} onChange={e => set({ cnrNo: e.target.value })} />
                   </div>
 
                   <div className="misc-grid__wide">
@@ -286,7 +397,7 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
                     <Dropdown className="form-input" value={form.court}
                       onChange={e => {
                         const court = e.target.value
-                        set({ court, district: preferred.districtOf(court) || getDistricts(court)[0] || '' })
+                        set({ court, district: preferred.districtOf(court) || getDistricts(court)[0] || '', courtNo: '', building: '', floor: '' })
                       }}>
                       <option value="">Select Court</option>
                       {courtNames.length > 0 && (
@@ -306,13 +417,42 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
                     <label className="form-label">District{hasNamedDistricts(form.court) && <Req />}</label>
                     <Dropdown className="form-input" value={form.district}
                       disabled={!hasNamedDistricts(form.court)}
-                      onChange={e => set({ district: e.target.value })}>
+                      onChange={e => set({ district: e.target.value, courtNo: '', building: '', floor: '' })}>
                       {!hasNamedDistricts(form.court) && (
                         <option value={form.district || ''}>
                           {!form.court ? 'Select a court first' : isHighCourt(form.court) ? 'Not applicable' : 'No district'}
                         </option>
                       )}
                       {hasNamedDistricts(form.court) && districts.map(d => <option key={d} value={d}>{d}</option>)}
+                    </Dropdown>
+                  </div>
+
+                  <div className="misc-grid__wide">
+                    <label className="form-label">Court No. / Judge</label>
+                    {/* Court rooms come from the court table for the chosen court and district; each shows the judge sitting there */}
+                    <Dropdown className="form-input"
+                      value={roomKey(form.building, form.floor, form.courtNo)}
+                      disabled={!form.court}
+                      onChange={e => {
+                        const [building = '', floor = '', courtNo = ''] = e.target.value.split(KEY_SEP)
+                        set({ courtNo, building, floor })
+                      }}>
+                      <option value={roomKey('', '', '')}>{form.court ? (judgesLoading ? 'Loading court nos. and judges…' : 'Select Court No. / Judge') : 'Select a court first'}</option>
+                      {courtNoGroups.flatMap(g => {
+                        const opt = r => (
+                          <option key={roomKey(g.building, r.floor, r.courtNo)} value={roomKey(g.building, r.floor, r.courtNo)}>
+                            {roomLabel(g, r)}
+                          </option>
+                        )
+                        // No building: plain options. With a building: one group per floor, "Building (Floor)"
+                        if (!g.building) return g.rooms.map(opt)
+                        const floors = [...new Set(g.rooms.map(r => r.floor))]
+                        return floors.map(f => (
+                          <optgroup key={`${g.building}|${f}`} label={buildingWithFloor(g.building, f)}>
+                            {g.rooms.filter(r => r.floor === f).map(opt)}
+                          </optgroup>
+                        ))
+                      })}
                     </Dropdown>
                   </div>
                 </div>
@@ -374,6 +514,17 @@ export default function AddMiscApplicationModal({ onClose, onCreated }) {
         </div>
       </ModalPortal>
       {dialog}
+      {looking && (
+        <CaseAddModePrompt
+          key={looking}
+          initialCnr={looking}
+          hasCnr={cnr => cases.some(c => cleanCnr(c.cnrNo) === cnr)}
+          onFetched={onCnrFetched}
+          onFailed={onCnrFailed}
+          onManual={() => setLooking('')}
+          onClose={() => setLooking('')}
+        />
+      )}
     </>
   )
 }

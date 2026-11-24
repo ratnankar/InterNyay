@@ -143,6 +143,10 @@ public class CaseService {
             hearingDays.assertAllowed(nextHearing, userId);
         }
 
+        // A case read from eCourts whose number says MISC is an application of its own; a case made with a misc. application
+        // (miscOnly) is kept out of the Cases page the same way, but its application is added by the caller
+        boolean portalApplication = byCnr && MiscTag.in(caseNo);
+
         Case c = Case.builder()
                 .title(CaseText.normalizeTitle(req.getTitle()))
                 .caseNo(caseNo)
@@ -152,7 +156,7 @@ public class CaseService {
                 .nextHearing(nextHearing)
                 .client(client)
                 .user(user)
-                .miscPortal(byCnr && MiscTag.in(caseNo))
+                .miscPortal(portalApplication || req.isMiscOnly())
                 .build();
 
         applyCourt(c, req.getCourt(), req.getDistrict());
@@ -163,6 +167,7 @@ public class CaseService {
         applyOpponents(c, req.getOpponents());
         applyNonClients(c, req.getNonClients());
         applyClientSubTypes(c, req.getClientSubTypes());
+        applyClientCaseNames(c, req.getClientCaseNames());
         if (!c.isMiscPortal()) numberNewCase(c, req, userId);
 
         FeeMapper.applyFeeFields(c, req);
@@ -172,7 +177,7 @@ public class CaseService {
 
         if (snap != null) oldCaseImport.importHistory(saved, snap, userId);
 
-        if (saved.isMiscPortal()) {
+        if (portalApplication) {
             miscApplicationRepo.save(MiscApplication.builder()
                     .legalCase(saved)
                     .user(user)
@@ -312,6 +317,7 @@ public class CaseService {
         }
 
         applyClientSubTypes(c, req.getClientSubTypes());
+        applyClientCaseNames(c, req.getClientCaseNames());
 
         syncFileNumber(c, req, userId, wasCorporatePanel, wasClosed);
         applyEditedFileNo(c, req, userId, wasCorporatePanel);
@@ -713,6 +719,28 @@ public class CaseService {
             String subType = canonicalSubType(value, current.get(clientId));
             if (subType == null) current.remove(clientId);
             else current.put(clientId, subType);
+        });
+    }
+
+    // Name each client goes by in this case, only for clients that are on the case. Null leaves the names as they are;
+    // a blank name (or one equal to the client's own name) removes it, so the client's own name shows again
+    private void applyClientCaseNames(Case c, Map<Long, String> requested) {
+        Map<Long, String> current = c.getClientCaseNames();
+
+        Map<Long, String> ownNames = new HashMap<>();
+        if (c.getClient() != null) ownNames.put(c.getClient().getId(), c.getClient().getName());
+        c.getAdditionalClients().forEach(x -> ownNames.put(x.getId(), x.getName()));
+
+        current.keySet().removeIf(id -> !ownNames.containsKey(id));
+        if (requested == null) return;
+
+        requested.forEach((clientId, value) -> {
+            if (clientId == null || !ownNames.containsKey(clientId)) return;
+            String name = value == null ? "" : value.trim().replaceAll("\\s+", " ");
+            if (name.length() > 255) throw new IllegalArgumentException("A name can be at most 255 characters");
+            String own = ownNames.get(clientId);
+            if (name.isEmpty() || (own != null && own.trim().equalsIgnoreCase(name))) current.remove(clientId);
+            else current.put(clientId, name);
         });
     }
 

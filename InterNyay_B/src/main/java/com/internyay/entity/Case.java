@@ -198,6 +198,15 @@ public class Case {
     @Builder.Default
     private Map<Long, String> clientSubTypes = new HashMap<>();
 
+    // Name each client goes by in this case when the court lists them differently, client id -> name as in the case
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "case_client_names", joinColumns = @JoinColumn(name = "case_id"))
+    @MapKeyColumn(name = "client_id")
+    @Column(name = "case_name", length = 255, nullable = false)
+    @BatchSize(size = 50)
+    @Builder.Default
+    private Map<Long, String> clientCaseNames = new HashMap<>();
+
     // Advocate who owns the case
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

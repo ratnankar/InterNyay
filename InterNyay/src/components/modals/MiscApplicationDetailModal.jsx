@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import api from '../../services/api'
 import { MISC_OUTCOMES, MISC_TYPE_MANUAL } from '../../constants/data'
@@ -8,7 +8,8 @@ import { formatDate, formatDisplayDate } from '../../utils/dateUtils'
 import {
   APPLICATION_CHOICES, docIcon, isDisposed, isValidCnr, resolveApplicationType, splitApplicationType, statusSlug,
 } from '../misc/miscUtils'
-import { useCourts, getDistricts, hasNamedDistricts, isHighCourt } from '../../constants/courts'
+import { useCourts, getDistricts, getCourtNosByBuilding, buildingWithFloor, hasNamedDistricts, isHighCourt } from '../../constants/courts'
+import { judgesForRoom } from '../../utils/courtMatch'
 import useOverlayClose from '../../hooks/useOverlayClose'
 import Dropdown from '../common/Dropdown'
 import Icon from '../common/Icon'
@@ -17,6 +18,10 @@ import ModalPortal from '../common/ModalPortal'
 import MiscHearingPanel from '../misc/MiscHearingPanel'
 import ClearableDateInput from '../common/ClearableDateInput'
 import SearchPick from '../misc/SearchPick'
+
+// A court no. in the dropdown is identified by building, floor and number, because the same number can be used in several buildings
+const KEY_SEP = '\u0001'
+const roomKey = (building, floor, courtNo) => [building || '', floor || '', courtNo || ''].join(KEY_SEP)
 
 // One document of the application with its Open, Download and Delete buttons
 function DocRow({ doc, onView, onDownload, onDelete }) {
@@ -92,6 +97,38 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
 
   const disposed = isDisposed(app)
 
+  // Court rooms (with the judge sitting in each) of the court and district being edited, for the Court No. / Judge field
+  const [courtNumbers, setCourtNumbers] = useState([])
+  const [judgesLoading, setJudgesLoading] = useState(false)
+  const roomCourt = editing ? draft?.court : ''
+  const roomDistrict = editing ? draft?.district : ''
+  useEffect(() => {
+    if (!roomCourt || (hasNamedDistricts(roomCourt) && !roomDistrict)) {
+      setCourtNumbers([])
+      setJudgesLoading(false)
+      return undefined
+    }
+    let alive = true
+    setJudgesLoading(true)
+    api.judgesList.courtNumbers({ court: roomCourt, district: roomDistrict })
+      .then(rows => { if (alive) setCourtNumbers(Array.isArray(rows) ? rows : []) })
+      .catch(() => { if (alive) setCourtNumbers([]) })
+      .finally(() => { if (alive) setJudgesLoading(false) })
+    return () => { alive = false }
+  }, [roomCourt, roomDistrict])
+
+  const courtNoGroups = useMemo(() => getCourtNosByBuilding(roomCourt, roomDistrict), [roomCourt, roomDistrict, courtNumbers])
+
+  // "Court No." and the number, then the judge(s) sitting in that room
+  function roomLabel(g, r) {
+    const names = [...new Set(
+      judgesForRoom(courtNumbers, { courtNo: r.courtNo, building: g.building, floor: r.floor })
+        .map(j => (j.judgeName || '').trim())
+        .filter(Boolean)
+    )]
+    return names.length ? `Court No. ${r.courtNo} — ${names.join(' / ')}` : `Court No. ${r.courtNo}`
+  }
+
   // Runs one request: shows what is happening, hands the answer to the page, and reports a failure
   async function run(label, fn, failure) {
     setBusy(label)
@@ -130,6 +167,9 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
       cnrNo: app.cnrNo || '',
       court: app.court || '',
       district: app.district || '',
+      courtNo: app.courtNo || '',
+      building: app.building || '',
+      floor: app.floor || '',
     })
     setEditing(true)
   }
@@ -164,6 +204,10 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
             clientId: draft.clientId,
             court: draft.court,
             district: draft.district,
+            // Empty clears the court room
+            courtNo: draft.courtNo || '',
+            building: draft.building || '',
+            floor: draft.floor || '',
           }
         : { caseId: draft.caseId }),
     }), 'Could not save the changes')
@@ -449,7 +493,7 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                     <Dropdown className="form-input" value={draft.court}
                       onChange={e => {
                         const court = e.target.value
-                        setDraft(d => ({ ...d, court, district: getDistricts(court)[0] || '' }))
+                        setDraft(d => ({ ...d, court, district: getDistricts(court)[0] || '', courtNo: '', building: '', floor: '' }))
                       }}>
                       <option value="">Select Court</option>
                       {courtNames.length > 0 && (
@@ -468,13 +512,44 @@ export default function MiscApplicationDetailModal({ app, onChange, onDeleted, o
                     <label className="form-label">District{hasNamedDistricts(draft.court) && <Req />}</label>
                     <Dropdown className="form-input" value={draft.district}
                       disabled={!hasNamedDistricts(draft.court)}
-                      onChange={e => setDraft(d => ({ ...d, district: e.target.value }))}>
+                      onChange={e => setDraft(d => ({ ...d, district: e.target.value, courtNo: '', building: '', floor: '' }))}>
                       {!hasNamedDistricts(draft.court) && (
                         <option value={draft.district || ''}>
                           {!draft.court ? 'Select a court first' : isHighCourt(draft.court) ? 'Not applicable' : 'No district'}
                         </option>
                       )}
                       {hasNamedDistricts(draft.court) && getDistricts(draft.court).map(d => <option key={d} value={d}>{d}</option>)}
+                    </Dropdown>
+                  </div>
+                  <div className="misc-grid__wide">
+                    <label className="form-label">Court No. / Judge</label>
+                    {/* Court rooms come from the court table for the chosen court and district; each shows the judge sitting there */}
+                    <Dropdown className="form-input"
+                      value={roomKey(draft.building, draft.floor, draft.courtNo)}
+                      disabled={!draft.court}
+                      onChange={e => {
+                        const [building = '', floor = '', courtNo = ''] = e.target.value.split(KEY_SEP)
+                        setDraft(d => ({ ...d, courtNo, building, floor }))
+                      }}>
+                      <option value={roomKey('', '', '')}>{draft.court ? (judgesLoading ? 'Loading court nos. and judges…' : 'Select Court No. / Judge') : 'Select a court first'}</option>
+                      {/* A court no. the case already holds that is not in the table stays selectable so it is not lost */}
+                      {draft.courtNo && !courtNoGroups.some(g => g.rooms.some(r => roomKey(g.building, r.floor, r.courtNo) === roomKey(draft.building, draft.floor, draft.courtNo))) && (
+                        <option value={roomKey(draft.building, draft.floor, draft.courtNo)}>Court No. {draft.courtNo}</option>
+                      )}
+                      {courtNoGroups.flatMap(g => {
+                        const opt = r => (
+                          <option key={roomKey(g.building, r.floor, r.courtNo)} value={roomKey(g.building, r.floor, r.courtNo)}>
+                            {roomLabel(g, r)}
+                          </option>
+                        )
+                        if (!g.building) return g.rooms.map(opt)
+                        const floors = [...new Set(g.rooms.map(r => r.floor))]
+                        return floors.map(f => (
+                          <optgroup key={`${g.building}|${f}`} label={buildingWithFloor(g.building, f)}>
+                            {g.rooms.filter(r => r.floor === f).map(opt)}
+                          </optgroup>
+                        ))
+                      })}
                     </Dropdown>
                   </div>
                 </>

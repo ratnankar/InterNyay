@@ -205,7 +205,7 @@ public class MiscApplicationService {
         // The case to link to is checked before the new case is created, so nothing is saved when it is refused
         Case linkTarget = req.isNewCase() && req.getLinkedCaseId() != null ? linkableCase(req.getLinkedCaseId(), userId) : null;
 
-        Case legalCase = req.isNewCase() ? createCase(req, userId) : ownedCase(req.getCaseId(), userId);
+        Case legalCase = req.isNewCase() ? createCase(req, userId) : linkableCase(req.getCaseId(), userId);
 
         // Checked before anything is saved: a closed day or a full day stops the whole request
         if (hearing != null) hearingDays.assertAllowed(hearing, userId, legalCase.getId());
@@ -263,6 +263,10 @@ public class MiscApplicationService {
                 portal.setCourt(clean(req.getCourt()));
                 portal.setDistrict(req.getDistrict());
             }
+            // Court room (court no. with its building and floor); an empty court no. clears it
+            portal.setCourtNo(req.getCourtNo());
+            portal.setBuilding(req.getBuilding());
+            portal.setFloor(req.getFloor());
             caseService.update(a.getLegalCase().getId(), portal, userId);
             return toDto(repo.save(a));
         }
@@ -408,12 +412,14 @@ public class MiscApplicationService {
         return toDto(repo.save(a));
     }
 
-    // Deletes the application with all its documents. The case and its own hearing history stay
+    // Deletes the application with all its documents. A case it was filed in stays with its own hearing history; a case made
+    // with the application goes too
     @Transactional
     public void delete(Long id, Long userId) {
         MiscApplication a = findOwned(id, userId);
         documentService.deleteAllForMiscApplication(a.getId());
-        if (a.isPortalSynced()) {
+        // The case that was made only for the application goes with it (it is not in Cases, so nothing else would remove it)
+        if (a.isPortalSynced() || a.isCaseCreatedHere()) {
             caseService.delete(a.getLegalCase().getId(), userId);
             return;
         }
@@ -483,8 +489,13 @@ public class MiscApplicationService {
         cr.setCaseNo(clean(req.getCaseNo()));
         cr.setCnrNo(clean(req.getCnrNo()));
         cr.setIdsOptional(true);
+        // The case exists for this application only: it is not listed in Cases
+        cr.setMiscOnly(true);
         cr.setCourt(clean(req.getCourt()));
         cr.setDistrict(req.getDistrict());
+        cr.setCourtNo(clean(req.getCourtNo()));
+        cr.setBuilding(clean(req.getBuilding()));
+        cr.setFloor(clean(req.getFloor()));
         cr.setClientId(req.getClientId());
         cr.setStatus("Pending");
         cr.setAddMode("MANUAL");
@@ -495,7 +506,7 @@ public class MiscApplicationService {
 
     // Files the application in another case of the same advocate; its documents follow it
     private void moveToCase(MiscApplication a, Long caseId, Long userId) {
-        Case target = ownedCase(caseId, userId);
+        Case target = linkableCase(caseId, userId);
         if (a.getHearingDate() != null) hearingDays.assertAllowed(a.getHearingDate(), userId, target.getId());
         a.setLegalCase(target);
         documentService.moveMiscDocumentsToCase(a.getId(), target.getId());
@@ -514,6 +525,10 @@ public class MiscApplicationService {
         cr.setClientId(req.getClientId());
         cr.setCourt(clean(req.getCourt()));
         cr.setDistrict(req.getDistrict());
+        // Court room (court no. with its building and floor); an empty court no. clears it
+        cr.setCourtNo(req.getCourtNo());
+        cr.setBuilding(req.getBuilding());
+        cr.setFloor(req.getFloor());
         cr.setIdsOptional(true);
         caseService.update(a.getLegalCase().getId(), cr, userId);
     }

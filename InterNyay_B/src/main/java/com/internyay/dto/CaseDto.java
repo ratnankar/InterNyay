@@ -83,6 +83,9 @@ public class CaseDto {
     // Role of each client in the case
     public Map<Long, String> clientSubTypes;
 
+    // Name of each client as the court lists it in this case (only for clients listed under another name)
+    public Map<Long, String> clientCaseNames;
+
     // People on our side who are not saved as clients
     public List<CasePartyDto> nonClients;
 
@@ -206,6 +209,9 @@ public class CaseDto {
                 .clientSubTypes(c.getClientSubTypes() == null
                         ? new LinkedHashMap<>()
                         : new LinkedHashMap<>(c.getClientSubTypes()))
+                .clientCaseNames(c.getClientCaseNames() == null
+                        ? new LinkedHashMap<>()
+                        : new LinkedHashMap<>(c.getClientCaseNames()))
                 .feeType(c.getFeeType())
                 .totalFeeAmount(c.getTotalFeeAmount())
                 .totalFeeAmountDate(c.getTotalFeeAmountDate())

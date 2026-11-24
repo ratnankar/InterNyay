@@ -10,7 +10,7 @@ export default function MiscSummaryFields({ app: a }) {
     { label: 'Case', value: a.caseTitle },
     { label: 'Case No', value: a.caseNo || '—', always: true },
     { label: 'CNR No', value: a.portalSynced ? a.cnrNo : '' },
-    { label: 'Court No', value: a.portalSynced && a.courtNo ? a.courtNo : '' },
+    { label: 'Court No', value: a.courtNo || '' },
     { label: 'Cause List No', value: a.portalSynced && a.causeListNo != null && a.listingDate === a.hearingDate ? a.causeListNo : '' },
     { label: 'Client', value: a.clientName },
     { label: 'Court', value: court },

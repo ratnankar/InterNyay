@@ -567,7 +567,7 @@ export const holidays = {
 // Dates on which the advocate doesn't want hearings scheduled
 export const noHearingDates = {
   list:   ()     => get('/no-hearing-dates'),
-  mark:   (date) => post('/no-hearing-dates', { body: { date } }),
+  mark:   (date, reason) => post('/no-hearing-dates', { body: { date, reason: reason || null } }),
   unmark: (date) => del(`/no-hearing-dates/${date}`),
 }
 

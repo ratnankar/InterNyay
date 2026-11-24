@@ -24,7 +24,7 @@ export default function HearingDateInput({
   caseId = null,
 }) {
   // Dates the user crossed out as no-hearing days, and the daily hearing limit
-  const { noHearingDates, isDayFull, dayFullProblem, hearingLimitFor, hearingCountsByDate } = useApp()
+  const { noHearingDates, noHearingReasons, isDayFull, dayFullProblem, hearingLimitFor, hearingCountsByDate } = useApp()
 
   // Whether the calendar popover is open
   const [open, setOpen] = useState(false)
@@ -187,7 +187,7 @@ export default function HearingDateInput({
                   className={cls}
                   disabled={blocked}
                   title={
-                    crossed ? 'Marked as a no-hearing date'
+                    crossed ? `Marked as a no-hearing date${noHearingReasons?.get(ds) ? ` — ${noHearingReasons.get(ds)}` : ''}`
                     : full ? `Full — ${hearingCountsByDate.get(ds) || 0} of ${hearingLimitFor(ds)} hearings`
                     : undefined
                   }

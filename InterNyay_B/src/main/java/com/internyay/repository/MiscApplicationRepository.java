@@ -14,6 +14,9 @@ public interface MiscApplicationRepository extends JpaRepository<MiscApplication
     // Removes the applications when a case is deleted
     void deleteByLegalCase_Id(Long caseId);
 
+    // The applications filed in (or made with) a case
+    List<MiscApplication> findByLegalCase_Id(Long caseId);
+
     // Filterable list with the case, its court and its client loaded in the same query. The search matches the
     // application type, the case title and number, and the client's name
     @Query(value = """

@@ -4,17 +4,24 @@ import { navToPath } from '../../routes/paths'
 import { caseCourtParts, roomLabel } from '../../constants/courts'
 import { formatDisplayDate } from '../../utils/dateUtils'
 import Icon from '../common/Icon'
+import CauseListRefreshButton from '../common/CauseListRefreshButton'
+import { useApp } from '../../context/AppContext'
 import { isDisposed, statusSlug } from './miscUtils'
 import MiscHearingPanel from './MiscHearingPanel'
 
 // One misc. application with a hearing on the selected date. It shows the application's own details, not the case's
 export default function DashboardMiscHearing({ app, dateKey, caseItem }) {
   const navigate = useNavigate()
+  const { bumpHearings } = useApp()
   const [open, setOpen] = useState(false)
 
   const disposed = isDisposed(app)
   // Listed for a later date now (or disposed off), so this date is a past one
   const heard = disposed || app.hearingDate !== dateKey
+  // An application with its own CNR is a case of its own, so its cause list number can be looked up like a case's (only for
+  // the date it is still listed for)
+  const canLookUpCauseList = !!app.portalSynced && !heard
+  const hasCauseListNo = app.causeListNo != null && app.listingDate === dateKey
   const { district, court } = caseCourtParts({ court: app.court, district: app.district })
   const dash = v => (v === '' || v == null ? '—' : v)
   // Same table as the case's details: label and value, two pairs to a row
@@ -23,7 +30,7 @@ export default function DashboardMiscHearing({ app, dateKey, caseItem }) {
     ['Status', disposed && app.disposalOutcome ? `${app.status} - ${app.disposalOutcome}` : app.status],
     ['Case', app.caseTitle],
     ['Case No', app.caseNo],
-    ...(app.portalSynced ? [['CNR No', app.cnrNo], ['Cause List No', app.causeListNo != null && app.listingDate === dateKey ? app.causeListNo : '']] : []),
+    ...(app.portalSynced ? [['CNR No', app.cnrNo], ['Cause List No', hasCauseListNo ? app.causeListNo : '']] : []),
     ['Client', app.clientName],
     ['Court', court],
     ['District', district],
@@ -53,7 +60,10 @@ export default function DashboardMiscHearing({ app, dateKey, caseItem }) {
           {!open && (
             <div className="hearing-row__chips">
               {(caseItem?.courtNo || app.courtNo) && <span className="hearing-row__court-no" title="Court number">Court No. {caseItem?.courtNo || app.courtNo}</span>}
-              {app.portalSynced && app.causeListNo != null && app.listingDate === dateKey && <span className="hearing-row__file-no" title="Cause list number">Cause List No. {app.causeListNo}</span>}
+              {app.portalSynced && hasCauseListNo && <span className="hearing-row__file-no" title="Cause list number">Cause List No. {app.causeListNo}</span>}
+              {canLookUpCauseList && (
+                <CauseListRefreshButton caseId={app.caseId} dateKey={dateKey} hasNumber={hasCauseListNo} onDone={() => bumpHearings(app.caseId)} />
+              )}
               {caseItem && roomLabel(caseItem) && <span className="hearing-row__file-no" title="Building and floor">{roomLabel(caseItem)}</span>}
               {caseItem?.fileNo && <span className="hearing-row__file-no" title="File number">File No. {caseItem.fileNo}</span>}
             </div>
@@ -86,6 +96,9 @@ export default function DashboardMiscHearing({ app, dateKey, caseItem }) {
           <MiscHearingPanel app={app} />
 
           <div className="hearing-card__footer">
+            {canLookUpCauseList && (
+              <CauseListRefreshButton caseId={app.caseId} dateKey={dateKey} withLabel onDone={() => bumpHearings(app.caseId)} />
+            )}
             <button type="button" className="btn-outline btn-outline--sm hearing-card__open"
               onClick={e => { e.stopPropagation(); navigate(navToPath('miscapps'), { state: { openId: app.id } }) }}>
               Open Application <Icon name="arrow-right" />

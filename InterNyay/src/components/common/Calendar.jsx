@@ -8,6 +8,7 @@ import Icon from './Icon'
 import HearingLimitModal from '../modals/HearingLimitModal'
 import { confirmDialog } from '../../utils/confirmDialog'
 import Linkify from './Linkify'
+import NoHearingReasonModal from '../modals/NoHearingReasonModal'
 // Weekday headers for the month grid, starting on Sunday
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -19,13 +20,15 @@ export default function Calendar() {
   const {
     cases, holidays, hearingCountsByDate,
     calendarDate, setCalendarDate, calendarViewDate, setCalendarViewDate,
-    noHearingDates, toggleNoHearingDate, hearingLimitFor,
+    noHearingDates, noHearingReasons, toggleNoHearingDate, updateNoHearingReason, hearingLimitFor,
   } = useApp()
 
   // Whether the upcoming-holidays list is expanded
   const [holidaysOpen, setHolidaysOpen] = useSessionState('calendar_holidays_open', false)
   // Whether the daily hearing limit window is open
   const [limitOpen, setLimitOpen] = useState(false)
+  // Reason window: 'mark' when crossing a date out, 'edit' to change the reason of a crossed date, null when closed
+  const [reasonMode, setReasonMode] = useState(null)
 
   // Month currently being viewed in the grid (not necessarily the selected date)
   const year  = calendarViewDate.getFullYear()
@@ -46,6 +49,7 @@ export default function Calendar() {
 
   // True if the user has marked this date as a no-hearing day
   const selectedIsCrossed = noHearingDates.has(selectedStr)
+  const selectedReason = noHearingReasons.get(selectedStr) || ''
 
   // Limit that applies to the selected date, null when there is none
   const selectedLimit = hearingLimitFor(selectedStr)
@@ -65,7 +69,9 @@ export default function Calendar() {
       })
       if (!ok) return
     }
-    toggleNoHearingDate(selectedStr)
+    // Crossing a date out asks for the reason first; removing the cross needs none
+    if (selectedIsCrossed) toggleNoHearingDate(selectedStr)
+    else setReasonMode('mark')
   }
 
   // Next three holidays from today, shown in the side list
@@ -131,7 +137,7 @@ export default function Calendar() {
               key={day}
               className={cls}
               title={
-                isCrossed ? 'No hearing on this date'
+                isCrossed ? `No hearing on this date${noHearingReasons.get(ds) ? ` — ${noHearingReasons.get(ds)}` : ''}`
                 : holiday ? `${holiday.label} — ${holidayCourtLabel(holiday)} holiday`
                 : hearingCount > 0 ? `${hearingCount} hearing${hearingCount === 1 ? '' : 's'}${dayLimit != null ? ` of ${dayLimit}${isFull ? ' — full' : ''}` : ''}`
                 : undefined
@@ -187,7 +193,13 @@ export default function Calendar() {
           Daily hearing limit{selectedIsCrossed ? ': 0' : selectedLimit != null ? `: ${selectedLimit}` : ''}
         </button>
         {selectedIsCrossed && (
-          <p className="calendar__cross-note">No hearing will be taken on this date.</p>
+          <p className="calendar__cross-note">
+            No hearing will be taken on this date.
+            {selectedReason && <> Reason: <span className="calendar__cross-reason">{selectedReason}</span></>}
+            <button type="button" className="calendar__cross-edit" onClick={() => setReasonMode('edit')}>
+              {selectedReason ? 'Edit reason' : 'Add reason'}
+            </button>
+          </p>
         )}
       </div>
 
@@ -204,6 +216,18 @@ export default function Calendar() {
             )}
           </div>
         </div>
+      )}
+
+      {reasonMode && (
+        <NoHearingReasonModal
+          dateStr={selectedStr}
+          editing={reasonMode === 'edit'}
+          initial={reasonMode === 'edit' ? selectedReason : ''}
+          onSave={reason => reasonMode === 'edit'
+            ? updateNoHearingReason(selectedStr, reason)
+            : toggleNoHearingDate(selectedStr, reason)}
+          onClose={() => setReasonMode(null)}
+        />
       )}
 
       {limitOpen && <HearingLimitModal dateStr={selectedStr} onClose={() => setLimitOpen(false)} />}

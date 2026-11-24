@@ -91,6 +91,11 @@ public class CaseRequest {
     @com.fasterxml.jackson.annotation.JsonIgnore
     public boolean idsOptional;
 
+    // Set by the server (never read from the request) when the case only exists for a misc. application: it is kept out
+    // of the Cases page and is shown (and edited, deleted) from the application alone
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public boolean miscOnly;
+
     // True when the case is added by CNR
     public boolean isCnrMode() { return "CNR".equalsIgnoreCase(addMode == null ? "" : addMode.trim()); }
 
@@ -101,6 +106,9 @@ public class CaseRequest {
 
     // Role of each client in the case
     public Map<Long, String> clientSubTypes;
+
+    // Name of each client as the court lists it in this case, when it differs from the client's own name
+    public Map<Long, String> clientCaseNames;
 
     // People on our side who are not saved as clients. Null leaves them as they are, a list replaces them
     public List<@Valid CasePartyRequest> nonClients;

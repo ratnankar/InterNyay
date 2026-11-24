@@ -12,6 +12,12 @@ export function caseHasClient(c, clientId) {
   return caseClientIds(c).includes(Number(clientId))
 }
 
+// Name of a client as the case lists it: the name the court has them under when it differs from the client's own name
+export function clientNameInCase(c, clientId, fallback = '') {
+  const map = c?.clientCaseNames || {}
+  return map[clientId] || map[String(clientId)] || fallback
+}
+
 // Names of every client on the case; falls back to the clients list when the case doesn't carry the name
 export function caseClientNames(c, clients = []) {
   // Main client's name, looked up from the clients list if the case doesn't have it.
@@ -65,8 +71,9 @@ export function caseClientLabels(c, clients = []) {
   })
 
   return entries.map(({ id, name }) => {
+    const shown = clientNameInCase(c, id, name)
     const subType = caseClientSubType(c, id)
-    return subType ? `${name} (${subType})` : name
+    return subType ? `${shown} (${subType})` : shown
   })
 }
 
@@ -117,6 +124,9 @@ export function caseClientEntries(c, clients = []) {
     const client = clients.find(cl => Number(cl.id) === Number(entry.id))
     return {
       ...entry,
+      // The name the court lists the client under, when it differs from their own name
+      name: clientNameInCase(c, entry.id, entry.name),
+      clientName: entry.name,
       subType: caseClientSubType(c, entry.id),
       phone: String(client?.whatsappPhone || client?.phone || '').trim(),
     }

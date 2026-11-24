@@ -22,6 +22,11 @@ public class MiscApplicationRequest {
     public String court;
     public String district;
 
+    // Court room of the new case (optional): the cause list is looked up by it
+    @Size(max = 30) public String courtNo;
+    @Size(max = 255) public String building;
+    @Size(max = 50) public String floor;
+
     // Add (new case) only, optional: an existing case of the advocate to link the application to. The application still
     // reads its own hearing history and orders from eCourts by its CNR
     public Long linkedCaseId;

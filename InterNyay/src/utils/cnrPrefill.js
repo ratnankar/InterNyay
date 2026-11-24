@@ -102,6 +102,19 @@ export function sameName(a, b) {
   return short.every(w => long.includes(w))
 }
 
+// The name eCourts lists for a client, found by the client's own name or any of the other names they go by.
+// Empty when eCourts does not list the client (on either side)
+export function courtNameOf(detail, client) {
+  if (!detail || !client) return ''
+  const listed = [...(detail.petitioners || []), ...(detail.respondents || [])]
+  const names = [client.name, ...(client.otherNames || [])]
+  for (const n of names) {
+    const hit = listed.find(l => sameName(l, n))
+    if (hit) return String(hit).trim()
+  }
+  return ''
+}
+
 // Which side a person is on in the case, going by the names eCourts lists: the petitioners and respondents, or when
 // advocates is true their advocates. Null when the name is on neither side or on both
 export function detectSide(detail, name, { advocates = false } = {}) {

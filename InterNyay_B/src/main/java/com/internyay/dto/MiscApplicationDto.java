@@ -28,6 +28,8 @@ public class MiscApplicationDto {
     public String court;
     public String district;
     public String courtNo;
+    public String building;
+    public String floor;
     public String caseStatus;
     public Long clientId;
     public String clientName;
@@ -85,6 +87,8 @@ public class MiscApplicationDto {
                 .court(c.getCourt())
                 .district(c.getDistrict())
                 .courtNo(c.getCourtNo())
+                .building(c.getBuilding())
+                .floor(c.getFloor())
                 .caseStatus(c.getStatus())
                 .clientId(c.getClient() == null ? null : c.getClient().getId())
                 .clientName(c.getClient() == null ? null : c.getClient().getName())

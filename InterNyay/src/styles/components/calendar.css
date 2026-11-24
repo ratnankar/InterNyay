@@ -418,3 +418,27 @@
   font-size: var(--cal-note-fs);
   color: #b3261e;
 }
+
+/* Quick-pick reasons in the no-hearing reason window */
+.no-hearing-reason__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+/* Reason shown under a crossed-out date */
+.calendar__cross-reason {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.calendar__cross-edit {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-navy);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}

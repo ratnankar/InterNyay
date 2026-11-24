@@ -153,7 +153,7 @@ function ChequeDetails({ form, setForm }) {
 // Search for and attach one or more clients to the case, or jump to adding a new client.
 // People on our side who are not saved as clients can be added too, and marked as a client later
 function ClientPicker({ ourLabel, allowNonClient }) {
-  const { showAddCase, caseClients, removeCaseClient, setPrimaryCaseClient, newCaseForm, setNewCaseForm, startMarkAsClient } = useApp()
+  const { showAddCase, caseClients, removeCaseClient, unmarkCaseClient, setPrimaryCaseClient, newCaseForm, setNewCaseForm, startMarkAsClient } = useApp()
 
   // Whether the client search window is open
   const [searchOpen, setSearchOpen] = useState(false)
@@ -202,17 +202,25 @@ function ClientPicker({ ourLabel, allowNonClient }) {
               </div>
               <div className="client-selected__info">
                 <p className="client-selected__name">
-                  {cl.name}
+                  {newCaseForm.clientCaseNames?.[cl.id] || cl.name}
                   {i === 0 && !leadKey && ourCount > 1 && (
                     <span className="client-selected__tag">Shown in title</span>
                   )}
                 </p>
                 <p className="client-selected__email">{cl.email}</p>
+                {newCaseForm.clientCaseNames?.[cl.id] && (
+                  <p className="client-selected__email">Saved as {cl.name} in your clients</p>
+                )}
               </div>
               <div className="client-selected__actions">
                 {(i > 0 || leadKey) && (
                   <button type="button" className="btn-outline" onClick={() => setPrimaryCaseClient(cl.id)}>
                     Show in title
+                  </button>
+                )}
+                {newCaseForm.markedParties?.[cl.id] && (
+                  <button type="button" className="btn-outline" onClick={() => unmarkCaseClient(cl.id)}>
+                    Not a client
                   </button>
                 )}
                 <button type="button" className="btn-outline" onClick={() => removeCaseClient(cl.id)}>
