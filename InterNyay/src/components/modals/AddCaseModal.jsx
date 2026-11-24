@@ -642,29 +642,33 @@ function FileNumberField({ form, setForm }) {
 
       {heldBy && (
         <div className="file-no-clash">
-          {form.exchangeFileNo ? (
-            <span>
-              File number {heldBy.number} is held by <strong>{heldBy.caseTitle}</strong>
-              {heldBy.caseNo ? ` (${heldBy.caseNo})` : ''}. On saving, that case moves to number {handOver}.
-            </span>
-          ) : (
-            <span>
-              File number {heldBy.number} is already held by <strong>{heldBy.caseTitle}</strong>
-              {heldBy.caseNo ? ` (${heldBy.caseNo})` : ''}.
-            </span>
-          )}
-          {canExchange && (
-            <button type="button" className="btn-outline btn-outline--sm" disabled={swapping} onClick={exchangeTyped}>
-              {swapping ? 'Exchanging…' : form.exchangeFileNo ? 'Undo exchange' : 'Exchange numbers'}
-            </button>
-          )}
-          {!form.exchangeFileNo && (
-            <ChangeHolderNumber
-              holder={{ caseId: heldBy.caseId, caseTitle: heldBy.caseTitle }}
-              suggested={holders.reduce((m, h) => Math.max(m, h.number), 0) + 1}
-              onChanged={() => api.cases.fileNumbers().then(res => setHolders(res.occupied || [])).catch(() => { })}
-            />
-          )}
+          <span className="file-no-clash__msg">
+            {form.exchangeFileNo ? (
+              <>
+                File number {heldBy.number} is held by <strong>{heldBy.caseTitle}</strong>
+                {heldBy.caseNo ? ` (${heldBy.caseNo})` : ''}. On saving, that case moves to number {handOver}.
+              </>
+            ) : (
+              <>
+                File number {heldBy.number} is already held by <strong>{heldBy.caseTitle}</strong>
+                {heldBy.caseNo ? ` (${heldBy.caseNo})` : ''}.
+              </>
+            )}
+          </span>
+          <div className="file-no-clash__actions">
+            {canExchange && (
+              <button type="button" className="btn-outline btn-outline--sm" disabled={swapping} onClick={exchangeTyped}>
+                {swapping ? 'Exchanging…' : form.exchangeFileNo ? 'Undo exchange' : 'Exchange numbers'}
+              </button>
+            )}
+            {!form.exchangeFileNo && (
+              <ChangeHolderNumber
+                holder={{ caseId: heldBy.caseId, caseTitle: heldBy.caseTitle }}
+                suggested={holders.reduce((m, h) => Math.max(m, h.number), 0) + 1}
+                onChanged={() => api.cases.fileNumbers().then(res => setHolders(res.occupied || [])).catch(() => { })}
+              />
+            )}
+          </div>
         </div>
       )}
 

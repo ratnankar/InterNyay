@@ -97,3 +97,51 @@
   width: 96px;
   min-width: 0;
 }
+
+@media (max-width: 640px) {
+  .hearing-row__chips {
+    gap: 6px;
+  }
+  .hearing-row__chips > span,
+  .hearing-row__chips > .cause-list-refresh--labelled {
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    height: 26px;
+    min-height: 26px;
+    padding: 0 10px;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    line-height: 1;
+  }
+  .hearing-row__chips > .cause-list-refresh--labelled {
+    gap: 5px;
+  }
+  .hearing-row__chips > .cause-list-refresh--labelled svg {
+    width: 13px;
+    height: 13px;
+  }
+  .hearing-row__chips > .cause-list-refresh:not(.cause-list-refresh--labelled) {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hearing-row__side .hearing-row__past {
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    height: 26px;
+    padding: 0 12px;
+    border: var(--border-default);
+    border-radius: 999px;
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    line-height: 1;
+  }
+}

@@ -703,7 +703,8 @@
   border: var(--border-default);
   border-radius: var(--border-radius-md);
 }
-.file-no-clash span { flex: 1 1 200px; min-width: 0; }
+.file-no-clash__msg { flex: 1 1 100%; min-width: 0; }
+.file-no-clash__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 1 1 100%; }
 .file-no-clash .btn-outline { flex-shrink: 0; white-space: nowrap; }
 
 /* Row note: the typed number is held by another case */
